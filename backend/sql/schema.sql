@@ -1,0 +1,3 @@
+-- 謎部 DB スキーマ（SSOT）
+-- ここに DDL を記述すると、起動時に sqldef が現状 DB との差分を計算して適用する。
+-- 文字コード: utf8mb4 / エンジン: InnoDB / ID 型: VARCHAR(26) ULID
