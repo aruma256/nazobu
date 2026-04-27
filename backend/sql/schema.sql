@@ -38,3 +38,42 @@ CREATE TABLE sessions (
   KEY idx_sessions_user_id (user_id),
   CONSTRAINT fk_sessions_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- 謎解きイベント（公演）。長期開催が一般的なので、開催日は event ではなく
+-- ticket（実際に参加した日）側に持たせる。
+CREATE TABLE events (
+  id          VARCHAR(26)  NOT NULL,
+  title       VARCHAR(255) NOT NULL,
+  created_at  DATETIME(6)  NOT NULL,
+  updated_at  DATETIME(6)  NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- チケット 1 枚。グループチケットなら 1 枚で複数人が参加でき、price を割り勘する。
+-- price は税込・円。purchased_by が立て替え、ticket_participants が割り勘元。
+CREATE TABLE tickets (
+  id            VARCHAR(26) NOT NULL,
+  event_id      VARCHAR(26) NOT NULL,
+  attended_on   DATE        NOT NULL,
+  price         INT         NOT NULL,
+  purchased_by  VARCHAR(26) NOT NULL,
+  created_at    DATETIME(6) NOT NULL,
+  updated_at    DATETIME(6) NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_tickets_event_id (event_id),
+  KEY idx_tickets_attended_on (attended_on),
+  KEY idx_tickets_purchased_by (purchased_by),
+  CONSTRAINT fk_tickets_event_id     FOREIGN KEY (event_id)     REFERENCES events(id) ON DELETE CASCADE,
+  CONSTRAINT fk_tickets_purchased_by FOREIGN KEY (purchased_by) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ticket と参加者の M:N。誰がどのチケットで参加したか。
+CREATE TABLE ticket_participants (
+  ticket_id   VARCHAR(26) NOT NULL,
+  user_id     VARCHAR(26) NOT NULL,
+  created_at  DATETIME(6) NOT NULL,
+  PRIMARY KEY (ticket_id, user_id),
+  KEY idx_ticket_participants_user_id (user_id),
+  CONSTRAINT fk_ticket_participants_ticket_id FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ticket_participants_user_id   FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
