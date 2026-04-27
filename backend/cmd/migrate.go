@@ -15,7 +15,9 @@ var migrateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg := config.Load()
 
-		// mysqldef は PATH に居る前提（Dockerfile で go install 済み）
+		// mysqldef は PATH に居る前提（Dockerfile で go install 済み）。
+		// 宣言型マイグレーションでは schema.sql からの差分には削除も含まれるため、
+		// --enable-drop で DROP TABLE / DROP COLUMN / DROP INDEX を許可する。
 		mysqldef := exec.Command(
 			"mysqldef",
 			"--host="+cfg.DB.Host,
@@ -24,6 +26,7 @@ var migrateCmd = &cobra.Command{
 			"--password="+cfg.DB.Password,
 			"--file="+cfg.SchemaPath,
 			"--apply",
+			"--enable-drop",
 			cfg.DB.Name,
 		)
 		mysqldef.Stdout = os.Stdout

@@ -24,11 +24,16 @@ services:
     environment:
       HTTP_ADDR: ":8080"
       SCHEMA_PATH: "sql/schema.sql"
+      FRONTEND_URL: "http://localhost:3000"
+      COOKIE_SECURE: "false"
       DB_HOST: mysql
       DB_PORT: "3306"
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
+      DISCORD_REDIRECT_URL: ${DISCORD_REDIRECT_URL:-http://localhost:3000/auth/discord/callback}
     ports:
       - "8080:8080"
     depends_on:

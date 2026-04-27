@@ -3,9 +3,12 @@ package config
 import "os"
 
 type Config struct {
-	HTTPAddr   string
-	SchemaPath string
-	DB         DBConfig
+	HTTPAddr     string
+	FrontendURL  string
+	SchemaPath   string
+	CookieSecure bool
+	DB           DBConfig
+	Discord      DiscordConfig
 }
 
 type DBConfig struct {
@@ -16,16 +19,29 @@ type DBConfig struct {
 	Name     string
 }
 
+type DiscordConfig struct {
+	ClientID     string
+	ClientSecret string
+	RedirectURL  string
+}
+
 func Load() Config {
 	return Config{
-		HTTPAddr:   env("HTTP_ADDR", ":8080"),
-		SchemaPath: env("SCHEMA_PATH", "sql/schema.sql"),
+		HTTPAddr:     env("HTTP_ADDR", ":8080"),
+		FrontendURL:  env("FRONTEND_URL", "http://localhost:3000"),
+		SchemaPath:   env("SCHEMA_PATH", "sql/schema.sql"),
+		CookieSecure: env("COOKIE_SECURE", "false") == "true",
 		DB: DBConfig{
 			Host:     env("DB_HOST", "mysql"),
 			Port:     env("DB_PORT", "3306"),
 			User:     env("DB_USER", "nazobu"),
 			Password: env("DB_PASSWORD", ""),
 			Name:     env("DB_NAME", "nazobu"),
+		},
+		Discord: DiscordConfig{
+			ClientID:     env("DISCORD_CLIENT_ID", ""),
+			ClientSecret: env("DISCORD_CLIENT_SECRET", ""),
+			RedirectURL:  env("DISCORD_REDIRECT_URL", "http://localhost:3000/auth/discord/callback"),
 		},
 	}
 }
