@@ -54,16 +54,16 @@ CREATE TABLE events (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- チケット 1 枚。グループチケットなら 1 枚で複数人が参加でき、参加者で割り勘する。
--- price は一人あたりの税込・円（割り勘済み）。purchased_by が立て替え、
+-- price_per_person は一人あたりの税込・円（割り勘済み）。purchased_by が立て替え、
 -- ticket_participants が割り勘元。
 CREATE TABLE tickets (
-  id            VARCHAR(26) NOT NULL,
-  event_id      VARCHAR(26) NOT NULL,
-  attended_on   DATE        NOT NULL,
-  price         INT         NOT NULL,
-  purchased_by  VARCHAR(26) NOT NULL,
-  created_at    DATETIME(6) NOT NULL,
-  updated_at    DATETIME(6) NOT NULL,
+  id                VARCHAR(26) NOT NULL,
+  event_id          VARCHAR(26) NOT NULL,
+  attended_on       DATE        NOT NULL,
+  price_per_person  INT         NOT NULL,
+  purchased_by      VARCHAR(26) NOT NULL,
+  created_at        DATETIME(6) NOT NULL,
+  updated_at        DATETIME(6) NOT NULL,
   PRIMARY KEY (id),
   KEY idx_tickets_event_id (event_id),
   KEY idx_tickets_attended_on (attended_on),
