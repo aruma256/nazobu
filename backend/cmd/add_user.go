@@ -26,7 +26,7 @@ var addUserCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		ctx := cmd.Context()
 

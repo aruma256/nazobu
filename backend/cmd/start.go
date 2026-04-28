@@ -17,7 +17,7 @@ var startCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 
 		return server.Run(cmd.Context(), cfg, conn)
 	},
