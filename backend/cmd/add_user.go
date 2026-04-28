@@ -32,18 +32,19 @@ var addUserCmd = &cobra.Command{
 
 		var existingUserID string
 		err = conn.QueryRowContext(ctx, `
-			SELECT user_id FROM discord_identities WHERE discord_user_id = ?
-		`, addUserDiscordUserID).Scan(&existingUserID)
+			SELECT user_id FROM user_identities WHERE provider = ? AND subject = ?
+		`, auth.ProviderDiscord, addUserDiscordUserID).Scan(&existingUserID)
 		isNew := errors.Is(err, sql.ErrNoRows)
 		if err != nil && !isNew {
 			return err
 		}
 
-		user, err := auth.UpsertUserWithDiscord(ctx, conn, &auth.DiscordUser{
+		du := &auth.DiscordUser{
 			ID:          addUserDiscordUserID,
 			Username:    addUserUsername,
 			DisplayName: addUserDisplayName,
-		})
+		}
+		user, err := auth.UpsertUserFromIdentity(ctx, conn, auth.ProviderDiscord, du.ID, du.ToProfile())
 		if err != nil {
 			return fmt.Errorf("ユーザー登録に失敗: %w", err)
 		}
@@ -52,7 +53,7 @@ var addUserCmd = &cobra.Command{
 		if !isNew {
 			action = "既存ユーザーを更新"
 		}
-		fmt.Printf("%s: user_id=%s discord_user_id=%s\n", action, user.ID, user.Discord.DiscordUserID)
+		fmt.Printf("%s: user_id=%s provider=%s subject=%s\n", action, user.ID, auth.ProviderDiscord, addUserDiscordUserID)
 		return nil
 	},
 }

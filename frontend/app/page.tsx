@@ -4,12 +4,9 @@ import { useEffect, useState } from "react";
 
 type Me = {
   id: string;
-  discord: {
-    user_id: string;
-    username: string;
-    global_name: string | null;
-    avatar: string | null;
-  };
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
 };
 
 type LoadState =
@@ -69,7 +66,7 @@ export default function Home() {
           <p className="text-base">
             ログイン中:{" "}
             <span className="font-semibold">
-              {state.me.discord.global_name ?? state.me.discord.username}
+              {state.me.display_name ?? state.me.username}
             </span>
           </p>
           <button

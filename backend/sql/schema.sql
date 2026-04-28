@@ -3,27 +3,30 @@
 -- 文字コード: utf8mb4 / エンジン: InnoDB / ID 型: VARCHAR(26) ULID
 
 -- 内部ユーザー。IdP 非依存の anchor。
--- IdP ごとの identity は *_identities テーブルに分離する（将来 Discord 以外の
--- IdP に対応する場合、google_identities 等を横並びで追加する想定）。
+-- 表示用プロフィール（username / display_name / avatar_url）はログイン時に
+-- 連携元 IdP の値で更新するキャッシュ。IdP に依存しない形で持たせる。
 CREATE TABLE users (
-  id          VARCHAR(26) NOT NULL,
-  created_at  DATETIME(6) NOT NULL,
-  updated_at  DATETIME(6) NOT NULL,
+  id            VARCHAR(26)  NOT NULL,
+  username      VARCHAR(255) NOT NULL,
+  display_name  VARCHAR(255) NULL,
+  avatar_url    VARCHAR(512) NULL,
+  created_at    DATETIME(6)  NOT NULL,
+  updated_at    DATETIME(6)  NOT NULL,
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Discord IdP の identity。1 user につき 0 or 1 件。
-CREATE TABLE discord_identities (
-  user_id         VARCHAR(26)  NOT NULL,
-  discord_user_id VARCHAR(32)  NOT NULL,
-  username        VARCHAR(255) NOT NULL,
-  display_name    VARCHAR(255) NULL,
-  avatar          VARCHAR(64)  NULL,
-  created_at      DATETIME(6)  NOT NULL,
-  updated_at      DATETIME(6)  NOT NULL,
-  PRIMARY KEY (user_id),
-  UNIQUE KEY uq_discord_identities_discord_user_id (discord_user_id),
-  CONSTRAINT fk_discord_identities_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+-- IdP の identity。(provider, subject) でログイン時に user を引く。
+-- provider は 'discord' / 'google' 等の識別子、subject は IdP 内のユーザー ID
+-- （OIDC の sub 相当）。1 user に複数 IdP を紐付けられる前提の N:1。
+CREATE TABLE user_identities (
+  user_id     VARCHAR(26)  NOT NULL,
+  provider    VARCHAR(32)  NOT NULL,
+  subject     VARCHAR(255) NOT NULL,
+  created_at  DATETIME(6)  NOT NULL,
+  updated_at  DATETIME(6)  NOT NULL,
+  PRIMARY KEY (provider, subject),
+  KEY idx_user_identities_user_id (user_id),
+  CONSTRAINT fk_user_identities_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE sessions (

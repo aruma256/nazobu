@@ -21,28 +21,31 @@ const (
 var ErrNoSession = errors.New("session が見つからないか期限切れ")
 
 type User struct {
-	ID      string
-	Discord DiscordIdentity
+	ID          string
+	Username    string
+	DisplayName sql.NullString
+	AvatarURL   sql.NullString
 }
 
-type DiscordIdentity struct {
-	DiscordUserID string
-	Username      string
-	DisplayName   sql.NullString
-	Avatar        sql.NullString
+// UserProfile は IdP から取得した、user 表示用プロフィールのスナップショット。
+// ログインのたびに users テーブルへキャッシュ更新される。
+type UserProfile struct {
+	Username    string
+	DisplayName string
+	AvatarURL   string
 }
 
-// UpsertUserWithDiscord は Discord identity を内部 user に upsert する。
-// 既存の Discord identity があればそれを更新、無ければ users と discord_identities を
-// 同一トランザクションで作る。
-func UpsertUserWithDiscord(ctx context.Context, db *sql.DB, du *DiscordUser) (*User, error) {
-	displayName := nullString(du.DisplayName)
-	avatar := nullString(du.Avatar)
+// UpsertUserFromIdentity は (provider, subject) で識別される IdP identity を内部 user に
+// upsert する。既存 identity があれば紐づく user のプロフィールを更新、無ければ users と
+// user_identities を同一トランザクションで作る。
+func UpsertUserFromIdentity(ctx context.Context, db *sql.DB, provider, subject string, profile UserProfile) (*User, error) {
+	displayName := nullString(profile.DisplayName)
+	avatarURL := nullString(profile.AvatarURL)
 
 	var existingUserID string
 	err := db.QueryRowContext(ctx, `
-		SELECT user_id FROM discord_identities WHERE discord_user_id = ?
-	`, du.ID).Scan(&existingUserID)
+		SELECT user_id FROM user_identities WHERE provider = ? AND subject = ?
+	`, provider, subject).Scan(&existingUserID)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		newUserID := ulid.Make().String()
@@ -53,28 +56,25 @@ func UpsertUserWithDiscord(ctx context.Context, db *sql.DB, du *DiscordUser) (*U
 		defer func() { _ = tx.Rollback() }()
 
 		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO users (id, created_at, updated_at) VALUES (?, NOW(6), NOW(6))
-		`, newUserID); err != nil {
+			INSERT INTO users (id, username, display_name, avatar_url, created_at, updated_at)
+			VALUES (?, ?, ?, ?, NOW(6), NOW(6))
+		`, newUserID, profile.Username, displayName, avatarURL); err != nil {
 			return nil, err
 		}
 		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO discord_identities
-			  (user_id, discord_user_id, username, display_name, avatar, created_at, updated_at)
-			VALUES (?, ?, ?, ?, ?, NOW(6), NOW(6))
-		`, newUserID, du.ID, du.Username, displayName, avatar); err != nil {
+			INSERT INTO user_identities (user_id, provider, subject, created_at, updated_at)
+			VALUES (?, ?, ?, NOW(6), NOW(6))
+		`, newUserID, provider, subject); err != nil {
 			return nil, err
 		}
 		if err := tx.Commit(); err != nil {
 			return nil, err
 		}
 		return &User{
-			ID: newUserID,
-			Discord: DiscordIdentity{
-				DiscordUserID: du.ID,
-				Username:      du.Username,
-				DisplayName:   displayName,
-				Avatar:        avatar,
-			},
+			ID:          newUserID,
+			Username:    profile.Username,
+			DisplayName: displayName,
+			AvatarURL:   avatarURL,
 		}, nil
 
 	case err != nil:
@@ -82,20 +82,17 @@ func UpsertUserWithDiscord(ctx context.Context, db *sql.DB, du *DiscordUser) (*U
 
 	default:
 		if _, err := db.ExecContext(ctx, `
-			UPDATE discord_identities
-			SET username = ?, display_name = ?, avatar = ?, updated_at = NOW(6)
-			WHERE user_id = ?
-		`, du.Username, displayName, avatar, existingUserID); err != nil {
+			UPDATE users
+			SET username = ?, display_name = ?, avatar_url = ?, updated_at = NOW(6)
+			WHERE id = ?
+		`, profile.Username, displayName, avatarURL, existingUserID); err != nil {
 			return nil, err
 		}
 		return &User{
-			ID: existingUserID,
-			Discord: DiscordIdentity{
-				DiscordUserID: du.ID,
-				Username:      du.Username,
-				DisplayName:   displayName,
-				Avatar:        avatar,
-			},
+			ID:          existingUserID,
+			Username:    profile.Username,
+			DisplayName: displayName,
+			AvatarURL:   avatarURL,
 		}, nil
 	}
 }
@@ -119,23 +116,16 @@ func CreateSession(ctx context.Context, db *sql.DB, userID string) (string, erro
 
 // LookupSession は raw token から有効な session に紐づく user を引く。
 // 期限切れなら ErrNoSession を返し、当該 session を削除する。
-// 現状 user は必ず Discord identity を持つ（UpsertUserWithDiscord で users と
-// discord_identities を同一トランザクションで作っている）ので INNER JOIN で良い。
-// 将来別 IdP を追加するときに JOIN 構造を見直す。
 func LookupSession(ctx context.Context, db *sql.DB, rawToken string) (*User, error) {
 	var u User
 	var expiresAt time.Time
 	err := db.QueryRowContext(ctx, `
-		SELECT u.id,
-		       di.discord_user_id, di.username, di.display_name, di.avatar,
-		       s.expires_at
+		SELECT u.id, u.username, u.display_name, u.avatar_url, s.expires_at
 		FROM sessions s
-		INNER JOIN users u              ON u.id = s.user_id
-		INNER JOIN discord_identities di ON di.user_id = u.id
+		INNER JOIN users u ON u.id = s.user_id
 		WHERE s.token_hash = ?
 	`, hashToken(rawToken)).Scan(
-		&u.ID,
-		&u.Discord.DiscordUserID, &u.Discord.Username, &u.Discord.DisplayName, &u.Discord.Avatar,
+		&u.ID, &u.Username, &u.DisplayName, &u.AvatarURL,
 		&expiresAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {

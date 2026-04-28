@@ -70,7 +70,7 @@ func (s *Server) handleDiscordCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := auth.UpsertUserWithDiscord(ctx, s.db, du)
+	user, err := auth.UpsertUserFromIdentity(ctx, s.db, auth.ProviderDiscord, du.ID, du.ToProfile())
 	if err != nil {
 		http.Error(w, "user upsert 失敗: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -119,30 +119,23 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	type discordJSON struct {
-		UserID      string  `json:"user_id"`
+	type meJSON struct {
+		ID          string  `json:"id"`
 		Username    string  `json:"username"`
 		DisplayName *string `json:"display_name"`
-		Avatar      *string `json:"avatar"`
-	}
-	type meJSON struct {
-		ID      string      `json:"id"`
-		Discord discordJSON `json:"discord"`
+		AvatarURL   *string `json:"avatar_url"`
 	}
 	out := meJSON{
-		ID: user.ID,
-		Discord: discordJSON{
-			UserID:   user.Discord.DiscordUserID,
-			Username: user.Discord.Username,
-		},
+		ID:       user.ID,
+		Username: user.Username,
 	}
-	if user.Discord.DisplayName.Valid {
-		v := user.Discord.DisplayName.String
-		out.Discord.DisplayName = &v
+	if user.DisplayName.Valid {
+		v := user.DisplayName.String
+		out.DisplayName = &v
 	}
-	if user.Discord.Avatar.Valid {
-		v := user.Discord.Avatar.String
-		out.Discord.Avatar = &v
+	if user.AvatarURL.Valid {
+		v := user.AvatarURL.String
+		out.AvatarURL = &v
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(out)

@@ -5,12 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
 )
 
-const discordUserInfoURL = "https://discord.com/api/users/@me"
+const (
+	discordUserInfoURL = "https://discord.com/api/users/@me"
+	discordCDNBase     = "https://cdn.discordapp.com"
+
+	// ProviderDiscord は user_identities.provider に保存する識別子。
+	ProviderDiscord = "discord"
+)
 
 // Discord は OIDC discovery エンドポイント（/.well-known/openid-configuration）に
 // 対応していないので、Provider 設定を手組みする。
@@ -43,6 +50,24 @@ type DiscordUser struct {
 	// JSON フィールド名は歴史的経緯から global_name のまま。
 	DisplayName string `json:"global_name"`
 	Avatar      string `json:"avatar"`
+}
+
+// ToProfile は Discord の identity を IdP 非依存の UserProfile に変換する。
+// avatar はハッシュなので Discord CDN の URL を組み立てる。
+// "a_" 接頭辞付きハッシュはアニメーションアバターなので gif、それ以外は png。
+func (du *DiscordUser) ToProfile() UserProfile {
+	p := UserProfile{
+		Username:    du.Username,
+		DisplayName: du.DisplayName,
+	}
+	if du.Avatar != "" {
+		ext := "png"
+		if strings.HasPrefix(du.Avatar, "a_") {
+			ext = "gif"
+		}
+		p.AvatarURL = fmt.Sprintf("%s/avatars/%s/%s.%s", discordCDNBase, du.ID, du.Avatar, ext)
+	}
+	return p
 }
 
 // Discord の /users/@me を access token 付きで叩いて identity を取得する。
