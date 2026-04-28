@@ -47,6 +47,7 @@ CREATE TABLE sessions (
 CREATE TABLE events (
   id          VARCHAR(26)  NOT NULL,
   title       VARCHAR(255) NOT NULL,
+  url         VARCHAR(512) NOT NULL,
   created_at  DATETIME(6)  NOT NULL,
   updated_at  DATETIME(6)  NOT NULL,
   PRIMARY KEY (id)
