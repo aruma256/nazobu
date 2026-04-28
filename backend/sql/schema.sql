@@ -11,9 +11,12 @@ CREATE TABLE users (
   display_name  VARCHAR(255) NULL,
   avatar_url    VARCHAR(512) NULL,
   notifications_enabled TINYINT(1) NOT NULL DEFAULT 1,
+  -- 'admin' = 管理者 / 'member' = 一般メンバー。新規ユーザーは member スタート、admin は手動昇格。
+  role          VARCHAR(16)  NOT NULL DEFAULT 'member',
   created_at    DATETIME(6)  NOT NULL,
   updated_at    DATETIME(6)  NOT NULL,
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  CONSTRAINT chk_users_role CHECK (role IN ('admin', 'member'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- IdP の identity。(provider, subject) でログイン時に user を引く。
