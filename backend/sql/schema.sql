@@ -26,7 +26,10 @@ CREATE TABLE user_identities (
   updated_at  DATETIME(6)  NOT NULL,
   PRIMARY KEY (provider, subject),
   KEY idx_user_identities_user_id (user_id),
-  CONSTRAINT fk_user_identities_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  CONSTRAINT fk_user_identities_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  -- 当面 Discord のみで運用するため provider を固定する。新規 IdP を増やす際にここを更新する。
+  -- ※ sqldef + MySQL では 1 要素の IN (...) に既知のバグがあるため = で書く。
+  CONSTRAINT chk_user_identities_provider CHECK (provider = 'discord')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE sessions (
