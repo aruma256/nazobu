@@ -37,10 +37,12 @@ func DiscordOAuthConfig(provider *oidc.Provider, clientID, clientSecret, redirec
 }
 
 type DiscordUser struct {
-	ID         string `json:"id"`
-	Username   string `json:"username"`
-	GlobalName string `json:"global_name"`
-	Avatar     string `json:"avatar"`
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	// Discord 公式ドキュメント上の名称は "Display name" だが、API レスポンスの
+	// JSON フィールド名は歴史的経緯から global_name のまま。
+	DisplayName string `json:"global_name"`
+	Avatar      string `json:"avatar"`
 }
 
 // Discord の /users/@me を access token 付きで叩いて identity を取得する。

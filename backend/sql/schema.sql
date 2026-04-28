@@ -17,7 +17,7 @@ CREATE TABLE discord_identities (
   user_id         VARCHAR(26)  NOT NULL,
   discord_user_id VARCHAR(32)  NOT NULL,
   username        VARCHAR(255) NOT NULL,
-  global_name     VARCHAR(255) NULL,
+  display_name    VARCHAR(255) NULL,
   avatar          VARCHAR(64)  NULL,
   created_at      DATETIME(6)  NOT NULL,
   updated_at      DATETIME(6)  NOT NULL,

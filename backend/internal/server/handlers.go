@@ -120,10 +120,10 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type discordJSON struct {
-		UserID     string  `json:"user_id"`
-		Username   string  `json:"username"`
-		GlobalName *string `json:"global_name"`
-		Avatar     *string `json:"avatar"`
+		UserID      string  `json:"user_id"`
+		Username    string  `json:"username"`
+		DisplayName *string `json:"display_name"`
+		Avatar      *string `json:"avatar"`
 	}
 	type meJSON struct {
 		ID      string      `json:"id"`
@@ -136,9 +136,9 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) {
 			Username: user.Discord.Username,
 		},
 	}
-	if user.Discord.GlobalName.Valid {
-		v := user.Discord.GlobalName.String
-		out.Discord.GlobalName = &v
+	if user.Discord.DisplayName.Valid {
+		v := user.Discord.DisplayName.String
+		out.Discord.DisplayName = &v
 	}
 	if user.Discord.Avatar.Valid {
 		v := user.Discord.Avatar.String

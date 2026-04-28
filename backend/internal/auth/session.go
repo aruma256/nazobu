@@ -28,7 +28,7 @@ type User struct {
 type DiscordIdentity struct {
 	DiscordUserID string
 	Username      string
-	GlobalName    sql.NullString
+	DisplayName   sql.NullString
 	Avatar        sql.NullString
 }
 
@@ -36,7 +36,7 @@ type DiscordIdentity struct {
 // 既存の Discord identity があればそれを更新、無ければ users と discord_identities を
 // 同一トランザクションで作る。
 func UpsertUserWithDiscord(ctx context.Context, db *sql.DB, du *DiscordUser) (*User, error) {
-	globalName := nullString(du.GlobalName)
+	displayName := nullString(du.DisplayName)
 	avatar := nullString(du.Avatar)
 
 	var existingUserID string
@@ -59,9 +59,9 @@ func UpsertUserWithDiscord(ctx context.Context, db *sql.DB, du *DiscordUser) (*U
 		}
 		if _, err := tx.ExecContext(ctx, `
 			INSERT INTO discord_identities
-			  (user_id, discord_user_id, username, global_name, avatar, created_at, updated_at)
+			  (user_id, discord_user_id, username, display_name, avatar, created_at, updated_at)
 			VALUES (?, ?, ?, ?, ?, NOW(6), NOW(6))
-		`, newUserID, du.ID, du.Username, globalName, avatar); err != nil {
+		`, newUserID, du.ID, du.Username, displayName, avatar); err != nil {
 			return nil, err
 		}
 		if err := tx.Commit(); err != nil {
@@ -72,7 +72,7 @@ func UpsertUserWithDiscord(ctx context.Context, db *sql.DB, du *DiscordUser) (*U
 			Discord: DiscordIdentity{
 				DiscordUserID: du.ID,
 				Username:      du.Username,
-				GlobalName:    globalName,
+				DisplayName:   displayName,
 				Avatar:        avatar,
 			},
 		}, nil
@@ -83,9 +83,9 @@ func UpsertUserWithDiscord(ctx context.Context, db *sql.DB, du *DiscordUser) (*U
 	default:
 		if _, err := db.ExecContext(ctx, `
 			UPDATE discord_identities
-			SET username = ?, global_name = ?, avatar = ?, updated_at = NOW(6)
+			SET username = ?, display_name = ?, avatar = ?, updated_at = NOW(6)
 			WHERE user_id = ?
-		`, du.Username, globalName, avatar, existingUserID); err != nil {
+		`, du.Username, displayName, avatar, existingUserID); err != nil {
 			return nil, err
 		}
 		return &User{
@@ -93,7 +93,7 @@ func UpsertUserWithDiscord(ctx context.Context, db *sql.DB, du *DiscordUser) (*U
 			Discord: DiscordIdentity{
 				DiscordUserID: du.ID,
 				Username:      du.Username,
-				GlobalName:    globalName,
+				DisplayName:   displayName,
 				Avatar:        avatar,
 			},
 		}, nil
@@ -127,7 +127,7 @@ func LookupSession(ctx context.Context, db *sql.DB, rawToken string) (*User, err
 	var expiresAt time.Time
 	err := db.QueryRowContext(ctx, `
 		SELECT u.id,
-		       di.discord_user_id, di.username, di.global_name, di.avatar,
+		       di.discord_user_id, di.username, di.display_name, di.avatar,
 		       s.expires_at
 		FROM sessions s
 		INNER JOIN users u              ON u.id = s.user_id
@@ -135,7 +135,7 @@ func LookupSession(ctx context.Context, db *sql.DB, rawToken string) (*User, err
 		WHERE s.token_hash = ?
 	`, hashToken(rawToken)).Scan(
 		&u.ID,
-		&u.Discord.DiscordUserID, &u.Discord.Username, &u.Discord.GlobalName, &u.Discord.Avatar,
+		&u.Discord.DiscordUserID, &u.Discord.Username, &u.Discord.DisplayName, &u.Discord.Avatar,
 		&expiresAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
