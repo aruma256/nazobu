@@ -53,8 +53,9 @@ CREATE TABLE events (
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- チケット 1 枚。グループチケットなら 1 枚で複数人が参加でき、price を割り勘する。
--- price は税込・円。purchased_by が立て替え、ticket_participants が割り勘元。
+-- チケット 1 枚。グループチケットなら 1 枚で複数人が参加でき、参加者で割り勘する。
+-- price は一人あたりの税込・円（割り勘済み）。purchased_by が立て替え、
+-- ticket_participants が割り勘元。
 CREATE TABLE tickets (
   id            VARCHAR(26) NOT NULL,
   event_id      VARCHAR(26) NOT NULL,
@@ -66,7 +67,7 @@ CREATE TABLE tickets (
   PRIMARY KEY (id),
   KEY idx_tickets_event_id (event_id),
   KEY idx_tickets_attended_on (attended_on),
-  KEY idx_tickets_purchased_by (purchased_by),
+  KEY idx_tickets_purchased_by_attended_on (purchased_by, attended_on),
   CONSTRAINT fk_tickets_event_id     FOREIGN KEY (event_id)     REFERENCES events(id) ON DELETE CASCADE,
   CONSTRAINT fk_tickets_purchased_by FOREIGN KEY (purchased_by) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
