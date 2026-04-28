@@ -10,6 +10,7 @@ CREATE TABLE users (
   username      VARCHAR(255) NOT NULL,
   display_name  VARCHAR(255) NULL,
   avatar_url    VARCHAR(512) NULL,
+  notifications_enabled TINYINT(1) NOT NULL DEFAULT 1,
   created_at    DATETIME(6)  NOT NULL,
   updated_at    DATETIME(6)  NOT NULL,
   PRIMARY KEY (id)
