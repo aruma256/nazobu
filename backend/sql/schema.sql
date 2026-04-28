@@ -73,9 +73,12 @@ CREATE TABLE tickets (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ticket と参加者の M:N。誰がどのチケットで参加したか。
+-- settled_at は立て替え分を購入者へ精算した時刻。NULL = 未精算（デフォルト）、
+-- 非 NULL = 精算済み。タイムスタンプを兼ねることで「いつ精算したか」も保持する。
 CREATE TABLE ticket_participants (
   ticket_id   VARCHAR(26) NOT NULL,
   user_id     VARCHAR(26) NOT NULL,
+  settled_at  DATETIME(6) NULL DEFAULT NULL,
   created_at  DATETIME(6) NOT NULL,
   PRIMARY KEY (ticket_id, user_id),
   KEY idx_ticket_participants_user_id (user_id),
