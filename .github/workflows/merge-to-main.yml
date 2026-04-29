@@ -1,0 +1,31 @@
+name: 指定ブランチを main に fast-forward マージ
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: main にマージするブランチ名
+        required: true
+        type: string
+
+jobs:
+  fast-forward-merge:
+    name: fast-forward merge into main
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: チェックアウト（main）
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: 対象ブランチを取得
+        run: git fetch origin "${{ inputs.branch }}":"refs/remotes/origin/${{ inputs.branch }}"
+
+      - name: fast-forward マージ
+        run: git merge --ff-only "origin/${{ inputs.branch }}"
+
+      - name: main に push
+        run: git push origin main
