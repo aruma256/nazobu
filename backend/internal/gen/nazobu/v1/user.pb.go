@@ -126,6 +126,148 @@ func (x *GetMeResponse) GetAvatarUrl() string {
 	return ""
 }
 
+type ListUsersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUsersRequest) Reset() {
+	*x = ListUsersRequest{}
+	mi := &file_nazobu_v1_user_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUsersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUsersRequest) ProtoMessage() {}
+
+func (x *ListUsersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_user_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUsersRequest.ProtoReflect.Descriptor instead.
+func (*ListUsersRequest) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_user_proto_rawDescGZIP(), []int{2}
+}
+
+type ListUsersResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// users は username 昇順。
+	Users         []*User `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUsersResponse) Reset() {
+	*x = ListUsersResponse{}
+	mi := &file_nazobu_v1_user_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUsersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUsersResponse) ProtoMessage() {}
+
+func (x *ListUsersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_user_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUsersResponse.ProtoReflect.Descriptor instead.
+func (*ListUsersResponse) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_user_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ListUsersResponse) GetUsers() []*User {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
+type User struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Id       string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Username string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	// 表示名は未設定なら空文字列。
+	DisplayName   string `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *User) Reset() {
+	*x = User{}
+	mi := &file_nazobu_v1_user_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *User) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*User) ProtoMessage() {}
+
+func (x *User) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_user_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use User.ProtoReflect.Descriptor instead.
+func (*User) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_user_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *User) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *User) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *User) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
 var File_nazobu_v1_user_proto protoreflect.FileDescriptor
 
 const file_nazobu_v1_user_proto_rawDesc = "" +
@@ -137,9 +279,17 @@ const file_nazobu_v1_user_proto_rawDesc = "" +
 	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
 	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayName\x12\x1d\n" +
 	"\n" +
-	"avatar_url\x18\x04 \x01(\tR\tavatarUrl2I\n" +
+	"avatar_url\x18\x04 \x01(\tR\tavatarUrl\"\x12\n" +
+	"\x10ListUsersRequest\":\n" +
+	"\x11ListUsersResponse\x12%\n" +
+	"\x05users\x18\x01 \x03(\v2\x0f.nazobu.v1.UserR\x05users\"U\n" +
+	"\x04User\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
+	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayName2\x91\x01\n" +
 	"\vUserService\x12:\n" +
-	"\x05GetMe\x12\x17.nazobu.v1.GetMeRequest\x1a\x18.nazobu.v1.GetMeResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
+	"\x05GetMe\x12\x17.nazobu.v1.GetMeRequest\x1a\x18.nazobu.v1.GetMeResponse\x12F\n" +
+	"\tListUsers\x12\x1b.nazobu.v1.ListUsersRequest\x1a\x1c.nazobu.v1.ListUsersResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
 
 var (
 	file_nazobu_v1_user_proto_rawDescOnce sync.Once
@@ -153,19 +303,25 @@ func file_nazobu_v1_user_proto_rawDescGZIP() []byte {
 	return file_nazobu_v1_user_proto_rawDescData
 }
 
-var file_nazobu_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_nazobu_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_nazobu_v1_user_proto_goTypes = []any{
-	(*GetMeRequest)(nil),  // 0: nazobu.v1.GetMeRequest
-	(*GetMeResponse)(nil), // 1: nazobu.v1.GetMeResponse
+	(*GetMeRequest)(nil),      // 0: nazobu.v1.GetMeRequest
+	(*GetMeResponse)(nil),     // 1: nazobu.v1.GetMeResponse
+	(*ListUsersRequest)(nil),  // 2: nazobu.v1.ListUsersRequest
+	(*ListUsersResponse)(nil), // 3: nazobu.v1.ListUsersResponse
+	(*User)(nil),              // 4: nazobu.v1.User
 }
 var file_nazobu_v1_user_proto_depIdxs = []int32{
-	0, // 0: nazobu.v1.UserService.GetMe:input_type -> nazobu.v1.GetMeRequest
-	1, // 1: nazobu.v1.UserService.GetMe:output_type -> nazobu.v1.GetMeResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	4, // 0: nazobu.v1.ListUsersResponse.users:type_name -> nazobu.v1.User
+	0, // 1: nazobu.v1.UserService.GetMe:input_type -> nazobu.v1.GetMeRequest
+	2, // 2: nazobu.v1.UserService.ListUsers:input_type -> nazobu.v1.ListUsersRequest
+	1, // 3: nazobu.v1.UserService.GetMe:output_type -> nazobu.v1.GetMeResponse
+	3, // 4: nazobu.v1.UserService.ListUsers:output_type -> nazobu.v1.ListUsersResponse
+	3, // [3:5] is the sub-list for method output_type
+	1, // [1:3] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_nazobu_v1_user_proto_init() }
@@ -179,7 +335,7 @@ func file_nazobu_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_nazobu_v1_user_proto_rawDesc), len(file_nazobu_v1_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

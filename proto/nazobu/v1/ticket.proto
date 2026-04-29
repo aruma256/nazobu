@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package nazobu.v1;
+
+option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1";
+
+// TicketService は ticket（公演に対する 1 枚分の参加チケット）の参照・登録 RPC を提供する。
+service TicketService {
+  // ListTickets は登録済み ticket を attended_on 降順で返す。
+  rpc ListTickets(ListTicketsRequest) returns (ListTicketsResponse);
+  // CreateTicket は新規 ticket を 1 件登録する。参加者（割り勘元）も同時に登録する。
+  rpc CreateTicket(CreateTicketRequest) returns (CreateTicketResponse);
+}
+
+message ListTicketsRequest {}
+
+message ListTicketsResponse {
+  // tickets は attended_on 降順 / id 昇順。
+  repeated Ticket tickets = 1;
+}
+
+message Ticket {
+  string id = 1;
+  string event_id = 2;
+  string event_title = 3;
+  // YYYY-MM-DD（JST）。
+  string attended_on = 4;
+  // 一人あたりの精算額（円）。
+  int32 price_per_person = 5;
+  // 集合時刻 "HH:MM"（attended_on の JST 当日基準）。
+  string meeting_time = 6;
+  // 集合場所。
+  string meeting_place = 7;
+  // 立て替えてくれた人の表示名（display_name が空なら username）。
+  string purchaser_name = 8;
+  // 参加者の表示名（created_at 昇順）。立て替えた人も参加者として含めて構わない。
+  repeated string participant_names = 9;
+}
+
+message CreateTicketRequest {
+  string event_id = 1;
+  // YYYY-MM-DD（JST）。
+  string attended_on = 2;
+  // 一人あたりの精算額（円、0 以上）。
+  int32 price_per_person = 3;
+  // 集合時刻 "HH:MM"（attended_on の JST 当日基準）。
+  string meeting_time = 4;
+  // 集合場所。
+  string meeting_place = 5;
+  // 参加者（割り勘元）の user id。立替者（= ログイン中の user）を含めても構わない。1 件以上。
+  // 立替者は session の user で固定するため、ここでは指定しない。
+  repeated string participant_user_ids = 6;
+}
+
+message CreateTicketResponse {
+  Ticket ticket = 1;
+}

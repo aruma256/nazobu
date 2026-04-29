@@ -64,6 +64,8 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	mux.Handle(myPagePath, myPageHandler)
 	eventPath, eventHandler := nazobuv1connect.NewEventServiceHandler(newEventService(dbc))
 	mux.Handle(eventPath, eventHandler)
+	ticketPath, ticketHandler := nazobuv1connect.NewTicketServiceHandler(newTicketService(dbc))
+	mux.Handle(ticketPath, ticketHandler)
 
 	httpSrv := &http.Server{
 		Addr:              cfg.HTTPAddr,

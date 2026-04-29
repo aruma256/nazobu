@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file nazobu/v1/user.proto.
  */
 export const file_nazobu_v1_user: GenFile = /*@__PURE__*/
-  fileDesc("ChRuYXpvYnUvdjEvdXNlci5wcm90bxIJbmF6b2J1LnYxIg4KDEdldE1lUmVxdWVzdCJXCg1HZXRNZVJlc3BvbnNlEgoKAmlkGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCRISCgphdmF0YXJfdXJsGAQgASgJMkkKC1VzZXJTZXJ2aWNlEjoKBUdldE1lEhcubmF6b2J1LnYxLkdldE1lUmVxdWVzdBoYLm5hem9idS52MS5HZXRNZVJlc3BvbnNlQkRaQmdpdGh1Yi5jb20vYXJ1bWEyNTYvbmF6b2J1L2JhY2tlbmQvaW50ZXJuYWwvZ2VuL25hem9idS92MTtuYXpvYnV2MWIGcHJvdG8z");
+  fileDesc("ChRuYXpvYnUvdjEvdXNlci5wcm90bxIJbmF6b2J1LnYxIg4KDEdldE1lUmVxdWVzdCJXCg1HZXRNZVJlc3BvbnNlEgoKAmlkGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCRISCgphdmF0YXJfdXJsGAQgASgJIhIKEExpc3RVc2Vyc1JlcXVlc3QiMwoRTGlzdFVzZXJzUmVzcG9uc2USHgoFdXNlcnMYASADKAsyDy5uYXpvYnUudjEuVXNlciI6CgRVc2VyEgoKAmlkGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCTKRAQoLVXNlclNlcnZpY2USOgoFR2V0TWUSFy5uYXpvYnUudjEuR2V0TWVSZXF1ZXN0GhgubmF6b2J1LnYxLkdldE1lUmVzcG9uc2USRgoJTGlzdFVzZXJzEhsubmF6b2J1LnYxLkxpc3RVc2Vyc1JlcXVlc3QaHC5uYXpvYnUudjEuTGlzdFVzZXJzUmVzcG9uc2VCRFpCZ2l0aHViLmNvbS9hcnVtYTI1Ni9uYXpvYnUvYmFja2VuZC9pbnRlcm5hbC9nZW4vbmF6b2J1L3YxO25hem9idXYxYgZwcm90bzM");
 
 /**
  * @generated from message nazobu.v1.GetMeRequest
@@ -60,7 +60,68 @@ export const GetMeResponseSchema: GenMessage<GetMeResponse> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_user, 1);
 
 /**
- * UserService は現在ログイン中の user に関する RPC を提供する。
+ * @generated from message nazobu.v1.ListUsersRequest
+ */
+export type ListUsersRequest = Message<"nazobu.v1.ListUsersRequest"> & {
+};
+
+/**
+ * Describes the message nazobu.v1.ListUsersRequest.
+ * Use `create(ListUsersRequestSchema)` to create a new message.
+ */
+export const ListUsersRequestSchema: GenMessage<ListUsersRequest> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_user, 2);
+
+/**
+ * @generated from message nazobu.v1.ListUsersResponse
+ */
+export type ListUsersResponse = Message<"nazobu.v1.ListUsersResponse"> & {
+  /**
+   * users は username 昇順。
+   *
+   * @generated from field: repeated nazobu.v1.User users = 1;
+   */
+  users: User[];
+};
+
+/**
+ * Describes the message nazobu.v1.ListUsersResponse.
+ * Use `create(ListUsersResponseSchema)` to create a new message.
+ */
+export const ListUsersResponseSchema: GenMessage<ListUsersResponse> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_user, 3);
+
+/**
+ * @generated from message nazobu.v1.User
+ */
+export type User = Message<"nazobu.v1.User"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string username = 2;
+   */
+  username: string;
+
+  /**
+   * 表示名は未設定なら空文字列。
+   *
+   * @generated from field: string display_name = 3;
+   */
+  displayName: string;
+};
+
+/**
+ * Describes the message nazobu.v1.User.
+ * Use `create(UserSchema)` to create a new message.
+ */
+export const UserSchema: GenMessage<User> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_user, 4);
+
+/**
+ * UserService は現在ログイン中の user に関する RPC、および user 一覧の参照 RPC を提供する。
  *
  * @generated from service nazobu.v1.UserService
  */
@@ -74,6 +135,16 @@ export const UserService: GenService<{
     methodKind: "unary";
     input: typeof GetMeRequestSchema;
     output: typeof GetMeResponseSchema;
+  },
+  /**
+   * ListUsers は登録済み user を返す。ticket 登録時の参加者選択などで使う。
+   *
+   * @generated from rpc nazobu.v1.UserService.ListUsers
+   */
+  listUsers: {
+    methodKind: "unary";
+    input: typeof ListUsersRequestSchema;
+    output: typeof ListUsersResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_nazobu_v1_user, 0);

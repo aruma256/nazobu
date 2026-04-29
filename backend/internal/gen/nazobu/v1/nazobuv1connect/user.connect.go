@@ -35,12 +35,16 @@ const (
 const (
 	// UserServiceGetMeProcedure is the fully-qualified name of the UserService's GetMe RPC.
 	UserServiceGetMeProcedure = "/nazobu.v1.UserService/GetMe"
+	// UserServiceListUsersProcedure is the fully-qualified name of the UserService's ListUsers RPC.
+	UserServiceListUsersProcedure = "/nazobu.v1.UserService/ListUsers"
 )
 
 // UserServiceClient is a client for the nazobu.v1.UserService service.
 type UserServiceClient interface {
 	// GetMe は cookie session から現在の user を返す。未ログインなら unauthenticated。
 	GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error)
+	// ListUsers は登録済み user を返す。ticket 登録時の参加者選択などで使う。
+	ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error)
 }
 
 // NewUserServiceClient constructs a client for the nazobu.v1.UserService service. By default, it
@@ -60,12 +64,19 @@ func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(userServiceMethods.ByName("GetMe")),
 			connect.WithClientOptions(opts...),
 		),
+		listUsers: connect.NewClient[v1.ListUsersRequest, v1.ListUsersResponse](
+			httpClient,
+			baseURL+UserServiceListUsersProcedure,
+			connect.WithSchema(userServiceMethods.ByName("ListUsers")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
-	getMe *connect.Client[v1.GetMeRequest, v1.GetMeResponse]
+	getMe     *connect.Client[v1.GetMeRequest, v1.GetMeResponse]
+	listUsers *connect.Client[v1.ListUsersRequest, v1.ListUsersResponse]
 }
 
 // GetMe calls nazobu.v1.UserService.GetMe.
@@ -73,10 +84,17 @@ func (c *userServiceClient) GetMe(ctx context.Context, req *connect.Request[v1.G
 	return c.getMe.CallUnary(ctx, req)
 }
 
+// ListUsers calls nazobu.v1.UserService.ListUsers.
+func (c *userServiceClient) ListUsers(ctx context.Context, req *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error) {
+	return c.listUsers.CallUnary(ctx, req)
+}
+
 // UserServiceHandler is an implementation of the nazobu.v1.UserService service.
 type UserServiceHandler interface {
 	// GetMe は cookie session から現在の user を返す。未ログインなら unauthenticated。
 	GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error)
+	// ListUsers は登録済み user を返す。ticket 登録時の参加者選択などで使う。
+	ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -92,10 +110,18 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(userServiceMethods.ByName("GetMe")),
 		connect.WithHandlerOptions(opts...),
 	)
+	userServiceListUsersHandler := connect.NewUnaryHandler(
+		UserServiceListUsersProcedure,
+		svc.ListUsers,
+		connect.WithSchema(userServiceMethods.ByName("ListUsers")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/nazobu.v1.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case UserServiceGetMeProcedure:
 			userServiceGetMeHandler.ServeHTTP(w, r)
+		case UserServiceListUsersProcedure:
+			userServiceListUsersHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -107,4 +133,8 @@ type UnimplementedUserServiceHandler struct{}
 
 func (UnimplementedUserServiceHandler) GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.UserService.GetMe is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.UserService.ListUsers is not implemented"))
 }

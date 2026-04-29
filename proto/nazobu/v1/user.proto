@@ -4,10 +4,12 @@ package nazobu.v1;
 
 option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1";
 
-// UserService は現在ログイン中の user に関する RPC を提供する。
+// UserService は現在ログイン中の user に関する RPC、および user 一覧の参照 RPC を提供する。
 service UserService {
   // GetMe は cookie session から現在の user を返す。未ログインなら unauthenticated。
   rpc GetMe(GetMeRequest) returns (GetMeResponse);
+  // ListUsers は登録済み user を返す。ticket 登録時の参加者選択などで使う。
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
 }
 
 message GetMeRequest {}
@@ -18,4 +20,18 @@ message GetMeResponse {
   // 表示名・avatar URL は未設定なら空文字列。
   string display_name = 3;
   string avatar_url = 4;
+}
+
+message ListUsersRequest {}
+
+message ListUsersResponse {
+  // users は username 昇順。
+  repeated User users = 1;
+}
+
+message User {
+  string id = 1;
+  string username = 2;
+  // 表示名は未設定なら空文字列。
+  string display_name = 3;
 }

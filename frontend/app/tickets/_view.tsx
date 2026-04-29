@@ -4,9 +4,9 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import type { Event as NazobuEvent, EventTicket } from "@/app/gen/nazobu/v1/event_pb";
+import type { Ticket } from "@/app/gen/nazobu/v1/ticket_pb";
 import type { GetMeResponse } from "@/app/gen/nazobu/v1/user_pb";
-import { eventClient, userClient } from "@/app/lib/rpc";
+import { ticketClient, userClient } from "@/app/lib/rpc";
 
 import {
   AppHeader,
@@ -25,16 +25,16 @@ type LoadState =
   | { kind: "loading" }
   | { kind: "unauthenticated" }
   | { kind: "error"; message: string }
-  | { kind: "ready"; me: GetMeResponse; events: NazobuEvent[] };
+  | { kind: "ready"; me: GetMeResponse; tickets: Ticket[] };
 
-export function EventsView() {
+export function TicketsView() {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([userClient.getMe({}), eventClient.listEvents({})])
+    Promise.all([userClient.getMe({}), ticketClient.listTickets({})])
       .then(([me, res]) => {
-        if (!cancelled) setState({ kind: "ready", me, events: res.events });
+        if (!cancelled) setState({ kind: "ready", me, tickets: res.tickets });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -94,7 +94,7 @@ export function EventsView() {
     );
   }
 
-  const { me, events } = state;
+  const { me, tickets } = state;
   const displayName = me.displayName !== "" ? me.displayName : me.username;
 
   return (
@@ -103,23 +103,23 @@ export function EventsView() {
       <PageShell>
         <Section>
           <Link
-            href="/events/new"
+            href="/events"
             className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 active:bg-emerald-900"
           >
-            公演を登録
+            公演を選んでチケットを登録
           </Link>
         </Section>
 
         <Section>
-          <SectionTitle count={events.length}>公演一覧</SectionTitle>
-          {events.length === 0 ? (
+          <SectionTitle count={tickets.length}>チケット一覧</SectionTitle>
+          {tickets.length === 0 ? (
             <p className="mt-3 text-sm text-zinc-500">
-              まだ公演が登録されていません。
+              まだチケットが登録されていません。
             </p>
           ) : (
-            <ul className="mt-3 space-y-4">
-              {events.map((e) => (
-                <EventCard key={e.id} event={e} />
+            <ul className="mt-3 space-y-3">
+              {tickets.map((t) => (
+                <TicketCard key={t.id} ticket={t} />
               ))}
             </ul>
           )}
@@ -129,69 +129,34 @@ export function EventsView() {
   );
 }
 
-function EventCard({ event }: { event: NazobuEvent }) {
-  return (
-    <li className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-      <div className="px-4 pt-4">
-        <h3 className="text-base leading-snug font-semibold">
-          {event.url !== "" ? (
-            <a
-              href={event.url}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-500"
-            >
-              {event.title}
-            </a>
-          ) : (
-            event.title
-          )}
-        </h3>
-      </div>
-
-      {event.tickets.length === 0 ? (
-        <p className="px-4 pt-3 text-sm text-zinc-500">チケットはまだありません。</p>
-      ) : (
-        <ul className="mt-3 divide-y divide-zinc-200 border-t border-zinc-200">
-          {event.tickets.map((t) => (
-            <TicketRow key={t.id} ticket={t} />
-          ))}
-        </ul>
-      )}
-
-      <div className="px-4 pt-4 pb-4">
-        <Link
-          href={`/events/${event.id}/tickets/new`}
-          className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-emerald-700 hover:bg-zinc-50"
-        >
-          この公演のチケットを登録
-        </Link>
-      </div>
-    </li>
-  );
-}
-
-function TicketRow({ ticket }: { ticket: EventTicket }) {
+function TicketCard({ ticket }: { ticket: Ticket }) {
   const date = parseAttendedOn(ticket.attendedOn);
   return (
-    <li className="px-4 py-3">
-      <div className="flex items-baseline gap-3">
+    <li className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+      <div className="flex items-baseline gap-3 px-4 pt-4">
         <Mono className="text-sm font-semibold text-emerald-700">
           {formatDateJa(date)}
         </Mono>
+        <Mono className="text-xs text-zinc-500">{ticket.meetingTime}</Mono>
         <Mono className="ml-auto text-sm font-semibold tracking-tight">
           {formatYen(ticket.pricePerPerson)}
         </Mono>
       </div>
-      <p className="mt-1 text-xs text-zinc-600">
-        <span className="text-zinc-400">立替</span> {ticket.purchaserName}
-      </p>
-      {ticket.participantNames.length > 0 && (
-        <p className="mt-1 text-xs text-zinc-600">
-          <span className="text-zinc-400">参加</span>{" "}
-          {ticket.participantNames.join("・")}
-        </p>
-      )}
+      <h3 className="px-4 pt-1 text-base leading-snug font-semibold">
+        {ticket.eventTitle}
+      </h3>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 pt-3 pb-4 text-xs text-zinc-600">
+        <dt className="text-zinc-400">集合</dt>
+        <dd>{ticket.meetingPlace}</dd>
+        <dt className="text-zinc-400">立替</dt>
+        <dd>{ticket.purchaserName}</dd>
+        {ticket.participantNames.length > 0 && (
+          <>
+            <dt className="text-zinc-400">参加</dt>
+            <dd>{ticket.participantNames.join("・")}</dd>
+          </>
+        )}
+      </dl>
     </li>
   );
 }
