@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package nazobu.v1;
+
+option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1";
+
+// EventService は event（公演）の参照・登録 RPC を提供する。
+service EventService {
+  // ListEvents は登録済み event を新しい順で返す。各 event には紐づく ticket を含める。
+  rpc ListEvents(ListEventsRequest) returns (ListEventsResponse);
+  // CreateEvent は新規 event を 1 件登録する。
+  rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse);
+}
+
+message ListEventsRequest {}
+
+message ListEventsResponse {
+  // events は created_at 降順。
+  repeated Event events = 1;
+}
+
+message Event {
+  string id = 1;
+  string title = 2;
+  string url = 3;
+  // 紐づく ticket（attended_on 降順）。
+  repeated EventTicket tickets = 4;
+}
+
+message EventTicket {
+  string id = 1;
+  // YYYY-MM-DD（JST）。
+  string attended_on = 2;
+  // 一人あたりの精算額（円）。
+  int32 price_per_person = 3;
+  // 立て替えてくれた人の表示名（display_name が空なら username）。
+  string purchaser_name = 4;
+  // 参加者の表示名（created_at 昇順）。立て替えた人も参加者として含めて構わない。
+  repeated string participant_names = 5;
+}
+
+message CreateEventRequest {
+  string title = 1;
+  string url = 2;
+}
+
+message CreateEventResponse {
+  Event event = 1;
+}
