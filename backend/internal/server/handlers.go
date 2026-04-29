@@ -3,8 +3,6 @@ package server
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"encoding/json"
-	"errors"
 	"net/http"
 	"time"
 
@@ -101,44 +99,6 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 	}
 	clearCookie(w, auth.SessionCookieName, s.cfg.CookieSecure)
 	w.WriteHeader(http.StatusNoContent)
-}
-
-func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) {
-	c, err := r.Cookie(auth.SessionCookieName)
-	if err != nil || c.Value == "" {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-	user, err := auth.LookupSession(r.Context(), s.db, c.Value)
-	if err != nil {
-		if errors.Is(err, auth.ErrNoSession) {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
-			return
-		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
-	type meJSON struct {
-		ID          string  `json:"id"`
-		Username    string  `json:"username"`
-		DisplayName *string `json:"display_name"`
-		AvatarURL   *string `json:"avatar_url"`
-	}
-	out := meJSON{
-		ID:       user.ID,
-		Username: user.Username,
-	}
-	if user.DisplayName.Valid {
-		v := user.DisplayName.String
-		out.DisplayName = &v
-	}
-	if user.AvatarURL.Valid {
-		v := user.AvatarURL.String
-		out.AvatarURL = &v
-	}
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(out)
 }
 
 func clearCookie(w http.ResponseWriter, name string, secure bool) {

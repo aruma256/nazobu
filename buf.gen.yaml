@@ -1,0 +1,20 @@
+version: v2
+inputs:
+  - directory: proto
+plugins:
+  # Go の message 型
+  - remote: buf.build/protocolbuffers/go:v1.36.6
+    out: backend/internal/gen
+    opt:
+      - paths=source_relative
+  # Connect-Go の service 型
+  - remote: buf.build/connectrpc/go:v1.18.1
+    out: backend/internal/gen
+    opt:
+      - paths=source_relative
+  # TypeScript の message + service schema
+  - remote: buf.build/bufbuild/es:v2.2.5
+    out: frontend/app/gen
+    opt:
+      - target=ts
+      - import_extension=none

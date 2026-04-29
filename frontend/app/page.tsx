@@ -1,40 +1,33 @@
 "use client";
 
+import { Code, ConnectError } from "@connectrpc/connect";
 import { useEffect, useState } from "react";
 
-type Me = {
-  id: string;
-  username: string;
-  display_name: string | null;
-  avatar_url: string | null;
-};
+import type { GetMeResponse } from "@/app/gen/nazobu/v1/user_pb";
+import { userClient } from "@/app/lib/rpc";
 
 type LoadState =
   | { kind: "loading" }
   | { kind: "anonymous" }
-  | { kind: "logged_in"; me: Me };
+  | { kind: "logged_in"; me: GetMeResponse };
 
 export default function Home() {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/me", { credentials: "same-origin" })
-      .then(async (r) => {
+    userClient
+      .getMe({})
+      .then((me) => {
+        if (!cancelled) setState({ kind: "logged_in", me });
+      })
+      .catch((err: unknown) => {
         if (cancelled) return;
-        if (r.status === 401) {
+        if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
           setState({ kind: "anonymous" });
           return;
         }
-        if (r.ok) {
-          const me = (await r.json()) as Me;
-          setState({ kind: "logged_in", me });
-          return;
-        }
         setState({ kind: "anonymous" });
-      })
-      .catch(() => {
-        if (!cancelled) setState({ kind: "anonymous" });
       });
     return () => {
       cancelled = true;
@@ -66,7 +59,7 @@ export default function Home() {
           <p className="text-base">
             ログイン中:{" "}
             <span className="font-semibold">
-              {state.me.display_name ?? state.me.username}
+              {state.me.displayName !== "" ? state.me.displayName : state.me.username}
             </span>
           </p>
           <button

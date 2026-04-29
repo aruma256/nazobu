@@ -15,6 +15,7 @@ import (
 
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	"github.com/aruma256/nazobu/backend/internal/config"
+	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
 )
 
 type Server struct {
@@ -56,8 +57,9 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	mux.HandleFunc("GET /auth/discord/callback", srv.handleDiscordCallback)
 	mux.HandleFunc("POST /auth/logout", srv.handleLogout)
 
-	// API
-	mux.HandleFunc("GET /api/me", srv.handleMe)
+	// Connect RPC (mount は "/nazobu.v1.UserService/")
+	userPath, userHandler := nazobuv1connect.NewUserServiceHandler(newUserService(dbc))
+	mux.Handle(userPath, userHandler)
 
 	httpSrv := &http.Server{
 		Addr:              cfg.HTTPAddr,
