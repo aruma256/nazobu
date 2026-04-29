@@ -21,14 +21,14 @@ import {
   PageShell,
   Section,
   SectionTitle,
-} from "./_components";
+} from "@/app/_components";
 import {
   daysFromToday,
   formatDateJa,
   formatMonoDate,
   formatYen,
   parseAttendedOn,
-} from "./_format";
+} from "@/app/_format";
 
 type LoadState =
   | { kind: "loading" }

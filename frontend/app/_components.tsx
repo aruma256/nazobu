@@ -1,4 +1,4 @@
-// マイページの再利用 UI 部品。スタイルはここに集約し、
+// 共通の再利用 UI 部品。スタイルはここに集約し、
 // 個別ページからは意味のある単位（Card / Badge / Section など）で組み合わせる。
 
 import type { ButtonHTMLAttributes, ReactNode } from "react";
