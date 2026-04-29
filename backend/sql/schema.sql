@@ -64,13 +64,16 @@ CREATE TABLE events (
 -- price_per_person は一人あたりの税込・円（割り勘済み）。purchased_by が立て替え、
 -- ticket_participants が割り勘元。
 CREATE TABLE tickets (
-  id                VARCHAR(26) NOT NULL,
-  event_id          VARCHAR(26) NOT NULL,
-  attended_on       DATE        NOT NULL,
-  price_per_person  INT         NOT NULL,
-  purchased_by      VARCHAR(26) NOT NULL,
-  created_at        DATETIME(6) NOT NULL,
-  updated_at        DATETIME(6) NOT NULL,
+  id                VARCHAR(26)  NOT NULL,
+  event_id          VARCHAR(26)  NOT NULL,
+  attended_on       DATE         NOT NULL,
+  price_per_person  INT          NOT NULL,
+  purchased_by      VARCHAR(26)  NOT NULL,
+  -- 集合時刻（attended_on の JST 当日基準）と集合場所。
+  meeting_time      TIME         NOT NULL,
+  meeting_place     VARCHAR(255) NOT NULL,
+  created_at        DATETIME(6)  NOT NULL,
+  updated_at        DATETIME(6)  NOT NULL,
   PRIMARY KEY (id),
   KEY idx_tickets_event_id (event_id),
   KEY idx_tickets_attended_on (attended_on),
