@@ -20,6 +20,7 @@
 - DB マイグレーション: sqldef による宣言型。`backend/sql/schema.sql` が SSOT
 - 認証: DB 保存セッション（Cookie + token hash）+ OIDC
 - ローカル開発: docker compose（backend は起動時に sqldef で自動マイグレーション）
+- RPC: proto は `proto/nazobu/v1/*.proto` が SSOT。`buf generate` で `backend/internal/gen/` と `frontend/app/gen/` を生成し、生成物もコミットする（compose では codegen を回さない）
 
 ## ポリシー
 
