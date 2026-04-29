@@ -57,9 +57,11 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	mux.HandleFunc("GET /auth/discord/callback", srv.handleDiscordCallback)
 	mux.HandleFunc("POST /auth/logout", srv.handleLogout)
 
-	// Connect RPC (mount は "/nazobu.v1.UserService/")
+	// Connect RPC
 	userPath, userHandler := nazobuv1connect.NewUserServiceHandler(newUserService(dbc))
 	mux.Handle(userPath, userHandler)
+	myPagePath, myPageHandler := nazobuv1connect.NewMyPageServiceHandler(newMyPageService(dbc))
+	mux.Handle(myPagePath, myPageHandler)
 
 	httpSrv := &http.Server{
 		Addr:              cfg.HTTPAddr,

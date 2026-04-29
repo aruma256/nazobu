@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package nazobu.v1;
+
+option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1";
+
+// MyPageService はマイページ表示に必要な集約データを返す。
+// 表示は 1 画面分のスナップショットなので、未精算 / 今後の予定 / 当月履歴を 1 RPC で束ねる。
+service MyPageService {
+  // GetMyPage は cookie session の user 向けにマイページの全セクションを返す。
+  // 未ログインなら unauthenticated。
+  rpc GetMyPage(GetMyPageRequest) returns (GetMyPageResponse);
+}
+
+message GetMyPageRequest {}
+
+message GetMyPageResponse {
+  // 自分の精算が未完了の ticket（attended_on 昇順）。自分が立て替えた分は含めない。
+  repeated UnsettledTicket unsettled = 1;
+  // 自分が参加予定で attended_on が今日以降の ticket（attended_on 昇順）。
+  repeated UpcomingTicket upcoming = 2;
+  // サーバ基準の当月に attended_on がある自分の ticket（attended_on 降順）。
+  repeated MonthlyTicket monthly = 3;
+  // monthly セクションの基準月（サーバ基準、JST）。1〜12。
+  int32 monthly_month = 4;
+}
+
+message UnsettledTicket {
+  string ticket_id = 1;
+  string event_title = 2;
+  // 一人あたりの精算額（円）。
+  int32 price_per_person = 3;
+  // 立て替えてくれた人の表示名（display_name が空なら username）。
+  string payee_name = 4;
+  // YYYY-MM-DD（JST）。
+  string attended_on = 5;
+}
+
+message UpcomingTicket {
+  string ticket_id = 1;
+  string event_title = 2;
+  string event_url = 3;
+  // YYYY-MM-DD（JST）。
+  string attended_on = 4;
+  // 同じ ticket の他の参加者の表示名（自分は除く）。created_at 昇順。
+  repeated string companion_names = 5;
+}
+
+message MonthlyTicket {
+  string ticket_id = 1;
+  string event_title = 2;
+  // YYYY-MM-DD（JST）。
+  string attended_on = 3;
+  // 自分の精算が完了しているか。自分が立て替えた ticket は常に true 扱い。
+  bool settled = 4;
+}

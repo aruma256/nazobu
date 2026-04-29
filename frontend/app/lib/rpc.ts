@@ -1,6 +1,7 @@
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 
+import { MyPageService } from "@/app/gen/nazobu/v1/mypage_pb";
 import { UserService } from "@/app/gen/nazobu/v1/user_pb";
 
 // 同一 origin（next.config.ts の rewrites 経由で backend へ proxy される）。
@@ -11,3 +12,4 @@ const transport = createConnectTransport({
 });
 
 export const userClient = createClient(UserService, transport);
+export const myPageClient = createClient(MyPageService, transport);
