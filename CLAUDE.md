@@ -18,6 +18,7 @@
 - backend: Go 1.26（cobra CLI + Connect/gRPC）
 - DB: MySQL 8（utf8mb4 / InnoDB）、主キーは ULID
 - DB マイグレーション: sqldef による宣言型。`backend/sql/schema.sql` が SSOT
+- DB アクセス: sqlc（設定は `backend/sqlc.yaml`）。クエリは `backend/sql/queries/*.sql`、生成物は `backend/internal/gen/queries/`。schema は sqldef と同じ `schema.sql` を参照する。生成物もコミットする（compose では codegen を回さない）
 - 認証: DB 保存セッション（Cookie + token hash）+ OIDC
 - ローカル開発: docker compose（backend は起動時に sqldef で自動マイグレーション）
 - RPC: proto は `proto/nazobu/v1/*.proto` が SSOT。`buf generate` で `backend/internal/gen/` と `frontend/app/gen/` を生成し、生成物もコミットする（compose では codegen を回さない）

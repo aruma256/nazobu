@@ -1,0 +1,18 @@
+version: "2"
+sql:
+  - engine: "mysql"
+    schema: "sql/schema.sql"
+    queries: "sql/queries"
+    gen:
+      go:
+        package: "queries"
+        out: "internal/gen/queries"
+        sql_package: "database/sql"
+        emit_interface: true
+        emit_json_tags: false
+        emit_pointers_for_null_types: false
+        emit_exact_table_names: false
+        # MySQL の TIME は go-sql-driver では文字列で返るため、生成側も string 固定にする。
+        overrides:
+          - column: "tickets.meeting_time"
+            go_type: "string"
