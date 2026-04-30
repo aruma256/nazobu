@@ -1,0 +1,46 @@
+# 本番運用用 override（Synology NAS）。
+#
+# 使い方:
+#   git pull
+#   docker compose -f compose.yaml -f compose.prod.yaml up -d --force-recreate
+#
+# 前提:
+#   - .env に DB_*, DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET,
+#     DISCORD_REDIRECT_URL=https://nazobu.aruma256.dev/auth/discord/callback,
+#     CLOUDFLARE_TUNNEL_TOKEN を設定済み。
+#   - Cloudflare Zero Trust の Tunnel で
+#     public hostname `nazobu.aruma256.dev` → service `http://frontend:3000` を設定済み。
+#   - bind mount するソースは git pull 済みであること（dev と同じ）。
+services:
+  mysql:
+    restart: unless-stopped
+
+  backend:
+    # bind mount は維持。起動時に build → 実行に切り替える。
+    # signal が届くよう exec で置き換える。
+    command: >-
+      sh -c "go install github.com/sqldef/sqldef/v3/cmd/mysqldef@v3.11.1
+      && go run . migrate
+      && go build -o /tmp/nazobu .
+      && exec /tmp/nazobu start"
+    environment:
+      FRONTEND_URL: "https://nazobu.aruma256.dev"
+      COOKIE_SECURE: "true"
+    # Cloudflare Tunnel 経由で内部ネットワークから到達するためホスト公開しない。
+    ports: !reset []
+    restart: unless-stopped
+
+  frontend:
+    # next dev → next build & next start。
+    command: sh -c "npm install && npm run build && exec npm run start -- --hostname 0.0.0.0"
+    ports: !reset []
+    restart: unless-stopped
+
+  cloudflared:
+    image: mirror.gcr.io/cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - frontend
+    restart: unless-stopped
