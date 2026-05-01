@@ -11,6 +11,8 @@ import (
 type Querier interface {
 	// 参照整合性のフレンドリーなプリチェック用。FK でも担保されるが UX のために事前に存在確認する。
 	CountEventByID(ctx context.Context, id string) (int64, error)
+	// 参加者の存在確認。重複登録を避けるためのプリチェック。
+	CountTicketParticipant(ctx context.Context, arg CountTicketParticipantParams) (int64, error)
 	// 参照整合性のフレンドリーなプリチェック用。FK でも担保されるが UX のために事前に数を確認する。
 	CountUsersByIDs(ctx context.Context, ids []string) (int64, error)
 	CreateEvent(ctx context.Context, arg CreateEventParams) error
@@ -20,9 +22,12 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	CreateUserIdentity(ctx context.Context, arg CreateUserIdentityParams) error
 	DeleteSessionByTokenHash(ctx context.Context, tokenHash string) error
+	DeleteTicketParticipant(ctx context.Context, arg DeleteTicketParticipantParams) error
 	// session 引きで紐づく user と expires_at を一発で取得する。
 	// 期限切れ判定は呼び出し側で行う。
 	GetSessionUserByTokenHash(ctx context.Context, tokenHash string) (GetSessionUserByTokenHashRow, error)
+	// ticket 詳細表示用。立替者の id と表示名も返す（権限判定 / UI 表示で使う）。
+	GetTicketByID(ctx context.Context, id string) (GetTicketByIDRow, error)
 	GetUserIDByIdentity(ctx context.Context, arg GetUserIDByIdentityParams) (string, error)
 	// 自分以外の参加者（同行者）名を ticket_id ごとにまとめて引く（N+1 回避）。
 	ListCompanionNamesByTicketIDs(ctx context.Context, arg ListCompanionNamesByTicketIDsParams) ([]ListCompanionNamesByTicketIDsRow, error)
@@ -38,6 +43,8 @@ type Querier interface {
 	// ticket 一覧 / 公演一覧で、各 ticket の参加者名をまとめて引く（N+1 回避）。
 	// 呼び出し側で ticket_id ごとに in-memory で振り分ける。
 	ListTicketParticipantNamesByTicketIDs(ctx context.Context, ticketIds []string) ([]ListTicketParticipantNamesByTicketIDsRow, error)
+	// ticket 詳細用。参加者の user_id / 名前 / 精算済みフラグを created_at 昇順で返す。
+	ListTicketParticipantsByTicketID(ctx context.Context, ticketID string) ([]ListTicketParticipantsByTicketIDRow, error)
 	// ticket 一覧画面用。event 名と立替者名を join して返す。
 	ListTickets(ctx context.Context) ([]ListTicketsRow, error)
 	// CreateTicket 直後の返却用。1 件のことが多いがインタフェースは ListTickets と揃える。
@@ -49,6 +56,12 @@ type Querier interface {
 	ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcomingTicketsByUserIDParams) ([]ListUpcomingTicketsByUserIDRow, error)
 	// 表示用の最低限フィールドだけ返す。avatar_url 等は GetMe 経路（session join）で取る。
 	ListUsers(ctx context.Context) ([]ListUsersRow, error)
+	// 未精算 → 精算済み。settled_at に現在時刻を入れる。
+	MarkTicketParticipantSettled(ctx context.Context, arg MarkTicketParticipantSettledParams) error
+	// 精算済み → 未精算。settled_at を NULL に戻す。
+	MarkTicketParticipantUnsettled(ctx context.Context, arg MarkTicketParticipantUnsettledParams) error
+	// ticket 本体の更新。event_id / purchased_by は変更しない。
+	UpdateTicket(ctx context.Context, arg UpdateTicketParams) error
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) error
 }
 

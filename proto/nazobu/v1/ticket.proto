@@ -8,8 +8,22 @@ option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;n
 service TicketService {
   // ListTickets は登録済み ticket を attended_on 降順で返す。
   rpc ListTickets(ListTicketsRequest) returns (ListTicketsResponse);
+  // GetTicket は 1 件の ticket を詳細表示用の形（参加者の精算状況を含む）で返す。
+  rpc GetTicket(GetTicketRequest) returns (GetTicketResponse);
   // CreateTicket は新規 ticket を 1 件登録する。参加者（割り勘元）も同時に登録する。
   rpc CreateTicket(CreateTicketRequest) returns (CreateTicketResponse);
+  // UpdateTicket は ticket 本体（attended_on / price_per_person / meeting_time / meeting_place）を更新する。
+  // admin もしくは立替者のみ実行可能。
+  rpc UpdateTicket(UpdateTicketRequest) returns (UpdateTicketResponse);
+  // AddTicketParticipants は ticket の参加者を 1 人以上追加する。
+  // admin もしくは立替者のみ実行可能。既に存在する user_id は無視する。
+  rpc AddTicketParticipants(AddTicketParticipantsRequest) returns (AddTicketParticipantsResponse);
+  // RemoveTicketParticipant は ticket の参加者を 1 人削除する。
+  // admin もしくは立替者のみ実行可能。立替者本人は削除できない。
+  rpc RemoveTicketParticipant(RemoveTicketParticipantRequest) returns (RemoveTicketParticipantResponse);
+  // UpdateTicketParticipantSettlement は参加者の精算状態を切り替える。
+  // admin もしくは立替者のみ実行可能。立替者本人に対しては実行不可。
+  rpc UpdateTicketParticipantSettlement(UpdateTicketParticipantSettlementRequest) returns (UpdateTicketParticipantSettlementResponse);
 }
 
 message ListTicketsRequest {}
@@ -37,6 +51,28 @@ message Ticket {
   repeated string participant_names = 9;
 }
 
+message GetTicketRequest {
+  string ticket_id = 1;
+}
+
+message GetTicketResponse {
+  Ticket ticket = 1;
+  // ticket の参加者一覧。created_at 昇順。
+  repeated TicketParticipant participants = 2;
+  // 現在ログイン中の user が編集権限を持つか（admin もしくは立替者）。
+  bool can_edit = 3;
+}
+
+message TicketParticipant {
+  string user_id = 1;
+  // 表示名（display_name が空なら username）。
+  string name = 2;
+  // 自分の精算が完了しているか。立替者本人なら常に true。
+  bool settled = 3;
+  // 立替者本人かどうか。立替者は精算操作の対象外、また削除もできない。
+  bool is_purchaser = 4;
+}
+
 message CreateTicketRequest {
   string event_id = 1;
   // YYYY-MM-DD（JST）。
@@ -55,3 +91,43 @@ message CreateTicketRequest {
 message CreateTicketResponse {
   Ticket ticket = 1;
 }
+
+message UpdateTicketRequest {
+  string ticket_id = 1;
+  // YYYY-MM-DD（JST）。
+  string attended_on = 2;
+  // 一人あたりの精算額（円、0 以上）。
+  int32 price_per_person = 3;
+  // 集合時刻 "HH:MM"（attended_on の JST 当日基準）。
+  string meeting_time = 4;
+  // 集合場所。
+  string meeting_place = 5;
+}
+
+message UpdateTicketResponse {
+  Ticket ticket = 1;
+}
+
+message AddTicketParticipantsRequest {
+  string ticket_id = 1;
+  // 追加する参加者の user id。1 件以上。既に参加済みの user は無視する。
+  repeated string user_ids = 2;
+}
+
+message AddTicketParticipantsResponse {}
+
+message RemoveTicketParticipantRequest {
+  string ticket_id = 1;
+  string user_id = 2;
+}
+
+message RemoveTicketParticipantResponse {}
+
+message UpdateTicketParticipantSettlementRequest {
+  string ticket_id = 1;
+  string user_id = 2;
+  // true = 精算済みにする、false = 未精算に戻す。
+  bool settled = 3;
+}
+
+message UpdateTicketParticipantSettlementResponse {}

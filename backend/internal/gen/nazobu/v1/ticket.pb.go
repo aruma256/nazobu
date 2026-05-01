@@ -216,6 +216,183 @@ func (x *Ticket) GetParticipantNames() []string {
 	return nil
 }
 
+type GetTicketRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TicketId      string                 `protobuf:"bytes,1,opt,name=ticket_id,json=ticketId,proto3" json:"ticket_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTicketRequest) Reset() {
+	*x = GetTicketRequest{}
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTicketRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTicketRequest) ProtoMessage() {}
+
+func (x *GetTicketRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTicketRequest.ProtoReflect.Descriptor instead.
+func (*GetTicketRequest) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetTicketRequest) GetTicketId() string {
+	if x != nil {
+		return x.TicketId
+	}
+	return ""
+}
+
+type GetTicketResponse struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Ticket *Ticket                `protobuf:"bytes,1,opt,name=ticket,proto3" json:"ticket,omitempty"`
+	// ticket の参加者一覧。created_at 昇順。
+	Participants []*TicketParticipant `protobuf:"bytes,2,rep,name=participants,proto3" json:"participants,omitempty"`
+	// 現在ログイン中の user が編集権限を持つか（admin もしくは立替者）。
+	CanEdit       bool `protobuf:"varint,3,opt,name=can_edit,json=canEdit,proto3" json:"can_edit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTicketResponse) Reset() {
+	*x = GetTicketResponse{}
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTicketResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTicketResponse) ProtoMessage() {}
+
+func (x *GetTicketResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTicketResponse.ProtoReflect.Descriptor instead.
+func (*GetTicketResponse) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetTicketResponse) GetTicket() *Ticket {
+	if x != nil {
+		return x.Ticket
+	}
+	return nil
+}
+
+func (x *GetTicketResponse) GetParticipants() []*TicketParticipant {
+	if x != nil {
+		return x.Participants
+	}
+	return nil
+}
+
+func (x *GetTicketResponse) GetCanEdit() bool {
+	if x != nil {
+		return x.CanEdit
+	}
+	return false
+}
+
+type TicketParticipant struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// 表示名（display_name が空なら username）。
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// 自分の精算が完了しているか。立替者本人なら常に true。
+	Settled bool `protobuf:"varint,3,opt,name=settled,proto3" json:"settled,omitempty"`
+	// 立替者本人かどうか。立替者は精算操作の対象外、また削除もできない。
+	IsPurchaser   bool `protobuf:"varint,4,opt,name=is_purchaser,json=isPurchaser,proto3" json:"is_purchaser,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TicketParticipant) Reset() {
+	*x = TicketParticipant{}
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TicketParticipant) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TicketParticipant) ProtoMessage() {}
+
+func (x *TicketParticipant) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TicketParticipant.ProtoReflect.Descriptor instead.
+func (*TicketParticipant) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *TicketParticipant) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *TicketParticipant) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *TicketParticipant) GetSettled() bool {
+	if x != nil {
+		return x.Settled
+	}
+	return false
+}
+
+func (x *TicketParticipant) GetIsPurchaser() bool {
+	if x != nil {
+		return x.IsPurchaser
+	}
+	return false
+}
+
 type CreateTicketRequest struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	EventId string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
@@ -236,7 +413,7 @@ type CreateTicketRequest struct {
 
 func (x *CreateTicketRequest) Reset() {
 	*x = CreateTicketRequest{}
-	mi := &file_nazobu_v1_ticket_proto_msgTypes[3]
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -248,7 +425,7 @@ func (x *CreateTicketRequest) String() string {
 func (*CreateTicketRequest) ProtoMessage() {}
 
 func (x *CreateTicketRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_nazobu_v1_ticket_proto_msgTypes[3]
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -261,7 +438,7 @@ func (x *CreateTicketRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTicketRequest.ProtoReflect.Descriptor instead.
 func (*CreateTicketRequest) Descriptor() ([]byte, []int) {
-	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{3}
+	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *CreateTicketRequest) GetEventId() string {
@@ -315,7 +492,7 @@ type CreateTicketResponse struct {
 
 func (x *CreateTicketResponse) Reset() {
 	*x = CreateTicketResponse{}
-	mi := &file_nazobu_v1_ticket_proto_msgTypes[4]
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -327,7 +504,7 @@ func (x *CreateTicketResponse) String() string {
 func (*CreateTicketResponse) ProtoMessage() {}
 
 func (x *CreateTicketResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_nazobu_v1_ticket_proto_msgTypes[4]
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -340,7 +517,7 @@ func (x *CreateTicketResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTicketResponse.ProtoReflect.Descriptor instead.
 func (*CreateTicketResponse) Descriptor() ([]byte, []int) {
-	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{4}
+	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *CreateTicketResponse) GetTicket() *Ticket {
@@ -348,6 +525,404 @@ func (x *CreateTicketResponse) GetTicket() *Ticket {
 		return x.Ticket
 	}
 	return nil
+}
+
+type UpdateTicketRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	TicketId string                 `protobuf:"bytes,1,opt,name=ticket_id,json=ticketId,proto3" json:"ticket_id,omitempty"`
+	// YYYY-MM-DD（JST）。
+	AttendedOn string `protobuf:"bytes,2,opt,name=attended_on,json=attendedOn,proto3" json:"attended_on,omitempty"`
+	// 一人あたりの精算額（円、0 以上）。
+	PricePerPerson int32 `protobuf:"varint,3,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
+	// 集合時刻 "HH:MM"（attended_on の JST 当日基準）。
+	MeetingTime string `protobuf:"bytes,4,opt,name=meeting_time,json=meetingTime,proto3" json:"meeting_time,omitempty"`
+	// 集合場所。
+	MeetingPlace  string `protobuf:"bytes,5,opt,name=meeting_place,json=meetingPlace,proto3" json:"meeting_place,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateTicketRequest) Reset() {
+	*x = UpdateTicketRequest{}
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateTicketRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateTicketRequest) ProtoMessage() {}
+
+func (x *UpdateTicketRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateTicketRequest.ProtoReflect.Descriptor instead.
+func (*UpdateTicketRequest) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *UpdateTicketRequest) GetTicketId() string {
+	if x != nil {
+		return x.TicketId
+	}
+	return ""
+}
+
+func (x *UpdateTicketRequest) GetAttendedOn() string {
+	if x != nil {
+		return x.AttendedOn
+	}
+	return ""
+}
+
+func (x *UpdateTicketRequest) GetPricePerPerson() int32 {
+	if x != nil {
+		return x.PricePerPerson
+	}
+	return 0
+}
+
+func (x *UpdateTicketRequest) GetMeetingTime() string {
+	if x != nil {
+		return x.MeetingTime
+	}
+	return ""
+}
+
+func (x *UpdateTicketRequest) GetMeetingPlace() string {
+	if x != nil {
+		return x.MeetingPlace
+	}
+	return ""
+}
+
+type UpdateTicketResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ticket        *Ticket                `protobuf:"bytes,1,opt,name=ticket,proto3" json:"ticket,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateTicketResponse) Reset() {
+	*x = UpdateTicketResponse{}
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateTicketResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateTicketResponse) ProtoMessage() {}
+
+func (x *UpdateTicketResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateTicketResponse.ProtoReflect.Descriptor instead.
+func (*UpdateTicketResponse) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *UpdateTicketResponse) GetTicket() *Ticket {
+	if x != nil {
+		return x.Ticket
+	}
+	return nil
+}
+
+type AddTicketParticipantsRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	TicketId string                 `protobuf:"bytes,1,opt,name=ticket_id,json=ticketId,proto3" json:"ticket_id,omitempty"`
+	// 追加する参加者の user id。1 件以上。既に参加済みの user は無視する。
+	UserIds       []string `protobuf:"bytes,2,rep,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddTicketParticipantsRequest) Reset() {
+	*x = AddTicketParticipantsRequest{}
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddTicketParticipantsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddTicketParticipantsRequest) ProtoMessage() {}
+
+func (x *AddTicketParticipantsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddTicketParticipantsRequest.ProtoReflect.Descriptor instead.
+func (*AddTicketParticipantsRequest) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *AddTicketParticipantsRequest) GetTicketId() string {
+	if x != nil {
+		return x.TicketId
+	}
+	return ""
+}
+
+func (x *AddTicketParticipantsRequest) GetUserIds() []string {
+	if x != nil {
+		return x.UserIds
+	}
+	return nil
+}
+
+type AddTicketParticipantsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddTicketParticipantsResponse) Reset() {
+	*x = AddTicketParticipantsResponse{}
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddTicketParticipantsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddTicketParticipantsResponse) ProtoMessage() {}
+
+func (x *AddTicketParticipantsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddTicketParticipantsResponse.ProtoReflect.Descriptor instead.
+func (*AddTicketParticipantsResponse) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{11}
+}
+
+type RemoveTicketParticipantRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TicketId      string                 `protobuf:"bytes,1,opt,name=ticket_id,json=ticketId,proto3" json:"ticket_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveTicketParticipantRequest) Reset() {
+	*x = RemoveTicketParticipantRequest{}
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveTicketParticipantRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveTicketParticipantRequest) ProtoMessage() {}
+
+func (x *RemoveTicketParticipantRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveTicketParticipantRequest.ProtoReflect.Descriptor instead.
+func (*RemoveTicketParticipantRequest) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *RemoveTicketParticipantRequest) GetTicketId() string {
+	if x != nil {
+		return x.TicketId
+	}
+	return ""
+}
+
+func (x *RemoveTicketParticipantRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type RemoveTicketParticipantResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveTicketParticipantResponse) Reset() {
+	*x = RemoveTicketParticipantResponse{}
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveTicketParticipantResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveTicketParticipantResponse) ProtoMessage() {}
+
+func (x *RemoveTicketParticipantResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveTicketParticipantResponse.ProtoReflect.Descriptor instead.
+func (*RemoveTicketParticipantResponse) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{13}
+}
+
+type UpdateTicketParticipantSettlementRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	TicketId string                 `protobuf:"bytes,1,opt,name=ticket_id,json=ticketId,proto3" json:"ticket_id,omitempty"`
+	UserId   string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// true = 精算済みにする、false = 未精算に戻す。
+	Settled       bool `protobuf:"varint,3,opt,name=settled,proto3" json:"settled,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateTicketParticipantSettlementRequest) Reset() {
+	*x = UpdateTicketParticipantSettlementRequest{}
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateTicketParticipantSettlementRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateTicketParticipantSettlementRequest) ProtoMessage() {}
+
+func (x *UpdateTicketParticipantSettlementRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateTicketParticipantSettlementRequest.ProtoReflect.Descriptor instead.
+func (*UpdateTicketParticipantSettlementRequest) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *UpdateTicketParticipantSettlementRequest) GetTicketId() string {
+	if x != nil {
+		return x.TicketId
+	}
+	return ""
+}
+
+func (x *UpdateTicketParticipantSettlementRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *UpdateTicketParticipantSettlementRequest) GetSettled() bool {
+	if x != nil {
+		return x.Settled
+	}
+	return false
+}
+
+type UpdateTicketParticipantSettlementResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateTicketParticipantSettlementResponse) Reset() {
+	*x = UpdateTicketParticipantSettlementResponse{}
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateTicketParticipantSettlementResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateTicketParticipantSettlementResponse) ProtoMessage() {}
+
+func (x *UpdateTicketParticipantSettlementResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateTicketParticipantSettlementResponse.ProtoReflect.Descriptor instead.
+func (*UpdateTicketParticipantSettlementResponse) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{15}
 }
 
 var File_nazobu_v1_ticket_proto protoreflect.FileDescriptor
@@ -369,7 +944,18 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\fmeeting_time\x18\x06 \x01(\tR\vmeetingTime\x12#\n" +
 	"\rmeeting_place\x18\a \x01(\tR\fmeetingPlace\x12%\n" +
 	"\x0epurchaser_name\x18\b \x01(\tR\rpurchaserName\x12+\n" +
-	"\x11participant_names\x18\t \x03(\tR\x10participantNames\"\xf5\x01\n" +
+	"\x11participant_names\x18\t \x03(\tR\x10participantNames\"/\n" +
+	"\x10GetTicketRequest\x12\x1b\n" +
+	"\tticket_id\x18\x01 \x01(\tR\bticketId\"\x9b\x01\n" +
+	"\x11GetTicketResponse\x12)\n" +
+	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket\x12@\n" +
+	"\fparticipants\x18\x02 \x03(\v2\x1c.nazobu.v1.TicketParticipantR\fparticipants\x12\x19\n" +
+	"\bcan_edit\x18\x03 \x01(\bR\acanEdit\"}\n" +
+	"\x11TicketParticipant\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
+	"\asettled\x18\x03 \x01(\bR\asettled\x12!\n" +
+	"\fis_purchaser\x18\x04 \x01(\bR\visPurchaser\"\xf5\x01\n" +
 	"\x13CreateTicketRequest\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12\x1f\n" +
 	"\vattended_on\x18\x02 \x01(\tR\n" +
@@ -379,10 +965,37 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\rmeeting_place\x18\x05 \x01(\tR\fmeetingPlace\x120\n" +
 	"\x14participant_user_ids\x18\x06 \x03(\tR\x12participantUserIds\"A\n" +
 	"\x14CreateTicketResponse\x12)\n" +
-	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket2\xae\x01\n" +
+	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket\"\xc5\x01\n" +
+	"\x13UpdateTicketRequest\x12\x1b\n" +
+	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x1f\n" +
+	"\vattended_on\x18\x02 \x01(\tR\n" +
+	"attendedOn\x12(\n" +
+	"\x10price_per_person\x18\x03 \x01(\x05R\x0epricePerPerson\x12!\n" +
+	"\fmeeting_time\x18\x04 \x01(\tR\vmeetingTime\x12#\n" +
+	"\rmeeting_place\x18\x05 \x01(\tR\fmeetingPlace\"A\n" +
+	"\x14UpdateTicketResponse\x12)\n" +
+	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket\"V\n" +
+	"\x1cAddTicketParticipantsRequest\x12\x1b\n" +
+	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x19\n" +
+	"\buser_ids\x18\x02 \x03(\tR\auserIds\"\x1f\n" +
+	"\x1dAddTicketParticipantsResponse\"V\n" +
+	"\x1eRemoveTicketParticipantRequest\x12\x1b\n" +
+	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"!\n" +
+	"\x1fRemoveTicketParticipantResponse\"z\n" +
+	"(UpdateTicketParticipantSettlementRequest\x12\x1b\n" +
+	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x18\n" +
+	"\asettled\x18\x03 \x01(\bR\asettled\"+\n" +
+	")UpdateTicketParticipantSettlementResponse2\xb6\x05\n" +
 	"\rTicketService\x12L\n" +
-	"\vListTickets\x12\x1d.nazobu.v1.ListTicketsRequest\x1a\x1e.nazobu.v1.ListTicketsResponse\x12O\n" +
-	"\fCreateTicket\x12\x1e.nazobu.v1.CreateTicketRequest\x1a\x1f.nazobu.v1.CreateTicketResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
+	"\vListTickets\x12\x1d.nazobu.v1.ListTicketsRequest\x1a\x1e.nazobu.v1.ListTicketsResponse\x12F\n" +
+	"\tGetTicket\x12\x1b.nazobu.v1.GetTicketRequest\x1a\x1c.nazobu.v1.GetTicketResponse\x12O\n" +
+	"\fCreateTicket\x12\x1e.nazobu.v1.CreateTicketRequest\x1a\x1f.nazobu.v1.CreateTicketResponse\x12O\n" +
+	"\fUpdateTicket\x12\x1e.nazobu.v1.UpdateTicketRequest\x1a\x1f.nazobu.v1.UpdateTicketResponse\x12j\n" +
+	"\x15AddTicketParticipants\x12'.nazobu.v1.AddTicketParticipantsRequest\x1a(.nazobu.v1.AddTicketParticipantsResponse\x12p\n" +
+	"\x17RemoveTicketParticipant\x12).nazobu.v1.RemoveTicketParticipantRequest\x1a*.nazobu.v1.RemoveTicketParticipantResponse\x12\x8e\x01\n" +
+	"!UpdateTicketParticipantSettlement\x123.nazobu.v1.UpdateTicketParticipantSettlementRequest\x1a4.nazobu.v1.UpdateTicketParticipantSettlementResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
 
 var (
 	file_nazobu_v1_ticket_proto_rawDescOnce sync.Once
@@ -396,26 +1009,50 @@ func file_nazobu_v1_ticket_proto_rawDescGZIP() []byte {
 	return file_nazobu_v1_ticket_proto_rawDescData
 }
 
-var file_nazobu_v1_ticket_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_nazobu_v1_ticket_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_nazobu_v1_ticket_proto_goTypes = []any{
-	(*ListTicketsRequest)(nil),   // 0: nazobu.v1.ListTicketsRequest
-	(*ListTicketsResponse)(nil),  // 1: nazobu.v1.ListTicketsResponse
-	(*Ticket)(nil),               // 2: nazobu.v1.Ticket
-	(*CreateTicketRequest)(nil),  // 3: nazobu.v1.CreateTicketRequest
-	(*CreateTicketResponse)(nil), // 4: nazobu.v1.CreateTicketResponse
+	(*ListTicketsRequest)(nil),                        // 0: nazobu.v1.ListTicketsRequest
+	(*ListTicketsResponse)(nil),                       // 1: nazobu.v1.ListTicketsResponse
+	(*Ticket)(nil),                                    // 2: nazobu.v1.Ticket
+	(*GetTicketRequest)(nil),                          // 3: nazobu.v1.GetTicketRequest
+	(*GetTicketResponse)(nil),                         // 4: nazobu.v1.GetTicketResponse
+	(*TicketParticipant)(nil),                         // 5: nazobu.v1.TicketParticipant
+	(*CreateTicketRequest)(nil),                       // 6: nazobu.v1.CreateTicketRequest
+	(*CreateTicketResponse)(nil),                      // 7: nazobu.v1.CreateTicketResponse
+	(*UpdateTicketRequest)(nil),                       // 8: nazobu.v1.UpdateTicketRequest
+	(*UpdateTicketResponse)(nil),                      // 9: nazobu.v1.UpdateTicketResponse
+	(*AddTicketParticipantsRequest)(nil),              // 10: nazobu.v1.AddTicketParticipantsRequest
+	(*AddTicketParticipantsResponse)(nil),             // 11: nazobu.v1.AddTicketParticipantsResponse
+	(*RemoveTicketParticipantRequest)(nil),            // 12: nazobu.v1.RemoveTicketParticipantRequest
+	(*RemoveTicketParticipantResponse)(nil),           // 13: nazobu.v1.RemoveTicketParticipantResponse
+	(*UpdateTicketParticipantSettlementRequest)(nil),  // 14: nazobu.v1.UpdateTicketParticipantSettlementRequest
+	(*UpdateTicketParticipantSettlementResponse)(nil), // 15: nazobu.v1.UpdateTicketParticipantSettlementResponse
 }
 var file_nazobu_v1_ticket_proto_depIdxs = []int32{
-	2, // 0: nazobu.v1.ListTicketsResponse.tickets:type_name -> nazobu.v1.Ticket
-	2, // 1: nazobu.v1.CreateTicketResponse.ticket:type_name -> nazobu.v1.Ticket
-	0, // 2: nazobu.v1.TicketService.ListTickets:input_type -> nazobu.v1.ListTicketsRequest
-	3, // 3: nazobu.v1.TicketService.CreateTicket:input_type -> nazobu.v1.CreateTicketRequest
-	1, // 4: nazobu.v1.TicketService.ListTickets:output_type -> nazobu.v1.ListTicketsResponse
-	4, // 5: nazobu.v1.TicketService.CreateTicket:output_type -> nazobu.v1.CreateTicketResponse
-	4, // [4:6] is the sub-list for method output_type
-	2, // [2:4] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	2,  // 0: nazobu.v1.ListTicketsResponse.tickets:type_name -> nazobu.v1.Ticket
+	2,  // 1: nazobu.v1.GetTicketResponse.ticket:type_name -> nazobu.v1.Ticket
+	5,  // 2: nazobu.v1.GetTicketResponse.participants:type_name -> nazobu.v1.TicketParticipant
+	2,  // 3: nazobu.v1.CreateTicketResponse.ticket:type_name -> nazobu.v1.Ticket
+	2,  // 4: nazobu.v1.UpdateTicketResponse.ticket:type_name -> nazobu.v1.Ticket
+	0,  // 5: nazobu.v1.TicketService.ListTickets:input_type -> nazobu.v1.ListTicketsRequest
+	3,  // 6: nazobu.v1.TicketService.GetTicket:input_type -> nazobu.v1.GetTicketRequest
+	6,  // 7: nazobu.v1.TicketService.CreateTicket:input_type -> nazobu.v1.CreateTicketRequest
+	8,  // 8: nazobu.v1.TicketService.UpdateTicket:input_type -> nazobu.v1.UpdateTicketRequest
+	10, // 9: nazobu.v1.TicketService.AddTicketParticipants:input_type -> nazobu.v1.AddTicketParticipantsRequest
+	12, // 10: nazobu.v1.TicketService.RemoveTicketParticipant:input_type -> nazobu.v1.RemoveTicketParticipantRequest
+	14, // 11: nazobu.v1.TicketService.UpdateTicketParticipantSettlement:input_type -> nazobu.v1.UpdateTicketParticipantSettlementRequest
+	1,  // 12: nazobu.v1.TicketService.ListTickets:output_type -> nazobu.v1.ListTicketsResponse
+	4,  // 13: nazobu.v1.TicketService.GetTicket:output_type -> nazobu.v1.GetTicketResponse
+	7,  // 14: nazobu.v1.TicketService.CreateTicket:output_type -> nazobu.v1.CreateTicketResponse
+	9,  // 15: nazobu.v1.TicketService.UpdateTicket:output_type -> nazobu.v1.UpdateTicketResponse
+	11, // 16: nazobu.v1.TicketService.AddTicketParticipants:output_type -> nazobu.v1.AddTicketParticipantsResponse
+	13, // 17: nazobu.v1.TicketService.RemoveTicketParticipant:output_type -> nazobu.v1.RemoveTicketParticipantResponse
+	15, // 18: nazobu.v1.TicketService.UpdateTicketParticipantSettlement:output_type -> nazobu.v1.UpdateTicketParticipantSettlementResponse
+	12, // [12:19] is the sub-list for method output_type
+	5,  // [5:12] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_nazobu_v1_ticket_proto_init() }
@@ -429,7 +1066,7 @@ func file_nazobu_v1_ticket_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_nazobu_v1_ticket_proto_rawDesc), len(file_nazobu_v1_ticket_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

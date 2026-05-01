@@ -7,9 +7,27 @@ package queries
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 	"time"
 )
+
+const countTicketParticipant = `-- name: CountTicketParticipant :one
+SELECT COUNT(*) FROM ticket_participants WHERE ticket_id = ? AND user_id = ?
+`
+
+type CountTicketParticipantParams struct {
+	TicketID string
+	UserID   string
+}
+
+// 参加者の存在確認。重複登録を避けるためのプリチェック。
+func (q *Queries) CountTicketParticipant(ctx context.Context, arg CountTicketParticipantParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countTicketParticipant, arg.TicketID, arg.UserID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
 
 const createTicket = `-- name: CreateTicket :exec
 INSERT INTO tickets (id, event_id, attended_on, price_per_person, purchased_by, meeting_time, meeting_place, created_at, updated_at)
@@ -54,6 +72,62 @@ func (q *Queries) CreateTicketParticipant(ctx context.Context, arg CreateTicketP
 	return err
 }
 
+const deleteTicketParticipant = `-- name: DeleteTicketParticipant :exec
+DELETE FROM ticket_participants WHERE ticket_id = ? AND user_id = ?
+`
+
+type DeleteTicketParticipantParams struct {
+	TicketID string
+	UserID   string
+}
+
+func (q *Queries) DeleteTicketParticipant(ctx context.Context, arg DeleteTicketParticipantParams) error {
+	_, err := q.db.ExecContext(ctx, deleteTicketParticipant, arg.TicketID, arg.UserID)
+	return err
+}
+
+const getTicketByID = `-- name: GetTicketByID :one
+SELECT t.id, t.event_id, e.title AS event_title,
+       t.attended_on, t.price_per_person,
+       t.meeting_time, t.meeting_place,
+       t.purchased_by,
+       COALESCE(NULLIF(pu.display_name, ''), pu.username) AS purchaser_name
+FROM tickets t
+JOIN events e  ON e.id  = t.event_id
+JOIN users  pu ON pu.id = t.purchased_by
+WHERE t.id = ?
+`
+
+type GetTicketByIDRow struct {
+	ID             string
+	EventID        string
+	EventTitle     string
+	AttendedOn     time.Time
+	PricePerPerson int32
+	MeetingTime    string
+	MeetingPlace   string
+	PurchasedBy    string
+	PurchaserName  string
+}
+
+// ticket 詳細表示用。立替者の id と表示名も返す（権限判定 / UI 表示で使う）。
+func (q *Queries) GetTicketByID(ctx context.Context, id string) (GetTicketByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getTicketByID, id)
+	var i GetTicketByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.EventID,
+		&i.EventTitle,
+		&i.AttendedOn,
+		&i.PricePerPerson,
+		&i.MeetingTime,
+		&i.MeetingPlace,
+		&i.PurchasedBy,
+		&i.PurchaserName,
+	)
+	return i, err
+}
+
 const listTicketParticipantNamesByTicketIDs = `-- name: ListTicketParticipantNamesByTicketIDs :many
 SELECT tp.ticket_id,
        COALESCE(NULLIF(u.display_name, ''), u.username) AS name
@@ -90,6 +164,46 @@ func (q *Queries) ListTicketParticipantNamesByTicketIDs(ctx context.Context, tic
 	for rows.Next() {
 		var i ListTicketParticipantNamesByTicketIDsRow
 		if err := rows.Scan(&i.TicketID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTicketParticipantsByTicketID = `-- name: ListTicketParticipantsByTicketID :many
+SELECT tp.user_id,
+       COALESCE(NULLIF(u.display_name, ''), u.username) AS name,
+       tp.settled_at
+FROM ticket_participants tp
+JOIN users u ON u.id = tp.user_id
+WHERE tp.ticket_id = ?
+ORDER BY tp.created_at ASC, tp.user_id ASC
+`
+
+type ListTicketParticipantsByTicketIDRow struct {
+	UserID    string
+	Name      string
+	SettledAt sql.NullTime
+}
+
+// ticket 詳細用。参加者の user_id / 名前 / 精算済みフラグを created_at 昇順で返す。
+func (q *Queries) ListTicketParticipantsByTicketID(ctx context.Context, ticketID string) ([]ListTicketParticipantsByTicketIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, listTicketParticipantsByTicketID, ticketID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListTicketParticipantsByTicketIDRow
+	for rows.Next() {
+		var i ListTicketParticipantsByTicketIDRow
+		if err := rows.Scan(&i.UserID, &i.Name, &i.SettledAt); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -222,4 +336,68 @@ func (q *Queries) ListTicketsByIDs(ctx context.Context, ids []string) ([]ListTic
 		return nil, err
 	}
 	return items, nil
+}
+
+const markTicketParticipantSettled = `-- name: MarkTicketParticipantSettled :exec
+UPDATE ticket_participants
+SET settled_at = NOW(6)
+WHERE ticket_id = ? AND user_id = ?
+`
+
+type MarkTicketParticipantSettledParams struct {
+	TicketID string
+	UserID   string
+}
+
+// 未精算 → 精算済み。settled_at に現在時刻を入れる。
+func (q *Queries) MarkTicketParticipantSettled(ctx context.Context, arg MarkTicketParticipantSettledParams) error {
+	_, err := q.db.ExecContext(ctx, markTicketParticipantSettled, arg.TicketID, arg.UserID)
+	return err
+}
+
+const markTicketParticipantUnsettled = `-- name: MarkTicketParticipantUnsettled :exec
+UPDATE ticket_participants
+SET settled_at = NULL
+WHERE ticket_id = ? AND user_id = ?
+`
+
+type MarkTicketParticipantUnsettledParams struct {
+	TicketID string
+	UserID   string
+}
+
+// 精算済み → 未精算。settled_at を NULL に戻す。
+func (q *Queries) MarkTicketParticipantUnsettled(ctx context.Context, arg MarkTicketParticipantUnsettledParams) error {
+	_, err := q.db.ExecContext(ctx, markTicketParticipantUnsettled, arg.TicketID, arg.UserID)
+	return err
+}
+
+const updateTicket = `-- name: UpdateTicket :exec
+UPDATE tickets
+SET attended_on      = ?,
+    price_per_person = ?,
+    meeting_time     = ?,
+    meeting_place    = ?,
+    updated_at       = NOW(6)
+WHERE id = ?
+`
+
+type UpdateTicketParams struct {
+	AttendedOn     time.Time
+	PricePerPerson int32
+	MeetingTime    string
+	MeetingPlace   string
+	ID             string
+}
+
+// ticket 本体の更新。event_id / purchased_by は変更しない。
+func (q *Queries) UpdateTicket(ctx context.Context, arg UpdateTicketParams) error {
+	_, err := q.db.ExecContext(ctx, updateTicket,
+		arg.AttendedOn,
+		arg.PricePerPerson,
+		arg.MeetingTime,
+		arg.MeetingPlace,
+		arg.ID,
+	)
+	return err
 }

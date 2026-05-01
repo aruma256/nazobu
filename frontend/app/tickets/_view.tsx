@@ -1,6 +1,7 @@
 "use client";
 
 import { Code, ConnectError } from "@connectrpc/connect";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -105,31 +106,33 @@ export function TicketsView() {
 function TicketCard({ ticket }: { ticket: Ticket }) {
   const date = parseAttendedOn(ticket.attendedOn);
   return (
-    <li className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-      <div className="flex items-baseline gap-3 px-4 pt-4">
-        <Mono className="text-sm font-semibold text-emerald-700">
-          {formatDateJa(date)}
-        </Mono>
-        <Mono className="text-xs text-zinc-500">{ticket.meetingTime}</Mono>
-        <Mono className="ml-auto text-sm font-semibold tracking-tight">
-          {formatYen(ticket.pricePerPerson)}
-        </Mono>
-      </div>
-      <h3 className="px-4 pt-1 text-base leading-snug font-semibold">
-        {ticket.eventTitle}
-      </h3>
-      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 pt-3 pb-4 text-xs text-zinc-600">
-        <dt className="text-zinc-400">集合</dt>
-        <dd>{ticket.meetingPlace}</dd>
-        <dt className="text-zinc-400">立替</dt>
-        <dd>{ticket.purchaserName}</dd>
-        {ticket.participantNames.length > 0 && (
-          <>
-            <dt className="text-zinc-400">参加</dt>
-            <dd>{ticket.participantNames.join("・")}</dd>
-          </>
-        )}
-      </dl>
+    <li className="overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-colors hover:bg-zinc-50">
+      <Link href={`/tickets/${ticket.id}`} className="block">
+        <div className="flex items-baseline gap-3 px-4 pt-4">
+          <Mono className="text-sm font-semibold text-emerald-700">
+            {formatDateJa(date)}
+          </Mono>
+          <Mono className="text-xs text-zinc-500">{ticket.meetingTime}</Mono>
+          <Mono className="ml-auto text-sm font-semibold tracking-tight">
+            {formatYen(ticket.pricePerPerson)}
+          </Mono>
+        </div>
+        <h3 className="px-4 pt-1 text-base leading-snug font-semibold">
+          {ticket.eventTitle}
+        </h3>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 pt-3 pb-4 text-xs text-zinc-600">
+          <dt className="text-zinc-400">集合</dt>
+          <dd>{ticket.meetingPlace}</dd>
+          <dt className="text-zinc-400">立替</dt>
+          <dd>{ticket.purchaserName}</dd>
+          {ticket.participantNames.length > 0 && (
+            <>
+              <dt className="text-zinc-400">参加</dt>
+              <dd>{ticket.participantNames.join("・")}</dd>
+            </>
+          )}
+        </dl>
+      </Link>
     </li>
   );
 }

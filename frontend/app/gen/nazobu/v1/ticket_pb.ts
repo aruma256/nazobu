@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file nazobu/v1/ticket.proto.
  */
 export const file_nazobu_v1_ticket: GenFile = /*@__PURE__*/
-  fileDesc("ChZuYXpvYnUvdjEvdGlja2V0LnByb3RvEgluYXpvYnUudjEiFAoSTGlzdFRpY2tldHNSZXF1ZXN0IjkKE0xpc3RUaWNrZXRzUmVzcG9uc2USIgoHdGlja2V0cxgBIAMoCzIRLm5hem9idS52MS5UaWNrZXQiygEKBlRpY2tldBIKCgJpZBgBIAEoCRIQCghldmVudF9pZBgCIAEoCRITCgtldmVudF90aXRsZRgDIAEoCRITCgthdHRlbmRlZF9vbhgEIAEoCRIYChBwcmljZV9wZXJfcGVyc29uGAUgASgFEhQKDG1lZXRpbmdfdGltZRgGIAEoCRIVCg1tZWV0aW5nX3BsYWNlGAcgASgJEhYKDnB1cmNoYXNlcl9uYW1lGAggASgJEhkKEXBhcnRpY2lwYW50X25hbWVzGAkgAygJIqEBChNDcmVhdGVUaWNrZXRSZXF1ZXN0EhAKCGV2ZW50X2lkGAEgASgJEhMKC2F0dGVuZGVkX29uGAIgASgJEhgKEHByaWNlX3Blcl9wZXJzb24YAyABKAUSFAoMbWVldGluZ190aW1lGAQgASgJEhUKDW1lZXRpbmdfcGxhY2UYBSABKAkSHAoUcGFydGljaXBhbnRfdXNlcl9pZHMYBiADKAkiOQoUQ3JlYXRlVGlja2V0UmVzcG9uc2USIQoGdGlja2V0GAEgASgLMhEubmF6b2J1LnYxLlRpY2tldDKuAQoNVGlja2V0U2VydmljZRJMCgtMaXN0VGlja2V0cxIdLm5hem9idS52MS5MaXN0VGlja2V0c1JlcXVlc3QaHi5uYXpvYnUudjEuTGlzdFRpY2tldHNSZXNwb25zZRJPCgxDcmVhdGVUaWNrZXQSHi5uYXpvYnUudjEuQ3JlYXRlVGlja2V0UmVxdWVzdBofLm5hem9idS52MS5DcmVhdGVUaWNrZXRSZXNwb25zZUJEWkJnaXRodWIuY29tL2FydW1hMjU2L25hem9idS9iYWNrZW5kL2ludGVybmFsL2dlbi9uYXpvYnUvdjE7bmF6b2J1djFiBnByb3RvMw");
+  fileDesc("ChZuYXpvYnUvdjEvdGlja2V0LnByb3RvEgluYXpvYnUudjEiFAoSTGlzdFRpY2tldHNSZXF1ZXN0IjkKE0xpc3RUaWNrZXRzUmVzcG9uc2USIgoHdGlja2V0cxgBIAMoCzIRLm5hem9idS52MS5UaWNrZXQiygEKBlRpY2tldBIKCgJpZBgBIAEoCRIQCghldmVudF9pZBgCIAEoCRITCgtldmVudF90aXRsZRgDIAEoCRITCgthdHRlbmRlZF9vbhgEIAEoCRIYChBwcmljZV9wZXJfcGVyc29uGAUgASgFEhQKDG1lZXRpbmdfdGltZRgGIAEoCRIVCg1tZWV0aW5nX3BsYWNlGAcgASgJEhYKDnB1cmNoYXNlcl9uYW1lGAggASgJEhkKEXBhcnRpY2lwYW50X25hbWVzGAkgAygJIiUKEEdldFRpY2tldFJlcXVlc3QSEQoJdGlja2V0X2lkGAEgASgJInwKEUdldFRpY2tldFJlc3BvbnNlEiEKBnRpY2tldBgBIAEoCzIRLm5hem9idS52MS5UaWNrZXQSMgoMcGFydGljaXBhbnRzGAIgAygLMhwubmF6b2J1LnYxLlRpY2tldFBhcnRpY2lwYW50EhAKCGNhbl9lZGl0GAMgASgIIlkKEVRpY2tldFBhcnRpY2lwYW50Eg8KB3VzZXJfaWQYASABKAkSDAoEbmFtZRgCIAEoCRIPCgdzZXR0bGVkGAMgASgIEhQKDGlzX3B1cmNoYXNlchgEIAEoCCKhAQoTQ3JlYXRlVGlja2V0UmVxdWVzdBIQCghldmVudF9pZBgBIAEoCRITCgthdHRlbmRlZF9vbhgCIAEoCRIYChBwcmljZV9wZXJfcGVyc29uGAMgASgFEhQKDG1lZXRpbmdfdGltZRgEIAEoCRIVCg1tZWV0aW5nX3BsYWNlGAUgASgJEhwKFHBhcnRpY2lwYW50X3VzZXJfaWRzGAYgAygJIjkKFENyZWF0ZVRpY2tldFJlc3BvbnNlEiEKBnRpY2tldBgBIAEoCzIRLm5hem9idS52MS5UaWNrZXQihAEKE1VwZGF0ZVRpY2tldFJlcXVlc3QSEQoJdGlja2V0X2lkGAEgASgJEhMKC2F0dGVuZGVkX29uGAIgASgJEhgKEHByaWNlX3Blcl9wZXJzb24YAyABKAUSFAoMbWVldGluZ190aW1lGAQgASgJEhUKDW1lZXRpbmdfcGxhY2UYBSABKAkiOQoUVXBkYXRlVGlja2V0UmVzcG9uc2USIQoGdGlja2V0GAEgASgLMhEubmF6b2J1LnYxLlRpY2tldCJDChxBZGRUaWNrZXRQYXJ0aWNpcGFudHNSZXF1ZXN0EhEKCXRpY2tldF9pZBgBIAEoCRIQCgh1c2VyX2lkcxgCIAMoCSIfCh1BZGRUaWNrZXRQYXJ0aWNpcGFudHNSZXNwb25zZSJECh5SZW1vdmVUaWNrZXRQYXJ0aWNpcGFudFJlcXVlc3QSEQoJdGlja2V0X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkiIQofUmVtb3ZlVGlja2V0UGFydGljaXBhbnRSZXNwb25zZSJfCihVcGRhdGVUaWNrZXRQYXJ0aWNpcGFudFNldHRsZW1lbnRSZXF1ZXN0EhEKCXRpY2tldF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEg8KB3NldHRsZWQYAyABKAgiKwopVXBkYXRlVGlja2V0UGFydGljaXBhbnRTZXR0bGVtZW50UmVzcG9uc2UytgUKDVRpY2tldFNlcnZpY2USTAoLTGlzdFRpY2tldHMSHS5uYXpvYnUudjEuTGlzdFRpY2tldHNSZXF1ZXN0Gh4ubmF6b2J1LnYxLkxpc3RUaWNrZXRzUmVzcG9uc2USRgoJR2V0VGlja2V0EhsubmF6b2J1LnYxLkdldFRpY2tldFJlcXVlc3QaHC5uYXpvYnUudjEuR2V0VGlja2V0UmVzcG9uc2USTwoMQ3JlYXRlVGlja2V0Eh4ubmF6b2J1LnYxLkNyZWF0ZVRpY2tldFJlcXVlc3QaHy5uYXpvYnUudjEuQ3JlYXRlVGlja2V0UmVzcG9uc2USTwoMVXBkYXRlVGlja2V0Eh4ubmF6b2J1LnYxLlVwZGF0ZVRpY2tldFJlcXVlc3QaHy5uYXpvYnUudjEuVXBkYXRlVGlja2V0UmVzcG9uc2USagoVQWRkVGlja2V0UGFydGljaXBhbnRzEicubmF6b2J1LnYxLkFkZFRpY2tldFBhcnRpY2lwYW50c1JlcXVlc3QaKC5uYXpvYnUudjEuQWRkVGlja2V0UGFydGljaXBhbnRzUmVzcG9uc2UScAoXUmVtb3ZlVGlja2V0UGFydGljaXBhbnQSKS5uYXpvYnUudjEuUmVtb3ZlVGlja2V0UGFydGljaXBhbnRSZXF1ZXN0GioubmF6b2J1LnYxLlJlbW92ZVRpY2tldFBhcnRpY2lwYW50UmVzcG9uc2USjgEKIVVwZGF0ZVRpY2tldFBhcnRpY2lwYW50U2V0dGxlbWVudBIzLm5hem9idS52MS5VcGRhdGVUaWNrZXRQYXJ0aWNpcGFudFNldHRsZW1lbnRSZXF1ZXN0GjQubmF6b2J1LnYxLlVwZGF0ZVRpY2tldFBhcnRpY2lwYW50U2V0dGxlbWVudFJlc3BvbnNlQkRaQmdpdGh1Yi5jb20vYXJ1bWEyNTYvbmF6b2J1L2JhY2tlbmQvaW50ZXJuYWwvZ2VuL25hem9idS92MTtuYXpvYnV2MWIGcHJvdG8z");
 
 /**
  * @generated from message nazobu.v1.ListTicketsRequest
@@ -114,6 +114,92 @@ export const TicketSchema: GenMessage<Ticket> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_ticket, 2);
 
 /**
+ * @generated from message nazobu.v1.GetTicketRequest
+ */
+export type GetTicketRequest = Message<"nazobu.v1.GetTicketRequest"> & {
+  /**
+   * @generated from field: string ticket_id = 1;
+   */
+  ticketId: string;
+};
+
+/**
+ * Describes the message nazobu.v1.GetTicketRequest.
+ * Use `create(GetTicketRequestSchema)` to create a new message.
+ */
+export const GetTicketRequestSchema: GenMessage<GetTicketRequest> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_ticket, 3);
+
+/**
+ * @generated from message nazobu.v1.GetTicketResponse
+ */
+export type GetTicketResponse = Message<"nazobu.v1.GetTicketResponse"> & {
+  /**
+   * @generated from field: nazobu.v1.Ticket ticket = 1;
+   */
+  ticket?: Ticket;
+
+  /**
+   * ticket の参加者一覧。created_at 昇順。
+   *
+   * @generated from field: repeated nazobu.v1.TicketParticipant participants = 2;
+   */
+  participants: TicketParticipant[];
+
+  /**
+   * 現在ログイン中の user が編集権限を持つか（admin もしくは立替者）。
+   *
+   * @generated from field: bool can_edit = 3;
+   */
+  canEdit: boolean;
+};
+
+/**
+ * Describes the message nazobu.v1.GetTicketResponse.
+ * Use `create(GetTicketResponseSchema)` to create a new message.
+ */
+export const GetTicketResponseSchema: GenMessage<GetTicketResponse> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_ticket, 4);
+
+/**
+ * @generated from message nazobu.v1.TicketParticipant
+ */
+export type TicketParticipant = Message<"nazobu.v1.TicketParticipant"> & {
+  /**
+   * @generated from field: string user_id = 1;
+   */
+  userId: string;
+
+  /**
+   * 表示名（display_name が空なら username）。
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * 自分の精算が完了しているか。立替者本人なら常に true。
+   *
+   * @generated from field: bool settled = 3;
+   */
+  settled: boolean;
+
+  /**
+   * 立替者本人かどうか。立替者は精算操作の対象外、また削除もできない。
+   *
+   * @generated from field: bool is_purchaser = 4;
+   */
+  isPurchaser: boolean;
+};
+
+/**
+ * Describes the message nazobu.v1.TicketParticipant.
+ * Use `create(TicketParticipantSchema)` to create a new message.
+ */
+export const TicketParticipantSchema: GenMessage<TicketParticipant> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_ticket, 5);
+
+/**
  * @generated from message nazobu.v1.CreateTicketRequest
  */
 export type CreateTicketRequest = Message<"nazobu.v1.CreateTicketRequest"> & {
@@ -164,7 +250,7 @@ export type CreateTicketRequest = Message<"nazobu.v1.CreateTicketRequest"> & {
  * Use `create(CreateTicketRequestSchema)` to create a new message.
  */
 export const CreateTicketRequestSchema: GenMessage<CreateTicketRequest> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_ticket, 3);
+  messageDesc(file_nazobu_v1_ticket, 6);
 
 /**
  * @generated from message nazobu.v1.CreateTicketResponse
@@ -181,7 +267,183 @@ export type CreateTicketResponse = Message<"nazobu.v1.CreateTicketResponse"> & {
  * Use `create(CreateTicketResponseSchema)` to create a new message.
  */
 export const CreateTicketResponseSchema: GenMessage<CreateTicketResponse> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_ticket, 4);
+  messageDesc(file_nazobu_v1_ticket, 7);
+
+/**
+ * @generated from message nazobu.v1.UpdateTicketRequest
+ */
+export type UpdateTicketRequest = Message<"nazobu.v1.UpdateTicketRequest"> & {
+  /**
+   * @generated from field: string ticket_id = 1;
+   */
+  ticketId: string;
+
+  /**
+   * YYYY-MM-DD（JST）。
+   *
+   * @generated from field: string attended_on = 2;
+   */
+  attendedOn: string;
+
+  /**
+   * 一人あたりの精算額（円、0 以上）。
+   *
+   * @generated from field: int32 price_per_person = 3;
+   */
+  pricePerPerson: number;
+
+  /**
+   * 集合時刻 "HH:MM"（attended_on の JST 当日基準）。
+   *
+   * @generated from field: string meeting_time = 4;
+   */
+  meetingTime: string;
+
+  /**
+   * 集合場所。
+   *
+   * @generated from field: string meeting_place = 5;
+   */
+  meetingPlace: string;
+};
+
+/**
+ * Describes the message nazobu.v1.UpdateTicketRequest.
+ * Use `create(UpdateTicketRequestSchema)` to create a new message.
+ */
+export const UpdateTicketRequestSchema: GenMessage<UpdateTicketRequest> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_ticket, 8);
+
+/**
+ * @generated from message nazobu.v1.UpdateTicketResponse
+ */
+export type UpdateTicketResponse = Message<"nazobu.v1.UpdateTicketResponse"> & {
+  /**
+   * @generated from field: nazobu.v1.Ticket ticket = 1;
+   */
+  ticket?: Ticket;
+};
+
+/**
+ * Describes the message nazobu.v1.UpdateTicketResponse.
+ * Use `create(UpdateTicketResponseSchema)` to create a new message.
+ */
+export const UpdateTicketResponseSchema: GenMessage<UpdateTicketResponse> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_ticket, 9);
+
+/**
+ * @generated from message nazobu.v1.AddTicketParticipantsRequest
+ */
+export type AddTicketParticipantsRequest = Message<"nazobu.v1.AddTicketParticipantsRequest"> & {
+  /**
+   * @generated from field: string ticket_id = 1;
+   */
+  ticketId: string;
+
+  /**
+   * 追加する参加者の user id。1 件以上。既に参加済みの user は無視する。
+   *
+   * @generated from field: repeated string user_ids = 2;
+   */
+  userIds: string[];
+};
+
+/**
+ * Describes the message nazobu.v1.AddTicketParticipantsRequest.
+ * Use `create(AddTicketParticipantsRequestSchema)` to create a new message.
+ */
+export const AddTicketParticipantsRequestSchema: GenMessage<AddTicketParticipantsRequest> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_ticket, 10);
+
+/**
+ * @generated from message nazobu.v1.AddTicketParticipantsResponse
+ */
+export type AddTicketParticipantsResponse = Message<"nazobu.v1.AddTicketParticipantsResponse"> & {
+};
+
+/**
+ * Describes the message nazobu.v1.AddTicketParticipantsResponse.
+ * Use `create(AddTicketParticipantsResponseSchema)` to create a new message.
+ */
+export const AddTicketParticipantsResponseSchema: GenMessage<AddTicketParticipantsResponse> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_ticket, 11);
+
+/**
+ * @generated from message nazobu.v1.RemoveTicketParticipantRequest
+ */
+export type RemoveTicketParticipantRequest = Message<"nazobu.v1.RemoveTicketParticipantRequest"> & {
+  /**
+   * @generated from field: string ticket_id = 1;
+   */
+  ticketId: string;
+
+  /**
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+};
+
+/**
+ * Describes the message nazobu.v1.RemoveTicketParticipantRequest.
+ * Use `create(RemoveTicketParticipantRequestSchema)` to create a new message.
+ */
+export const RemoveTicketParticipantRequestSchema: GenMessage<RemoveTicketParticipantRequest> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_ticket, 12);
+
+/**
+ * @generated from message nazobu.v1.RemoveTicketParticipantResponse
+ */
+export type RemoveTicketParticipantResponse = Message<"nazobu.v1.RemoveTicketParticipantResponse"> & {
+};
+
+/**
+ * Describes the message nazobu.v1.RemoveTicketParticipantResponse.
+ * Use `create(RemoveTicketParticipantResponseSchema)` to create a new message.
+ */
+export const RemoveTicketParticipantResponseSchema: GenMessage<RemoveTicketParticipantResponse> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_ticket, 13);
+
+/**
+ * @generated from message nazobu.v1.UpdateTicketParticipantSettlementRequest
+ */
+export type UpdateTicketParticipantSettlementRequest = Message<"nazobu.v1.UpdateTicketParticipantSettlementRequest"> & {
+  /**
+   * @generated from field: string ticket_id = 1;
+   */
+  ticketId: string;
+
+  /**
+   * @generated from field: string user_id = 2;
+   */
+  userId: string;
+
+  /**
+   * true = 精算済みにする、false = 未精算に戻す。
+   *
+   * @generated from field: bool settled = 3;
+   */
+  settled: boolean;
+};
+
+/**
+ * Describes the message nazobu.v1.UpdateTicketParticipantSettlementRequest.
+ * Use `create(UpdateTicketParticipantSettlementRequestSchema)` to create a new message.
+ */
+export const UpdateTicketParticipantSettlementRequestSchema: GenMessage<UpdateTicketParticipantSettlementRequest> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_ticket, 14);
+
+/**
+ * @generated from message nazobu.v1.UpdateTicketParticipantSettlementResponse
+ */
+export type UpdateTicketParticipantSettlementResponse = Message<"nazobu.v1.UpdateTicketParticipantSettlementResponse"> & {
+};
+
+/**
+ * Describes the message nazobu.v1.UpdateTicketParticipantSettlementResponse.
+ * Use `create(UpdateTicketParticipantSettlementResponseSchema)` to create a new message.
+ */
+export const UpdateTicketParticipantSettlementResponseSchema: GenMessage<UpdateTicketParticipantSettlementResponse> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_ticket, 15);
 
 /**
  * TicketService は ticket（公演に対する 1 枚分の参加チケット）の参照・登録 RPC を提供する。
@@ -200,6 +462,16 @@ export const TicketService: GenService<{
     output: typeof ListTicketsResponseSchema;
   },
   /**
+   * GetTicket は 1 件の ticket を詳細表示用の形（参加者の精算状況を含む）で返す。
+   *
+   * @generated from rpc nazobu.v1.TicketService.GetTicket
+   */
+  getTicket: {
+    methodKind: "unary";
+    input: typeof GetTicketRequestSchema;
+    output: typeof GetTicketResponseSchema;
+  },
+  /**
    * CreateTicket は新規 ticket を 1 件登録する。参加者（割り勘元）も同時に登録する。
    *
    * @generated from rpc nazobu.v1.TicketService.CreateTicket
@@ -208,6 +480,50 @@ export const TicketService: GenService<{
     methodKind: "unary";
     input: typeof CreateTicketRequestSchema;
     output: typeof CreateTicketResponseSchema;
+  },
+  /**
+   * UpdateTicket は ticket 本体（attended_on / price_per_person / meeting_time / meeting_place）を更新する。
+   * admin もしくは立替者のみ実行可能。
+   *
+   * @generated from rpc nazobu.v1.TicketService.UpdateTicket
+   */
+  updateTicket: {
+    methodKind: "unary";
+    input: typeof UpdateTicketRequestSchema;
+    output: typeof UpdateTicketResponseSchema;
+  },
+  /**
+   * AddTicketParticipants は ticket の参加者を 1 人以上追加する。
+   * admin もしくは立替者のみ実行可能。既に存在する user_id は無視する。
+   *
+   * @generated from rpc nazobu.v1.TicketService.AddTicketParticipants
+   */
+  addTicketParticipants: {
+    methodKind: "unary";
+    input: typeof AddTicketParticipantsRequestSchema;
+    output: typeof AddTicketParticipantsResponseSchema;
+  },
+  /**
+   * RemoveTicketParticipant は ticket の参加者を 1 人削除する。
+   * admin もしくは立替者のみ実行可能。立替者本人は削除できない。
+   *
+   * @generated from rpc nazobu.v1.TicketService.RemoveTicketParticipant
+   */
+  removeTicketParticipant: {
+    methodKind: "unary";
+    input: typeof RemoveTicketParticipantRequestSchema;
+    output: typeof RemoveTicketParticipantResponseSchema;
+  },
+  /**
+   * UpdateTicketParticipantSettlement は参加者の精算状態を切り替える。
+   * admin もしくは立替者のみ実行可能。立替者本人に対しては実行不可。
+   *
+   * @generated from rpc nazobu.v1.TicketService.UpdateTicketParticipantSettlement
+   */
+  updateTicketParticipantSettlement: {
+    methodKind: "unary";
+    input: typeof UpdateTicketParticipantSettlementRequestSchema;
+    output: typeof UpdateTicketParticipantSettlementResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_nazobu_v1_ticket, 0);
