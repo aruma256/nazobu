@@ -2,6 +2,7 @@
 
 import { Code, ConnectError } from "@connectrpc/connect";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import type { Ticket } from "@/app/gen/nazobu/v1/ticket_pb";
@@ -20,14 +21,15 @@ import {
   formatYen,
   parseAttendedOn,
 } from "@/app/_format";
+import { redirectToLogin } from "@/app/lib/auth";
 
 type LoadState =
   | { kind: "loading" }
-  | { kind: "unauthenticated" }
   | { kind: "error"; message: string }
   | { kind: "ready"; me: GetMeResponse; tickets: Ticket[] };
 
 export function TicketsView() {
+  const router = useRouter();
   const [state, setState] = useState<LoadState>({ kind: "loading" });
 
   useEffect(() => {
@@ -39,7 +41,7 @@ export function TicketsView() {
       .catch((err: unknown) => {
         if (cancelled) return;
         if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
-          setState({ kind: "unauthenticated" });
+          redirectToLogin(router, "/tickets");
           return;
         }
         const message =
@@ -49,7 +51,7 @@ export function TicketsView() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [router]);
 
   if (state.kind === "loading") {
     return (
@@ -57,25 +59,6 @@ export function TicketsView() {
         <AppHeader brand="謎部" user="" />
         <PageShell>
           <p className="pt-8 text-sm text-zinc-500">読み込み中…</p>
-        </PageShell>
-      </>
-    );
-  }
-
-  if (state.kind === "unauthenticated") {
-    return (
-      <>
-        <AppHeader brand="謎部" user="" />
-        <PageShell>
-          <div className="space-y-4 pt-8 text-sm text-zinc-700">
-            <p>このページを表示するにはログインが必要です。</p>
-            <a
-              href="/auth/discord/login"
-              className="inline-flex h-11 items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800"
-            >
-              Discord でログイン
-            </a>
-          </div>
         </PageShell>
       </>
     );

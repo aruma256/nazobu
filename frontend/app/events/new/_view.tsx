@@ -15,6 +15,7 @@ import {
   Section,
   SectionTitle,
 } from "@/app/_components";
+import { redirectToLogin } from "@/app/lib/auth";
 
 type SubmitState =
   | { kind: "idle" }
@@ -44,10 +45,7 @@ export function NewEventView() {
       router.push("/events");
     } catch (err) {
       if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
-        setState({
-          kind: "error",
-          message: "ログインが切れています。ログインし直してください。",
-        });
+        redirectToLogin(router, "/events/new");
         return;
       }
       const message =

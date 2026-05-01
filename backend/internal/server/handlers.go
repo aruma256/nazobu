@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/aruma256/nazobu/backend/internal/auth"
@@ -12,7 +13,26 @@ import (
 const (
 	stateCookieName = "nazobu_oauth_state"
 	stateCookieTTL  = 10 * time.Minute
+	// ログイン完了後にユーザーを戻すパスを保持する一時 cookie。
+	nextCookieName = "nazobu_oauth_next"
+	nextCookieTTL  = 10 * time.Minute
 )
+
+// sanitizeNextPath は ?next= で受け取った遷移先パスを open redirect の
+// 踏み台にされないように検証する。許容するのは `/` 始まりかつ `//` で
+// 始まらない（プロトコル相対 URL を弾く）内部パスのみ。
+func sanitizeNextPath(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	if !strings.HasPrefix(raw, "/") {
+		return ""
+	}
+	if strings.HasPrefix(raw, "//") {
+		return ""
+	}
+	return raw
+}
 
 func (s *Server) handleDiscordLogin(w http.ResponseWriter, r *http.Request) {
 	if s.cfg.Discord.ClientID == "" {
@@ -33,6 +53,19 @@ func (s *Server) handleDiscordLogin(w http.ResponseWriter, r *http.Request) {
 		Secure:   s.cfg.CookieSecure,
 		SameSite: http.SameSiteLaxMode,
 	})
+
+	if next := sanitizeNextPath(r.URL.Query().Get("next")); next != "" {
+		http.SetCookie(w, &http.Cookie{
+			Name:     nextCookieName,
+			Value:    next,
+			Path:     "/",
+			MaxAge:   int(nextCookieTTL.Seconds()),
+			HttpOnly: true,
+			Secure:   s.cfg.CookieSecure,
+			SameSite: http.SameSiteLaxMode,
+		})
+	}
+
 	http.Redirect(w, r, s.discordOAuth.AuthCodeURL(state), http.StatusFound)
 }
 
@@ -90,7 +123,14 @@ func (s *Server) handleDiscordCallback(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	})
 
-	http.Redirect(w, r, s.cfg.FrontendURL, http.StatusFound)
+	dest := s.cfg.FrontendURL
+	if c, err := r.Cookie(nextCookieName); err == nil {
+		if next := sanitizeNextPath(c.Value); next != "" {
+			dest = s.cfg.FrontendURL + next
+		}
+		clearCookie(w, nextCookieName, s.cfg.CookieSecure)
+	}
+	http.Redirect(w, r, dest, http.StatusFound)
 }
 
 func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
@@ -98,7 +138,8 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 		_ = auth.DeleteSession(r.Context(), s.db, c.Value)
 	}
 	clearCookie(w, auth.SessionCookieName, s.cfg.CookieSecure)
-	w.WriteHeader(http.StatusNoContent)
+	// POST → GET にしてログイン画面へ。
+	http.Redirect(w, r, s.cfg.FrontendURL+"/login", http.StatusSeeOther)
 }
 
 func clearCookie(w http.ResponseWriter, name string, secure bool) {

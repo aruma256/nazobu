@@ -26,7 +26,21 @@ export function AppHeader({
           />
           <span className="text-base font-semibold tracking-tight">{brand}</span>
         </div>
-        <span className="text-sm text-zinc-500">{user}</span>
+        <div className="flex items-center gap-3">
+          {user !== "" && (
+            <span className="text-sm text-zinc-500">{user}</span>
+          )}
+          {user !== "" && (
+            <form action="/auth/logout" method="post">
+              <button
+                type="submit"
+                className="text-xs text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-700 hover:decoration-zinc-500"
+              >
+                ログアウト
+              </button>
+            </form>
+          )}
+        </div>
       </div>
     </header>
   );

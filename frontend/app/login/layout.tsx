@@ -7,7 +7,7 @@ const notoSansJP = Noto_Sans_JP({
   preload: false,
 });
 
-export default function MyPageLayout({ children }: { children: ReactNode }) {
+export default function LoginLayout({ children }: { children: ReactNode }) {
   return (
     <div
       className={`${notoSansJP.variable} flex min-h-screen flex-1 flex-col bg-zinc-50 text-zinc-900`}

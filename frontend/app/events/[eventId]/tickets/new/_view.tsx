@@ -17,10 +17,10 @@ import {
   Section,
   SectionTitle,
 } from "@/app/_components";
+import { redirectToLogin } from "@/app/lib/auth";
 
 type LoadState =
   | { kind: "loading" }
-  | { kind: "unauthenticated" }
   | { kind: "not_found" }
   | { kind: "error"; message: string }
   | { kind: "ready"; event: NazobuEvent; users: User[] };
@@ -49,7 +49,7 @@ export function NewTicketForEventView({ eventId }: { eventId: string }) {
       .catch((err: unknown) => {
         if (cancelled) return;
         if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
-          setLoad({ kind: "unauthenticated" });
+          redirectToLogin(router, `/events/${eventId}/tickets/new`);
           return;
         }
         const message =
@@ -59,7 +59,7 @@ export function NewTicketForEventView({ eventId }: { eventId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [eventId]);
+  }, [eventId, router]);
 
   if (load.kind === "loading") {
     return (
@@ -67,24 +67,6 @@ export function NewTicketForEventView({ eventId }: { eventId: string }) {
         <AppHeader brand="謎部" user="" />
         <PageShell>
           <p className="pt-8 text-sm text-zinc-500">読み込み中…</p>
-        </PageShell>
-      </>
-    );
-  }
-  if (load.kind === "unauthenticated") {
-    return (
-      <>
-        <AppHeader brand="謎部" user="" />
-        <PageShell>
-          <div className="space-y-4 pt-8 text-sm text-zinc-700">
-            <p>このページを表示するにはログインが必要です。</p>
-            <a
-              href="/auth/discord/login"
-              className="inline-flex h-11 items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800"
-            >
-              Discord でログイン
-            </a>
-          </div>
         </PageShell>
       </>
     );
@@ -184,10 +166,7 @@ function Form({
       router.push("/tickets");
     } catch (err) {
       if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
-        setState({
-          kind: "error",
-          message: "ログインが切れています。ログインし直してください。",
-        });
+        redirectToLogin(router, `/events/${event.id}/tickets/new`);
         return;
       }
       const message =
