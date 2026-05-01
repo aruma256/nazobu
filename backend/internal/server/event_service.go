@@ -11,6 +11,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
 
+	"github.com/aruma256/nazobu/backend/internal/auth"
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
 	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
@@ -58,8 +59,12 @@ func (s *eventService) ListEvents(ctx context.Context, req *connect.Request[nazo
 }
 
 func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[nazobuv1.CreateEventRequest]) (*connect.Response[nazobuv1.CreateEventResponse], error) {
-	if _, err := lookupSessionUser(ctx, s.db, req.Header()); err != nil {
+	user, err := lookupSessionUser(ctx, s.db, req.Header())
+	if err != nil {
 		return nil, err
+	}
+	if user.Role != auth.RoleAdmin {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("event の登録は admin のみ"))
 	}
 
 	title := strings.TrimSpace(req.Msg.GetTitle())

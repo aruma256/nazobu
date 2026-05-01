@@ -62,8 +62,10 @@ type GetMeResponse struct {
 	Id       string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Username string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	// 表示名・avatar URL は未設定なら空文字列。
-	DisplayName   string `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	AvatarUrl     string `protobuf:"bytes,4,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
+	DisplayName string `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	AvatarUrl   string `protobuf:"bytes,4,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
+	// 'admin' / 'member'。schema.sql の users.role と同じ値。
+	Role          string `protobuf:"bytes,5,opt,name=role,proto3" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -122,6 +124,13 @@ func (x *GetMeResponse) GetDisplayName() string {
 func (x *GetMeResponse) GetAvatarUrl() string {
 	if x != nil {
 		return x.AvatarUrl
+	}
+	return ""
+}
+
+func (x *GetMeResponse) GetRole() string {
+	if x != nil {
+		return x.Role
 	}
 	return ""
 }
@@ -273,13 +282,14 @@ var File_nazobu_v1_user_proto protoreflect.FileDescriptor
 const file_nazobu_v1_user_proto_rawDesc = "" +
 	"\n" +
 	"\x14nazobu/v1/user.proto\x12\tnazobu.v1\"\x0e\n" +
-	"\fGetMeRequest\"}\n" +
+	"\fGetMeRequest\"\x91\x01\n" +
 	"\rGetMeResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
 	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayName\x12\x1d\n" +
 	"\n" +
-	"avatar_url\x18\x04 \x01(\tR\tavatarUrl\"\x12\n" +
+	"avatar_url\x18\x04 \x01(\tR\tavatarUrl\x12\x12\n" +
+	"\x04role\x18\x05 \x01(\tR\x04role\"\x12\n" +
 	"\x10ListUsersRequest\":\n" +
 	"\x11ListUsersResponse\x12%\n" +
 	"\x05users\x18\x01 \x03(\v2\x0f.nazobu.v1.UserR\x05users\"U\n" +

@@ -31,6 +31,7 @@ func (s *userService) GetMe(ctx context.Context, req *connect.Request[nazobuv1.G
 		Username:    user.Username,
 		DisplayName: user.DisplayName.String,
 		AvatarUrl:   user.AvatarURL.String,
+		Role:        user.Role,
 	}), nil
 }
 

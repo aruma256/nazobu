@@ -18,6 +18,10 @@ import (
 const (
 	SessionCookieName = "nazobu_session"
 	SessionTTL        = 30 * 24 * time.Hour
+
+	// users.role に保存する値。schema.sql の CHECK 制約と同期させる。
+	RoleAdmin  = "admin"
+	RoleMember = "member"
 )
 
 var ErrNoSession = errors.New("session が見つからないか期限切れ")
@@ -27,6 +31,7 @@ type User struct {
 	Username    string
 	DisplayName sql.NullString
 	AvatarURL   sql.NullString
+	Role        string
 }
 
 // UserProfile は IdP から取得した、user 表示用プロフィールのスナップショット。
@@ -82,6 +87,7 @@ func UpsertUserFromIdentity(ctx context.Context, db *sql.DB, provider, subject s
 			Username:    profile.Username,
 			DisplayName: displayName,
 			AvatarURL:   avatarURL,
+			Role:        RoleMember,
 		}, nil
 
 	case err != nil:
@@ -144,6 +150,7 @@ func LookupSession(ctx context.Context, db *sql.DB, rawToken string) (*User, err
 		Username:    row.Username,
 		DisplayName: row.DisplayName,
 		AvatarURL:   row.AvatarUrl,
+		Role:        row.Role,
 	}, nil
 }
 

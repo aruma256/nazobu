@@ -79,19 +79,22 @@ export function EventsView() {
 
   const { me, events } = state;
   const displayName = me.displayName !== "" ? me.displayName : me.username;
+  const isAdmin = me.role === "admin";
 
   return (
     <>
       <AppHeader brand="謎部" user={displayName} />
       <PageShell>
-        <Section>
-          <Link
-            href="/events/new"
-            className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 active:bg-emerald-900"
-          >
-            公演を登録
-          </Link>
-        </Section>
+        {isAdmin && (
+          <Section>
+            <Link
+              href="/events/new"
+              className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 active:bg-emerald-900"
+            >
+              公演を登録
+            </Link>
+          </Section>
+        )}
 
         <Section>
           <SectionTitle count={events.length}>公演一覧</SectionTitle>

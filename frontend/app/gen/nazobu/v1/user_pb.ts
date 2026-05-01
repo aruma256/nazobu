@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file nazobu/v1/user.proto.
  */
 export const file_nazobu_v1_user: GenFile = /*@__PURE__*/
-  fileDesc("ChRuYXpvYnUvdjEvdXNlci5wcm90bxIJbmF6b2J1LnYxIg4KDEdldE1lUmVxdWVzdCJXCg1HZXRNZVJlc3BvbnNlEgoKAmlkGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCRISCgphdmF0YXJfdXJsGAQgASgJIhIKEExpc3RVc2Vyc1JlcXVlc3QiMwoRTGlzdFVzZXJzUmVzcG9uc2USHgoFdXNlcnMYASADKAsyDy5uYXpvYnUudjEuVXNlciI6CgRVc2VyEgoKAmlkGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCTKRAQoLVXNlclNlcnZpY2USOgoFR2V0TWUSFy5uYXpvYnUudjEuR2V0TWVSZXF1ZXN0GhgubmF6b2J1LnYxLkdldE1lUmVzcG9uc2USRgoJTGlzdFVzZXJzEhsubmF6b2J1LnYxLkxpc3RVc2Vyc1JlcXVlc3QaHC5uYXpvYnUudjEuTGlzdFVzZXJzUmVzcG9uc2VCRFpCZ2l0aHViLmNvbS9hcnVtYTI1Ni9uYXpvYnUvYmFja2VuZC9pbnRlcm5hbC9nZW4vbmF6b2J1L3YxO25hem9idXYxYgZwcm90bzM");
+  fileDesc("ChRuYXpvYnUvdjEvdXNlci5wcm90bxIJbmF6b2J1LnYxIg4KDEdldE1lUmVxdWVzdCJlCg1HZXRNZVJlc3BvbnNlEgoKAmlkGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCRISCgphdmF0YXJfdXJsGAQgASgJEgwKBHJvbGUYBSABKAkiEgoQTGlzdFVzZXJzUmVxdWVzdCIzChFMaXN0VXNlcnNSZXNwb25zZRIeCgV1c2VycxgBIAMoCzIPLm5hem9idS52MS5Vc2VyIjoKBFVzZXISCgoCaWQYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSFAoMZGlzcGxheV9uYW1lGAMgASgJMpEBCgtVc2VyU2VydmljZRI6CgVHZXRNZRIXLm5hem9idS52MS5HZXRNZVJlcXVlc3QaGC5uYXpvYnUudjEuR2V0TWVSZXNwb25zZRJGCglMaXN0VXNlcnMSGy5uYXpvYnUudjEuTGlzdFVzZXJzUmVxdWVzdBocLm5hem9idS52MS5MaXN0VXNlcnNSZXNwb25zZUJEWkJnaXRodWIuY29tL2FydW1hMjU2L25hem9idS9iYWNrZW5kL2ludGVybmFsL2dlbi9uYXpvYnUvdjE7bmF6b2J1djFiBnByb3RvMw");
 
 /**
  * @generated from message nazobu.v1.GetMeRequest
@@ -50,6 +50,13 @@ export type GetMeResponse = Message<"nazobu.v1.GetMeResponse"> & {
    * @generated from field: string avatar_url = 4;
    */
   avatarUrl: string;
+
+  /**
+   * 'admin' / 'member'。schema.sql の users.role と同じ値。
+   *
+   * @generated from field: string role = 5;
+   */
+  role: string;
 };
 
 /**
