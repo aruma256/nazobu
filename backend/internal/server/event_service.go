@@ -7,22 +7,22 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
-	"time"
 
 	"connectrpc.com/connect"
 	"github.com/oklog/ulid/v2"
 
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
 	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
+	"github.com/aruma256/nazobu/backend/internal/gen/queries"
 )
 
 type eventService struct {
-	db  *sql.DB
-	now func() time.Time
+	db *sql.DB
+	q  *queries.Queries
 }
 
 func newEventService(db *sql.DB) nazobuv1connect.EventServiceHandler {
-	return &eventService{db: db, now: time.Now}
+	return &eventService{db: db, q: queries.New(db)}
 }
 
 const (
@@ -35,9 +35,18 @@ func (s *eventService) ListEvents(ctx context.Context, req *connect.Request[nazo
 		return nil, err
 	}
 
-	events, err := s.queryEvents(ctx)
+	rows, err := s.q.ListEvents(ctx)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event 一覧の取得に失敗: %w", err))
+	}
+	events := make([]*nazobuv1.Event, 0, len(rows))
+	for _, r := range rows {
+		events = append(events, &nazobuv1.Event{
+			Id:      r.ID,
+			Title:   r.Title,
+			Url:     r.Url,
+			Tickets: []*nazobuv1.EventTicket{},
+		})
 	}
 	if len(events) == 0 {
 		return connect.NewResponse(&nazobuv1.ListEventsResponse{Events: events}), nil
@@ -74,12 +83,11 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 	}
 
 	id := ulid.Make().String()
-	now := s.now().UTC()
-
-	if _, err := s.db.ExecContext(ctx, `
-		INSERT INTO events (id, title, url, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?)
-	`, id, title, rawURL, now, now); err != nil {
+	if err := s.q.CreateEvent(ctx, queries.CreateEventParams{
+		ID:    id,
+		Title: title,
+		Url:   rawURL,
+	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の登録に失敗: %w", err))
 	}
 
@@ -93,111 +101,49 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 	}), nil
 }
 
-func (s *eventService) queryEvents(ctx context.Context) ([]*nazobuv1.Event, error) {
-	rows, err := s.db.QueryContext(ctx, `
-		SELECT id, title, url
-		FROM events
-		ORDER BY created_at DESC, id DESC
-	`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	out := []*nazobuv1.Event{}
-	for rows.Next() {
-		var id, title, eventURL string
-		if err := rows.Scan(&id, &title, &eventURL); err != nil {
-			return nil, err
-		}
-		out = append(out, &nazobuv1.Event{
-			Id:      id,
-			Title:   title,
-			Url:     eventURL,
-			Tickets: []*nazobuv1.EventTicket{},
-		})
-	}
-	return out, rows.Err()
-}
-
 // attachTickets は events に紐づく ticket と参加者を埋める。1 イベントずつ N+1 で叩かず、
 // IN (...) でまとめて引いて in-memory で振り分ける。
 func (s *eventService) attachTickets(ctx context.Context, events []*nazobuv1.Event) error {
 	indexByEvent := make(map[string]*nazobuv1.Event, len(events))
-	args := make([]any, 0, len(events))
-	placeholders := make([]string, 0, len(events))
+	eventIDs := make([]string, 0, len(events))
 	for _, e := range events {
 		indexByEvent[e.Id] = e
-		args = append(args, e.Id)
-		placeholders = append(placeholders, "?")
+		eventIDs = append(eventIDs, e.Id)
 	}
-	in := strings.Join(placeholders, ",")
 
-	ticketRows, err := s.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT t.id, t.event_id, t.attended_on, t.price_per_person,
-		       COALESCE(NULLIF(pu.display_name, ''), pu.username) AS purchaser_name
-		FROM tickets t
-		JOIN users pu ON pu.id = t.purchased_by
-		WHERE t.event_id IN (%s)
-		ORDER BY t.attended_on DESC, t.id ASC
-	`, in), args...)
+	ticketRows, err := s.q.ListEventTicketsByEventIDs(ctx, eventIDs)
 	if err != nil {
 		return err
 	}
-	defer ticketRows.Close()
 
 	indexByTicket := map[string]*nazobuv1.EventTicket{}
-	ticketIDs := []any{}
-	for ticketRows.Next() {
-		var (
-			id, eventID, purchaser string
-			price                  int32
-			attendedOn             time.Time
-		)
-		if err := ticketRows.Scan(&id, &eventID, &attendedOn, &price, &purchaser); err != nil {
-			return err
-		}
+	ticketIDs := make([]string, 0, len(ticketRows))
+	for _, r := range ticketRows {
 		t := &nazobuv1.EventTicket{
-			Id:               id,
-			AttendedOn:       attendedOn.Format(dateLayout),
-			PricePerPerson:   price,
-			PurchaserName:    purchaser,
+			Id:               r.ID,
+			AttendedOn:       r.AttendedOn.Format(dateLayout),
+			PricePerPerson:   r.PricePerPerson,
+			PurchaserName:    r.PurchaserName,
 			ParticipantNames: []string{},
 		}
-		if ev, ok := indexByEvent[eventID]; ok {
+		if ev, ok := indexByEvent[r.EventID]; ok {
 			ev.Tickets = append(ev.Tickets, t)
 		}
-		indexByTicket[id] = t
-		ticketIDs = append(ticketIDs, id)
-	}
-	if err := ticketRows.Err(); err != nil {
-		return err
+		indexByTicket[r.ID] = t
+		ticketIDs = append(ticketIDs, r.ID)
 	}
 	if len(ticketIDs) == 0 {
 		return nil
 	}
 
-	tinPlaceholders := strings.Repeat("?,", len(ticketIDs)-1) + "?"
-	partRows, err := s.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT tp.ticket_id, COALESCE(NULLIF(u.display_name, ''), u.username)
-		FROM ticket_participants tp
-		JOIN users u ON u.id = tp.user_id
-		WHERE tp.ticket_id IN (%s)
-		ORDER BY tp.ticket_id, tp.created_at ASC
-	`, tinPlaceholders), ticketIDs...)
+	partRows, err := s.q.ListTicketParticipantNamesByTicketIDs(ctx, ticketIDs)
 	if err != nil {
 		return err
 	}
-	defer partRows.Close()
-
-	for partRows.Next() {
-		var ticketID, name string
-		if err := partRows.Scan(&ticketID, &name); err != nil {
-			return err
-		}
-		if t, ok := indexByTicket[ticketID]; ok {
-			t.ParticipantNames = append(t.ParticipantNames, name)
+	for _, r := range partRows {
+		if t, ok := indexByTicket[r.TicketID]; ok {
+			t.ParticipantNames = append(t.ParticipantNames, r.Name)
 		}
 	}
-	return partRows.Err()
+	return nil
 }

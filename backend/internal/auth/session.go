@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/oklog/ulid/v2"
+
+	"github.com/aruma256/nazobu/backend/internal/gen/queries"
 )
 
 const (
@@ -42,10 +44,11 @@ func UpsertUserFromIdentity(ctx context.Context, db *sql.DB, provider, subject s
 	displayName := nullString(profile.DisplayName)
 	avatarURL := nullString(profile.AvatarURL)
 
-	var existingUserID string
-	err := db.QueryRowContext(ctx, `
-		SELECT user_id FROM user_identities WHERE provider = ? AND subject = ?
-	`, provider, subject).Scan(&existingUserID)
+	q := queries.New(db)
+	existingUserID, err := q.GetUserIDByIdentity(ctx, queries.GetUserIDByIdentityParams{
+		Provider: provider,
+		Subject:  subject,
+	})
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		newUserID := ulid.Make().String()
@@ -55,16 +58,20 @@ func UpsertUserFromIdentity(ctx context.Context, db *sql.DB, provider, subject s
 		}
 		defer func() { _ = tx.Rollback() }()
 
-		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO users (id, username, display_name, avatar_url, created_at, updated_at)
-			VALUES (?, ?, ?, ?, NOW(6), NOW(6))
-		`, newUserID, profile.Username, displayName, avatarURL); err != nil {
+		qtx := q.WithTx(tx)
+		if err := qtx.CreateUser(ctx, queries.CreateUserParams{
+			ID:          newUserID,
+			Username:    profile.Username,
+			DisplayName: displayName,
+			AvatarUrl:   avatarURL,
+		}); err != nil {
 			return nil, err
 		}
-		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO user_identities (user_id, provider, subject, created_at, updated_at)
-			VALUES (?, ?, ?, NOW(6), NOW(6))
-		`, newUserID, provider, subject); err != nil {
+		if err := qtx.CreateUserIdentity(ctx, queries.CreateUserIdentityParams{
+			UserID:   newUserID,
+			Provider: provider,
+			Subject:  subject,
+		}); err != nil {
 			return nil, err
 		}
 		if err := tx.Commit(); err != nil {
@@ -81,11 +88,12 @@ func UpsertUserFromIdentity(ctx context.Context, db *sql.DB, provider, subject s
 		return nil, err
 
 	default:
-		if _, err := db.ExecContext(ctx, `
-			UPDATE users
-			SET username = ?, display_name = ?, avatar_url = ?, updated_at = NOW(6)
-			WHERE id = ?
-		`, profile.Username, displayName, avatarURL, existingUserID); err != nil {
+		if err := q.UpdateUserProfile(ctx, queries.UpdateUserProfileParams{
+			Username:    profile.Username,
+			DisplayName: displayName,
+			AvatarUrl:   avatarURL,
+			ID:          existingUserID,
+		}); err != nil {
 			return nil, err
 		}
 		return &User{
@@ -104,11 +112,12 @@ func CreateSession(ctx context.Context, db *sql.DB, userID string) (string, erro
 	if err != nil {
 		return "", err
 	}
-	_, err = db.ExecContext(ctx, `
-		INSERT INTO sessions (id, user_id, token_hash, expires_at, created_at)
-		VALUES (?, ?, ?, ?, NOW(6))
-	`, ulid.Make().String(), userID, hashToken(rawToken), time.Now().Add(SessionTTL))
-	if err != nil {
+	if err := queries.New(db).CreateSession(ctx, queries.CreateSessionParams{
+		ID:        ulid.Make().String(),
+		UserID:    userID,
+		TokenHash: hashToken(rawToken),
+		ExpiresAt: time.Now().Add(SessionTTL),
+	}); err != nil {
 		return "", err
 	}
 	return rawToken, nil
@@ -117,34 +126,30 @@ func CreateSession(ctx context.Context, db *sql.DB, userID string) (string, erro
 // LookupSession は raw token から有効な session に紐づく user を引く。
 // 期限切れなら ErrNoSession を返し、当該 session を削除する。
 func LookupSession(ctx context.Context, db *sql.DB, rawToken string) (*User, error) {
-	var u User
-	var expiresAt time.Time
-	err := db.QueryRowContext(ctx, `
-		SELECT u.id, u.username, u.display_name, u.avatar_url, s.expires_at
-		FROM sessions s
-		INNER JOIN users u ON u.id = s.user_id
-		WHERE s.token_hash = ?
-	`, hashToken(rawToken)).Scan(
-		&u.ID, &u.Username, &u.DisplayName, &u.AvatarURL,
-		&expiresAt,
-	)
+	tokenHash := hashToken(rawToken)
+	q := queries.New(db)
+	row, err := q.GetSessionUserByTokenHash(ctx, tokenHash)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNoSession
 	}
 	if err != nil {
 		return nil, err
 	}
-	if time.Now().After(expiresAt) {
-		_, _ = db.ExecContext(ctx, `DELETE FROM sessions WHERE token_hash = ?`, hashToken(rawToken))
+	if time.Now().After(row.ExpiresAt) {
+		_ = q.DeleteSessionByTokenHash(ctx, tokenHash)
 		return nil, ErrNoSession
 	}
-	return &u, nil
+	return &User{
+		ID:          row.ID,
+		Username:    row.Username,
+		DisplayName: row.DisplayName,
+		AvatarURL:   row.AvatarUrl,
+	}, nil
 }
 
 // DeleteSession は raw token に対応する session を削除する。
 func DeleteSession(ctx context.Context, db *sql.DB, rawToken string) error {
-	_, err := db.ExecContext(ctx, `DELETE FROM sessions WHERE token_hash = ?`, hashToken(rawToken))
-	return err
+	return queries.New(db).DeleteSessionByTokenHash(ctx, hashToken(rawToken))
 }
 
 func generateToken() (string, error) {

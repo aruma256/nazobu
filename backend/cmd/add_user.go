@@ -8,6 +8,7 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	"github.com/aruma256/nazobu/backend/internal/config"
 	"github.com/aruma256/nazobu/backend/internal/db"
+	"github.com/aruma256/nazobu/backend/internal/gen/queries"
 	"github.com/spf13/cobra"
 )
 
@@ -30,10 +31,10 @@ var addUserCmd = &cobra.Command{
 
 		ctx := cmd.Context()
 
-		var existingUserID string
-		err = conn.QueryRowContext(ctx, `
-			SELECT user_id FROM user_identities WHERE provider = ? AND subject = ?
-		`, auth.ProviderDiscord, addUserDiscordUserID).Scan(&existingUserID)
+		_, err = queries.New(conn).GetUserIDByIdentity(ctx, queries.GetUserIDByIdentityParams{
+			Provider: auth.ProviderDiscord,
+			Subject:  addUserDiscordUserID,
+		})
 		isNew := errors.Is(err, sql.ErrNoRows)
 		if err != nil && !isNew {
 			return err

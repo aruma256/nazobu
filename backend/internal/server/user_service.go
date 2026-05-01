@@ -9,14 +9,16 @@ import (
 
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
 	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
+	"github.com/aruma256/nazobu/backend/internal/gen/queries"
 )
 
 type userService struct {
 	db *sql.DB
+	q  *queries.Queries
 }
 
 func newUserService(db *sql.DB) nazobuv1connect.UserServiceHandler {
-	return &userService{db: db}
+	return &userService{db: db, q: queries.New(db)}
 }
 
 func (s *userService) GetMe(ctx context.Context, req *connect.Request[nazobuv1.GetMeRequest]) (*connect.Response[nazobuv1.GetMeResponse], error) {
@@ -37,33 +39,18 @@ func (s *userService) ListUsers(ctx context.Context, req *connect.Request[nazobu
 		return nil, err
 	}
 
-	rows, err := s.db.QueryContext(ctx, `
-		SELECT id, username, display_name
-		FROM users
-		ORDER BY username ASC, id ASC
-	`)
+	rows, err := s.q.ListUsers(ctx)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("user 一覧の取得に失敗: %w", err))
 	}
-	defer rows.Close()
 
-	users := []*nazobuv1.User{}
-	for rows.Next() {
-		var (
-			id, username string
-			displayName  sql.NullString
-		)
-		if err := rows.Scan(&id, &username, &displayName); err != nil {
-			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("user 行の読み取りに失敗: %w", err))
-		}
+	users := make([]*nazobuv1.User, 0, len(rows))
+	for _, r := range rows {
 		users = append(users, &nazobuv1.User{
-			Id:          id,
-			Username:    username,
-			DisplayName: displayName.String,
+			Id:          r.ID,
+			Username:    r.Username,
+			DisplayName: r.DisplayName.String,
 		})
-	}
-	if err := rows.Err(); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("user 一覧の取得に失敗: %w", err))
 	}
 	return connect.NewResponse(&nazobuv1.ListUsersResponse{Users: users}), nil
 }
