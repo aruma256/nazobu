@@ -29,10 +29,10 @@ export function AppHeader({
         </Link>
         <nav className="flex items-center gap-3 text-sm text-zinc-600">
           <Link href="/events" className="hover:text-zinc-900">
-            公演
+            公演一覧
           </Link>
           <Link href="/tickets" className="hover:text-zinc-900">
-            チケット
+            チケット一覧
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-3">
