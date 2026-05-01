@@ -1,6 +1,7 @@
 // 共通の再利用 UI 部品。スタイルはここに集約し、
 // 個別ページからは意味のある単位（Card / Badge / Section など）で組み合わせる。
 
+import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 export function PageShell({ children }: { children: ReactNode }) {
@@ -18,17 +19,27 @@ export function AppHeader({
 }) {
   return (
     <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/85 backdrop-blur-md">
-      <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-2">
+      <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
+        <Link href="/" className="flex items-center gap-2">
           <span
             aria-hidden
             className="inline-block size-2 rounded-full bg-emerald-600"
           />
           <span className="text-base font-semibold tracking-tight">{brand}</span>
-        </div>
-        <div className="flex items-center gap-3">
+        </Link>
+        <nav className="flex items-center gap-3 text-sm text-zinc-600">
+          <Link href="/events" className="hover:text-zinc-900">
+            公演
+          </Link>
+          <Link href="/tickets" className="hover:text-zinc-900">
+            チケット
+          </Link>
+        </nav>
+        <div className="ml-auto flex items-center gap-3">
           {user !== "" && (
-            <span className="text-sm text-zinc-500">{user}</span>
+            <span className="max-w-[8rem] truncate text-sm text-zinc-500">
+              {user}
+            </span>
           )}
           {user !== "" && (
             <form action="/auth/logout" method="post">

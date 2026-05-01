@@ -1,7 +1,6 @@
 "use client";
 
 import { Code, ConnectError } from "@connectrpc/connect";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -84,15 +83,6 @@ export function TicketsView() {
     <>
       <AppHeader brand="謎部" user={displayName} />
       <PageShell>
-        <Section>
-          <Link
-            href="/events"
-            className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 active:bg-emerald-900"
-          >
-            公演を選んでチケットを登録
-          </Link>
-        </Section>
-
         <Section>
           <SectionTitle count={tickets.length}>チケット一覧</SectionTitle>
           {tickets.length === 0 ? (
