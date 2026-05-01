@@ -9,9 +9,14 @@ import (
 )
 
 type Querier interface {
+	// 参照整合性のフレンドリーなプリチェック用。FK でも担保されるが UX のために事前に存在確認する。
+	CountEventByID(ctx context.Context, id string) (int64, error)
 	// 参照整合性のフレンドリーなプリチェック用。FK でも担保されるが UX のために事前に数を確認する。
 	CountUsersByIDs(ctx context.Context, ids []string) (int64, error)
+	CreateEvent(ctx context.Context, arg CreateEventParams) error
 	CreateSession(ctx context.Context, arg CreateSessionParams) error
+	CreateTicket(ctx context.Context, arg CreateTicketParams) error
+	CreateTicketParticipant(ctx context.Context, arg CreateTicketParticipantParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	CreateUserIdentity(ctx context.Context, arg CreateUserIdentityParams) error
 	DeleteSessionByTokenHash(ctx context.Context, tokenHash string) error
@@ -19,6 +24,29 @@ type Querier interface {
 	// 期限切れ判定は呼び出し側で行う。
 	GetSessionUserByTokenHash(ctx context.Context, tokenHash string) (GetSessionUserByTokenHashRow, error)
 	GetUserIDByIdentity(ctx context.Context, arg GetUserIDByIdentityParams) (string, error)
+	// 自分以外の参加者（同行者）名を ticket_id ごとにまとめて引く（N+1 回避）。
+	ListCompanionNamesByTicketIDs(ctx context.Context, arg ListCompanionNamesByTicketIDsParams) ([]ListCompanionNamesByTicketIDsRow, error)
+	// 公演一覧画面で各 event に紐づく ticket をまとめて引く。
+	// 呼び出し側で event_id ごとに in-memory で振り分ける（N+1 回避）。
+	ListEventTicketsByEventIDs(ctx context.Context, eventIds []string) ([]ListEventTicketsByEventIDsRow, error)
+	// 公演一覧（新しい順）。詳細表示用の最低限フィールドのみ返す。
+	ListEvents(ctx context.Context) ([]ListEventsRow, error)
+	// 当月分（[month_start, next_month_start) 半開区間）の自分の参加チケット。
+	// 立替者本人 or 精算済みなら settled = 1 とみなす。
+	// MySQL に BOOLEAN 型がないため CAST で UNSIGNED に固定し、sqlc に NullBool 推論させずに int64 で受ける。
+	ListMyMonthlyTicketsByUserID(ctx context.Context, arg ListMyMonthlyTicketsByUserIDParams) ([]ListMyMonthlyTicketsByUserIDRow, error)
+	// ticket 一覧 / 公演一覧で、各 ticket の参加者名をまとめて引く（N+1 回避）。
+	// 呼び出し側で ticket_id ごとに in-memory で振り分ける。
+	ListTicketParticipantNamesByTicketIDs(ctx context.Context, ticketIds []string) ([]ListTicketParticipantNamesByTicketIDsRow, error)
+	// ticket 一覧画面用。event 名と立替者名を join して返す。
+	ListTickets(ctx context.Context) ([]ListTicketsRow, error)
+	// CreateTicket 直後の返却用。1 件のことが多いがインタフェースは ListTickets と揃える。
+	ListTicketsByIDs(ctx context.Context, ids []string) ([]ListTicketsByIDsRow, error)
+	// 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」を取る。
+	// 立替者本人の自己持ち分は精算対象ではないので除外する。
+	ListUnsettledTicketsByUserID(ctx context.Context, userID string) ([]ListUnsettledTicketsByUserIDRow, error)
+	// 今日以降に attended_on を持つ自分の参加チケット。
+	ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcomingTicketsByUserIDParams) ([]ListUpcomingTicketsByUserIDRow, error)
 	// 表示用の最低限フィールドだけ返す。avatar_url 等は GetMe 経路（session join）で取る。
 	ListUsers(ctx context.Context) ([]ListUsersRow, error)
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) error
