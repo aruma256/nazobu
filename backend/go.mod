@@ -4,7 +4,6 @@ go 1.26
 
 require (
 	connectrpc.com/connect v1.18.1
-	connectrpc.com/grpchealth v1.4.0
 	github.com/coreos/go-oidc/v3 v3.18.0
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/oklog/ulid/v2 v2.1.1

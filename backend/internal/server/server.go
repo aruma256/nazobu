@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"connectrpc.com/grpchealth"
 	"golang.org/x/oauth2"
 
 	"github.com/aruma256/nazobu/backend/internal/auth"
@@ -40,11 +39,6 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	}
 
 	mux := http.NewServeMux()
-
-	// gRPC health check (Connect)
-	healthChecker := grpchealth.NewStaticChecker("nazobu")
-	healthPath, healthHandler := grpchealth.NewHandler(healthChecker)
-	mux.Handle(healthPath, healthHandler)
 
 	// liveness 用
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
