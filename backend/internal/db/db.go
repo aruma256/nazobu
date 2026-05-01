@@ -10,8 +10,10 @@ import (
 )
 
 func Open(cfg config.DBConfig) (*sql.DB, error) {
+	// loc=Asia%2FTokyo: time.Time の DB 出入りを JST 基準で扱う。これがないと driver の
+	// 既定 loc=UTC で DATE 列が日付境界を跨いで -1 日ズレる。
 	dsn := fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/%s?parseTime=true&charset=utf8mb4&collation=utf8mb4_0900_ai_ci",
+		"%s:%s@tcp(%s:%s)/%s?parseTime=true&loc=Asia%%2FTokyo&charset=utf8mb4&collation=utf8mb4_0900_ai_ci",
 		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Name,
 	)
 	conn, err := sql.Open("mysql", dsn)
