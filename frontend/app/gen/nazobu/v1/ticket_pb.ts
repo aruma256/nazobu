@@ -78,7 +78,7 @@ export type Ticket = Message<"nazobu.v1.Ticket"> & {
   pricePerPerson: number;
 
   /**
-   * 集合時刻 "HH:MM"（attended_on の JST 当日基準）。
+   * 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
    *
    * @generated from field: string meeting_time = 6;
    */
@@ -237,7 +237,7 @@ export type CreateTicketRequest = Message<"nazobu.v1.CreateTicketRequest"> & {
   pricePerPerson: number;
 
   /**
-   * 集合時刻 "HH:MM"（attended_on の JST 当日基準）。
+   * 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
    *
    * @generated from field: string meeting_time = 4;
    */
@@ -314,7 +314,7 @@ export type UpdateTicketRequest = Message<"nazobu.v1.UpdateTicketRequest"> & {
   pricePerPerson: number;
 
   /**
-   * 集合時刻 "HH:MM"（attended_on の JST 当日基準）。
+   * 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
    *
    * @generated from field: string meeting_time = 4;
    */

@@ -16,6 +16,6 @@ sql:
         # NULL 可なカラムは sql.NullString で受ける。
         overrides:
           - column: "tickets.meeting_time"
-            go_type: "string"
+            go_type: "database/sql.NullString"
           - column: "tickets.start_time"
             go_type: "database/sql.NullString"

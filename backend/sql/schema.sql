@@ -74,8 +74,8 @@ CREATE TABLE tickets (
   attended_on       DATE         NOT NULL,
   price_per_person  INT          NOT NULL,
   purchased_by      VARCHAR(26)  NOT NULL,
-  -- 集合時刻（attended_on の JST 当日基準）と集合場所。
-  meeting_time      TIME         NOT NULL,
+  -- 集合時刻（attended_on の JST 当日基準）と集合場所。集合時刻が決まっていないときは NULL。
+  meeting_time      TIME         NULL,
   meeting_place     VARCHAR(255) NOT NULL,
   -- 公演の開始時刻（attended_on の JST 当日基準）。何時の回という概念が無い公演もあるので NULL 可。
   start_time        TIME         NULL,

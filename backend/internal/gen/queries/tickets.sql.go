@@ -40,7 +40,7 @@ type CreateTicketParams struct {
 	AttendedOn     time.Time
 	PricePerPerson int32
 	PurchasedBy    string
-	MeetingTime    string
+	MeetingTime    sql.NullString
 	MeetingPlace   string
 	StartTime      sql.NullString
 }
@@ -107,7 +107,7 @@ type GetTicketByIDRow struct {
 	EventUrl       string
 	AttendedOn     time.Time
 	PricePerPerson int32
-	MeetingTime    string
+	MeetingTime    sql.NullString
 	MeetingPlace   string
 	StartTime      sql.NullString
 	PurchasedBy    string
@@ -241,7 +241,7 @@ type ListTicketsRow struct {
 	EventUrl       string
 	AttendedOn     time.Time
 	PricePerPerson int32
-	MeetingTime    string
+	MeetingTime    sql.NullString
 	MeetingPlace   string
 	StartTime      sql.NullString
 	PurchaserName  string
@@ -301,7 +301,7 @@ type ListTicketsByIDsRow struct {
 	EventUrl       string
 	AttendedOn     time.Time
 	PricePerPerson int32
-	MeetingTime    string
+	MeetingTime    sql.NullString
 	MeetingPlace   string
 	StartTime      sql.NullString
 	PurchaserName  string
@@ -401,7 +401,7 @@ WHERE id = ?
 type UpdateTicketParams struct {
 	AttendedOn     time.Time
 	PricePerPerson int32
-	MeetingTime    string
+	MeetingTime    sql.NullString
 	MeetingPlace   string
 	StartTime      sql.NullString
 	PurchasedBy    string

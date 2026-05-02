@@ -50,7 +50,7 @@ func (s *ticketService) ListTickets(ctx context.Context, req *connect.Request[na
 			EventUrl:         r.EventUrl,
 			AttendedOn:       r.AttendedOn.Format(dateLayout),
 			PricePerPerson:   r.PricePerPerson,
-			MeetingTime:      formatMeetingTime(r.MeetingTime),
+			MeetingTime:      formatNullableMeetingTime(r.MeetingTime),
 			MeetingPlace:     r.MeetingPlace,
 			StartTime:        formatNullableMeetingTime(r.StartTime),
 			PurchaserName:    r.PurchaserName,
@@ -109,7 +109,7 @@ func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazo
 		EventUrl:         row.EventUrl,
 		AttendedOn:       row.AttendedOn.Format(dateLayout),
 		PricePerPerson:   row.PricePerPerson,
-		MeetingTime:      formatMeetingTime(row.MeetingTime),
+		MeetingTime:      formatNullableMeetingTime(row.MeetingTime),
 		MeetingPlace:     row.MeetingPlace,
 		StartTime:        formatNullableMeetingTime(row.StartTime),
 		PurchaserName:    row.PurchaserName,
@@ -136,7 +136,6 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 	msg := req.Msg
 	eventID := strings.TrimSpace(msg.GetEventId())
 	attendedOn := strings.TrimSpace(msg.GetAttendedOn())
-	meetingTime := strings.TrimSpace(msg.GetMeetingTime())
 	meetingPlace := strings.TrimSpace(msg.GetMeetingPlace())
 	price := msg.GetPricePerPerson()
 	participants := dedupeStrings(msg.GetParticipantUserIds())
@@ -148,10 +147,11 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("attended_on は YYYY-MM-DD"))
 	}
-	if _, err := time.ParseInLocation(timeLayout, meetingTime, jst); err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("meeting_time は HH:MM"))
+	meetingTime, err := parseNullableMeetingTime(msg.GetMeetingTime(), "meeting_time")
+	if err != nil {
+		return nil, err
 	}
-	startTime, err := parseNullableMeetingTime(msg.GetStartTime())
+	startTime, err := parseNullableMeetingTime(msg.GetStartTime(), "start_time")
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +224,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 		EventUrl:         r.EventUrl,
 		AttendedOn:       r.AttendedOn.Format(dateLayout),
 		PricePerPerson:   r.PricePerPerson,
-		MeetingTime:      formatMeetingTime(r.MeetingTime),
+		MeetingTime:      formatNullableMeetingTime(r.MeetingTime),
 		MeetingPlace:     r.MeetingPlace,
 		StartTime:        formatNullableMeetingTime(r.StartTime),
 		PurchaserName:    r.PurchaserName,
@@ -260,7 +260,6 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 	}
 
 	attendedOn := strings.TrimSpace(msg.GetAttendedOn())
-	meetingTime := strings.TrimSpace(msg.GetMeetingTime())
 	meetingPlace := strings.TrimSpace(msg.GetMeetingPlace())
 	purchasedBy := strings.TrimSpace(msg.GetPurchasedByUserId())
 	price := msg.GetPricePerPerson()
@@ -269,10 +268,11 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("attended_on は YYYY-MM-DD"))
 	}
-	if _, err := time.ParseInLocation(timeLayout, meetingTime, jst); err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("meeting_time は HH:MM"))
+	meetingTime, err := parseNullableMeetingTime(msg.GetMeetingTime(), "meeting_time")
+	if err != nil {
+		return nil, err
 	}
-	startTime, err := parseNullableMeetingTime(msg.GetStartTime())
+	startTime, err := parseNullableMeetingTime(msg.GetStartTime(), "start_time")
 	if err != nil {
 		return nil, err
 	}
@@ -326,7 +326,7 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 		EventUrl:         r.EventUrl,
 		AttendedOn:       r.AttendedOn.Format(dateLayout),
 		PricePerPerson:   r.PricePerPerson,
-		MeetingTime:      formatMeetingTime(r.MeetingTime),
+		MeetingTime:      formatNullableMeetingTime(r.MeetingTime),
 		MeetingPlace:     r.MeetingPlace,
 		StartTime:        formatNullableMeetingTime(r.StartTime),
 		PurchaserName:    r.PurchaserName,
@@ -504,30 +504,26 @@ func canEditTicket(user *auth.User, purchasedBy string) bool {
 	return user.Role == auth.RoleAdmin || user.ID == purchasedBy
 }
 
-// formatMeetingTime は MySQL から戻る "HH:MM:SS" を "HH:MM" に丸める。
-func formatMeetingTime(raw string) string {
-	if len(raw) >= 5 {
-		return raw[:5]
-	}
-	return raw
-}
-
-// formatNullableMeetingTime は NULL 可な TIME カラムを "HH:MM"（NULL なら空文字）にする。
+// formatNullableMeetingTime は NULL 可な TIME カラム（"HH:MM:SS"）を "HH:MM"（NULL なら空文字）にする。
 func formatNullableMeetingTime(v sql.NullString) string {
 	if !v.Valid {
 		return ""
 	}
-	return formatMeetingTime(v.String)
+	if len(v.String) >= 5 {
+		return v.String[:5]
+	}
+	return v.String
 }
 
 // parseNullableMeetingTime は "HH:MM"（空文字なら NULL）として受け取る。
-func parseNullableMeetingTime(raw string) (sql.NullString, error) {
+// field は invalid 時のエラーメッセージで参照する proto フィールド名。
+func parseNullableMeetingTime(raw, field string) (sql.NullString, error) {
 	s := strings.TrimSpace(raw)
 	if s == "" {
 		return sql.NullString{}, nil
 	}
 	if _, err := time.ParseInLocation(timeLayout, s, jst); err != nil {
-		return sql.NullString{}, connect.NewError(connect.CodeInvalidArgument, errors.New("start_time は HH:MM"))
+		return sql.NullString{}, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("%s は HH:MM", field))
 	}
 	return sql.NullString{String: s, Valid: true}, nil
 }

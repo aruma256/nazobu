@@ -41,7 +41,7 @@ message Ticket {
   string attended_on = 4;
   // 一人あたりの精算額（円）。
   int32 price_per_person = 5;
-  // 集合時刻 "HH:MM"（attended_on の JST 当日基準）。
+  // 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
   string meeting_time = 6;
   // 集合場所。
   string meeting_place = 7;
@@ -83,7 +83,7 @@ message CreateTicketRequest {
   string attended_on = 2;
   // 一人あたりの精算額（円、0 以上）。
   int32 price_per_person = 3;
-  // 集合時刻 "HH:MM"（attended_on の JST 当日基準）。
+  // 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
   string meeting_time = 4;
   // 集合場所。
   string meeting_place = 5;
@@ -104,7 +104,7 @@ message UpdateTicketRequest {
   string attended_on = 2;
   // 一人あたりの精算額（円、0 以上）。
   int32 price_per_person = 3;
-  // 集合時刻 "HH:MM"（attended_on の JST 当日基準）。
+  // 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
   string meeting_time = 4;
   // 集合場所。
   string meeting_place = 5;

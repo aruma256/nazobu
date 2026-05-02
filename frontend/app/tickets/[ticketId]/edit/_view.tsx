@@ -176,7 +176,6 @@ function Form({
     const priceNum = Number(pricePerPerson);
     if (
       attendedOn === "" ||
-      meetingTime === "" ||
       trimmedPlace === "" ||
       pricePerPerson === "" ||
       purchasedByUserId === ""
@@ -239,16 +238,18 @@ function Form({
               />
             </Field>
 
-            <Field label="集合時刻" htmlFor="ticket-meeting-time">
+            <Field label="集合時刻（任意）" htmlFor="ticket-meeting-time">
               <input
                 id="ticket-meeting-time"
                 type="time"
-                required
                 value={meetingTime}
                 onChange={(e) => setMeetingTime(e.target.value)}
                 disabled={submitting}
                 className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
               />
+              <p className="mt-1 text-xs text-zinc-500">
+                集合時刻が決まっている場合のみ入力してください。
+              </p>
             </Field>
 
             <Field label="開始時刻（任意）" htmlFor="ticket-start-time">

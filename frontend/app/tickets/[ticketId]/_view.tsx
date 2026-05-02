@@ -171,7 +171,9 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
               <Mono className="text-sm font-semibold text-emerald-700">
                 {formatDateJa(date)}
               </Mono>
-              <Mono className="text-xs text-zinc-500">{ticket.meetingTime}</Mono>
+              {ticket.meetingTime !== "" && (
+                <Mono className="text-xs text-zinc-500">{ticket.meetingTime}</Mono>
+              )}
               <Mono className="ml-auto text-sm font-semibold tracking-tight">
                 {formatYen(ticket.pricePerPerson)}
               </Mono>

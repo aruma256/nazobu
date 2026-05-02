@@ -111,7 +111,7 @@ type Ticket struct {
 	AttendedOn string `protobuf:"bytes,4,opt,name=attended_on,json=attendedOn,proto3" json:"attended_on,omitempty"`
 	// 一人あたりの精算額（円）。
 	PricePerPerson int32 `protobuf:"varint,5,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
-	// 集合時刻 "HH:MM"（attended_on の JST 当日基準）。
+	// 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
 	MeetingTime string `protobuf:"bytes,6,opt,name=meeting_time,json=meetingTime,proto3" json:"meeting_time,omitempty"`
 	// 集合場所。
 	MeetingPlace string `protobuf:"bytes,7,opt,name=meeting_place,json=meetingPlace,proto3" json:"meeting_place,omitempty"`
@@ -418,7 +418,7 @@ type CreateTicketRequest struct {
 	AttendedOn string `protobuf:"bytes,2,opt,name=attended_on,json=attendedOn,proto3" json:"attended_on,omitempty"`
 	// 一人あたりの精算額（円、0 以上）。
 	PricePerPerson int32 `protobuf:"varint,3,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
-	// 集合時刻 "HH:MM"（attended_on の JST 当日基準）。
+	// 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
 	MeetingTime string `protobuf:"bytes,4,opt,name=meeting_time,json=meetingTime,proto3" json:"meeting_time,omitempty"`
 	// 集合場所。
 	MeetingPlace string `protobuf:"bytes,5,opt,name=meeting_place,json=meetingPlace,proto3" json:"meeting_place,omitempty"`
@@ -561,7 +561,7 @@ type UpdateTicketRequest struct {
 	AttendedOn string `protobuf:"bytes,2,opt,name=attended_on,json=attendedOn,proto3" json:"attended_on,omitempty"`
 	// 一人あたりの精算額（円、0 以上）。
 	PricePerPerson int32 `protobuf:"varint,3,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
-	// 集合時刻 "HH:MM"（attended_on の JST 当日基準）。
+	// 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
 	MeetingTime string `protobuf:"bytes,4,opt,name=meeting_time,json=meetingTime,proto3" json:"meeting_time,omitempty"`
 	// 集合場所。
 	MeetingPlace string `protobuf:"bytes,5,opt,name=meeting_place,json=meetingPlace,proto3" json:"meeting_place,omitempty"`
