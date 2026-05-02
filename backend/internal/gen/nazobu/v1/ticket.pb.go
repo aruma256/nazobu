@@ -119,8 +119,10 @@ type Ticket struct {
 	PurchaserName string `protobuf:"bytes,8,opt,name=purchaser_name,json=purchaserName,proto3" json:"purchaser_name,omitempty"`
 	// 参加者の表示名（created_at 昇順）。立て替えた人も参加者として含めて構わない。
 	ParticipantNames []string `protobuf:"bytes,9,rep,name=participant_names,json=participantNames,proto3" json:"participant_names,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// 公演の URL（任意。空文字なら未設定）。
+	EventUrl      string `protobuf:"bytes,10,opt,name=event_url,json=eventUrl,proto3" json:"event_url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Ticket) Reset() {
@@ -214,6 +216,13 @@ func (x *Ticket) GetParticipantNames() []string {
 		return x.ParticipantNames
 	}
 	return nil
+}
+
+func (x *Ticket) GetEventUrl() string {
+	if x != nil {
+		return x.EventUrl
+	}
+	return ""
 }
 
 type GetTicketRequest struct {
@@ -932,7 +941,7 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\x16nazobu/v1/ticket.proto\x12\tnazobu.v1\"\x14\n" +
 	"\x12ListTicketsRequest\"B\n" +
 	"\x13ListTicketsResponse\x12+\n" +
-	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"\xbb\x02\n" +
+	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"\xd8\x02\n" +
 	"\x06Ticket\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\bevent_id\x18\x02 \x01(\tR\aeventId\x12\x1f\n" +
@@ -944,7 +953,9 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\fmeeting_time\x18\x06 \x01(\tR\vmeetingTime\x12#\n" +
 	"\rmeeting_place\x18\a \x01(\tR\fmeetingPlace\x12%\n" +
 	"\x0epurchaser_name\x18\b \x01(\tR\rpurchaserName\x12+\n" +
-	"\x11participant_names\x18\t \x03(\tR\x10participantNames\"/\n" +
+	"\x11participant_names\x18\t \x03(\tR\x10participantNames\x12\x1b\n" +
+	"\tevent_url\x18\n" +
+	" \x01(\tR\beventUrl\"/\n" +
 	"\x10GetTicketRequest\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\"\x9b\x01\n" +
 	"\x11GetTicketResponse\x12)\n" +

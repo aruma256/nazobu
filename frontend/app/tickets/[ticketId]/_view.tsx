@@ -179,6 +179,16 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
             <h3 className="px-4 pt-1 text-base leading-snug font-semibold">
               {ticket.eventTitle}
             </h3>
+            {ticket.eventUrl !== "" && (
+              <a
+                href={ticket.eventUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="mt-1 block truncate px-4 text-xs text-emerald-700 underline decoration-zinc-300 underline-offset-4 hover:decoration-emerald-700"
+              >
+                {ticket.eventUrl}
+              </a>
+            )}
             <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 pt-3 pb-4 text-xs text-zinc-600">
               <dt className="text-zinc-400">集合</dt>
               <dd>{ticket.meetingPlace}</dd>

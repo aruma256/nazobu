@@ -87,7 +87,7 @@ func (q *Queries) DeleteTicketParticipant(ctx context.Context, arg DeleteTicketP
 }
 
 const getTicketByID = `-- name: GetTicketByID :one
-SELECT t.id, t.event_id, e.title AS event_title,
+SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
        t.attended_on, t.price_per_person,
        t.meeting_time, t.meeting_place,
        t.purchased_by,
@@ -102,6 +102,7 @@ type GetTicketByIDRow struct {
 	ID             string
 	EventID        string
 	EventTitle     string
+	EventUrl       string
 	AttendedOn     time.Time
 	PricePerPerson int32
 	MeetingTime    string
@@ -118,6 +119,7 @@ func (q *Queries) GetTicketByID(ctx context.Context, id string) (GetTicketByIDRo
 		&i.ID,
 		&i.EventID,
 		&i.EventTitle,
+		&i.EventUrl,
 		&i.AttendedOn,
 		&i.PricePerPerson,
 		&i.MeetingTime,
@@ -218,7 +220,7 @@ func (q *Queries) ListTicketParticipantsByTicketID(ctx context.Context, ticketID
 }
 
 const listTickets = `-- name: ListTickets :many
-SELECT t.id, t.event_id, e.title AS event_title,
+SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
        t.attended_on, t.price_per_person,
        t.meeting_time, t.meeting_place,
        COALESCE(NULLIF(pu.display_name, ''), pu.username) AS purchaser_name
@@ -232,6 +234,7 @@ type ListTicketsRow struct {
 	ID             string
 	EventID        string
 	EventTitle     string
+	EventUrl       string
 	AttendedOn     time.Time
 	PricePerPerson int32
 	MeetingTime    string
@@ -253,6 +256,7 @@ func (q *Queries) ListTickets(ctx context.Context) ([]ListTicketsRow, error) {
 			&i.ID,
 			&i.EventID,
 			&i.EventTitle,
+			&i.EventUrl,
 			&i.AttendedOn,
 			&i.PricePerPerson,
 			&i.MeetingTime,
@@ -273,7 +277,7 @@ func (q *Queries) ListTickets(ctx context.Context) ([]ListTicketsRow, error) {
 }
 
 const listTicketsByIDs = `-- name: ListTicketsByIDs :many
-SELECT t.id, t.event_id, e.title AS event_title,
+SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
        t.attended_on, t.price_per_person,
        t.meeting_time, t.meeting_place,
        COALESCE(NULLIF(pu.display_name, ''), pu.username) AS purchaser_name
@@ -288,6 +292,7 @@ type ListTicketsByIDsRow struct {
 	ID             string
 	EventID        string
 	EventTitle     string
+	EventUrl       string
 	AttendedOn     time.Time
 	PricePerPerson int32
 	MeetingTime    string
@@ -319,6 +324,7 @@ func (q *Queries) ListTicketsByIDs(ctx context.Context, ids []string) ([]ListTic
 			&i.ID,
 			&i.EventID,
 			&i.EventTitle,
+			&i.EventUrl,
 			&i.AttendedOn,
 			&i.PricePerPerson,
 			&i.MeetingTime,

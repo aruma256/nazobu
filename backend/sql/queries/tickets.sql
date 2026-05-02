@@ -1,6 +1,6 @@
 -- name: ListTickets :many
 -- ticket 一覧画面用。event 名と立替者名を join して返す。
-SELECT t.id, t.event_id, e.title AS event_title,
+SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
        t.attended_on, t.price_per_person,
        t.meeting_time, t.meeting_place,
        COALESCE(NULLIF(pu.display_name, ''), pu.username) AS purchaser_name
@@ -11,7 +11,7 @@ ORDER BY t.attended_on DESC, t.id ASC;
 
 -- name: ListTicketsByIDs :many
 -- CreateTicket 直後の返却用。1 件のことが多いがインタフェースは ListTickets と揃える。
-SELECT t.id, t.event_id, e.title AS event_title,
+SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
        t.attended_on, t.price_per_person,
        t.meeting_time, t.meeting_place,
        COALESCE(NULLIF(pu.display_name, ''), pu.username) AS purchaser_name
@@ -41,7 +41,7 @@ ORDER BY tp.ticket_id, tp.created_at ASC;
 
 -- name: GetTicketByID :one
 -- ticket 詳細表示用。立替者の id と表示名も返す（権限判定 / UI 表示で使う）。
-SELECT t.id, t.event_id, e.title AS event_title,
+SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
        t.attended_on, t.price_per_person,
        t.meeting_time, t.meeting_place,
        t.purchased_by,

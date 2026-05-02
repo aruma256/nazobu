@@ -49,6 +49,8 @@ message Ticket {
   string purchaser_name = 8;
   // 参加者の表示名（created_at 昇順）。立て替えた人も参加者として含めて構わない。
   repeated string participant_names = 9;
+  // 公演の URL（任意。空文字なら未設定）。
+  string event_url = 10;
 }
 
 message GetTicketRequest {

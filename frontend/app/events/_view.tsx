@@ -119,20 +119,17 @@ function EventCard({ event }: { event: NazobuEvent }) {
   return (
     <li className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
       <div className="px-4 pt-4">
-        <h3 className="text-base leading-snug font-semibold">
-          {event.url !== "" ? (
-            <a
-              href={event.url}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-500"
-            >
-              {event.title}
-            </a>
-          ) : (
-            event.title
-          )}
-        </h3>
+        <h3 className="text-base leading-snug font-semibold">{event.title}</h3>
+        {event.url !== "" && (
+          <a
+            href={event.url}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="mt-1 block truncate text-xs text-emerald-700 underline decoration-zinc-300 underline-offset-4 hover:decoration-emerald-700"
+          >
+            {event.url}
+          </a>
+        )}
       </div>
 
       {event.tickets.length === 0 ? (
