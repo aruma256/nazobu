@@ -262,6 +262,7 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 	attendedOn := strings.TrimSpace(msg.GetAttendedOn())
 	meetingTime := strings.TrimSpace(msg.GetMeetingTime())
 	meetingPlace := strings.TrimSpace(msg.GetMeetingPlace())
+	purchasedBy := strings.TrimSpace(msg.GetPurchasedByUserId())
 	price := msg.GetPricePerPerson()
 
 	attendedOnTime, err := time.ParseInLocation(dateLayout, attendedOn, jst)
@@ -284,6 +285,22 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 	if price < 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("price_per_person は 0 以上"))
 	}
+	if purchasedBy == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("purchased_by_user_id は必須"))
+	}
+	// 立替者を変更する場合、新しい立替者は ticket の参加者の中から選ぶ。
+	if purchasedBy != existing.PurchasedBy {
+		count, err := s.q.CountTicketParticipant(ctx, queries.CountTicketParticipantParams{
+			TicketID: ticketID,
+			UserID:   purchasedBy,
+		})
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の存在確認に失敗: %w", err))
+		}
+		if count == 0 {
+			return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("立替者は ticket の参加者の中から選ぶ"))
+		}
+	}
 
 	if err := s.q.UpdateTicket(ctx, queries.UpdateTicketParams{
 		ID:             ticketID,
@@ -292,6 +309,7 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 		MeetingTime:    meetingTime,
 		MeetingPlace:   meetingPlace,
 		StartTime:      startTime,
+		PurchasedBy:    purchasedBy,
 	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket の更新に失敗: %w", err))
 	}

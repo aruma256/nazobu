@@ -62,13 +62,15 @@ WHERE tp.ticket_id = ?
 ORDER BY tp.created_at ASC, tp.user_id ASC;
 
 -- name: UpdateTicket :exec
--- ticket 本体の更新。event_id / purchased_by は変更しない。
+-- ticket 本体の更新。event_id は変更しない。purchased_by の変更は呼び出し側で
+-- 新しい立替者が ticket_participants に含まれることを保証する。
 UPDATE tickets
 SET attended_on      = ?,
     price_per_person = ?,
     meeting_time     = ?,
     meeting_place    = ?,
     start_time       = ?,
+    purchased_by     = ?,
     updated_at       = NOW(6)
 WHERE id = ?;
 

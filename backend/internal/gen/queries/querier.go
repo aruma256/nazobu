@@ -60,7 +60,8 @@ type Querier interface {
 	MarkTicketParticipantSettled(ctx context.Context, arg MarkTicketParticipantSettledParams) error
 	// 精算済み → 未精算。settled_at を NULL に戻す。
 	MarkTicketParticipantUnsettled(ctx context.Context, arg MarkTicketParticipantUnsettledParams) error
-	// ticket 本体の更新。event_id / purchased_by は変更しない。
+	// ticket 本体の更新。event_id は変更しない。purchased_by の変更は呼び出し側で
+	// 新しい立替者が ticket_participants に含まれることを保証する。
 	UpdateTicket(ctx context.Context, arg UpdateTicketParams) error
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) error
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error

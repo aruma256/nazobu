@@ -393,6 +393,7 @@ SET attended_on      = ?,
     meeting_time     = ?,
     meeting_place    = ?,
     start_time       = ?,
+    purchased_by     = ?,
     updated_at       = NOW(6)
 WHERE id = ?
 `
@@ -403,10 +404,12 @@ type UpdateTicketParams struct {
 	MeetingTime    string
 	MeetingPlace   string
 	StartTime      sql.NullString
+	PurchasedBy    string
 	ID             string
 }
 
-// ticket 本体の更新。event_id / purchased_by は変更しない。
+// ticket 本体の更新。event_id は変更しない。purchased_by の変更は呼び出し側で
+// 新しい立替者が ticket_participants に含まれることを保証する。
 func (q *Queries) UpdateTicket(ctx context.Context, arg UpdateTicketParams) error {
 	_, err := q.db.ExecContext(ctx, updateTicket,
 		arg.AttendedOn,
@@ -414,6 +417,7 @@ func (q *Queries) UpdateTicket(ctx context.Context, arg UpdateTicketParams) erro
 		arg.MeetingTime,
 		arg.MeetingPlace,
 		arg.StartTime,
+		arg.PurchasedBy,
 		arg.ID,
 	)
 	return err

@@ -6,7 +6,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 
-import type { Ticket } from "@/app/gen/nazobu/v1/ticket_pb";
+import type {
+  Ticket,
+  TicketParticipant,
+} from "@/app/gen/nazobu/v1/ticket_pb";
 import { ticketClient } from "@/app/lib/rpc";
 
 import {
@@ -23,7 +26,7 @@ type LoadState =
   | { kind: "not_found" }
   | { kind: "forbidden" }
   | { kind: "error"; message: string }
-  | { kind: "ready"; ticket: Ticket };
+  | { kind: "ready"; ticket: Ticket; participants: TicketParticipant[] };
 
 type SubmitState =
   | { kind: "idle" }
@@ -48,7 +51,11 @@ export function TicketEditView({ ticketId }: { ticketId: string }) {
           setLoad({ kind: "not_found" });
           return;
         }
-        setLoad({ kind: "ready", ticket: res.ticket });
+        setLoad({
+          kind: "ready",
+          ticket: res.ticket,
+          participants: res.participants,
+        });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -128,16 +135,26 @@ export function TicketEditView({ ticketId }: { ticketId: string }) {
     );
   }
 
-  return <Form router={router} ticket={load.ticket} />;
+  return (
+    <Form
+      router={router}
+      ticket={load.ticket}
+      participants={load.participants}
+    />
+  );
 }
 
 function Form({
   router,
   ticket,
+  participants,
 }: {
   router: ReturnType<typeof useRouter>;
   ticket: Ticket;
+  participants: TicketParticipant[];
 }) {
+  const currentPurchaserId =
+    participants.find((p) => p.isPurchaser)?.userId ?? "";
   const [attendedOn, setAttendedOn] = useState(ticket.attendedOn);
   const [meetingTime, setMeetingTime] = useState(ticket.meetingTime);
   const [startTime, setStartTime] = useState(ticket.startTime);
@@ -145,6 +162,8 @@ function Form({
   const [pricePerPerson, setPricePerPerson] = useState(
     String(ticket.pricePerPerson),
   );
+  const [purchasedByUserId, setPurchasedByUserId] =
+    useState(currentPurchaserId);
   const [state, setState] = useState<SubmitState>({ kind: "idle" });
 
   const submitting = state.kind === "submitting";
@@ -159,7 +178,8 @@ function Form({
       attendedOn === "" ||
       meetingTime === "" ||
       trimmedPlace === "" ||
-      pricePerPerson === ""
+      pricePerPerson === "" ||
+      purchasedByUserId === ""
     ) {
       setState({ kind: "error", message: "未入力の項目があります" });
       return;
@@ -178,6 +198,7 @@ function Form({
         startTime,
         meetingPlace: trimmedPlace,
         pricePerPerson: priceNum,
+        purchasedByUserId,
       });
       router.push(`/tickets/${ticket.id}`);
     } catch (err) {
@@ -272,6 +293,29 @@ function Form({
                 className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
                 placeholder="例: 3500"
               />
+            </Field>
+
+            <Field label="立替者" htmlFor="ticket-purchaser">
+              <select
+                id="ticket-purchaser"
+                required
+                value={purchasedByUserId}
+                onChange={(e) => setPurchasedByUserId(e.target.value)}
+                disabled={submitting || participants.length === 0}
+                className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+              >
+                {participants.length === 0 && (
+                  <option value="">参加者がいません</option>
+                )}
+                {participants.map((p) => (
+                  <option key={p.userId} value={p.userId}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-zinc-500">
+                立替者は参加者の中から選びます。
+              </p>
             </Field>
 
             {state.kind === "error" && (

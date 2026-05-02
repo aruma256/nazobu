@@ -566,9 +566,11 @@ type UpdateTicketRequest struct {
 	// 集合場所。
 	MeetingPlace string `protobuf:"bytes,5,opt,name=meeting_place,json=meetingPlace,proto3" json:"meeting_place,omitempty"`
 	// 開始時刻 "HH:MM"（attended_on の JST 当日基準。何時の回という概念が無い公演では空文字）。
-	StartTime     string `protobuf:"bytes,6,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	StartTime string `protobuf:"bytes,6,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	// 立替者の user id。ticket の参加者のいずれかを指定する。
+	PurchasedByUserId string `protobuf:"bytes,7,opt,name=purchased_by_user_id,json=purchasedByUserId,proto3" json:"purchased_by_user_id,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *UpdateTicketRequest) Reset() {
@@ -639,6 +641,13 @@ func (x *UpdateTicketRequest) GetMeetingPlace() string {
 func (x *UpdateTicketRequest) GetStartTime() string {
 	if x != nil {
 		return x.StartTime
+	}
+	return ""
+}
+
+func (x *UpdateTicketRequest) GetPurchasedByUserId() string {
+	if x != nil {
+		return x.PurchasedByUserId
 	}
 	return ""
 }
@@ -1007,7 +1016,7 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\n" +
 	"start_time\x18\a \x01(\tR\tstartTime\"A\n" +
 	"\x14CreateTicketResponse\x12)\n" +
-	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket\"\xe4\x01\n" +
+	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket\"\x95\x02\n" +
 	"\x13UpdateTicketRequest\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x1f\n" +
 	"\vattended_on\x18\x02 \x01(\tR\n" +
@@ -1016,7 +1025,8 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\fmeeting_time\x18\x04 \x01(\tR\vmeetingTime\x12#\n" +
 	"\rmeeting_place\x18\x05 \x01(\tR\fmeetingPlace\x12\x1d\n" +
 	"\n" +
-	"start_time\x18\x06 \x01(\tR\tstartTime\"A\n" +
+	"start_time\x18\x06 \x01(\tR\tstartTime\x12/\n" +
+	"\x14purchased_by_user_id\x18\a \x01(\tR\x11purchasedByUserId\"A\n" +
 	"\x14UpdateTicketResponse\x12)\n" +
 	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket\"V\n" +
 	"\x1cAddTicketParticipantsRequest\x12\x1b\n" +

@@ -63,8 +63,8 @@ type TicketServiceClient interface {
 	GetTicket(context.Context, *connect.Request[v1.GetTicketRequest]) (*connect.Response[v1.GetTicketResponse], error)
 	// CreateTicket は新規 ticket を 1 件登録する。参加者（割り勘元）も同時に登録する。
 	CreateTicket(context.Context, *connect.Request[v1.CreateTicketRequest]) (*connect.Response[v1.CreateTicketResponse], error)
-	// UpdateTicket は ticket 本体（attended_on / price_per_person / meeting_time / meeting_place / start_time）を更新する。
-	// admin もしくは立替者のみ実行可能。
+	// UpdateTicket は ticket 本体（attended_on / price_per_person / meeting_time / meeting_place / start_time / purchased_by_user_id）を更新する。
+	// admin もしくは立替者のみ実行可能。新しい立替者は ticket の参加者の中から選ぶ。
 	UpdateTicket(context.Context, *connect.Request[v1.UpdateTicketRequest]) (*connect.Response[v1.UpdateTicketResponse], error)
 	// AddTicketParticipants は ticket の参加者を 1 人以上追加する。
 	// admin もしくは立替者のみ実行可能。既に存在する user_id は無視する。
@@ -188,8 +188,8 @@ type TicketServiceHandler interface {
 	GetTicket(context.Context, *connect.Request[v1.GetTicketRequest]) (*connect.Response[v1.GetTicketResponse], error)
 	// CreateTicket は新規 ticket を 1 件登録する。参加者（割り勘元）も同時に登録する。
 	CreateTicket(context.Context, *connect.Request[v1.CreateTicketRequest]) (*connect.Response[v1.CreateTicketResponse], error)
-	// UpdateTicket は ticket 本体（attended_on / price_per_person / meeting_time / meeting_place / start_time）を更新する。
-	// admin もしくは立替者のみ実行可能。
+	// UpdateTicket は ticket 本体（attended_on / price_per_person / meeting_time / meeting_place / start_time / purchased_by_user_id）を更新する。
+	// admin もしくは立替者のみ実行可能。新しい立替者は ticket の参加者の中から選ぶ。
 	UpdateTicket(context.Context, *connect.Request[v1.UpdateTicketRequest]) (*connect.Response[v1.UpdateTicketResponse], error)
 	// AddTicketParticipants は ticket の参加者を 1 人以上追加する。
 	// admin もしくは立替者のみ実行可能。既に存在する user_id は無視する。

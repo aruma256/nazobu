@@ -12,8 +12,8 @@ service TicketService {
   rpc GetTicket(GetTicketRequest) returns (GetTicketResponse);
   // CreateTicket は新規 ticket を 1 件登録する。参加者（割り勘元）も同時に登録する。
   rpc CreateTicket(CreateTicketRequest) returns (CreateTicketResponse);
-  // UpdateTicket は ticket 本体（attended_on / price_per_person / meeting_time / meeting_place / start_time）を更新する。
-  // admin もしくは立替者のみ実行可能。
+  // UpdateTicket は ticket 本体（attended_on / price_per_person / meeting_time / meeting_place / start_time / purchased_by_user_id）を更新する。
+  // admin もしくは立替者のみ実行可能。新しい立替者は ticket の参加者の中から選ぶ。
   rpc UpdateTicket(UpdateTicketRequest) returns (UpdateTicketResponse);
   // AddTicketParticipants は ticket の参加者を 1 人以上追加する。
   // admin もしくは立替者のみ実行可能。既に存在する user_id は無視する。
@@ -110,6 +110,8 @@ message UpdateTicketRequest {
   string meeting_place = 5;
   // 開始時刻 "HH:MM"（attended_on の JST 当日基準。何時の回という概念が無い公演では空文字）。
   string start_time = 6;
+  // 立替者の user id。ticket の参加者のいずれかを指定する。
+  string purchased_by_user_id = 7;
 }
 
 message UpdateTicketResponse {
