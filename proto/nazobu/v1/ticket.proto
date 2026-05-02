@@ -55,8 +55,7 @@ message Ticket {
   // 開始時刻 "HH:MM"（attended_on の JST 当日基準。何時の回という概念が無い公演では空文字）。
   string start_time = 11;
   // このチケット 1 枚で参加できる最大人数。1 以上。
-  // 既存レコード移行中のため当面は省略可（未設定なら未指定として扱う）。
-  optional int32 max_participants = 12;
+  int32 max_participants = 12;
 }
 
 message GetTicketRequest {
@@ -120,7 +119,6 @@ message UpdateTicketRequest {
   // 立替者の user id。ticket の参加者のいずれかを指定する。
   string purchased_by_user_id = 7;
   // このチケット 1 枚で参加できる最大人数。1 以上、現在の参加者数以上である必要がある。
-  // 編集時は必須。既存レコードで未設定だった場合もこのタイミングで埋める。
   int32 max_participants = 8;
 }
 

@@ -163,7 +163,7 @@ function Form({
     String(ticket.pricePerPerson),
   );
   const [maxParticipants, setMaxParticipants] = useState(
-    ticket.maxParticipants !== undefined ? String(ticket.maxParticipants) : "",
+    String(ticket.maxParticipants),
   );
   const [purchasedByUserId, setPurchasedByUserId] =
     useState(currentPurchaserId);

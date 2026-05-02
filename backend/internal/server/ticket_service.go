@@ -50,7 +50,7 @@ func (s *ticketService) ListTickets(ctx context.Context, req *connect.Request[na
 			EventUrl:         r.EventUrl,
 			AttendedOn:       r.AttendedOn.Format(dateLayout),
 			PricePerPerson:   r.PricePerPerson,
-			MaxParticipants:  nullInt32ToPtr(r.MaxParticipants),
+			MaxParticipants:  r.MaxParticipants,
 			MeetingTime:      formatNullableMeetingTime(r.MeetingTime),
 			MeetingPlace:     r.MeetingPlace,
 			StartTime:        formatNullableMeetingTime(r.StartTime),
@@ -110,7 +110,7 @@ func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazo
 		EventUrl:         row.EventUrl,
 		AttendedOn:       row.AttendedOn.Format(dateLayout),
 		PricePerPerson:   row.PricePerPerson,
-		MaxParticipants:  nullInt32ToPtr(row.MaxParticipants),
+		MaxParticipants:  row.MaxParticipants,
 		MeetingTime:      formatNullableMeetingTime(row.MeetingTime),
 		MeetingPlace:     row.MeetingPlace,
 		StartTime:        formatNullableMeetingTime(row.StartTime),
@@ -200,7 +200,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 		EventID:         eventID,
 		AttendedOn:      attendedOnTime,
 		PricePerPerson:  price,
-		MaxParticipants: sql.NullInt32{Int32: maxParticipants, Valid: true},
+		MaxParticipants: maxParticipants,
 		PurchasedBy:     purchasedBy,
 		MeetingTime:     meetingTime,
 		MeetingPlace:    meetingPlace,
@@ -234,7 +234,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 		EventUrl:         r.EventUrl,
 		AttendedOn:       r.AttendedOn.Format(dateLayout),
 		PricePerPerson:   r.PricePerPerson,
-		MaxParticipants:  nullInt32ToPtr(r.MaxParticipants),
+		MaxParticipants:  r.MaxParticipants,
 		MeetingTime:      formatNullableMeetingTime(r.MeetingTime),
 		MeetingPlace:     r.MeetingPlace,
 		StartTime:        formatNullableMeetingTime(r.StartTime),
@@ -329,7 +329,7 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 		ID:              ticketID,
 		AttendedOn:      attendedOnTime,
 		PricePerPerson:  price,
-		MaxParticipants: sql.NullInt32{Int32: maxParticipants, Valid: true},
+		MaxParticipants: maxParticipants,
 		MeetingTime:     meetingTime,
 		MeetingPlace:    meetingPlace,
 		StartTime:       startTime,
@@ -350,7 +350,7 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 		EventUrl:         r.EventUrl,
 		AttendedOn:       r.AttendedOn.Format(dateLayout),
 		PricePerPerson:   r.PricePerPerson,
-		MaxParticipants:  nullInt32ToPtr(r.MaxParticipants),
+		MaxParticipants:  r.MaxParticipants,
 		MeetingTime:      formatNullableMeetingTime(r.MeetingTime),
 		MeetingPlace:     r.MeetingPlace,
 		StartTime:        formatNullableMeetingTime(r.StartTime),
@@ -402,7 +402,6 @@ func (s *ticketService) AddTicketParticipants(ctx context.Context, req *connect.
 
 	qtx := s.q.WithTx(tx)
 	// max_participants を超えないよう、現在数を持って 1 件ずつ加算する。
-	// max_participants が NULL（既存レコード）のときは制限なしで扱う。
 	currentCount, err := qtx.CountTicketParticipantsByTicketID(ctx, ticketID)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者数の取得に失敗: %w", err))
@@ -419,7 +418,7 @@ func (s *ticketService) AddTicketParticipants(ctx context.Context, req *connect.
 			// 既に参加済み。冪等に扱う。
 			continue
 		}
-		if existing.MaxParticipants.Valid && currentCount >= int64(existing.MaxParticipants.Int32) {
+		if currentCount >= int64(existing.MaxParticipants) {
 			return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("max_participants を超えるため追加できない"))
 		}
 		if err := qtx.CreateTicketParticipant(ctx, queries.CreateTicketParticipantParams{

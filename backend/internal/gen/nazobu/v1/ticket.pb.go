@@ -124,8 +124,7 @@ type Ticket struct {
 	// 開始時刻 "HH:MM"（attended_on の JST 当日基準。何時の回という概念が無い公演では空文字）。
 	StartTime string `protobuf:"bytes,11,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
 	// このチケット 1 枚で参加できる最大人数。1 以上。
-	// 既存レコード移行中のため当面は省略可（未設定なら未指定として扱う）。
-	MaxParticipants *int32 `protobuf:"varint,12,opt,name=max_participants,json=maxParticipants,proto3,oneof" json:"max_participants,omitempty"`
+	MaxParticipants int32 `protobuf:"varint,12,opt,name=max_participants,json=maxParticipants,proto3" json:"max_participants,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -238,8 +237,8 @@ func (x *Ticket) GetStartTime() string {
 }
 
 func (x *Ticket) GetMaxParticipants() int32 {
-	if x != nil && x.MaxParticipants != nil {
-		return *x.MaxParticipants
+	if x != nil {
+		return x.MaxParticipants
 	}
 	return 0
 }
@@ -590,7 +589,6 @@ type UpdateTicketRequest struct {
 	// 立替者の user id。ticket の参加者のいずれかを指定する。
 	PurchasedByUserId string `protobuf:"bytes,7,opt,name=purchased_by_user_id,json=purchasedByUserId,proto3" json:"purchased_by_user_id,omitempty"`
 	// このチケット 1 枚で参加できる最大人数。1 以上、現在の参加者数以上である必要がある。
-	// 編集時は必須。既存レコードで未設定だった場合もこのタイミングで埋める。
 	MaxParticipants int32 `protobuf:"varint,8,opt,name=max_participants,json=maxParticipants,proto3" json:"max_participants,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
@@ -1007,7 +1005,7 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\x16nazobu/v1/ticket.proto\x12\tnazobu.v1\"\x14\n" +
 	"\x12ListTicketsRequest\"B\n" +
 	"\x13ListTicketsResponse\x12+\n" +
-	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"\xbc\x03\n" +
+	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"\xa2\x03\n" +
 	"\x06Ticket\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\bevent_id\x18\x02 \x01(\tR\aeventId\x12\x1f\n" +
@@ -1023,9 +1021,8 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\tevent_url\x18\n" +
 	" \x01(\tR\beventUrl\x12\x1d\n" +
 	"\n" +
-	"start_time\x18\v \x01(\tR\tstartTime\x12.\n" +
-	"\x10max_participants\x18\f \x01(\x05H\x00R\x0fmaxParticipants\x88\x01\x01B\x13\n" +
-	"\x11_max_participants\"/\n" +
+	"start_time\x18\v \x01(\tR\tstartTime\x12)\n" +
+	"\x10max_participants\x18\f \x01(\x05R\x0fmaxParticipants\"/\n" +
 	"\x10GetTicketRequest\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\"\x9b\x01\n" +
 	"\x11GetTicketResponse\x12)\n" +
@@ -1148,7 +1145,6 @@ func file_nazobu_v1_ticket_proto_init() {
 	if File_nazobu_v1_ticket_proto != nil {
 		return
 	}
-	file_nazobu_v1_ticket_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

@@ -32,7 +32,7 @@ type Ticket struct {
 	EventID         string
 	AttendedOn      time.Time
 	PricePerPerson  int32
-	MaxParticipants sql.NullInt32
+	MaxParticipants int32
 	PurchasedBy     string
 	MeetingTime     sql.NullString
 	MeetingPlace    string
