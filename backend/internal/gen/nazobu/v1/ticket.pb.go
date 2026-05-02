@@ -113,7 +113,7 @@ type Ticket struct {
 	PricePerPerson int32 `protobuf:"varint,5,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
 	// 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
 	MeetingTime string `protobuf:"bytes,6,opt,name=meeting_time,json=meetingTime,proto3" json:"meeting_time,omitempty"`
-	// 集合場所。
+	// 集合場所（空文字なら未設定）。
 	MeetingPlace string `protobuf:"bytes,7,opt,name=meeting_place,json=meetingPlace,proto3" json:"meeting_place,omitempty"`
 	// 立て替えてくれた人の表示名。
 	PurchaserName string `protobuf:"bytes,8,opt,name=purchaser_name,json=purchaserName,proto3" json:"purchaser_name,omitempty"`
@@ -429,7 +429,7 @@ type CreateTicketRequest struct {
 	PricePerPerson int32 `protobuf:"varint,3,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
 	// 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
 	MeetingTime string `protobuf:"bytes,4,opt,name=meeting_time,json=meetingTime,proto3" json:"meeting_time,omitempty"`
-	// 集合場所。
+	// 集合場所（空文字なら未設定）。
 	MeetingPlace string `protobuf:"bytes,5,opt,name=meeting_place,json=meetingPlace,proto3" json:"meeting_place,omitempty"`
 	// 参加者（割り勘元）の user id。立替者（= ログイン中の user）を含めても構わない。1 件以上。
 	// 立替者は session の user で固定するため、ここでは指定しない。
@@ -582,7 +582,7 @@ type UpdateTicketRequest struct {
 	PricePerPerson int32 `protobuf:"varint,3,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
 	// 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
 	MeetingTime string `protobuf:"bytes,4,opt,name=meeting_time,json=meetingTime,proto3" json:"meeting_time,omitempty"`
-	// 集合場所。
+	// 集合場所（空文字なら未設定）。
 	MeetingPlace string `protobuf:"bytes,5,opt,name=meeting_place,json=meetingPlace,proto3" json:"meeting_place,omitempty"`
 	// 開始時刻 "HH:MM"（attended_on の JST 当日基準。何時の回という概念が無い公演では空文字）。
 	StartTime string `protobuf:"bytes,6,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`

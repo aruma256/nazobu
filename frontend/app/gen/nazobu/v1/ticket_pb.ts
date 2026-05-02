@@ -85,7 +85,7 @@ export type Ticket = Message<"nazobu.v1.Ticket"> & {
   meetingTime: string;
 
   /**
-   * 集合場所。
+   * 集合場所（空文字なら未設定）。
    *
    * @generated from field: string meeting_place = 7;
    */
@@ -251,7 +251,7 @@ export type CreateTicketRequest = Message<"nazobu.v1.CreateTicketRequest"> & {
   meetingTime: string;
 
   /**
-   * 集合場所。
+   * 集合場所（空文字なら未設定）。
    *
    * @generated from field: string meeting_place = 5;
    */
@@ -336,7 +336,7 @@ export type UpdateTicketRequest = Message<"nazobu.v1.UpdateTicketRequest"> & {
   meetingTime: string;
 
   /**
-   * 集合場所。
+   * 集合場所（空文字なら未設定）。
    *
    * @generated from field: string meeting_place = 5;
    */

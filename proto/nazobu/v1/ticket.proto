@@ -44,7 +44,7 @@ message Ticket {
   int32 price_per_person = 5;
   // 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
   string meeting_time = 6;
-  // 集合場所。
+  // 集合場所（空文字なら未設定）。
   string meeting_place = 7;
   // 立て替えてくれた人の表示名。
   string purchaser_name = 8;
@@ -88,7 +88,7 @@ message CreateTicketRequest {
   int32 price_per_person = 3;
   // 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
   string meeting_time = 4;
-  // 集合場所。
+  // 集合場所（空文字なら未設定）。
   string meeting_place = 5;
   // 参加者（割り勘元）の user id。立替者（= ログイン中の user）を含めても構わない。1 件以上。
   // 立替者は session の user で固定するため、ここでは指定しない。
@@ -112,7 +112,7 @@ message UpdateTicketRequest {
   int32 price_per_person = 3;
   // 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
   string meeting_time = 4;
-  // 集合場所。
+  // 集合場所（空文字なら未設定）。
   string meeting_place = 5;
   // 開始時刻 "HH:MM"（attended_on の JST 当日基準。何時の回という概念が無い公演では空文字）。
   string start_time = 6;

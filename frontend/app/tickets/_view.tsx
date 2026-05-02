@@ -131,8 +131,12 @@ function TicketCard({ ticket, myName }: { ticket: Ticket; myName: string }) {
               </dd>
             </>
           )}
-          <dt className="text-zinc-400">集合</dt>
-          <dd>{ticket.meetingPlace}</dd>
+          {ticket.meetingPlace !== "" && (
+            <>
+              <dt className="text-zinc-400">集合</dt>
+              <dd>{ticket.meetingPlace}</dd>
+            </>
+          )}
           <dt className="text-zinc-400">立替</dt>
           <dd>{ticket.purchaserName}</dd>
           {ticket.participantNames.length > 0 && (

@@ -285,11 +285,10 @@ function Form({
               </p>
             </Field>
 
-            <Field label="集合場所" htmlFor="ticket-meeting-place">
+            <Field label="集合場所（任意）" htmlFor="ticket-meeting-place">
               <input
                 id="ticket-meeting-place"
                 type="text"
-                required
                 maxLength={255}
                 value={meetingPlace}
                 onChange={(e) => setMeetingPlace(e.target.value)}

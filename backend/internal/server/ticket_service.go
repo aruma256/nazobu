@@ -158,9 +158,6 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 	if err != nil {
 		return nil, err
 	}
-	if meetingPlace == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("meeting_place は必須"))
-	}
 	if len(meetingPlace) > meetingPlaceMaxLen {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("meeting_place は %d 文字以内", meetingPlaceMaxLen))
 	}
@@ -287,9 +284,6 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 	startTime, err := parseNullableMeetingTime(msg.GetStartTime(), "start_time")
 	if err != nil {
 		return nil, err
-	}
-	if meetingPlace == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("meeting_place は必須"))
 	}
 	if len(meetingPlace) > meetingPlaceMaxLen {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("meeting_place は %d 文字以内", meetingPlaceMaxLen))
