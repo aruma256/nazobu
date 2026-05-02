@@ -163,7 +163,7 @@ export function HomeView() {
                     </p>
                     {e.companionNames.length > 0 && (
                       <p className="mt-2 text-xs text-zinc-600">
-                        <span className="text-zinc-400">同行</span>{" "}
+                        <span className="text-zinc-400">参加</span>{" "}
                         {e.companionNames.join("・")}
                       </p>
                     )}
