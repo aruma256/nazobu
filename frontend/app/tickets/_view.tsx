@@ -138,7 +138,11 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
           {ticket.participantNames.length > 0 && (
             <>
               <dt className="text-zinc-400">参加</dt>
-              <dd>{ticket.participantNames.join("・")}</dd>
+              <dd>
+                {[...ticket.participantNames]
+                  .sort((a, b) => a.localeCompare(b, "ja"))
+                  .join("・")}
+              </dd>
             </>
           )}
         </dl>

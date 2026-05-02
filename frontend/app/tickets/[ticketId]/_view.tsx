@@ -293,6 +293,11 @@ function ParticipantsSection({
     () => new Set(participants.map((p) => p.userId)),
     [participants],
   );
+  const sortedParticipants = useMemo(
+    () =>
+      [...participants].sort((a, b) => a.name.localeCompare(b.name, "ja")),
+    [participants],
+  );
   const candidates = useMemo(
     () => allUsers.filter((u) => !participantIds.has(u.id)),
     [allUsers, participantIds],
@@ -320,7 +325,7 @@ function ParticipantsSection({
         <p className="mt-3 text-sm text-zinc-500">参加者がいません。</p>
       ) : (
         <ul className="mt-3 divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-          {participants.map((p) => (
+          {sortedParticipants.map((p) => (
             <li key={p.userId} className="flex items-center gap-3 px-4 py-3">
               <span className="text-sm text-zinc-900">{p.name}</span>
               {p.isPurchaser ? (

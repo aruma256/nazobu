@@ -192,7 +192,9 @@ function TicketRow({ ticket }: { ticket: EventTicket }) {
         {ticket.participantNames.length > 0 && (
           <p className="mt-1 text-xs text-zinc-600">
             <span className="text-zinc-400">参加</span>{" "}
-            {ticket.participantNames.join("・")}
+            {[...ticket.participantNames]
+              .sort((a, b) => a.localeCompare(b, "ja"))
+              .join("・")}
           </p>
         )}
       </Link>
