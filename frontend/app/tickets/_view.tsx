@@ -140,8 +140,21 @@ function TicketCard({ ticket, myName }: { ticket: Ticket; myName: string }) {
           <dd>
             <Mono>{formatTimeHM(startAt)}</Mono>
           </dd>
-          <dt className="text-zinc-400">立替</dt>
-          <dd>{ticket.purchaserName}</dd>
+          <dt className="text-zinc-400">定員</dt>
+          <dd>
+            <Mono>
+              {ticket.participantNames.length}/{ticket.maxParticipants}
+            </Mono>
+            {ticket.participantNames.length < ticket.maxParticipants && (
+              <span className="ml-2 text-amber-800">
+                （残り
+                <Mono className="font-semibold">
+                  {ticket.maxParticipants - ticket.participantNames.length}
+                </Mono>
+                ）
+              </span>
+            )}
+          </dd>
           {ticket.participantNames.length > 0 && (
             <>
               <dt className="text-zinc-400">参加</dt>
