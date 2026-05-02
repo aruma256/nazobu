@@ -17,3 +17,8 @@ VALUES (?, ?, ?, ?, NOW(6), NOW(6));
 UPDATE users
 SET username = ?, display_name = ?, avatar_url = ?, updated_at = NOW(6)
 WHERE id = ?;
+
+-- name: UpdateUserRole :exec
+UPDATE users
+SET role = ?, updated_at = NOW(6)
+WHERE id = ?;

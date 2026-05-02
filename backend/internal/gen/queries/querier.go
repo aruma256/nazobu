@@ -63,6 +63,7 @@ type Querier interface {
 	// ticket 本体の更新。event_id / purchased_by は変更しない。
 	UpdateTicket(ctx context.Context, arg UpdateTicketParams) error
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) error
+	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error
 }
 
 var _ Querier = (*Queries)(nil)
