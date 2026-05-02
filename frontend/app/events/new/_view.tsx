@@ -131,8 +131,7 @@ export function NewEventView() {
     );
   }
 
-  const displayName =
-    load.me.displayName !== "" ? load.me.displayName : load.me.username;
+  const displayName = load.me.displayName;
 
   if (load.kind === "forbidden") {
     return (

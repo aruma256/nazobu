@@ -155,7 +155,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
     );
   }
 
-  const displayName = me.displayName !== "" ? me.displayName : me.username;
+  const displayName = me.displayName;
   const date = parseAttendedOn(ticket.attendedOn);
   const canEdit = detail.canEdit;
 
@@ -368,8 +368,7 @@ function ParticipantsSection({
               <ul className="divide-y divide-zinc-200 border-t border-zinc-200">
                 {candidates.map((u) => {
                   const checked = selectedToAdd.includes(u.id);
-                  const label =
-                    u.displayName !== "" ? u.displayName : u.username;
+                  const label = u.displayName;
                   return (
                     <li key={u.id}>
                       <label className="flex h-11 cursor-pointer items-center gap-3 px-4 text-sm text-zinc-900 hover:bg-zinc-50">

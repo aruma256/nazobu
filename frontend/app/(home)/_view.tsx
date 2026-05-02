@@ -90,7 +90,7 @@ export function HomeView() {
   }
 
   const { me, data } = state;
-  const displayName = me.displayName !== "" ? me.displayName : me.username;
+  const displayName = me.displayName;
   const today = new Date();
 
   return (

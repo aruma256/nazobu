@@ -50,7 +50,7 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) error 
 
 const listEventTicketsByEventIDs = `-- name: ListEventTicketsByEventIDs :many
 SELECT t.id, t.event_id, t.attended_on, t.price_per_person,
-       COALESCE(NULLIF(pu.display_name, ''), pu.username) AS purchaser_name
+       pu.display_name AS purchaser_name
 FROM tickets t
 JOIN users pu ON pu.id = t.purchased_by
 WHERE t.event_id IN (/*SLICE:event_ids*/?)

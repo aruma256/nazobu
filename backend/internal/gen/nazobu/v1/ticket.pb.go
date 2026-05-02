@@ -115,7 +115,7 @@ type Ticket struct {
 	MeetingTime string `protobuf:"bytes,6,opt,name=meeting_time,json=meetingTime,proto3" json:"meeting_time,omitempty"`
 	// 集合場所。
 	MeetingPlace string `protobuf:"bytes,7,opt,name=meeting_place,json=meetingPlace,proto3" json:"meeting_place,omitempty"`
-	// 立て替えてくれた人の表示名（display_name が空なら username）。
+	// 立て替えてくれた人の表示名。
 	PurchaserName string `protobuf:"bytes,8,opt,name=purchaser_name,json=purchaserName,proto3" json:"purchaser_name,omitempty"`
 	// 参加者の表示名（created_at 昇順）。立て替えた人も参加者として含めて構わない。
 	ParticipantNames []string `protobuf:"bytes,9,rep,name=participant_names,json=participantNames,proto3" json:"participant_names,omitempty"`
@@ -343,7 +343,7 @@ func (x *GetTicketResponse) GetCanEdit() bool {
 type TicketParticipant struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	// 表示名（display_name が空なら username）。
+	// 表示名。
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	// 自分の精算が完了しているか。立替者本人なら常に true。
 	Settled bool `protobuf:"varint,3,opt,name=settled,proto3" json:"settled,omitempty"`

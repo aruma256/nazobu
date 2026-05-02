@@ -30,7 +30,7 @@ message UnsettledTicket {
   string event_title = 2;
   // 一人あたりの精算額（円）。
   int32 price_per_person = 3;
-  // 立て替えてくれた人の表示名（display_name が空なら username）。
+  // 立て替えてくれた人の表示名。
   string payee_name = 4;
   // YYYY-MM-DD（JST）。
   string attended_on = 5;

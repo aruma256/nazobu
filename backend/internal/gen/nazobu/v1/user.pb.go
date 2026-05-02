@@ -58,12 +58,12 @@ func (*GetMeRequest) Descriptor() ([]byte, []int) {
 }
 
 type GetMeResponse struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	Id       string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Username string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	// 表示名・avatar URL は未設定なら空文字列。
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 表示名（NOT NULL）。IdP 側で空のときはハンドル名等にフォールバックして埋める。
 	DisplayName string `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	AvatarUrl   string `protobuf:"bytes,4,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
+	// avatar URL は未設定なら空文字列。
+	AvatarUrl string `protobuf:"bytes,4,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
 	// 'admin' / 'member'。schema.sql の users.role と同じ値。
 	Role          string `protobuf:"bytes,5,opt,name=role,proto3" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -103,13 +103,6 @@ func (*GetMeResponse) Descriptor() ([]byte, []int) {
 func (x *GetMeResponse) GetId() string {
 	if x != nil {
 		return x.Id
-	}
-	return ""
-}
-
-func (x *GetMeResponse) GetUsername() string {
-	if x != nil {
-		return x.Username
 	}
 	return ""
 }
@@ -173,7 +166,7 @@ func (*ListUsersRequest) Descriptor() ([]byte, []int) {
 
 type ListUsersResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// users は username 昇順。
+	// users は display_name 昇順。
 	Users         []*User `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -217,10 +210,9 @@ func (x *ListUsersResponse) GetUsers() []*User {
 }
 
 type User struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	Id       string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Username string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	// 表示名は未設定なら空文字列。
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// 表示名（NOT NULL）。
 	DisplayName   string `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -263,13 +255,6 @@ func (x *User) GetId() string {
 	return ""
 }
 
-func (x *User) GetUsername() string {
-	if x != nil {
-		return x.Username
-	}
-	return ""
-}
-
 func (x *User) GetDisplayName() string {
 	if x != nil {
 		return x.DisplayName
@@ -282,21 +267,19 @@ var File_nazobu_v1_user_proto protoreflect.FileDescriptor
 const file_nazobu_v1_user_proto_rawDesc = "" +
 	"\n" +
 	"\x14nazobu/v1/user.proto\x12\tnazobu.v1\"\x0e\n" +
-	"\fGetMeRequest\"\x91\x01\n" +
+	"\fGetMeRequest\"\x85\x01\n" +
 	"\rGetMeResponse\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayName\x12\x1d\n" +
 	"\n" +
 	"avatar_url\x18\x04 \x01(\tR\tavatarUrl\x12\x12\n" +
-	"\x04role\x18\x05 \x01(\tR\x04role\"\x12\n" +
+	"\x04role\x18\x05 \x01(\tR\x04roleJ\x04\b\x02\x10\x03R\busername\"\x12\n" +
 	"\x10ListUsersRequest\":\n" +
 	"\x11ListUsersResponse\x12%\n" +
-	"\x05users\x18\x01 \x03(\v2\x0f.nazobu.v1.UserR\x05users\"U\n" +
+	"\x05users\x18\x01 \x03(\v2\x0f.nazobu.v1.UserR\x05users\"I\n" +
 	"\x04User\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
-	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayName2\x91\x01\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
+	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayNameJ\x04\b\x02\x10\x03R\busername2\x91\x01\n" +
 	"\vUserService\x12:\n" +
 	"\x05GetMe\x12\x17.nazobu.v1.GetMeRequest\x1a\x18.nazobu.v1.GetMeResponse\x12F\n" +
 	"\tListUsers\x12\x1b.nazobu.v1.ListUsersRequest\x1a\x1c.nazobu.v1.ListUsersResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"

@@ -28,16 +28,16 @@ var ErrNoSession = errors.New("session が見つからないか期限切れ")
 
 type User struct {
 	ID          string
-	Username    string
-	DisplayName sql.NullString
+	DisplayName string
 	AvatarURL   sql.NullString
 	Role        string
 }
 
 // UserProfile は IdP から取得した、user 表示用プロフィールのスナップショット。
 // ログインのたびに users テーブルへキャッシュ更新される。
+// DisplayName は users.display_name の NOT NULL 制約に対応するため、IdP 側の fallback
+// （Discord なら global_name → username）を解決済みの値を渡す責務を呼び出し側に持たせる。
 type UserProfile struct {
-	Username    string
 	DisplayName string
 	AvatarURL   string
 }
@@ -46,7 +46,6 @@ type UserProfile struct {
 // upsert する。既存 identity があれば紐づく user のプロフィールを更新、無ければ users と
 // user_identities を同一トランザクションで作る。
 func UpsertUserFromIdentity(ctx context.Context, db *sql.DB, provider, subject string, profile UserProfile) (*User, error) {
-	displayName := nullString(profile.DisplayName)
 	avatarURL := nullString(profile.AvatarURL)
 
 	q := queries.New(db)
@@ -66,8 +65,7 @@ func UpsertUserFromIdentity(ctx context.Context, db *sql.DB, provider, subject s
 		qtx := q.WithTx(tx)
 		if err := qtx.CreateUser(ctx, queries.CreateUserParams{
 			ID:          newUserID,
-			Username:    profile.Username,
-			DisplayName: displayName,
+			DisplayName: profile.DisplayName,
 			AvatarUrl:   avatarURL,
 		}); err != nil {
 			return nil, err
@@ -84,8 +82,7 @@ func UpsertUserFromIdentity(ctx context.Context, db *sql.DB, provider, subject s
 		}
 		return &User{
 			ID:          newUserID,
-			Username:    profile.Username,
-			DisplayName: displayName,
+			DisplayName: profile.DisplayName,
 			AvatarURL:   avatarURL,
 			Role:        RoleMember,
 		}, nil
@@ -95,8 +92,7 @@ func UpsertUserFromIdentity(ctx context.Context, db *sql.DB, provider, subject s
 
 	default:
 		if err := q.UpdateUserProfile(ctx, queries.UpdateUserProfileParams{
-			Username:    profile.Username,
-			DisplayName: displayName,
+			DisplayName: profile.DisplayName,
 			AvatarUrl:   avatarURL,
 			ID:          existingUserID,
 		}); err != nil {
@@ -104,8 +100,7 @@ func UpsertUserFromIdentity(ctx context.Context, db *sql.DB, provider, subject s
 		}
 		return &User{
 			ID:          existingUserID,
-			Username:    profile.Username,
-			DisplayName: displayName,
+			DisplayName: profile.DisplayName,
 			AvatarURL:   avatarURL,
 		}, nil
 	}
@@ -147,7 +142,6 @@ func LookupSession(ctx context.Context, db *sql.DB, rawToken string) (*User, err
 	}
 	return &User{
 		ID:          row.ID,
-		Username:    row.Username,
 		DisplayName: row.DisplayName,
 		AvatarURL:   row.AvatarUrl,
 		Role:        row.Role,

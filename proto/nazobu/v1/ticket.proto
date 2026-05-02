@@ -45,7 +45,7 @@ message Ticket {
   string meeting_time = 6;
   // 集合場所。
   string meeting_place = 7;
-  // 立て替えてくれた人の表示名（display_name が空なら username）。
+  // 立て替えてくれた人の表示名。
   string purchaser_name = 8;
   // 参加者の表示名（created_at 昇順）。立て替えた人も参加者として含めて構わない。
   repeated string participant_names = 9;
@@ -69,7 +69,7 @@ message GetTicketResponse {
 
 message TicketParticipant {
   string user_id = 1;
-  // 表示名（display_name が空なら username）。
+  // 表示名。
   string name = 2;
   // 自分の精算が完了しているか。立替者本人なら常に true。
   bool settled = 3;

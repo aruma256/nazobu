@@ -78,7 +78,7 @@ export function TicketsView() {
   }
 
   const { me, tickets } = state;
-  const displayName = me.displayName !== "" ? me.displayName : me.username;
+  const displayName = me.displayName;
 
   return (
     <>

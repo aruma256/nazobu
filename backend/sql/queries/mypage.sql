@@ -3,7 +3,7 @@
 -- 立替者本人の自己持ち分は精算対象ではないので除外する。
 SELECT t.id, e.title AS event_title,
        t.price_per_person, t.attended_on,
-       COALESCE(NULLIF(pu.display_name, ''), pu.username) AS payee_name
+       pu.display_name AS payee_name
 FROM ticket_participants tp
 JOIN tickets t  ON t.id  = tp.ticket_id
 JOIN events  e  ON e.id  = t.event_id
@@ -40,7 +40,7 @@ ORDER BY t.attended_on DESC, t.id ASC;
 -- name: ListCompanionNamesByTicketIDs :many
 -- 自分以外の参加者（同行者）名を ticket_id ごとにまとめて引く（N+1 回避）。
 SELECT tp.ticket_id,
-       COALESCE(NULLIF(u.display_name, ''), u.username) AS name
+       u.display_name AS name
 FROM ticket_participants tp
 JOIN users u ON u.id = tp.user_id
 WHERE tp.ticket_id IN (sqlc.slice('ticket_ids'))

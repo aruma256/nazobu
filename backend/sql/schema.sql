@@ -3,12 +3,13 @@
 -- 文字コード: utf8mb4 / エンジン: InnoDB / ID 型: VARCHAR(26) ULID
 
 -- 内部ユーザー。IdP 非依存の anchor。
--- 表示用プロフィール（username / display_name / avatar_url）はログイン時に
+-- 表示用プロフィール（display_name / avatar_url）はログイン時に
 -- 連携元 IdP の値で更新するキャッシュ。IdP に依存しない形で持たせる。
+-- display_name は IdP 側で未設定のことがあるので、ログイン時に handle 名等を
+-- フォールバックとして必ず埋めて NOT NULL を保つ。
 CREATE TABLE users (
   id            VARCHAR(26)  NOT NULL,
-  username      VARCHAR(255) NOT NULL,
-  display_name  VARCHAR(255) NULL,
+  display_name  VARCHAR(255) NOT NULL,
   avatar_url    VARCHAR(512) NULL,
   notifications_enabled TINYINT(1) NOT NULL DEFAULT 1,
   -- 'admin' = 管理者 / 'member' = 一般メンバー。新規ユーザーは member スタート、admin は手動昇格。

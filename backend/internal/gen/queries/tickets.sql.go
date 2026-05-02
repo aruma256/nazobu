@@ -93,7 +93,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
        t.attended_on, t.price_per_person,
        t.meeting_time, t.meeting_place, t.start_time,
        t.purchased_by,
-       COALESCE(NULLIF(pu.display_name, ''), pu.username) AS purchaser_name
+       pu.display_name AS purchaser_name
 FROM tickets t
 JOIN events e  ON e.id  = t.event_id
 JOIN users  pu ON pu.id = t.purchased_by
@@ -136,7 +136,7 @@ func (q *Queries) GetTicketByID(ctx context.Context, id string) (GetTicketByIDRo
 
 const listTicketParticipantNamesByTicketIDs = `-- name: ListTicketParticipantNamesByTicketIDs :many
 SELECT tp.ticket_id,
-       COALESCE(NULLIF(u.display_name, ''), u.username) AS name
+       u.display_name AS name
 FROM ticket_participants tp
 JOIN users u ON u.id = tp.user_id
 WHERE tp.ticket_id IN (/*SLICE:ticket_ids*/?)
@@ -185,7 +185,7 @@ func (q *Queries) ListTicketParticipantNamesByTicketIDs(ctx context.Context, tic
 
 const listTicketParticipantsByTicketID = `-- name: ListTicketParticipantsByTicketID :many
 SELECT tp.user_id,
-       COALESCE(NULLIF(u.display_name, ''), u.username) AS name,
+       u.display_name AS name,
        tp.settled_at
 FROM ticket_participants tp
 JOIN users u ON u.id = tp.user_id
@@ -227,7 +227,7 @@ const listTickets = `-- name: ListTickets :many
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
        t.attended_on, t.price_per_person,
        t.meeting_time, t.meeting_place, t.start_time,
-       COALESCE(NULLIF(pu.display_name, ''), pu.username) AS purchaser_name
+       pu.display_name AS purchaser_name
 FROM tickets t
 JOIN events e  ON e.id  = t.event_id
 JOIN users  pu ON pu.id = t.purchased_by
@@ -286,7 +286,7 @@ const listTicketsByIDs = `-- name: ListTicketsByIDs :many
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
        t.attended_on, t.price_per_person,
        t.meeting_time, t.meeting_place, t.start_time,
-       COALESCE(NULLIF(pu.display_name, ''), pu.username) AS purchaser_name
+       pu.display_name AS purchaser_name
 FROM tickets t
 JOIN events e  ON e.id  = t.event_id
 JOIN users  pu ON pu.id = t.purchased_by

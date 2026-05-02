@@ -268,8 +268,7 @@ function Form({
               <ul className="divide-y divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 bg-white">
                 {users.map((u) => {
                   const checked = participantIds.includes(u.id);
-                  const label =
-                    u.displayName !== "" ? u.displayName : u.username;
+                  const label = u.displayName;
                   return (
                     <li key={u.id}>
                       <label className="flex h-11 cursor-pointer items-center gap-3 px-3 text-base text-zinc-900 hover:bg-zinc-50">

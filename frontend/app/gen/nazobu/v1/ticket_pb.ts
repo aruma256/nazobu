@@ -92,7 +92,7 @@ export type Ticket = Message<"nazobu.v1.Ticket"> & {
   meetingPlace: string;
 
   /**
-   * 立て替えてくれた人の表示名（display_name が空なら username）。
+   * 立て替えてくれた人の表示名。
    *
    * @generated from field: string purchaser_name = 8;
    */
@@ -185,7 +185,7 @@ export type TicketParticipant = Message<"nazobu.v1.TicketParticipant"> & {
   userId: string;
 
   /**
-   * 表示名（display_name が空なら username）。
+   * 表示名。
    *
    * @generated from field: string name = 2;
    */

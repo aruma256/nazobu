@@ -49,8 +49,7 @@ type TicketParticipant struct {
 
 type User struct {
 	ID                   string
-	Username             string
-	DisplayName          sql.NullString
+	DisplayName          string
 	AvatarUrl            sql.NullString
 	NotificationsEnabled bool
 	Role                 string

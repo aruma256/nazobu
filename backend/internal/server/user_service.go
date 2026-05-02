@@ -28,8 +28,7 @@ func (s *userService) GetMe(ctx context.Context, req *connect.Request[nazobuv1.G
 	}
 	return connect.NewResponse(&nazobuv1.GetMeResponse{
 		Id:          user.ID,
-		Username:    user.Username,
-		DisplayName: user.DisplayName.String,
+		DisplayName: user.DisplayName,
 		AvatarUrl:   user.AvatarURL.String,
 		Role:        user.Role,
 	}), nil
@@ -49,8 +48,7 @@ func (s *userService) ListUsers(ctx context.Context, req *connect.Request[nazobu
 	for _, r := range rows {
 		users = append(users, &nazobuv1.User{
 			Id:          r.ID,
-			Username:    r.Username,
-			DisplayName: r.DisplayName.String,
+			DisplayName: r.DisplayName,
 		})
 	}
 	return connect.NewResponse(&nazobuv1.ListUsersResponse{Users: users}), nil

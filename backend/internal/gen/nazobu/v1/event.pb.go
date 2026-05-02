@@ -196,7 +196,7 @@ type EventTicket struct {
 	AttendedOn string `protobuf:"bytes,2,opt,name=attended_on,json=attendedOn,proto3" json:"attended_on,omitempty"`
 	// 一人あたりの精算額（円）。
 	PricePerPerson int32 `protobuf:"varint,3,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
-	// 立て替えてくれた人の表示名（display_name が空なら username）。
+	// 立て替えてくれた人の表示名。
 	PurchaserName string `protobuf:"bytes,4,opt,name=purchaser_name,json=purchaserName,proto3" json:"purchaser_name,omitempty"`
 	// 参加者の表示名（created_at 昇順）。立て替えた人も参加者として含めて構わない。
 	ParticipantNames []string `protobuf:"bytes,5,rep,name=participant_names,json=participantNames,proto3" json:"participant_names,omitempty"`

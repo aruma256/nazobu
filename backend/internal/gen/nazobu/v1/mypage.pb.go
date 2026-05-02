@@ -135,7 +135,7 @@ type UnsettledTicket struct {
 	EventTitle string                 `protobuf:"bytes,2,opt,name=event_title,json=eventTitle,proto3" json:"event_title,omitempty"`
 	// 一人あたりの精算額（円）。
 	PricePerPerson int32 `protobuf:"varint,3,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
-	// 立て替えてくれた人の表示名（display_name が空なら username）。
+	// 立て替えてくれた人の表示名。
 	PayeeName string `protobuf:"bytes,4,opt,name=payee_name,json=payeeName,proto3" json:"payee_name,omitempty"`
 	// YYYY-MM-DD（JST）。
 	AttendedOn    string `protobuf:"bytes,5,opt,name=attended_on,json=attendedOn,proto3" json:"attended_on,omitempty"`

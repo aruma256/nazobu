@@ -15,10 +15,13 @@ service UserService {
 message GetMeRequest {}
 
 message GetMeResponse {
+  // 旧 username field（id=2）を削除済み。再利用しないため reserved。
+  reserved 2;
+  reserved "username";
   string id = 1;
-  string username = 2;
-  // 表示名・avatar URL は未設定なら空文字列。
+  // 表示名（NOT NULL）。IdP 側で空のときはハンドル名等にフォールバックして埋める。
   string display_name = 3;
+  // avatar URL は未設定なら空文字列。
   string avatar_url = 4;
   // 'admin' / 'member'。schema.sql の users.role と同じ値。
   string role = 5;
@@ -27,13 +30,15 @@ message GetMeResponse {
 message ListUsersRequest {}
 
 message ListUsersResponse {
-  // users は username 昇順。
+  // users は display_name 昇順。
   repeated User users = 1;
 }
 
 message User {
+  // 旧 username field（id=2）を削除済み。再利用しないため reserved。
+  reserved 2;
+  reserved "username";
   string id = 1;
-  string username = 2;
-  // 表示名は未設定なら空文字列。
+  // 表示名（NOT NULL）。
   string display_name = 3;
 }

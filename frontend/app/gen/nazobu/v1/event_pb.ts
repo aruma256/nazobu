@@ -116,7 +116,7 @@ export type EventTicket = Message<"nazobu.v1.EventTicket"> & {
   pricePerPerson: number;
 
   /**
-   * 立て替えてくれた人の表示名（display_name が空なら username）。
+   * 立て替えてくれた人の表示名。
    *
    * @generated from field: string purchaser_name = 4;
    */

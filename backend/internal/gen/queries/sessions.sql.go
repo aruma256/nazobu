@@ -43,7 +43,7 @@ func (q *Queries) DeleteSessionByTokenHash(ctx context.Context, tokenHash string
 }
 
 const getSessionUserByTokenHash = `-- name: GetSessionUserByTokenHash :one
-SELECT u.id, u.username, u.display_name, u.avatar_url, u.role, s.expires_at
+SELECT u.id, u.display_name, u.avatar_url, u.role, s.expires_at
 FROM sessions s
 INNER JOIN users u ON u.id = s.user_id
 WHERE s.token_hash = ?
@@ -51,8 +51,7 @@ WHERE s.token_hash = ?
 
 type GetSessionUserByTokenHashRow struct {
 	ID          string
-	Username    string
-	DisplayName sql.NullString
+	DisplayName string
 	AvatarUrl   sql.NullString
 	Role        string
 	ExpiresAt   time.Time
@@ -65,7 +64,6 @@ func (q *Queries) GetSessionUserByTokenHash(ctx context.Context, tokenHash strin
 	var i GetSessionUserByTokenHashRow
 	err := row.Scan(
 		&i.ID,
-		&i.Username,
 		&i.DisplayName,
 		&i.AvatarUrl,
 		&i.Role,

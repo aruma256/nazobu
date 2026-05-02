@@ -35,37 +35,30 @@ func (q *Queries) CountUsersByIDs(ctx context.Context, ids []string) (int64, err
 }
 
 const createUser = `-- name: CreateUser :exec
-INSERT INTO users (id, username, display_name, avatar_url, created_at, updated_at)
-VALUES (?, ?, ?, ?, NOW(6), NOW(6))
+INSERT INTO users (id, display_name, avatar_url, created_at, updated_at)
+VALUES (?, ?, ?, NOW(6), NOW(6))
 `
 
 type CreateUserParams struct {
 	ID          string
-	Username    string
-	DisplayName sql.NullString
+	DisplayName string
 	AvatarUrl   sql.NullString
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
-	_, err := q.db.ExecContext(ctx, createUser,
-		arg.ID,
-		arg.Username,
-		arg.DisplayName,
-		arg.AvatarUrl,
-	)
+	_, err := q.db.ExecContext(ctx, createUser, arg.ID, arg.DisplayName, arg.AvatarUrl)
 	return err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, username, display_name
+SELECT id, display_name
 FROM users
-ORDER BY username ASC, id ASC
+ORDER BY display_name ASC, id ASC
 `
 
 type ListUsersRow struct {
 	ID          string
-	Username    string
-	DisplayName sql.NullString
+	DisplayName string
 }
 
 // 表示用の最低限フィールドだけ返す。avatar_url 等は GetMe 経路（session join）で取る。
@@ -78,7 +71,7 @@ func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
 	var items []ListUsersRow
 	for rows.Next() {
 		var i ListUsersRow
-		if err := rows.Scan(&i.ID, &i.Username, &i.DisplayName); err != nil {
+		if err := rows.Scan(&i.ID, &i.DisplayName); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -94,24 +87,18 @@ func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
 
 const updateUserProfile = `-- name: UpdateUserProfile :exec
 UPDATE users
-SET username = ?, display_name = ?, avatar_url = ?, updated_at = NOW(6)
+SET display_name = ?, avatar_url = ?, updated_at = NOW(6)
 WHERE id = ?
 `
 
 type UpdateUserProfileParams struct {
-	Username    string
-	DisplayName sql.NullString
+	DisplayName string
 	AvatarUrl   sql.NullString
 	ID          string
 }
 
 func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) error {
-	_, err := q.db.ExecContext(ctx, updateUserProfile,
-		arg.Username,
-		arg.DisplayName,
-		arg.AvatarUrl,
-		arg.ID,
-	)
+	_, err := q.db.ExecContext(ctx, updateUserProfile, arg.DisplayName, arg.AvatarUrl, arg.ID)
 	return err
 }
 

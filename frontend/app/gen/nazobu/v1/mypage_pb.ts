@@ -87,7 +87,7 @@ export type UnsettledTicket = Message<"nazobu.v1.UnsettledTicket"> & {
   pricePerPerson: number;
 
   /**
-   * 立て替えてくれた人の表示名（display_name が空なら username）。
+   * 立て替えてくれた人の表示名。
    *
    * @generated from field: string payee_name = 4;
    */

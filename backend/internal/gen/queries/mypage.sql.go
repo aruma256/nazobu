@@ -13,7 +13,7 @@ import (
 
 const listCompanionNamesByTicketIDs = `-- name: ListCompanionNamesByTicketIDs :many
 SELECT tp.ticket_id,
-       COALESCE(NULLIF(u.display_name, ''), u.username) AS name
+       u.display_name AS name
 FROM ticket_participants tp
 JOIN users u ON u.id = tp.user_id
 WHERE tp.ticket_id IN (/*SLICE:ticket_ids*/?)
@@ -125,7 +125,7 @@ func (q *Queries) ListMyMonthlyTicketsByUserID(ctx context.Context, arg ListMyMo
 const listUnsettledTicketsByUserID = `-- name: ListUnsettledTicketsByUserID :many
 SELECT t.id, e.title AS event_title,
        t.price_per_person, t.attended_on,
-       COALESCE(NULLIF(pu.display_name, ''), pu.username) AS payee_name
+       pu.display_name AS payee_name
 FROM ticket_participants tp
 JOIN tickets t  ON t.id  = tp.ticket_id
 JOIN events  e  ON e.id  = t.event_id

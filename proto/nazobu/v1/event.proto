@@ -37,7 +37,7 @@ message EventTicket {
   string attended_on = 2;
   // 一人あたりの精算額（円）。
   int32 price_per_person = 3;
-  // 立て替えてくれた人の表示名（display_name が空なら username）。
+  // 立て替えてくれた人の表示名。
   string purchaser_name = 4;
   // 参加者の表示名（created_at 昇順）。立て替えた人も参加者として含めて構わない。
   repeated string participant_names = 5;

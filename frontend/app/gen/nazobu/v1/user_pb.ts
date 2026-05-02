@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file nazobu/v1/user.proto.
  */
 export const file_nazobu_v1_user: GenFile = /*@__PURE__*/
-  fileDesc("ChRuYXpvYnUvdjEvdXNlci5wcm90bxIJbmF6b2J1LnYxIg4KDEdldE1lUmVxdWVzdCJlCg1HZXRNZVJlc3BvbnNlEgoKAmlkGAEgASgJEhAKCHVzZXJuYW1lGAIgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCRISCgphdmF0YXJfdXJsGAQgASgJEgwKBHJvbGUYBSABKAkiEgoQTGlzdFVzZXJzUmVxdWVzdCIzChFMaXN0VXNlcnNSZXNwb25zZRIeCgV1c2VycxgBIAMoCzIPLm5hem9idS52MS5Vc2VyIjoKBFVzZXISCgoCaWQYASABKAkSEAoIdXNlcm5hbWUYAiABKAkSFAoMZGlzcGxheV9uYW1lGAMgASgJMpEBCgtVc2VyU2VydmljZRI6CgVHZXRNZRIXLm5hem9idS52MS5HZXRNZVJlcXVlc3QaGC5uYXpvYnUudjEuR2V0TWVSZXNwb25zZRJGCglMaXN0VXNlcnMSGy5uYXpvYnUudjEuTGlzdFVzZXJzUmVxdWVzdBocLm5hem9idS52MS5MaXN0VXNlcnNSZXNwb25zZUJEWkJnaXRodWIuY29tL2FydW1hMjU2L25hem9idS9iYWNrZW5kL2ludGVybmFsL2dlbi9uYXpvYnUvdjE7bmF6b2J1djFiBnByb3RvMw");
+  fileDesc("ChRuYXpvYnUvdjEvdXNlci5wcm90bxIJbmF6b2J1LnYxIg4KDEdldE1lUmVxdWVzdCJjCg1HZXRNZVJlc3BvbnNlEgoKAmlkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCRISCgphdmF0YXJfdXJsGAQgASgJEgwKBHJvbGUYBSABKAlKBAgCEANSCHVzZXJuYW1lIhIKEExpc3RVc2Vyc1JlcXVlc3QiMwoRTGlzdFVzZXJzUmVzcG9uc2USHgoFdXNlcnMYASADKAsyDy5uYXpvYnUudjEuVXNlciI4CgRVc2VyEgoKAmlkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCUoECAIQA1IIdXNlcm5hbWUykQEKC1VzZXJTZXJ2aWNlEjoKBUdldE1lEhcubmF6b2J1LnYxLkdldE1lUmVxdWVzdBoYLm5hem9idS52MS5HZXRNZVJlc3BvbnNlEkYKCUxpc3RVc2VycxIbLm5hem9idS52MS5MaXN0VXNlcnNSZXF1ZXN0GhwubmF6b2J1LnYxLkxpc3RVc2Vyc1Jlc3BvbnNlQkRaQmdpdGh1Yi5jb20vYXJ1bWEyNTYvbmF6b2J1L2JhY2tlbmQvaW50ZXJuYWwvZ2VuL25hem9idS92MTtuYXpvYnV2MWIGcHJvdG8z");
 
 /**
  * @generated from message nazobu.v1.GetMeRequest
@@ -35,18 +35,15 @@ export type GetMeResponse = Message<"nazobu.v1.GetMeResponse"> & {
   id: string;
 
   /**
-   * @generated from field: string username = 2;
-   */
-  username: string;
-
-  /**
-   * 表示名・avatar URL は未設定なら空文字列。
+   * 表示名（NOT NULL）。IdP 側で空のときはハンドル名等にフォールバックして埋める。
    *
    * @generated from field: string display_name = 3;
    */
   displayName: string;
 
   /**
+   * avatar URL は未設定なら空文字列。
+   *
    * @generated from field: string avatar_url = 4;
    */
   avatarUrl: string;
@@ -84,7 +81,7 @@ export const ListUsersRequestSchema: GenMessage<ListUsersRequest> = /*@__PURE__*
  */
 export type ListUsersResponse = Message<"nazobu.v1.ListUsersResponse"> & {
   /**
-   * users は username 昇順。
+   * users は display_name 昇順。
    *
    * @generated from field: repeated nazobu.v1.User users = 1;
    */
@@ -108,12 +105,7 @@ export type User = Message<"nazobu.v1.User"> & {
   id: string;
 
   /**
-   * @generated from field: string username = 2;
-   */
-  username: string;
-
-  /**
-   * 表示名は未設定なら空文字列。
+   * 表示名（NOT NULL）。
    *
    * @generated from field: string display_name = 3;
    */

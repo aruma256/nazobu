@@ -78,7 +78,7 @@ export function EventsView() {
   }
 
   const { me, events } = state;
-  const displayName = me.displayName !== "" ? me.displayName : me.username;
+  const displayName = me.displayName;
   const isAdmin = me.role === "admin";
 
   return (

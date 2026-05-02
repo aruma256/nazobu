@@ -14,7 +14,6 @@ import (
 
 var (
 	addUserDiscordUserID string
-	addUserUsername      string
 	addUserDisplayName   string
 )
 
@@ -40,12 +39,8 @@ var addUserCmd = &cobra.Command{
 			return err
 		}
 
-		du := &auth.DiscordUser{
-			ID:          addUserDiscordUserID,
-			Username:    addUserUsername,
-			DisplayName: addUserDisplayName,
-		}
-		user, err := auth.UpsertUserFromIdentity(ctx, conn, auth.ProviderDiscord, du.ID, du.ToProfile())
+		profile := auth.UserProfile{DisplayName: addUserDisplayName}
+		user, err := auth.UpsertUserFromIdentity(ctx, conn, auth.ProviderDiscord, addUserDiscordUserID, profile)
 		if err != nil {
 			return fmt.Errorf("ユーザー登録に失敗: %w", err)
 		}
@@ -61,8 +56,9 @@ var addUserCmd = &cobra.Command{
 
 func init() {
 	addUserCmd.Flags().StringVar(&addUserDiscordUserID, "discord-user-id", "", "Discord ユーザー ID（Snowflake）")
-	addUserCmd.Flags().StringVar(&addUserUsername, "username", "", "Discord のハンドル名（@xxx の xxx）")
-	addUserCmd.Flags().StringVar(&addUserDisplayName, "display-name", "", "Discord の表示名（任意）")
+	// display-name は users.display_name の NOT NULL を満たすため必須。実際にログインしてくれば
+	// IdP から取得した値で上書きされるが、先行登録の段階ではここで指定したものが表示される。
+	addUserCmd.Flags().StringVar(&addUserDisplayName, "display-name", "", "表示名（必須）")
 	_ = addUserCmd.MarkFlagRequired("discord-user-id")
-	_ = addUserCmd.MarkFlagRequired("username")
+	_ = addUserCmd.MarkFlagRequired("display-name")
 }
