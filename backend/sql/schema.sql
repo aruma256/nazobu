@@ -56,9 +56,9 @@ CREATE TABLE events (
   id          VARCHAR(26)  NOT NULL,
   title       VARCHAR(255) NOT NULL,
   url         VARCHAR(512) NOT NULL,
-  -- 開場時間が開始時刻（ticket.start_time）の何分前か。0 以上、NULL = 未設定。
+  -- 開場時間が開演時刻（ticket.start_time）の何分前か。0 以上、NULL = 未設定。
   doors_open_minutes_before     INT NULL,
-  -- 入場締切が開始時刻の何分前か。これを過ぎると参加できない。0 以上、NULL = 未設定。
+  -- 入場締切が開演時刻の何分前か。これを過ぎると参加できない。0 以上、NULL = 未設定。
   entry_deadline_minutes_before INT NULL,
   created_at  DATETIME(6)  NOT NULL,
   updated_at  DATETIME(6)  NOT NULL,
@@ -80,8 +80,8 @@ CREATE TABLE tickets (
   -- 集合場所は空文字を「未設定」として許容する。
   meeting_time      TIME         NULL,
   meeting_place     VARCHAR(255) NOT NULL,
-  -- 公演の開始時刻（attended_on の JST 当日基準）。何時の回という概念が無い公演もあるので NULL 可。
-  start_time        TIME         NULL,
+  -- 公演の開演時刻（attended_on の JST 当日基準）。
+  start_time        TIME         NOT NULL,
   created_at        DATETIME(6)  NOT NULL,
   updated_at        DATETIME(6)  NOT NULL,
   PRIMARY KEY (id),

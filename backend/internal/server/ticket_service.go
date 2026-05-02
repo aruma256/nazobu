@@ -53,7 +53,7 @@ func (s *ticketService) ListTickets(ctx context.Context, req *connect.Request[na
 			MaxParticipants:  r.MaxParticipants,
 			MeetingTime:      formatNullableMeetingTime(r.MeetingTime),
 			MeetingPlace:     r.MeetingPlace,
-			StartTime:        formatNullableMeetingTime(r.StartTime),
+			StartTime:        formatMeetingTime(r.StartTime),
 			PurchaserName:    r.PurchaserName,
 			ParticipantNames: []string{},
 		})
@@ -113,7 +113,7 @@ func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazo
 		MaxParticipants:  row.MaxParticipants,
 		MeetingTime:      formatNullableMeetingTime(row.MeetingTime),
 		MeetingPlace:     row.MeetingPlace,
-		StartTime:        formatNullableMeetingTime(row.StartTime),
+		StartTime:        formatMeetingTime(row.StartTime),
 		PurchaserName:    row.PurchaserName,
 		ParticipantNames: participantNames,
 	}
@@ -154,7 +154,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 	if err != nil {
 		return nil, err
 	}
-	startTime, err := parseNullableMeetingTime(msg.GetStartTime(), "start_time")
+	startTime, err := parseRequiredMeetingTime(msg.GetStartTime(), "start_time")
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +234,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 		MaxParticipants:  r.MaxParticipants,
 		MeetingTime:      formatNullableMeetingTime(r.MeetingTime),
 		MeetingPlace:     r.MeetingPlace,
-		StartTime:        formatNullableMeetingTime(r.StartTime),
+		StartTime:        formatMeetingTime(r.StartTime),
 		PurchaserName:    r.PurchaserName,
 		ParticipantNames: []string{},
 	}
@@ -281,7 +281,7 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 	if err != nil {
 		return nil, err
 	}
-	startTime, err := parseNullableMeetingTime(msg.GetStartTime(), "start_time")
+	startTime, err := parseRequiredMeetingTime(msg.GetStartTime(), "start_time")
 	if err != nil {
 		return nil, err
 	}
@@ -347,7 +347,7 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 		MaxParticipants:  r.MaxParticipants,
 		MeetingTime:      formatNullableMeetingTime(r.MeetingTime),
 		MeetingPlace:     r.MeetingPlace,
-		StartTime:        formatNullableMeetingTime(r.StartTime),
+		StartTime:        formatMeetingTime(r.StartTime),
 		PurchaserName:    r.PurchaserName,
 		ParticipantNames: []string{},
 	}
@@ -554,6 +554,27 @@ func parseNullableMeetingTime(raw, field string) (sql.NullString, error) {
 		return sql.NullString{}, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("%s は HH:MM", field))
 	}
 	return sql.NullString{String: s, Valid: true}, nil
+}
+
+// parseRequiredMeetingTime は "HH:MM" を必須として受け取る。
+// field は invalid 時のエラーメッセージで参照する proto フィールド名。
+func parseRequiredMeetingTime(raw, field string) (string, error) {
+	s := strings.TrimSpace(raw)
+	if s == "" {
+		return "", connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("%s は必須", field))
+	}
+	if _, err := time.ParseInLocation(timeLayout, s, jst); err != nil {
+		return "", connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("%s は HH:MM", field))
+	}
+	return s, nil
+}
+
+// formatMeetingTime は NOT NULL な TIME カラム（"HH:MM:SS"）を "HH:MM" にする。
+func formatMeetingTime(s string) string {
+	if len(s) >= 5 {
+		return s[:5]
+	}
+	return s
 }
 
 func (s *ticketService) attachParticipants(ctx context.Context, tickets []*nazobuv1.Ticket) error {

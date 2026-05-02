@@ -25,9 +25,9 @@ message Event {
   string url = 3;
   // 紐づく ticket（attended_on 降順）。
   repeated EventTicket tickets = 4;
-  // 開場時間が開始時刻（ticket.start_time）の何分前か。任意。
+  // 開場時間が開演時刻（ticket.start_time）の何分前か。任意。
   optional int32 doors_open_minutes_before = 5;
-  // 入場締切が開始時刻の何分前か（これを過ぎると参加できない）。任意。
+  // 入場締切が開演時刻の何分前か（これを過ぎると参加できない）。任意。
   optional int32 entry_deadline_minutes_before = 6;
 }
 
@@ -46,9 +46,9 @@ message EventTicket {
 message CreateEventRequest {
   string title = 1;
   string url = 2;
-  // 開場時間が開始時刻の何分前か。任意。
+  // 開場時間が開演時刻の何分前か。任意。
   optional int32 doors_open_minutes_before = 3;
-  // 入場締切が開始時刻の何分前か。任意。
+  // 入場締切が開演時刻の何分前か。任意。
   optional int32 entry_deadline_minutes_before = 4;
 }
 

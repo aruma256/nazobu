@@ -109,9 +109,9 @@ type Event struct {
 	Url   string                 `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
 	// 紐づく ticket（attended_on 降順）。
 	Tickets []*EventTicket `protobuf:"bytes,4,rep,name=tickets,proto3" json:"tickets,omitempty"`
-	// 開場時間が開始時刻（ticket.start_time）の何分前か。任意。
+	// 開場時間が開演時刻（ticket.start_time）の何分前か。任意。
 	DoorsOpenMinutesBefore *int32 `protobuf:"varint,5,opt,name=doors_open_minutes_before,json=doorsOpenMinutesBefore,proto3,oneof" json:"doors_open_minutes_before,omitempty"`
-	// 入場締切が開始時刻の何分前か（これを過ぎると参加できない）。任意。
+	// 入場締切が開演時刻の何分前か（これを過ぎると参加できない）。任意。
 	EntryDeadlineMinutesBefore *int32 `protobuf:"varint,6,opt,name=entry_deadline_minutes_before,json=entryDeadlineMinutesBefore,proto3,oneof" json:"entry_deadline_minutes_before,omitempty"`
 	unknownFields              protoimpl.UnknownFields
 	sizeCache                  protoimpl.SizeCache
@@ -273,9 +273,9 @@ type CreateEventRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Title string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
 	Url   string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
-	// 開場時間が開始時刻の何分前か。任意。
+	// 開場時間が開演時刻の何分前か。任意。
 	DoorsOpenMinutesBefore *int32 `protobuf:"varint,3,opt,name=doors_open_minutes_before,json=doorsOpenMinutesBefore,proto3,oneof" json:"doors_open_minutes_before,omitempty"`
-	// 入場締切が開始時刻の何分前か。任意。
+	// 入場締切が開演時刻の何分前か。任意。
 	EntryDeadlineMinutesBefore *int32 `protobuf:"varint,4,opt,name=entry_deadline_minutes_before,json=entryDeadlineMinutesBefore,proto3,oneof" json:"entry_deadline_minutes_before,omitempty"`
 	unknownFields              protoimpl.UnknownFields
 	sizeCache                  protoimpl.SizeCache

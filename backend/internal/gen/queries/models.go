@@ -36,7 +36,7 @@ type Ticket struct {
 	PurchasedBy     string
 	MeetingTime     sql.NullString
 	MeetingPlace    string
-	StartTime       sql.NullString
+	StartTime       string
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }

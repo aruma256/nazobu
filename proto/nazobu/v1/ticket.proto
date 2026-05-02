@@ -52,7 +52,7 @@ message Ticket {
   repeated string participant_names = 9;
   // 公演の URL（任意。空文字なら未設定）。
   string event_url = 10;
-  // 開始時刻 "HH:MM"（attended_on の JST 当日基準。何時の回という概念が無い公演では空文字）。
+  // 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
   string start_time = 11;
   // このチケット 1 枚で参加できる最大人数。1 以上。
   int32 max_participants = 12;
@@ -93,7 +93,7 @@ message CreateTicketRequest {
   // 参加者（割り勘元）の user id。立替者（= ログイン中の user）を含めても構わない。1 件以上。
   // 立替者は session の user で固定するため、ここでは指定しない。
   repeated string participant_user_ids = 6;
-  // 開始時刻 "HH:MM"（attended_on の JST 当日基準。何時の回という概念が無い公演では空文字）。
+  // 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
   string start_time = 7;
   // このチケット 1 枚で参加できる最大人数。新規登録では必須・1 以上。
   // participant_user_ids の件数以上である必要がある。
@@ -114,7 +114,7 @@ message UpdateTicketRequest {
   string meeting_time = 4;
   // 集合場所（空文字なら未設定）。
   string meeting_place = 5;
-  // 開始時刻 "HH:MM"（attended_on の JST 当日基準。何時の回という概念が無い公演では空文字）。
+  // 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
   string start_time = 6;
   // 立替者の user id。ticket の参加者のいずれかを指定する。
   string purchased_by_user_id = 7;

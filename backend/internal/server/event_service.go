@@ -120,7 +120,7 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 	}), nil
 }
 
-// validateMinutesBefore は任意の「開始時刻の何分前か」を受け取る。0 以上のみ許容し、未指定なら NULL。
+// validateMinutesBefore は任意の「開演時刻の何分前か」を受け取る。0 以上のみ許容し、未指定なら NULL。
 func validateMinutesBefore(v *int32, fieldName string) (sql.NullInt32, error) {
 	if v == nil {
 		return sql.NullInt32{}, nil

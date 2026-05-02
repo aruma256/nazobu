@@ -113,7 +113,7 @@ export type Ticket = Message<"nazobu.v1.Ticket"> & {
   eventUrl: string;
 
   /**
-   * 開始時刻 "HH:MM"（attended_on の JST 当日基準。何時の回という概念が無い公演では空文字）。
+   * 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
    *
    * @generated from field: string start_time = 11;
    */
@@ -266,7 +266,7 @@ export type CreateTicketRequest = Message<"nazobu.v1.CreateTicketRequest"> & {
   participantUserIds: string[];
 
   /**
-   * 開始時刻 "HH:MM"（attended_on の JST 当日基準。何時の回という概念が無い公演では空文字）。
+   * 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
    *
    * @generated from field: string start_time = 7;
    */
@@ -343,7 +343,7 @@ export type UpdateTicketRequest = Message<"nazobu.v1.UpdateTicketRequest"> & {
   meetingPlace: string;
 
   /**
-   * 開始時刻 "HH:MM"（attended_on の JST 当日基準。何時の回という概念が無い公演では空文字）。
+   * 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
    *
    * @generated from field: string start_time = 6;
    */

@@ -121,7 +121,7 @@ type Ticket struct {
 	ParticipantNames []string `protobuf:"bytes,9,rep,name=participant_names,json=participantNames,proto3" json:"participant_names,omitempty"`
 	// 公演の URL（任意。空文字なら未設定）。
 	EventUrl string `protobuf:"bytes,10,opt,name=event_url,json=eventUrl,proto3" json:"event_url,omitempty"`
-	// 開始時刻 "HH:MM"（attended_on の JST 当日基準。何時の回という概念が無い公演では空文字）。
+	// 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
 	StartTime string `protobuf:"bytes,11,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
 	// このチケット 1 枚で参加できる最大人数。1 以上。
 	MaxParticipants int32 `protobuf:"varint,12,opt,name=max_participants,json=maxParticipants,proto3" json:"max_participants,omitempty"`
@@ -434,7 +434,7 @@ type CreateTicketRequest struct {
 	// 参加者（割り勘元）の user id。立替者（= ログイン中の user）を含めても構わない。1 件以上。
 	// 立替者は session の user で固定するため、ここでは指定しない。
 	ParticipantUserIds []string `protobuf:"bytes,6,rep,name=participant_user_ids,json=participantUserIds,proto3" json:"participant_user_ids,omitempty"`
-	// 開始時刻 "HH:MM"（attended_on の JST 当日基準。何時の回という概念が無い公演では空文字）。
+	// 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
 	StartTime string `protobuf:"bytes,7,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
 	// このチケット 1 枚で参加できる最大人数。新規登録では必須・1 以上。
 	// participant_user_ids の件数以上である必要がある。
@@ -584,7 +584,7 @@ type UpdateTicketRequest struct {
 	MeetingTime string `protobuf:"bytes,4,opt,name=meeting_time,json=meetingTime,proto3" json:"meeting_time,omitempty"`
 	// 集合場所（空文字なら未設定）。
 	MeetingPlace string `protobuf:"bytes,5,opt,name=meeting_place,json=meetingPlace,proto3" json:"meeting_place,omitempty"`
-	// 開始時刻 "HH:MM"（attended_on の JST 当日基準。何時の回という概念が無い公演では空文字）。
+	// 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
 	StartTime string `protobuf:"bytes,6,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
 	// 立替者の user id。ticket の参加者のいずれかを指定する。
 	PurchasedByUserId string `protobuf:"bytes,7,opt,name=purchased_by_user_id,json=purchasedByUserId,proto3" json:"purchased_by_user_id,omitempty"`

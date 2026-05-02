@@ -192,14 +192,10 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
               </a>
             )}
             <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 pt-3 pb-4 text-xs text-zinc-600">
-              {ticket.startTime !== "" && (
-                <>
-                  <dt className="text-zinc-400">開演</dt>
-                  <dd>
-                    <Mono>{ticket.startTime}</Mono>
-                  </dd>
-                </>
-              )}
+              <dt className="text-zinc-400">開演</dt>
+              <dd>
+                <Mono>{ticket.startTime}</Mono>
+              </dd>
               {ticket.meetingPlace !== "" && (
                 <>
                   <dt className="text-zinc-400">集合</dt>

@@ -55,7 +55,7 @@ type CreateTicketParams struct {
 	PurchasedBy     string
 	MeetingTime     sql.NullString
 	MeetingPlace    string
-	StartTime       sql.NullString
+	StartTime       string
 }
 
 func (q *Queries) CreateTicket(ctx context.Context, arg CreateTicketParams) error {
@@ -124,7 +124,7 @@ type GetTicketByIDRow struct {
 	MaxParticipants int32
 	MeetingTime     sql.NullString
 	MeetingPlace    string
-	StartTime       sql.NullString
+	StartTime       string
 	PurchasedBy     string
 	PurchaserName   string
 }
@@ -260,7 +260,7 @@ type ListTicketsRow struct {
 	MaxParticipants int32
 	MeetingTime     sql.NullString
 	MeetingPlace    string
-	StartTime       sql.NullString
+	StartTime       string
 	PurchaserName   string
 }
 
@@ -322,7 +322,7 @@ type ListTicketsByIDsRow struct {
 	MaxParticipants int32
 	MeetingTime     sql.NullString
 	MeetingPlace    string
-	StartTime       sql.NullString
+	StartTime       string
 	PurchaserName   string
 }
 
@@ -425,7 +425,7 @@ type UpdateTicketParams struct {
 	MaxParticipants int32
 	MeetingTime     sql.NullString
 	MeetingPlace    string
-	StartTime       sql.NullString
+	StartTime       string
 	PurchasedBy     string
 	ID              string
 }

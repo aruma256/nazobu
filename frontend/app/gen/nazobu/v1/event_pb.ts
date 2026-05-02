@@ -71,14 +71,14 @@ export type Event = Message<"nazobu.v1.Event"> & {
   tickets: EventTicket[];
 
   /**
-   * 開場時間が開始時刻（ticket.start_time）の何分前か。任意。
+   * 開場時間が開演時刻（ticket.start_time）の何分前か。任意。
    *
    * @generated from field: optional int32 doors_open_minutes_before = 5;
    */
   doorsOpenMinutesBefore?: number;
 
   /**
-   * 入場締切が開始時刻の何分前か（これを過ぎると参加できない）。任意。
+   * 入場締切が開演時刻の何分前か（これを過ぎると参加できない）。任意。
    *
    * @generated from field: optional int32 entry_deadline_minutes_before = 6;
    */
@@ -152,14 +152,14 @@ export type CreateEventRequest = Message<"nazobu.v1.CreateEventRequest"> & {
   url: string;
 
   /**
-   * 開場時間が開始時刻の何分前か。任意。
+   * 開場時間が開演時刻の何分前か。任意。
    *
    * @generated from field: optional int32 doors_open_minutes_before = 3;
    */
   doorsOpenMinutesBefore?: number;
 
   /**
-   * 入場締切が開始時刻の何分前か。任意。
+   * 入場締切が開演時刻の何分前か。任意。
    *
    * @generated from field: optional int32 entry_deadline_minutes_before = 4;
    */
