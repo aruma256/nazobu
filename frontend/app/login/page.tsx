@@ -30,9 +30,6 @@ export default async function LoginPage({
           className="inline-block size-3 rounded-full bg-emerald-600"
         />
         <h1 className="text-2xl font-semibold tracking-tight">謎部</h1>
-        <p className="text-sm text-zinc-500">
-          謎解き仲間のための身内 Web サービス
-        </p>
       </div>
 
       <a

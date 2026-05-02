@@ -1,6 +1,6 @@
 # 謎部 (nazobu)
 
-謎解き仲間のための身内 Web サービス。
+謎解き仲間のための Web サービス。
 
 - ドメイン: `nazobu.aruma256.dev`
 - ホスティング: 自宅 Synology NAS 上の docker compose

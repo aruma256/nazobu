@@ -14,7 +14,6 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "謎部",
-  description: "謎解き仲間のための身内 Web サービス",
 };
 
 export default function RootLayout({
