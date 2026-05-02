@@ -7,6 +7,7 @@ package queries
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 	"time"
 )
@@ -24,18 +25,26 @@ func (q *Queries) CountEventByID(ctx context.Context, id string) (int64, error) 
 }
 
 const createEvent = `-- name: CreateEvent :exec
-INSERT INTO events (id, title, url, created_at, updated_at)
-VALUES (?, ?, ?, NOW(6), NOW(6))
+INSERT INTO events (id, title, url, doors_open_minutes_before, entry_deadline_minutes_before, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, NOW(6), NOW(6))
 `
 
 type CreateEventParams struct {
-	ID    string
-	Title string
-	Url   string
+	ID                         string
+	Title                      string
+	Url                        string
+	DoorsOpenMinutesBefore     sql.NullInt32
+	EntryDeadlineMinutesBefore sql.NullInt32
 }
 
 func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) error {
-	_, err := q.db.ExecContext(ctx, createEvent, arg.ID, arg.Title, arg.Url)
+	_, err := q.db.ExecContext(ctx, createEvent,
+		arg.ID,
+		arg.Title,
+		arg.Url,
+		arg.DoorsOpenMinutesBefore,
+		arg.EntryDeadlineMinutesBefore,
+	)
 	return err
 }
 
@@ -98,15 +107,17 @@ func (q *Queries) ListEventTicketsByEventIDs(ctx context.Context, eventIds []str
 }
 
 const listEvents = `-- name: ListEvents :many
-SELECT id, title, url
+SELECT id, title, url, doors_open_minutes_before, entry_deadline_minutes_before
 FROM events
 ORDER BY created_at DESC, id DESC
 `
 
 type ListEventsRow struct {
-	ID    string
-	Title string
-	Url   string
+	ID                         string
+	Title                      string
+	Url                        string
+	DoorsOpenMinutesBefore     sql.NullInt32
+	EntryDeadlineMinutesBefore sql.NullInt32
 }
 
 // 公演一覧（新しい順）。詳細表示用の最低限フィールドのみ返す。
@@ -119,7 +130,13 @@ func (q *Queries) ListEvents(ctx context.Context) ([]ListEventsRow, error) {
 	var items []ListEventsRow
 	for rows.Next() {
 		var i ListEventsRow
-		if err := rows.Scan(&i.ID, &i.Title, &i.Url); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Url,
+			&i.DoorsOpenMinutesBefore,
+			&i.EntryDeadlineMinutesBefore,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

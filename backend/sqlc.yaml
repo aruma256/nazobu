@@ -13,6 +13,9 @@ sql:
         emit_pointers_for_null_types: false
         emit_exact_table_names: false
         # MySQL の TIME は go-sql-driver では文字列で返るため、生成側も string 固定にする。
+        # NULL 可なカラムは sql.NullString で受ける。
         overrides:
           - column: "tickets.meeting_time"
             go_type: "string"
+          - column: "tickets.start_time"
+            go_type: "database/sql.NullString"

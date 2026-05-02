@@ -116,6 +116,7 @@ function Form({
 }) {
   const [attendedOn, setAttendedOn] = useState("");
   const [meetingTime, setMeetingTime] = useState("");
+  const [startTime, setStartTime] = useState("");
   const [meetingPlace, setMeetingPlace] = useState("");
   const [pricePerPerson, setPricePerPerson] = useState("");
   const [participantIds, setParticipantIds] = useState<string[]>([]);
@@ -159,6 +160,7 @@ function Form({
         eventId: event.id,
         attendedOn,
         meetingTime,
+        startTime,
         meetingPlace: trimmedPlace,
         pricePerPerson: priceNum,
         participantUserIds: participantIds,
@@ -210,6 +212,20 @@ function Form({
                 disabled={submitting}
                 className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
               />
+            </Field>
+
+            <Field label="開始時刻（任意）" htmlFor="ticket-start-time">
+              <input
+                id="ticket-start-time"
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                disabled={submitting}
+                className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+              />
+              <p className="mt-1 text-xs text-zinc-500">
+                何時の回かが決まっている公演のみ入力してください。
+              </p>
             </Field>
 
             <Field label="集合場所" htmlFor="ticket-meeting-place">

@@ -10,11 +10,13 @@ import (
 )
 
 type Event struct {
-	ID        string
-	Title     string
-	Url       string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID                         string
+	Title                      string
+	Url                        string
+	DoorsOpenMinutesBefore     sql.NullInt32
+	EntryDeadlineMinutesBefore sql.NullInt32
+	CreatedAt                  time.Time
+	UpdatedAt                  time.Time
 }
 
 type Session struct {
@@ -33,6 +35,7 @@ type Ticket struct {
 	PurchasedBy    string
 	MeetingTime    string
 	MeetingPlace   string
+	StartTime      sql.NullString
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }

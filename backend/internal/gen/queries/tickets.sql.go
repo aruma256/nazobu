@@ -30,8 +30,8 @@ func (q *Queries) CountTicketParticipant(ctx context.Context, arg CountTicketPar
 }
 
 const createTicket = `-- name: CreateTicket :exec
-INSERT INTO tickets (id, event_id, attended_on, price_per_person, purchased_by, meeting_time, meeting_place, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6))
+INSERT INTO tickets (id, event_id, attended_on, price_per_person, purchased_by, meeting_time, meeting_place, start_time, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6))
 `
 
 type CreateTicketParams struct {
@@ -42,6 +42,7 @@ type CreateTicketParams struct {
 	PurchasedBy    string
 	MeetingTime    string
 	MeetingPlace   string
+	StartTime      sql.NullString
 }
 
 func (q *Queries) CreateTicket(ctx context.Context, arg CreateTicketParams) error {
@@ -53,6 +54,7 @@ func (q *Queries) CreateTicket(ctx context.Context, arg CreateTicketParams) erro
 		arg.PurchasedBy,
 		arg.MeetingTime,
 		arg.MeetingPlace,
+		arg.StartTime,
 	)
 	return err
 }
@@ -89,7 +91,7 @@ func (q *Queries) DeleteTicketParticipant(ctx context.Context, arg DeleteTicketP
 const getTicketByID = `-- name: GetTicketByID :one
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
        t.attended_on, t.price_per_person,
-       t.meeting_time, t.meeting_place,
+       t.meeting_time, t.meeting_place, t.start_time,
        t.purchased_by,
        COALESCE(NULLIF(pu.display_name, ''), pu.username) AS purchaser_name
 FROM tickets t
@@ -107,6 +109,7 @@ type GetTicketByIDRow struct {
 	PricePerPerson int32
 	MeetingTime    string
 	MeetingPlace   string
+	StartTime      sql.NullString
 	PurchasedBy    string
 	PurchaserName  string
 }
@@ -124,6 +127,7 @@ func (q *Queries) GetTicketByID(ctx context.Context, id string) (GetTicketByIDRo
 		&i.PricePerPerson,
 		&i.MeetingTime,
 		&i.MeetingPlace,
+		&i.StartTime,
 		&i.PurchasedBy,
 		&i.PurchaserName,
 	)
@@ -222,7 +226,7 @@ func (q *Queries) ListTicketParticipantsByTicketID(ctx context.Context, ticketID
 const listTickets = `-- name: ListTickets :many
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
        t.attended_on, t.price_per_person,
-       t.meeting_time, t.meeting_place,
+       t.meeting_time, t.meeting_place, t.start_time,
        COALESCE(NULLIF(pu.display_name, ''), pu.username) AS purchaser_name
 FROM tickets t
 JOIN events e  ON e.id  = t.event_id
@@ -239,6 +243,7 @@ type ListTicketsRow struct {
 	PricePerPerson int32
 	MeetingTime    string
 	MeetingPlace   string
+	StartTime      sql.NullString
 	PurchaserName  string
 }
 
@@ -261,6 +266,7 @@ func (q *Queries) ListTickets(ctx context.Context) ([]ListTicketsRow, error) {
 			&i.PricePerPerson,
 			&i.MeetingTime,
 			&i.MeetingPlace,
+			&i.StartTime,
 			&i.PurchaserName,
 		); err != nil {
 			return nil, err
@@ -279,7 +285,7 @@ func (q *Queries) ListTickets(ctx context.Context) ([]ListTicketsRow, error) {
 const listTicketsByIDs = `-- name: ListTicketsByIDs :many
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
        t.attended_on, t.price_per_person,
-       t.meeting_time, t.meeting_place,
+       t.meeting_time, t.meeting_place, t.start_time,
        COALESCE(NULLIF(pu.display_name, ''), pu.username) AS purchaser_name
 FROM tickets t
 JOIN events e  ON e.id  = t.event_id
@@ -297,6 +303,7 @@ type ListTicketsByIDsRow struct {
 	PricePerPerson int32
 	MeetingTime    string
 	MeetingPlace   string
+	StartTime      sql.NullString
 	PurchaserName  string
 }
 
@@ -329,6 +336,7 @@ func (q *Queries) ListTicketsByIDs(ctx context.Context, ids []string) ([]ListTic
 			&i.PricePerPerson,
 			&i.MeetingTime,
 			&i.MeetingPlace,
+			&i.StartTime,
 			&i.PurchaserName,
 		); err != nil {
 			return nil, err
@@ -384,6 +392,7 @@ SET attended_on      = ?,
     price_per_person = ?,
     meeting_time     = ?,
     meeting_place    = ?,
+    start_time       = ?,
     updated_at       = NOW(6)
 WHERE id = ?
 `
@@ -393,6 +402,7 @@ type UpdateTicketParams struct {
 	PricePerPerson int32
 	MeetingTime    string
 	MeetingPlace   string
+	StartTime      sql.NullString
 	ID             string
 }
 
@@ -403,6 +413,7 @@ func (q *Queries) UpdateTicket(ctx context.Context, arg UpdateTicketParams) erro
 		arg.PricePerPerson,
 		arg.MeetingTime,
 		arg.MeetingPlace,
+		arg.StartTime,
 		arg.ID,
 	)
 	return err

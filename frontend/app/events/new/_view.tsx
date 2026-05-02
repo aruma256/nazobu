@@ -34,6 +34,8 @@ export function NewEventView() {
   const [load, setLoad] = useState<LoadState>({ kind: "loading" });
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
+  const [doorsOpen, setDoorsOpen] = useState("");
+  const [entryDeadline, setEntryDeadline] = useState("");
   const [submit, setSubmit] = useState<SubmitState>({ kind: "idle" });
 
   useEffect(() => {
@@ -74,9 +76,25 @@ export function NewEventView() {
       return;
     }
 
+    const parsedDoorsOpen = parseOptionalNonNegativeInt(doorsOpen);
+    if (parsedDoorsOpen === "invalid") {
+      setSubmit({ kind: "error", message: "開場は 0 以上の整数で入力してください" });
+      return;
+    }
+    const parsedEntryDeadline = parseOptionalNonNegativeInt(entryDeadline);
+    if (parsedEntryDeadline === "invalid") {
+      setSubmit({ kind: "error", message: "入場締切は 0 以上の整数で入力してください" });
+      return;
+    }
+
     setSubmit({ kind: "submitting" });
     try {
-      await eventClient.createEvent({ title: trimmedTitle, url: trimmedUrl });
+      await eventClient.createEvent({
+        title: trimmedTitle,
+        url: trimmedUrl,
+        doorsOpenMinutesBefore: parsedDoorsOpen,
+        entryDeadlineMinutesBefore: parsedEntryDeadline,
+      });
       router.push("/events");
     } catch (err) {
       if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
@@ -189,6 +207,57 @@ export function NewEventView() {
               />
             </div>
 
+            <div>
+              <label
+                htmlFor="event-doors-open"
+                className="block text-sm font-medium text-zinc-700"
+              >
+                開場（任意・開始の何分前か）
+              </label>
+              <div className="mt-1 flex items-center gap-2">
+                <input
+                  id="event-doors-open"
+                  type="number"
+                  min={0}
+                  step={1}
+                  inputMode="numeric"
+                  value={doorsOpen}
+                  onChange={(e) => setDoorsOpen(e.target.value)}
+                  disabled={submitting}
+                  className="block h-11 w-32 rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+                  placeholder="例: 15"
+                />
+                <span className="text-sm text-zinc-600">分前</span>
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="event-entry-deadline"
+                className="block text-sm font-medium text-zinc-700"
+              >
+                入場締切（任意・開始の何分前か）
+              </label>
+              <div className="mt-1 flex items-center gap-2">
+                <input
+                  id="event-entry-deadline"
+                  type="number"
+                  min={0}
+                  step={1}
+                  inputMode="numeric"
+                  value={entryDeadline}
+                  onChange={(e) => setEntryDeadline(e.target.value)}
+                  disabled={submitting}
+                  className="block h-11 w-32 rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+                  placeholder="例: 5"
+                />
+                <span className="text-sm text-zinc-600">分前</span>
+              </div>
+              <p className="mt-1 text-xs text-zinc-500">
+                これを過ぎると参加できなくなる時刻。
+              </p>
+            </div>
+
             {submit.kind === "error" && (
               <p className="text-sm text-amber-800">{submit.message}</p>
             )}
@@ -209,4 +278,13 @@ export function NewEventView() {
       </PageShell>
     </>
   );
+}
+
+// 任意 / 0 以上の整数。空文字は undefined を返す。
+function parseOptionalNonNegativeInt(raw: string): number | undefined | "invalid" {
+  const trimmed = raw.trim();
+  if (trimmed === "") return undefined;
+  const n = Number(trimmed);
+  if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0) return "invalid";
+  return n;
 }

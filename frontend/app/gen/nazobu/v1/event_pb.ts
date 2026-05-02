@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file nazobu/v1/event.proto.
  */
 export const file_nazobu_v1_event: GenFile = /*@__PURE__*/
-  fileDesc("ChVuYXpvYnUvdjEvZXZlbnQucHJvdG8SCW5hem9idS52MSITChFMaXN0RXZlbnRzUmVxdWVzdCI2ChJMaXN0RXZlbnRzUmVzcG9uc2USIAoGZXZlbnRzGAEgAygLMhAubmF6b2J1LnYxLkV2ZW50IlgKBUV2ZW50EgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEgsKA3VybBgDIAEoCRInCgd0aWNrZXRzGAQgAygLMhYubmF6b2J1LnYxLkV2ZW50VGlja2V0InsKC0V2ZW50VGlja2V0EgoKAmlkGAEgASgJEhMKC2F0dGVuZGVkX29uGAIgASgJEhgKEHByaWNlX3Blcl9wZXJzb24YAyABKAUSFgoOcHVyY2hhc2VyX25hbWUYBCABKAkSGQoRcGFydGljaXBhbnRfbmFtZXMYBSADKAkiMAoSQ3JlYXRlRXZlbnRSZXF1ZXN0Eg0KBXRpdGxlGAEgASgJEgsKA3VybBgCIAEoCSI2ChNDcmVhdGVFdmVudFJlc3BvbnNlEh8KBWV2ZW50GAEgASgLMhAubmF6b2J1LnYxLkV2ZW50MqcBCgxFdmVudFNlcnZpY2USSQoKTGlzdEV2ZW50cxIcLm5hem9idS52MS5MaXN0RXZlbnRzUmVxdWVzdBodLm5hem9idS52MS5MaXN0RXZlbnRzUmVzcG9uc2USTAoLQ3JlYXRlRXZlbnQSHS5uYXpvYnUudjEuQ3JlYXRlRXZlbnRSZXF1ZXN0Gh4ubmF6b2J1LnYxLkNyZWF0ZUV2ZW50UmVzcG9uc2VCRFpCZ2l0aHViLmNvbS9hcnVtYTI1Ni9uYXpvYnUvYmFja2VuZC9pbnRlcm5hbC9nZW4vbmF6b2J1L3YxO25hem9idXYxYgZwcm90bzM");
+  fileDesc("ChVuYXpvYnUvdjEvZXZlbnQucHJvdG8SCW5hem9idS52MSITChFMaXN0RXZlbnRzUmVxdWVzdCI2ChJMaXN0RXZlbnRzUmVzcG9uc2USIAoGZXZlbnRzGAEgAygLMhAubmF6b2J1LnYxLkV2ZW50IuwBCgVFdmVudBIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRILCgN1cmwYAyABKAkSJwoHdGlja2V0cxgEIAMoCzIWLm5hem9idS52MS5FdmVudFRpY2tldBImChlkb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlGAUgASgFSACIAQESKgodZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUYBiABKAVIAYgBAUIcChpfZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZUIgCh5fZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUiewoLRXZlbnRUaWNrZXQSCgoCaWQYASABKAkSEwoLYXR0ZW5kZWRfb24YAiABKAkSGAoQcHJpY2VfcGVyX3BlcnNvbhgDIAEoBRIWCg5wdXJjaGFzZXJfbmFtZRgEIAEoCRIZChFwYXJ0aWNpcGFudF9uYW1lcxgFIAMoCSLEAQoSQ3JlYXRlRXZlbnRSZXF1ZXN0Eg0KBXRpdGxlGAEgASgJEgsKA3VybBgCIAEoCRImChlkb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlGAMgASgFSACIAQESKgodZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUYBCABKAVIAYgBAUIcChpfZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZUIgCh5fZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUiNgoTQ3JlYXRlRXZlbnRSZXNwb25zZRIfCgVldmVudBgBIAEoCzIQLm5hem9idS52MS5FdmVudDKnAQoMRXZlbnRTZXJ2aWNlEkkKCkxpc3RFdmVudHMSHC5uYXpvYnUudjEuTGlzdEV2ZW50c1JlcXVlc3QaHS5uYXpvYnUudjEuTGlzdEV2ZW50c1Jlc3BvbnNlEkwKC0NyZWF0ZUV2ZW50Eh0ubmF6b2J1LnYxLkNyZWF0ZUV2ZW50UmVxdWVzdBoeLm5hem9idS52MS5DcmVhdGVFdmVudFJlc3BvbnNlQkRaQmdpdGh1Yi5jb20vYXJ1bWEyNTYvbmF6b2J1L2JhY2tlbmQvaW50ZXJuYWwvZ2VuL25hem9idS92MTtuYXpvYnV2MWIGcHJvdG8z");
 
 /**
  * @generated from message nazobu.v1.ListEventsRequest
@@ -69,6 +69,20 @@ export type Event = Message<"nazobu.v1.Event"> & {
    * @generated from field: repeated nazobu.v1.EventTicket tickets = 4;
    */
   tickets: EventTicket[];
+
+  /**
+   * 開場時間が開始時刻（ticket.start_time）の何分前か。任意。
+   *
+   * @generated from field: optional int32 doors_open_minutes_before = 5;
+   */
+  doorsOpenMinutesBefore?: number;
+
+  /**
+   * 入場締切が開始時刻の何分前か（これを過ぎると参加できない）。任意。
+   *
+   * @generated from field: optional int32 entry_deadline_minutes_before = 6;
+   */
+  entryDeadlineMinutesBefore?: number;
 };
 
 /**
@@ -136,6 +150,20 @@ export type CreateEventRequest = Message<"nazobu.v1.CreateEventRequest"> & {
    * @generated from field: string url = 2;
    */
   url: string;
+
+  /**
+   * 開場時間が開始時刻の何分前か。任意。
+   *
+   * @generated from field: optional int32 doors_open_minutes_before = 3;
+   */
+  doorsOpenMinutesBefore?: number;
+
+  /**
+   * 入場締切が開始時刻の何分前か。任意。
+   *
+   * @generated from field: optional int32 entry_deadline_minutes_before = 4;
+   */
+  entryDeadlineMinutesBefore?: number;
 };
 
 /**

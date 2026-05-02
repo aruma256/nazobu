@@ -43,10 +43,12 @@ func (s *eventService) ListEvents(ctx context.Context, req *connect.Request[nazo
 	events := make([]*nazobuv1.Event, 0, len(rows))
 	for _, r := range rows {
 		events = append(events, &nazobuv1.Event{
-			Id:      r.ID,
-			Title:   r.Title,
-			Url:     r.Url,
-			Tickets: []*nazobuv1.EventTicket{},
+			Id:                         r.ID,
+			Title:                      r.Title,
+			Url:                        r.Url,
+			DoorsOpenMinutesBefore:     nullInt32ToPtr(r.DoorsOpenMinutesBefore),
+			EntryDeadlineMinutesBefore: nullInt32ToPtr(r.EntryDeadlineMinutesBefore),
+			Tickets:                    []*nazobuv1.EventTicket{},
 		})
 	}
 	if len(events) == 0 {
@@ -69,6 +71,14 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 
 	title := strings.TrimSpace(req.Msg.GetTitle())
 	rawURL := strings.TrimSpace(req.Msg.GetUrl())
+	doorsOpen, err := validateMinutesBefore(req.Msg.DoorsOpenMinutesBefore, "doors_open_minutes_before")
+	if err != nil {
+		return nil, err
+	}
+	entryDeadline, err := validateMinutesBefore(req.Msg.EntryDeadlineMinutesBefore, "entry_deadline_minutes_before")
+	if err != nil {
+		return nil, err
+	}
 
 	if title == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("title は必須"))
@@ -89,21 +99,44 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 
 	id := ulid.Make().String()
 	if err := s.q.CreateEvent(ctx, queries.CreateEventParams{
-		ID:    id,
-		Title: title,
-		Url:   rawURL,
+		ID:                         id,
+		Title:                      title,
+		Url:                        rawURL,
+		DoorsOpenMinutesBefore:     doorsOpen,
+		EntryDeadlineMinutesBefore: entryDeadline,
 	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の登録に失敗: %w", err))
 	}
 
 	return connect.NewResponse(&nazobuv1.CreateEventResponse{
 		Event: &nazobuv1.Event{
-			Id:      id,
-			Title:   title,
-			Url:     rawURL,
-			Tickets: []*nazobuv1.EventTicket{},
+			Id:                         id,
+			Title:                      title,
+			Url:                        rawURL,
+			DoorsOpenMinutesBefore:     nullInt32ToPtr(doorsOpen),
+			EntryDeadlineMinutesBefore: nullInt32ToPtr(entryDeadline),
+			Tickets:                    []*nazobuv1.EventTicket{},
 		},
 	}), nil
+}
+
+// validateMinutesBefore は任意の「開始時刻の何分前か」を受け取る。0 以上のみ許容し、未指定なら NULL。
+func validateMinutesBefore(v *int32, fieldName string) (sql.NullInt32, error) {
+	if v == nil {
+		return sql.NullInt32{}, nil
+	}
+	if *v < 0 {
+		return sql.NullInt32{}, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("%s は 0 以上", fieldName))
+	}
+	return sql.NullInt32{Int32: *v, Valid: true}, nil
+}
+
+func nullInt32ToPtr(v sql.NullInt32) *int32 {
+	if !v.Valid {
+		return nil
+	}
+	x := v.Int32
+	return &x
 }
 
 // attachTickets は events に紐づく ticket と参加者を埋める。1 イベントずつ N+1 で叩かず、

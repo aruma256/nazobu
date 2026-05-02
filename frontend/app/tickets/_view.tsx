@@ -121,6 +121,14 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
           {ticket.eventTitle}
         </h3>
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 pt-3 pb-4 text-xs text-zinc-600">
+          {ticket.startTime !== "" && (
+            <>
+              <dt className="text-zinc-400">開演</dt>
+              <dd>
+                <Mono>{ticket.startTime}</Mono>
+              </dd>
+            </>
+          )}
           <dt className="text-zinc-400">集合</dt>
           <dd>{ticket.meetingPlace}</dd>
           <dt className="text-zinc-400">立替</dt>

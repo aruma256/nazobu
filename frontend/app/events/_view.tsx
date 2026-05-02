@@ -116,6 +116,9 @@ export function EventsView() {
 }
 
 function EventCard({ event }: { event: NazobuEvent }) {
+  const hasOffsets =
+    event.doorsOpenMinutesBefore !== undefined ||
+    event.entryDeadlineMinutesBefore !== undefined;
   return (
     <li className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
       <div className="px-4 pt-4">
@@ -129,6 +132,22 @@ function EventCard({ event }: { event: NazobuEvent }) {
           >
             {event.url}
           </a>
+        )}
+        {hasOffsets && (
+          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-zinc-600">
+            {event.doorsOpenMinutesBefore !== undefined && (
+              <>
+                <dt className="text-zinc-400">開場</dt>
+                <dd>開始 {event.doorsOpenMinutesBefore} 分前</dd>
+              </>
+            )}
+            {event.entryDeadlineMinutesBefore !== undefined && (
+              <>
+                <dt className="text-zinc-400">締切</dt>
+                <dd>開始 {event.entryDeadlineMinutesBefore} 分前</dd>
+              </>
+            )}
+          </dl>
         )}
       </div>
 

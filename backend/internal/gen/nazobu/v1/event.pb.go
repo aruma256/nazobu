@@ -108,9 +108,13 @@ type Event struct {
 	Title string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	Url   string                 `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
 	// 紐づく ticket（attended_on 降順）。
-	Tickets       []*EventTicket `protobuf:"bytes,4,rep,name=tickets,proto3" json:"tickets,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Tickets []*EventTicket `protobuf:"bytes,4,rep,name=tickets,proto3" json:"tickets,omitempty"`
+	// 開場時間が開始時刻（ticket.start_time）の何分前か。任意。
+	DoorsOpenMinutesBefore *int32 `protobuf:"varint,5,opt,name=doors_open_minutes_before,json=doorsOpenMinutesBefore,proto3,oneof" json:"doors_open_minutes_before,omitempty"`
+	// 入場締切が開始時刻の何分前か（これを過ぎると参加できない）。任意。
+	EntryDeadlineMinutesBefore *int32 `protobuf:"varint,6,opt,name=entry_deadline_minutes_before,json=entryDeadlineMinutesBefore,proto3,oneof" json:"entry_deadline_minutes_before,omitempty"`
+	unknownFields              protoimpl.UnknownFields
+	sizeCache                  protoimpl.SizeCache
 }
 
 func (x *Event) Reset() {
@@ -169,6 +173,20 @@ func (x *Event) GetTickets() []*EventTicket {
 		return x.Tickets
 	}
 	return nil
+}
+
+func (x *Event) GetDoorsOpenMinutesBefore() int32 {
+	if x != nil && x.DoorsOpenMinutesBefore != nil {
+		return *x.DoorsOpenMinutesBefore
+	}
+	return 0
+}
+
+func (x *Event) GetEntryDeadlineMinutesBefore() int32 {
+	if x != nil && x.EntryDeadlineMinutesBefore != nil {
+		return *x.EntryDeadlineMinutesBefore
+	}
+	return 0
 }
 
 type EventTicket struct {
@@ -252,11 +270,15 @@ func (x *EventTicket) GetParticipantNames() []string {
 }
 
 type CreateEventRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
-	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Title string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	Url   string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	// 開場時間が開始時刻の何分前か。任意。
+	DoorsOpenMinutesBefore *int32 `protobuf:"varint,3,opt,name=doors_open_minutes_before,json=doorsOpenMinutesBefore,proto3,oneof" json:"doors_open_minutes_before,omitempty"`
+	// 入場締切が開始時刻の何分前か。任意。
+	EntryDeadlineMinutesBefore *int32 `protobuf:"varint,4,opt,name=entry_deadline_minutes_before,json=entryDeadlineMinutesBefore,proto3,oneof" json:"entry_deadline_minutes_before,omitempty"`
+	unknownFields              protoimpl.UnknownFields
+	sizeCache                  protoimpl.SizeCache
 }
 
 func (x *CreateEventRequest) Reset() {
@@ -301,6 +323,20 @@ func (x *CreateEventRequest) GetUrl() string {
 		return x.Url
 	}
 	return ""
+}
+
+func (x *CreateEventRequest) GetDoorsOpenMinutesBefore() int32 {
+	if x != nil && x.DoorsOpenMinutesBefore != nil {
+		return *x.DoorsOpenMinutesBefore
+	}
+	return 0
+}
+
+func (x *CreateEventRequest) GetEntryDeadlineMinutesBefore() int32 {
+	if x != nil && x.EntryDeadlineMinutesBefore != nil {
+		return *x.EntryDeadlineMinutesBefore
+	}
+	return 0
 }
 
 type CreateEventResponse struct {
@@ -354,22 +390,30 @@ const file_nazobu_v1_event_proto_rawDesc = "" +
 	"\x15nazobu/v1/event.proto\x12\tnazobu.v1\"\x13\n" +
 	"\x11ListEventsRequest\">\n" +
 	"\x12ListEventsResponse\x12(\n" +
-	"\x06events\x18\x01 \x03(\v2\x10.nazobu.v1.EventR\x06events\"q\n" +
+	"\x06events\x18\x01 \x03(\v2\x10.nazobu.v1.EventR\x06events\"\xb9\x02\n" +
 	"\x05Event\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x10\n" +
 	"\x03url\x18\x03 \x01(\tR\x03url\x120\n" +
-	"\atickets\x18\x04 \x03(\v2\x16.nazobu.v1.EventTicketR\atickets\"\xbc\x01\n" +
+	"\atickets\x18\x04 \x03(\v2\x16.nazobu.v1.EventTicketR\atickets\x12>\n" +
+	"\x19doors_open_minutes_before\x18\x05 \x01(\x05H\x00R\x16doorsOpenMinutesBefore\x88\x01\x01\x12F\n" +
+	"\x1dentry_deadline_minutes_before\x18\x06 \x01(\x05H\x01R\x1aentryDeadlineMinutesBefore\x88\x01\x01B\x1c\n" +
+	"\x1a_doors_open_minutes_beforeB \n" +
+	"\x1e_entry_deadline_minutes_before\"\xbc\x01\n" +
 	"\vEventTicket\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
 	"\vattended_on\x18\x02 \x01(\tR\n" +
 	"attendedOn\x12(\n" +
 	"\x10price_per_person\x18\x03 \x01(\x05R\x0epricePerPerson\x12%\n" +
 	"\x0epurchaser_name\x18\x04 \x01(\tR\rpurchaserName\x12+\n" +
-	"\x11participant_names\x18\x05 \x03(\tR\x10participantNames\"<\n" +
+	"\x11participant_names\x18\x05 \x03(\tR\x10participantNames\"\x84\x02\n" +
 	"\x12CreateEventRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x10\n" +
-	"\x03url\x18\x02 \x01(\tR\x03url\"=\n" +
+	"\x03url\x18\x02 \x01(\tR\x03url\x12>\n" +
+	"\x19doors_open_minutes_before\x18\x03 \x01(\x05H\x00R\x16doorsOpenMinutesBefore\x88\x01\x01\x12F\n" +
+	"\x1dentry_deadline_minutes_before\x18\x04 \x01(\x05H\x01R\x1aentryDeadlineMinutesBefore\x88\x01\x01B\x1c\n" +
+	"\x1a_doors_open_minutes_beforeB \n" +
+	"\x1e_entry_deadline_minutes_before\"=\n" +
 	"\x13CreateEventResponse\x12&\n" +
 	"\x05event\x18\x01 \x01(\v2\x10.nazobu.v1.EventR\x05event2\xa7\x01\n" +
 	"\fEventService\x12I\n" +
@@ -418,6 +462,8 @@ func file_nazobu_v1_event_proto_init() {
 	if File_nazobu_v1_event_proto != nil {
 		return
 	}
+	file_nazobu_v1_event_proto_msgTypes[2].OneofWrappers = []any{}
+	file_nazobu_v1_event_proto_msgTypes[4].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

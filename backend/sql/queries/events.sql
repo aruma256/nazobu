@@ -1,12 +1,12 @@
 -- name: ListEvents :many
 -- 公演一覧（新しい順）。詳細表示用の最低限フィールドのみ返す。
-SELECT id, title, url
+SELECT id, title, url, doors_open_minutes_before, entry_deadline_minutes_before
 FROM events
 ORDER BY created_at DESC, id DESC;
 
 -- name: CreateEvent :exec
-INSERT INTO events (id, title, url, created_at, updated_at)
-VALUES (?, ?, ?, NOW(6), NOW(6));
+INSERT INTO events (id, title, url, doors_open_minutes_before, entry_deadline_minutes_before, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, NOW(6), NOW(6));
 
 -- name: CountEventByID :one
 -- 参照整合性のフレンドリーなプリチェック用。FK でも担保されるが UX のために事前に存在確認する。
