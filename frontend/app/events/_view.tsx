@@ -160,24 +160,26 @@ function EventCard({ event }: { event: NazobuEvent }) {
 function TicketRow({ ticket }: { ticket: EventTicket }) {
   const date = parseAttendedOn(ticket.attendedOn);
   return (
-    <li className="px-4 py-3">
-      <div className="flex items-baseline gap-3">
-        <Mono className="text-sm font-semibold text-emerald-700">
-          {formatDateJa(date)}
-        </Mono>
-        <Mono className="ml-auto text-sm font-semibold tracking-tight">
-          {formatYen(ticket.pricePerPerson)}
-        </Mono>
-      </div>
-      <p className="mt-1 text-xs text-zinc-600">
-        <span className="text-zinc-400">立替</span> {ticket.purchaserName}
-      </p>
-      {ticket.participantNames.length > 0 && (
+    <li className="transition-colors hover:bg-zinc-50">
+      <Link href={`/tickets/${ticket.id}`} className="block px-4 py-3">
+        <div className="flex items-baseline gap-3">
+          <Mono className="text-sm font-semibold text-emerald-700">
+            {formatDateJa(date)}
+          </Mono>
+          <Mono className="ml-auto text-sm font-semibold tracking-tight">
+            {formatYen(ticket.pricePerPerson)}
+          </Mono>
+        </div>
         <p className="mt-1 text-xs text-zinc-600">
-          <span className="text-zinc-400">参加</span>{" "}
-          {ticket.participantNames.join("・")}
+          <span className="text-zinc-400">立替</span> {ticket.purchaserName}
         </p>
-      )}
+        {ticket.participantNames.length > 0 && (
+          <p className="mt-1 text-xs text-zinc-600">
+            <span className="text-zinc-400">参加</span>{" "}
+            {ticket.participantNames.join("・")}
+          </p>
+        )}
+      </Link>
     </li>
   );
 }
