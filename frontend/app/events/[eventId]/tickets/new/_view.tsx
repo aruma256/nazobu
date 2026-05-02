@@ -119,6 +119,7 @@ function Form({
   const [startTime, setStartTime] = useState("");
   const [meetingPlace, setMeetingPlace] = useState("");
   const [pricePerPerson, setPricePerPerson] = useState("");
+  const [maxParticipants, setMaxParticipants] = useState("");
   const [participantIds, setParticipantIds] = useState<string[]>([]);
   const [state, setState] = useState<SubmitState>({ kind: "idle" });
 
@@ -136,10 +137,12 @@ function Form({
 
     const trimmedPlace = meetingPlace.trim();
     const priceNum = Number(pricePerPerson);
+    const maxNum = Number(maxParticipants);
     if (
       attendedOn === "" ||
       trimmedPlace === "" ||
-      pricePerPerson === ""
+      pricePerPerson === "" ||
+      maxParticipants === ""
     ) {
       setState({ kind: "error", message: "未入力の項目があります" });
       return;
@@ -148,8 +151,16 @@ function Form({
       setState({ kind: "error", message: "金額は 0 以上の整数で入力してください" });
       return;
     }
+    if (!Number.isFinite(maxNum) || maxNum < 1 || !Number.isInteger(maxNum)) {
+      setState({ kind: "error", message: "定員は 1 以上の整数で入力してください" });
+      return;
+    }
     if (participantIds.length === 0) {
       setState({ kind: "error", message: "参加者を 1 人以上選択してください" });
+      return;
+    }
+    if (participantIds.length > maxNum) {
+      setState({ kind: "error", message: "選択した参加者の人数が定員を超えています" });
       return;
     }
 
@@ -162,6 +173,7 @@ function Form({
         startTime,
         meetingPlace: trimmedPlace,
         pricePerPerson: priceNum,
+        maxParticipants: maxNum,
         participantUserIds: participantIds,
       });
       router.push("/tickets");
@@ -256,6 +268,22 @@ function Form({
                 disabled={submitting}
                 className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
                 placeholder="例: 4000"
+              />
+            </Field>
+
+            <Field label="定員（このチケットで参加できる最大人数）" htmlFor="ticket-max-participants">
+              <input
+                id="ticket-max-participants"
+                type="number"
+                required
+                min={1}
+                step={1}
+                inputMode="numeric"
+                value={maxParticipants}
+                onChange={(e) => setMaxParticipants(e.target.value)}
+                disabled={submitting}
+                className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+                placeholder="例: 4"
               />
             </Field>
 

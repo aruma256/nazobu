@@ -12,11 +12,12 @@ service TicketService {
   rpc GetTicket(GetTicketRequest) returns (GetTicketResponse);
   // CreateTicket は新規 ticket を 1 件登録する。参加者（割り勘元）も同時に登録する。
   rpc CreateTicket(CreateTicketRequest) returns (CreateTicketResponse);
-  // UpdateTicket は ticket 本体（attended_on / price_per_person / meeting_time / meeting_place / start_time / purchased_by_user_id）を更新する。
+  // UpdateTicket は ticket 本体（attended_on / price_per_person / max_participants / meeting_time / meeting_place / start_time / purchased_by_user_id）を更新する。
   // admin もしくは立替者のみ実行可能。新しい立替者は ticket の参加者の中から選ぶ。
   rpc UpdateTicket(UpdateTicketRequest) returns (UpdateTicketResponse);
   // AddTicketParticipants は ticket の参加者を 1 人以上追加する。
   // admin もしくは立替者のみ実行可能。既に存在する user_id は無視する。
+  // 追加によって max_participants を超える場合は失敗する。
   rpc AddTicketParticipants(AddTicketParticipantsRequest) returns (AddTicketParticipantsResponse);
   // RemoveTicketParticipant は ticket の参加者を 1 人削除する。
   // admin もしくは立替者のみ実行可能。立替者本人は削除できない。
@@ -53,6 +54,9 @@ message Ticket {
   string event_url = 10;
   // 開始時刻 "HH:MM"（attended_on の JST 当日基準。何時の回という概念が無い公演では空文字）。
   string start_time = 11;
+  // このチケット 1 枚で参加できる最大人数。1 以上。
+  // 既存レコード移行中のため当面は省略可（未設定なら未指定として扱う）。
+  optional int32 max_participants = 12;
 }
 
 message GetTicketRequest {
@@ -92,6 +96,9 @@ message CreateTicketRequest {
   repeated string participant_user_ids = 6;
   // 開始時刻 "HH:MM"（attended_on の JST 当日基準。何時の回という概念が無い公演では空文字）。
   string start_time = 7;
+  // このチケット 1 枚で参加できる最大人数。新規登録では必須・1 以上。
+  // participant_user_ids の件数以上である必要がある。
+  int32 max_participants = 8;
 }
 
 message CreateTicketResponse {
@@ -112,6 +119,9 @@ message UpdateTicketRequest {
   string start_time = 6;
   // 立替者の user id。ticket の参加者のいずれかを指定する。
   string purchased_by_user_id = 7;
+  // このチケット 1 枚で参加できる最大人数。1 以上、現在の参加者数以上である必要がある。
+  // 編集時は必須。既存レコードで未設定だった場合もこのタイミングで埋める。
+  int32 max_participants = 8;
 }
 
 message UpdateTicketResponse {

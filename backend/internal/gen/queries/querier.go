@@ -13,6 +13,8 @@ type Querier interface {
 	CountEventByID(ctx context.Context, id string) (int64, error)
 	// 参加者の存在確認。重複登録を避けるためのプリチェック。
 	CountTicketParticipant(ctx context.Context, arg CountTicketParticipantParams) (int64, error)
+	// ticket の参加者数。max_participants 超過チェックで使う。
+	CountTicketParticipantsByTicketID(ctx context.Context, ticketID string) (int64, error)
 	// 参照整合性のフレンドリーなプリチェック用。FK でも担保されるが UX のために事前に数を確認する。
 	CountUsersByIDs(ctx context.Context, ids []string) (int64, error)
 	CreateEvent(ctx context.Context, arg CreateEventParams) error
@@ -61,7 +63,8 @@ type Querier interface {
 	// 精算済み → 未精算。settled_at を NULL に戻す。
 	MarkTicketParticipantUnsettled(ctx context.Context, arg MarkTicketParticipantUnsettledParams) error
 	// ticket 本体の更新。event_id は変更しない。purchased_by の変更は呼び出し側で
-	// 新しい立替者が ticket_participants に含まれることを保証する。
+	// 新しい立替者が ticket_participants に含まれることを保証する。max_participants は
+	// 呼び出し側で参加者数を下回らないことを保証する。
 	UpdateTicket(ctx context.Context, arg UpdateTicketParams) error
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) error
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error

@@ -73,6 +73,9 @@ CREATE TABLE tickets (
   event_id          VARCHAR(26)  NOT NULL,
   attended_on       DATE         NOT NULL,
   price_per_person  INT          NOT NULL,
+  -- このチケット 1 枚で参加できる最大人数（ticket_participants の最大紐づけ数）。
+  -- 既存レコードがあるため一旦 NULL 可で導入し、本番データ補完後に NOT NULL へ締める。
+  max_participants  INT          NULL,
   purchased_by      VARCHAR(26)  NOT NULL,
   -- 集合時刻（attended_on の JST 当日基準）と集合場所。集合時刻が決まっていないときは NULL。
   meeting_time      TIME         NULL,

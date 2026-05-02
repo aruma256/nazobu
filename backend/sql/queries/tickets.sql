@@ -1,7 +1,7 @@
 -- name: ListTickets :many
 -- ticket 一覧画面用。event 名と立替者名を join して返す。
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
-       t.attended_on, t.price_per_person,
+       t.attended_on, t.price_per_person, t.max_participants,
        t.meeting_time, t.meeting_place, t.start_time,
        pu.display_name AS purchaser_name
 FROM tickets t
@@ -12,7 +12,7 @@ ORDER BY t.attended_on DESC, t.id ASC;
 -- name: ListTicketsByIDs :many
 -- CreateTicket 直後の返却用。1 件のことが多いがインタフェースは ListTickets と揃える。
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
-       t.attended_on, t.price_per_person,
+       t.attended_on, t.price_per_person, t.max_participants,
        t.meeting_time, t.meeting_place, t.start_time,
        pu.display_name AS purchaser_name
 FROM tickets t
@@ -22,8 +22,8 @@ WHERE t.id IN (sqlc.slice('ids'))
 ORDER BY t.attended_on DESC, t.id ASC;
 
 -- name: CreateTicket :exec
-INSERT INTO tickets (id, event_id, attended_on, price_per_person, purchased_by, meeting_time, meeting_place, start_time, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6));
+INSERT INTO tickets (id, event_id, attended_on, price_per_person, max_participants, purchased_by, meeting_time, meeting_place, start_time, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6));
 
 -- name: CreateTicketParticipant :exec
 INSERT INTO ticket_participants (ticket_id, user_id, created_at)
@@ -42,7 +42,7 @@ ORDER BY tp.ticket_id, tp.created_at ASC;
 -- name: GetTicketByID :one
 -- ticket 詳細表示用。立替者の id と表示名も返す（権限判定 / UI 表示で使う）。
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
-       t.attended_on, t.price_per_person,
+       t.attended_on, t.price_per_person, t.max_participants,
        t.meeting_time, t.meeting_place, t.start_time,
        t.purchased_by,
        pu.display_name AS purchaser_name
@@ -63,10 +63,12 @@ ORDER BY tp.created_at ASC, tp.user_id ASC;
 
 -- name: UpdateTicket :exec
 -- ticket 本体の更新。event_id は変更しない。purchased_by の変更は呼び出し側で
--- 新しい立替者が ticket_participants に含まれることを保証する。
+-- 新しい立替者が ticket_participants に含まれることを保証する。max_participants は
+-- 呼び出し側で参加者数を下回らないことを保証する。
 UPDATE tickets
 SET attended_on      = ?,
     price_per_person = ?,
+    max_participants = ?,
     meeting_time     = ?,
     meeting_place    = ?,
     start_time       = ?,
@@ -92,3 +94,7 @@ WHERE ticket_id = ? AND user_id = ?;
 -- name: CountTicketParticipant :one
 -- 参加者の存在確認。重複登録を避けるためのプリチェック。
 SELECT COUNT(*) FROM ticket_participants WHERE ticket_id = ? AND user_id = ?;
+
+-- name: CountTicketParticipantsByTicketID :one
+-- ticket の参加者数。max_participants 超過チェックで使う。
+SELECT COUNT(*) FROM ticket_participants WHERE ticket_id = ?;

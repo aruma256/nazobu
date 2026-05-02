@@ -50,6 +50,7 @@ func (s *ticketService) ListTickets(ctx context.Context, req *connect.Request[na
 			EventUrl:         r.EventUrl,
 			AttendedOn:       r.AttendedOn.Format(dateLayout),
 			PricePerPerson:   r.PricePerPerson,
+			MaxParticipants:  nullInt32ToPtr(r.MaxParticipants),
 			MeetingTime:      formatNullableMeetingTime(r.MeetingTime),
 			MeetingPlace:     r.MeetingPlace,
 			StartTime:        formatNullableMeetingTime(r.StartTime),
@@ -109,6 +110,7 @@ func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazo
 		EventUrl:         row.EventUrl,
 		AttendedOn:       row.AttendedOn.Format(dateLayout),
 		PricePerPerson:   row.PricePerPerson,
+		MaxParticipants:  nullInt32ToPtr(row.MaxParticipants),
 		MeetingTime:      formatNullableMeetingTime(row.MeetingTime),
 		MeetingPlace:     row.MeetingPlace,
 		StartTime:        formatNullableMeetingTime(row.StartTime),
@@ -138,6 +140,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 	attendedOn := strings.TrimSpace(msg.GetAttendedOn())
 	meetingPlace := strings.TrimSpace(msg.GetMeetingPlace())
 	price := msg.GetPricePerPerson()
+	maxParticipants := msg.GetMaxParticipants()
 	participants := dedupeStrings(msg.GetParticipantUserIds())
 
 	if eventID == "" {
@@ -164,8 +167,14 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 	if price < 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("price_per_person は 0 以上"))
 	}
+	if maxParticipants < 1 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("max_participants は 1 以上"))
+	}
 	if len(participants) == 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("participant_user_ids は 1 件以上"))
+	}
+	if int32(len(participants)) > maxParticipants {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("participant_user_ids の件数が max_participants を超えている"))
 	}
 
 	// 参照整合性は FK でも担保されるが、ユーザに分かりやすいメッセージを返すため事前確認する。
@@ -187,14 +196,15 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 
 	qtx := s.q.WithTx(tx)
 	if err := qtx.CreateTicket(ctx, queries.CreateTicketParams{
-		ID:             id,
-		EventID:        eventID,
-		AttendedOn:     attendedOnTime,
-		PricePerPerson: price,
-		PurchasedBy:    purchasedBy,
-		MeetingTime:    meetingTime,
-		MeetingPlace:   meetingPlace,
-		StartTime:      startTime,
+		ID:              id,
+		EventID:         eventID,
+		AttendedOn:      attendedOnTime,
+		PricePerPerson:  price,
+		MaxParticipants: sql.NullInt32{Int32: maxParticipants, Valid: true},
+		PurchasedBy:     purchasedBy,
+		MeetingTime:     meetingTime,
+		MeetingPlace:    meetingPlace,
+		StartTime:       startTime,
 	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket の登録に失敗: %w", err))
 	}
@@ -224,6 +234,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 		EventUrl:         r.EventUrl,
 		AttendedOn:       r.AttendedOn.Format(dateLayout),
 		PricePerPerson:   r.PricePerPerson,
+		MaxParticipants:  nullInt32ToPtr(r.MaxParticipants),
 		MeetingTime:      formatNullableMeetingTime(r.MeetingTime),
 		MeetingPlace:     r.MeetingPlace,
 		StartTime:        formatNullableMeetingTime(r.StartTime),
@@ -263,6 +274,7 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 	meetingPlace := strings.TrimSpace(msg.GetMeetingPlace())
 	purchasedBy := strings.TrimSpace(msg.GetPurchasedByUserId())
 	price := msg.GetPricePerPerson()
+	maxParticipants := msg.GetMaxParticipants()
 
 	attendedOnTime, err := time.ParseInLocation(dateLayout, attendedOn, jst)
 	if err != nil {
@@ -285,6 +297,9 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 	if price < 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("price_per_person は 0 以上"))
 	}
+	if maxParticipants < 1 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("max_participants は 1 以上"))
+	}
 	if purchasedBy == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("purchased_by_user_id は必須"))
 	}
@@ -301,15 +316,24 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 			return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("立替者は ticket の参加者の中から選ぶ"))
 		}
 	}
+	// max_participants は現在の参加者数を下回ってはいけない。
+	participantCount, err := s.q.CountTicketParticipantsByTicketID(ctx, ticketID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者数の取得に失敗: %w", err))
+	}
+	if int64(maxParticipants) < participantCount {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("max_participants は現在の参加者数以上"))
+	}
 
 	if err := s.q.UpdateTicket(ctx, queries.UpdateTicketParams{
-		ID:             ticketID,
-		AttendedOn:     attendedOnTime,
-		PricePerPerson: price,
-		MeetingTime:    meetingTime,
-		MeetingPlace:   meetingPlace,
-		StartTime:      startTime,
-		PurchasedBy:    purchasedBy,
+		ID:              ticketID,
+		AttendedOn:      attendedOnTime,
+		PricePerPerson:  price,
+		MaxParticipants: sql.NullInt32{Int32: maxParticipants, Valid: true},
+		MeetingTime:     meetingTime,
+		MeetingPlace:    meetingPlace,
+		StartTime:       startTime,
+		PurchasedBy:     purchasedBy,
 	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket の更新に失敗: %w", err))
 	}
@@ -326,6 +350,7 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 		EventUrl:         r.EventUrl,
 		AttendedOn:       r.AttendedOn.Format(dateLayout),
 		PricePerPerson:   r.PricePerPerson,
+		MaxParticipants:  nullInt32ToPtr(r.MaxParticipants),
 		MeetingTime:      formatNullableMeetingTime(r.MeetingTime),
 		MeetingPlace:     r.MeetingPlace,
 		StartTime:        formatNullableMeetingTime(r.StartTime),
@@ -376,6 +401,12 @@ func (s *ticketService) AddTicketParticipants(ctx context.Context, req *connect.
 	defer func() { _ = tx.Rollback() }()
 
 	qtx := s.q.WithTx(tx)
+	// max_participants を超えないよう、現在数を持って 1 件ずつ加算する。
+	// max_participants が NULL（既存レコード）のときは制限なしで扱う。
+	currentCount, err := qtx.CountTicketParticipantsByTicketID(ctx, ticketID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者数の取得に失敗: %w", err))
+	}
 	for _, uid := range userIDs {
 		count, err := qtx.CountTicketParticipant(ctx, queries.CountTicketParticipantParams{
 			TicketID: ticketID,
@@ -388,12 +419,16 @@ func (s *ticketService) AddTicketParticipants(ctx context.Context, req *connect.
 			// 既に参加済み。冪等に扱う。
 			continue
 		}
+		if existing.MaxParticipants.Valid && currentCount >= int64(existing.MaxParticipants.Int32) {
+			return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("max_participants を超えるため追加できない"))
+		}
 		if err := qtx.CreateTicketParticipant(ctx, queries.CreateTicketParticipantParams{
 			TicketID: ticketID,
 			UserID:   uid,
 		}); err != nil {
 			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の追加に失敗: %w", err))
 		}
+		currentCount++
 	}
 
 	if err := tx.Commit(); err != nil {

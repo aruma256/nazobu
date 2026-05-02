@@ -204,6 +204,21 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
               <dd>{ticket.meetingPlace}</dd>
               <dt className="text-zinc-400">立替</dt>
               <dd>{ticket.purchaserName}</dd>
+              <dt className="text-zinc-400">定員</dt>
+              <dd>
+                {ticket.maxParticipants !== undefined ? (
+                  <>
+                    <Mono>
+                      {detail.participants.length}
+                      <span className="text-zinc-400"> / </span>
+                      {ticket.maxParticipants}
+                    </Mono>
+                    <span className="text-zinc-500"> 人</span>
+                  </>
+                ) : (
+                  <span className="text-zinc-400">未設定</span>
+                )}
+              </dd>
             </dl>
 
             {canEdit && (
@@ -222,6 +237,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
         <ParticipantsSection
           ticketId={ticket.id}
           participants={detail.participants}
+          maxParticipants={ticket.maxParticipants}
           allUsers={users}
           myUserId={me.id}
           canEdit={canEdit}
@@ -274,6 +290,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
 
 function ParticipantsSection({
   participants,
+  maxParticipants,
   allUsers,
   myUserId,
   canEdit,
@@ -284,6 +301,7 @@ function ParticipantsSection({
 }: {
   ticketId: string;
   participants: TicketParticipant[];
+  maxParticipants: number | undefined;
   allUsers: User[];
   myUserId: string;
   canEdit: boolean;
@@ -374,12 +392,22 @@ function ParticipantsSection({
 
       {canEdit && (
         <div className="mt-4 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-          <div className="px-4 pt-4 pb-2 text-sm font-medium text-zinc-700">
-            参加者を追加
+          <div className="flex items-baseline gap-3 px-4 pt-4 pb-2">
+            <span className="text-sm font-medium text-zinc-700">参加者を追加</span>
+            {maxParticipants !== undefined && (
+              <span className="text-xs text-zinc-500">
+                残り {Math.max(0, maxParticipants - participants.length)} 人
+              </span>
+            )}
           </div>
           {candidates.length === 0 ? (
             <p className="px-4 pb-4 text-xs text-zinc-500">
               追加できるユーザーがいません。
+            </p>
+          ) : maxParticipants !== undefined &&
+            participants.length >= maxParticipants ? (
+            <p className="px-4 pb-4 text-xs text-amber-800">
+              定員に達しているため追加できません。
             </p>
           ) : (
             <>
@@ -404,10 +432,23 @@ function ParticipantsSection({
                 })}
               </ul>
               <div className="px-4 py-3">
+                {maxParticipants !== undefined &&
+                  participants.length + selectedToAdd.length >
+                    maxParticipants && (
+                    <p className="mb-2 text-xs text-amber-800">
+                      選択中の人数が定員を超えています。
+                    </p>
+                  )}
                 <button
                   type="button"
                   onClick={handleAdd}
-                  disabled={mutating || selectedToAdd.length === 0}
+                  disabled={
+                    mutating ||
+                    selectedToAdd.length === 0 ||
+                    (maxParticipants !== undefined &&
+                      participants.length + selectedToAdd.length >
+                        maxParticipants)
+                  }
                   className="inline-flex h-10 items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 active:bg-emerald-900 disabled:opacity-50"
                 >
                   選択した {selectedToAdd.length} 人を追加
