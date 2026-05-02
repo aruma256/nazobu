@@ -108,6 +108,7 @@ function TicketCard({ ticket, myName }: { ticket: Ticket; myName: string }) {
   const startAt = parseDateTime(ticket.startAt);
   const meetingAt =
     ticket.meetingAt !== "" ? parseDateTime(ticket.meetingAt) : null;
+  const hasMeeting = meetingAt !== null || ticket.meetingPlace !== "";
   return (
     <li className="overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-colors hover:bg-zinc-50">
       <Link href={`/tickets/${ticket.id}`} className="block">
@@ -115,11 +116,6 @@ function TicketCard({ ticket, myName }: { ticket: Ticket; myName: string }) {
           <Mono className="text-sm font-semibold text-emerald-700">
             {formatDateJa(startAt)}
           </Mono>
-          {meetingAt !== null && (
-            <Mono className="text-xs text-zinc-500">
-              {formatTimeHM(meetingAt)}
-            </Mono>
-          )}
           <Mono className="ml-auto text-sm font-semibold tracking-tight">
             {formatYen(ticket.pricePerPerson)}
           </Mono>
@@ -132,10 +128,16 @@ function TicketCard({ ticket, myName }: { ticket: Ticket; myName: string }) {
           <dd>
             <Mono>{formatTimeHM(startAt)}</Mono>
           </dd>
-          {ticket.meetingPlace !== "" && (
+          {hasMeeting && (
             <>
               <dt className="text-zinc-400">集合</dt>
-              <dd>{ticket.meetingPlace}</dd>
+              <dd>
+                {meetingAt !== null && (
+                  <Mono>{formatTimeHM(meetingAt)}</Mono>
+                )}
+                {meetingAt !== null && ticket.meetingPlace !== "" && " "}
+                {ticket.meetingPlace !== "" && ticket.meetingPlace}
+              </dd>
             </>
           )}
           <dt className="text-zinc-400">立替</dt>
