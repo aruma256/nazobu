@@ -223,6 +223,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
           ticketId={ticket.id}
           participants={detail.participants}
           allUsers={users}
+          myUserId={me.id}
           canEdit={canEdit}
           mutating={mutating}
           onAdd={(userIds) =>
@@ -274,6 +275,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
 function ParticipantsSection({
   participants,
   allUsers,
+  myUserId,
   canEdit,
   mutating,
   onAdd,
@@ -283,6 +285,7 @@ function ParticipantsSection({
   ticketId: string;
   participants: TicketParticipant[];
   allUsers: User[];
+  myUserId: string;
   canEdit: boolean;
   mutating: boolean;
   onAdd: (userIds: string[]) => Promise<void>;
@@ -327,7 +330,15 @@ function ParticipantsSection({
         <ul className="mt-3 divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
           {sortedParticipants.map((p) => (
             <li key={p.userId} className="flex items-center gap-3 px-4 py-3">
-              <span className="text-sm text-zinc-900">{p.name}</span>
+              <span
+                className={
+                  p.userId === myUserId
+                    ? "text-sm font-semibold text-zinc-900"
+                    : "text-sm text-zinc-900"
+                }
+              >
+                {p.name}
+              </span>
               {p.isPurchaser ? (
                 <Badge tone="muted">立替</Badge>
               ) : p.settled ? (

@@ -3,7 +3,7 @@
 import { Code, ConnectError } from "@connectrpc/connect";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 import type { Ticket } from "@/app/gen/nazobu/v1/ticket_pb";
 import type { GetMeResponse } from "@/app/gen/nazobu/v1/user_pb";
@@ -93,7 +93,7 @@ export function TicketsView() {
           ) : (
             <ul className="mt-3 space-y-3">
               {tickets.map((t) => (
-                <TicketCard key={t.id} ticket={t} />
+                <TicketCard key={t.id} ticket={t} myName={displayName} />
               ))}
             </ul>
           )}
@@ -103,7 +103,7 @@ export function TicketsView() {
   );
 }
 
-function TicketCard({ ticket }: { ticket: Ticket }) {
+function TicketCard({ ticket, myName }: { ticket: Ticket; myName: string }) {
   const date = parseAttendedOn(ticket.attendedOn);
   return (
     <li className="overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-colors hover:bg-zinc-50">
@@ -141,7 +141,18 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
               <dd>
                 {[...ticket.participantNames]
                   .sort((a, b) => a.localeCompare(b, "ja"))
-                  .join("・")}
+                  .map((name, i) => (
+                    <Fragment key={i}>
+                      {i > 0 && "・"}
+                      {name === myName ? (
+                        <span className="font-semibold text-zinc-900">
+                          {name}
+                        </span>
+                      ) : (
+                        name
+                      )}
+                    </Fragment>
+                  ))}
               </dd>
             </>
           )}

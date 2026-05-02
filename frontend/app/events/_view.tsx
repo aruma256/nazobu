@@ -3,7 +3,7 @@
 import { Code, ConnectError } from "@connectrpc/connect";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 import type { Event as NazobuEvent, EventTicket } from "@/app/gen/nazobu/v1/event_pb";
 import type { GetMeResponse } from "@/app/gen/nazobu/v1/user_pb";
@@ -105,7 +105,7 @@ export function EventsView() {
           ) : (
             <ul className="mt-3 space-y-4">
               {events.map((e) => (
-                <EventCard key={e.id} event={e} />
+                <EventCard key={e.id} event={e} myName={displayName} />
               ))}
             </ul>
           )}
@@ -115,7 +115,7 @@ export function EventsView() {
   );
 }
 
-function EventCard({ event }: { event: NazobuEvent }) {
+function EventCard({ event, myName }: { event: NazobuEvent; myName: string }) {
   const hasOffsets =
     event.doorsOpenMinutesBefore !== undefined ||
     event.entryDeadlineMinutesBefore !== undefined;
@@ -156,7 +156,7 @@ function EventCard({ event }: { event: NazobuEvent }) {
       ) : (
         <ul className="mt-3 divide-y divide-zinc-200 border-t border-zinc-200">
           {event.tickets.map((t) => (
-            <TicketRow key={t.id} ticket={t} />
+            <TicketRow key={t.id} ticket={t} myName={myName} />
           ))}
         </ul>
       )}
@@ -173,7 +173,7 @@ function EventCard({ event }: { event: NazobuEvent }) {
   );
 }
 
-function TicketRow({ ticket }: { ticket: EventTicket }) {
+function TicketRow({ ticket, myName }: { ticket: EventTicket; myName: string }) {
   const date = parseAttendedOn(ticket.attendedOn);
   return (
     <li className="transition-colors hover:bg-zinc-50">
@@ -194,7 +194,16 @@ function TicketRow({ ticket }: { ticket: EventTicket }) {
             <span className="text-zinc-400">参加</span>{" "}
             {[...ticket.participantNames]
               .sort((a, b) => a.localeCompare(b, "ja"))
-              .join("・")}
+              .map((name, i) => (
+                <Fragment key={i}>
+                  {i > 0 && "・"}
+                  {name === myName ? (
+                    <span className="font-semibold text-zinc-900">{name}</span>
+                  ) : (
+                    name
+                  )}
+                </Fragment>
+              ))}
           </p>
         )}
       </Link>
