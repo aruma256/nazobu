@@ -59,7 +59,7 @@ func (*ListTicketsRequest) Descriptor() ([]byte, []int) {
 
 type ListTicketsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// tickets は attended_on 降順 / id 昇順。
+	// tickets は start_at 降順 / id 昇順。
 	Tickets       []*Ticket `protobuf:"bytes,1,rep,name=tickets,proto3" json:"tickets,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -107,12 +107,10 @@ type Ticket struct {
 	Id         string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	EventId    string                 `protobuf:"bytes,2,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
 	EventTitle string                 `protobuf:"bytes,3,opt,name=event_title,json=eventTitle,proto3" json:"event_title,omitempty"`
-	// YYYY-MM-DD（JST）。
-	AttendedOn string `protobuf:"bytes,4,opt,name=attended_on,json=attendedOn,proto3" json:"attended_on,omitempty"`
 	// 一人あたりの精算額（円）。
 	PricePerPerson int32 `protobuf:"varint,5,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
-	// 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
-	MeetingTime string `protobuf:"bytes,6,opt,name=meeting_time,json=meetingTime,proto3" json:"meeting_time,omitempty"`
+	// 集合日時（RFC3339, JST オフセット +09:00。集合時刻が決まっていない場合は空文字）。
+	MeetingAt string `protobuf:"bytes,6,opt,name=meeting_at,json=meetingAt,proto3" json:"meeting_at,omitempty"`
 	// 集合場所（空文字なら未設定）。
 	MeetingPlace string `protobuf:"bytes,7,opt,name=meeting_place,json=meetingPlace,proto3" json:"meeting_place,omitempty"`
 	// 立て替えてくれた人の表示名。
@@ -121,8 +119,8 @@ type Ticket struct {
 	ParticipantNames []string `protobuf:"bytes,9,rep,name=participant_names,json=participantNames,proto3" json:"participant_names,omitempty"`
 	// 公演の URL（任意。空文字なら未設定）。
 	EventUrl string `protobuf:"bytes,10,opt,name=event_url,json=eventUrl,proto3" json:"event_url,omitempty"`
-	// 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
-	StartTime string `protobuf:"bytes,11,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	// 開演日時（RFC3339, JST オフセット +09:00）。
+	StartAt string `protobuf:"bytes,11,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
 	// このチケット 1 枚で参加できる最大人数。1 以上。
 	MaxParticipants int32 `protobuf:"varint,12,opt,name=max_participants,json=maxParticipants,proto3" json:"max_participants,omitempty"`
 	unknownFields   protoimpl.UnknownFields
@@ -180,13 +178,6 @@ func (x *Ticket) GetEventTitle() string {
 	return ""
 }
 
-func (x *Ticket) GetAttendedOn() string {
-	if x != nil {
-		return x.AttendedOn
-	}
-	return ""
-}
-
 func (x *Ticket) GetPricePerPerson() int32 {
 	if x != nil {
 		return x.PricePerPerson
@@ -194,9 +185,9 @@ func (x *Ticket) GetPricePerPerson() int32 {
 	return 0
 }
 
-func (x *Ticket) GetMeetingTime() string {
+func (x *Ticket) GetMeetingAt() string {
 	if x != nil {
-		return x.MeetingTime
+		return x.MeetingAt
 	}
 	return ""
 }
@@ -229,9 +220,9 @@ func (x *Ticket) GetEventUrl() string {
 	return ""
 }
 
-func (x *Ticket) GetStartTime() string {
+func (x *Ticket) GetStartAt() string {
 	if x != nil {
-		return x.StartTime
+		return x.StartAt
 	}
 	return ""
 }
@@ -423,19 +414,17 @@ func (x *TicketParticipant) GetIsPurchaser() bool {
 type CreateTicketRequest struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	EventId string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
-	// YYYY-MM-DD（JST）。
-	AttendedOn string `protobuf:"bytes,2,opt,name=attended_on,json=attendedOn,proto3" json:"attended_on,omitempty"`
 	// 一人あたりの精算額（円、0 以上）。
 	PricePerPerson int32 `protobuf:"varint,3,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
-	// 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
-	MeetingTime string `protobuf:"bytes,4,opt,name=meeting_time,json=meetingTime,proto3" json:"meeting_time,omitempty"`
+	// 集合日時（RFC3339, JST。集合時刻が決まっていない場合は空文字）。
+	MeetingAt string `protobuf:"bytes,4,opt,name=meeting_at,json=meetingAt,proto3" json:"meeting_at,omitempty"`
 	// 集合場所（空文字なら未設定）。
 	MeetingPlace string `protobuf:"bytes,5,opt,name=meeting_place,json=meetingPlace,proto3" json:"meeting_place,omitempty"`
 	// 参加者（割り勘元）の user id。立替者（= ログイン中の user）を含めても構わない。1 件以上。
 	// 立替者は session の user で固定するため、ここでは指定しない。
 	ParticipantUserIds []string `protobuf:"bytes,6,rep,name=participant_user_ids,json=participantUserIds,proto3" json:"participant_user_ids,omitempty"`
-	// 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
-	StartTime string `protobuf:"bytes,7,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	// 開演日時（RFC3339, JST）。
+	StartAt string `protobuf:"bytes,7,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
 	// このチケット 1 枚で参加できる最大人数。新規登録では必須・1 以上。
 	// participant_user_ids の件数以上である必要がある。
 	MaxParticipants int32 `protobuf:"varint,8,opt,name=max_participants,json=maxParticipants,proto3" json:"max_participants,omitempty"`
@@ -480,13 +469,6 @@ func (x *CreateTicketRequest) GetEventId() string {
 	return ""
 }
 
-func (x *CreateTicketRequest) GetAttendedOn() string {
-	if x != nil {
-		return x.AttendedOn
-	}
-	return ""
-}
-
 func (x *CreateTicketRequest) GetPricePerPerson() int32 {
 	if x != nil {
 		return x.PricePerPerson
@@ -494,9 +476,9 @@ func (x *CreateTicketRequest) GetPricePerPerson() int32 {
 	return 0
 }
 
-func (x *CreateTicketRequest) GetMeetingTime() string {
+func (x *CreateTicketRequest) GetMeetingAt() string {
 	if x != nil {
-		return x.MeetingTime
+		return x.MeetingAt
 	}
 	return ""
 }
@@ -515,9 +497,9 @@ func (x *CreateTicketRequest) GetParticipantUserIds() []string {
 	return nil
 }
 
-func (x *CreateTicketRequest) GetStartTime() string {
+func (x *CreateTicketRequest) GetStartAt() string {
 	if x != nil {
-		return x.StartTime
+		return x.StartAt
 	}
 	return ""
 }
@@ -576,16 +558,14 @@ func (x *CreateTicketResponse) GetTicket() *Ticket {
 type UpdateTicketRequest struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	TicketId string                 `protobuf:"bytes,1,opt,name=ticket_id,json=ticketId,proto3" json:"ticket_id,omitempty"`
-	// YYYY-MM-DD（JST）。
-	AttendedOn string `protobuf:"bytes,2,opt,name=attended_on,json=attendedOn,proto3" json:"attended_on,omitempty"`
 	// 一人あたりの精算額（円、0 以上）。
 	PricePerPerson int32 `protobuf:"varint,3,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
-	// 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
-	MeetingTime string `protobuf:"bytes,4,opt,name=meeting_time,json=meetingTime,proto3" json:"meeting_time,omitempty"`
+	// 集合日時（RFC3339, JST。集合時刻が決まっていない場合は空文字）。
+	MeetingAt string `protobuf:"bytes,4,opt,name=meeting_at,json=meetingAt,proto3" json:"meeting_at,omitempty"`
 	// 集合場所（空文字なら未設定）。
 	MeetingPlace string `protobuf:"bytes,5,opt,name=meeting_place,json=meetingPlace,proto3" json:"meeting_place,omitempty"`
-	// 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
-	StartTime string `protobuf:"bytes,6,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	// 開演日時（RFC3339, JST）。
+	StartAt string `protobuf:"bytes,6,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
 	// 立替者の user id。ticket の参加者のいずれかを指定する。
 	PurchasedByUserId string `protobuf:"bytes,7,opt,name=purchased_by_user_id,json=purchasedByUserId,proto3" json:"purchased_by_user_id,omitempty"`
 	// このチケット 1 枚で参加できる最大人数。1 以上、現在の参加者数以上である必要がある。
@@ -631,13 +611,6 @@ func (x *UpdateTicketRequest) GetTicketId() string {
 	return ""
 }
 
-func (x *UpdateTicketRequest) GetAttendedOn() string {
-	if x != nil {
-		return x.AttendedOn
-	}
-	return ""
-}
-
 func (x *UpdateTicketRequest) GetPricePerPerson() int32 {
 	if x != nil {
 		return x.PricePerPerson
@@ -645,9 +618,9 @@ func (x *UpdateTicketRequest) GetPricePerPerson() int32 {
 	return 0
 }
 
-func (x *UpdateTicketRequest) GetMeetingTime() string {
+func (x *UpdateTicketRequest) GetMeetingAt() string {
 	if x != nil {
-		return x.MeetingTime
+		return x.MeetingAt
 	}
 	return ""
 }
@@ -659,9 +632,9 @@ func (x *UpdateTicketRequest) GetMeetingPlace() string {
 	return ""
 }
 
-func (x *UpdateTicketRequest) GetStartTime() string {
+func (x *UpdateTicketRequest) GetStartAt() string {
 	if x != nil {
-		return x.StartTime
+		return x.StartAt
 	}
 	return ""
 }
@@ -1005,24 +978,22 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\x16nazobu/v1/ticket.proto\x12\tnazobu.v1\"\x14\n" +
 	"\x12ListTicketsRequest\"B\n" +
 	"\x13ListTicketsResponse\x12+\n" +
-	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"\xa2\x03\n" +
+	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"\xff\x02\n" +
 	"\x06Ticket\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\bevent_id\x18\x02 \x01(\tR\aeventId\x12\x1f\n" +
 	"\vevent_title\x18\x03 \x01(\tR\n" +
-	"eventTitle\x12\x1f\n" +
-	"\vattended_on\x18\x04 \x01(\tR\n" +
-	"attendedOn\x12(\n" +
-	"\x10price_per_person\x18\x05 \x01(\x05R\x0epricePerPerson\x12!\n" +
-	"\fmeeting_time\x18\x06 \x01(\tR\vmeetingTime\x12#\n" +
+	"eventTitle\x12(\n" +
+	"\x10price_per_person\x18\x05 \x01(\x05R\x0epricePerPerson\x12\x1d\n" +
+	"\n" +
+	"meeting_at\x18\x06 \x01(\tR\tmeetingAt\x12#\n" +
 	"\rmeeting_place\x18\a \x01(\tR\fmeetingPlace\x12%\n" +
 	"\x0epurchaser_name\x18\b \x01(\tR\rpurchaserName\x12+\n" +
 	"\x11participant_names\x18\t \x03(\tR\x10participantNames\x12\x1b\n" +
 	"\tevent_url\x18\n" +
-	" \x01(\tR\beventUrl\x12\x1d\n" +
-	"\n" +
-	"start_time\x18\v \x01(\tR\tstartTime\x12)\n" +
-	"\x10max_participants\x18\f \x01(\x05R\x0fmaxParticipants\"/\n" +
+	" \x01(\tR\beventUrl\x12\x19\n" +
+	"\bstart_at\x18\v \x01(\tR\astartAt\x12)\n" +
+	"\x10max_participants\x18\f \x01(\x05R\x0fmaxParticipantsJ\x04\b\x04\x10\x05\"/\n" +
 	"\x10GetTicketRequest\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\"\x9b\x01\n" +
 	"\x11GetTicketResponse\x12)\n" +
@@ -1033,31 +1004,27 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
 	"\asettled\x18\x03 \x01(\bR\asettled\x12!\n" +
-	"\fis_purchaser\x18\x04 \x01(\bR\visPurchaser\"\xbf\x02\n" +
+	"\fis_purchaser\x18\x04 \x01(\bR\visPurchaser\"\x9c\x02\n" +
 	"\x13CreateTicketRequest\x12\x19\n" +
-	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12\x1f\n" +
-	"\vattended_on\x18\x02 \x01(\tR\n" +
-	"attendedOn\x12(\n" +
-	"\x10price_per_person\x18\x03 \x01(\x05R\x0epricePerPerson\x12!\n" +
-	"\fmeeting_time\x18\x04 \x01(\tR\vmeetingTime\x12#\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12(\n" +
+	"\x10price_per_person\x18\x03 \x01(\x05R\x0epricePerPerson\x12\x1d\n" +
+	"\n" +
+	"meeting_at\x18\x04 \x01(\tR\tmeetingAt\x12#\n" +
 	"\rmeeting_place\x18\x05 \x01(\tR\fmeetingPlace\x120\n" +
-	"\x14participant_user_ids\x18\x06 \x03(\tR\x12participantUserIds\x12\x1d\n" +
-	"\n" +
-	"start_time\x18\a \x01(\tR\tstartTime\x12)\n" +
-	"\x10max_participants\x18\b \x01(\x05R\x0fmaxParticipants\"A\n" +
+	"\x14participant_user_ids\x18\x06 \x03(\tR\x12participantUserIds\x12\x19\n" +
+	"\bstart_at\x18\a \x01(\tR\astartAt\x12)\n" +
+	"\x10max_participants\x18\b \x01(\x05R\x0fmaxParticipantsJ\x04\b\x02\x10\x03\"A\n" +
 	"\x14CreateTicketResponse\x12)\n" +
-	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket\"\xc0\x02\n" +
+	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket\"\x9d\x02\n" +
 	"\x13UpdateTicketRequest\x12\x1b\n" +
-	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x1f\n" +
-	"\vattended_on\x18\x02 \x01(\tR\n" +
-	"attendedOn\x12(\n" +
-	"\x10price_per_person\x18\x03 \x01(\x05R\x0epricePerPerson\x12!\n" +
-	"\fmeeting_time\x18\x04 \x01(\tR\vmeetingTime\x12#\n" +
-	"\rmeeting_place\x18\x05 \x01(\tR\fmeetingPlace\x12\x1d\n" +
+	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12(\n" +
+	"\x10price_per_person\x18\x03 \x01(\x05R\x0epricePerPerson\x12\x1d\n" +
 	"\n" +
-	"start_time\x18\x06 \x01(\tR\tstartTime\x12/\n" +
+	"meeting_at\x18\x04 \x01(\tR\tmeetingAt\x12#\n" +
+	"\rmeeting_place\x18\x05 \x01(\tR\fmeetingPlace\x12\x19\n" +
+	"\bstart_at\x18\x06 \x01(\tR\astartAt\x12/\n" +
 	"\x14purchased_by_user_id\x18\a \x01(\tR\x11purchasedByUserId\x12)\n" +
-	"\x10max_participants\x18\b \x01(\x05R\x0fmaxParticipants\"A\n" +
+	"\x10max_participants\x18\b \x01(\x05R\x0fmaxParticipantsJ\x04\b\x02\x10\x03\"A\n" +
 	"\x14UpdateTicketResponse\x12)\n" +
 	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket\"V\n" +
 	"\x1cAddTicketParticipantsRequest\x12\x1b\n" +

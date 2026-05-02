@@ -54,7 +54,8 @@ type Querier interface {
 	// 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」を取る。
 	// 立替者本人の自己持ち分は精算対象ではないので除外する。
 	ListUnsettledTicketsByUserID(ctx context.Context, userID string) ([]ListUnsettledTicketsByUserIDRow, error)
-	// 今日以降に attended_on を持つ自分の参加チケット。
+	// 当日 0:00（JST）以降に start_at を持つ自分の参加チケット。
+	// 当日中は時刻が過ぎていても表示し続ける（今日の予定として残す）。
 	ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcomingTicketsByUserIDParams) ([]ListUpcomingTicketsByUserIDRow, error)
 	// 表示用の最低限フィールドだけ返す。avatar_url 等は GetMe 経路（session join）で取る。
 	ListUsers(ctx context.Context) ([]ListUsersRow, error)

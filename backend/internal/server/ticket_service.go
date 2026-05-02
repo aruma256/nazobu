@@ -26,11 +26,7 @@ func newTicketService(db *sql.DB) nazobuv1connect.TicketServiceHandler {
 	return &ticketService{db: db, q: queries.New(db)}
 }
 
-const (
-	meetingPlaceMaxLen = 255
-	// 集合時刻 / 当日日付の入出力レイアウト。
-	timeLayout = "15:04"
-)
+const meetingPlaceMaxLen = 255
 
 func (s *ticketService) ListTickets(ctx context.Context, req *connect.Request[nazobuv1.ListTicketsRequest]) (*connect.Response[nazobuv1.ListTicketsResponse], error) {
 	if _, err := lookupSessionUser(ctx, s.db, req.Header()); err != nil {
@@ -48,12 +44,11 @@ func (s *ticketService) ListTickets(ctx context.Context, req *connect.Request[na
 			EventId:          r.EventID,
 			EventTitle:       r.EventTitle,
 			EventUrl:         r.EventUrl,
-			AttendedOn:       r.AttendedOn.Format(dateLayout),
+			StartAt:          formatJSTDateTime(r.StartAt),
+			MeetingAt:        formatNullableJSTDateTime(r.MeetingAt),
 			PricePerPerson:   r.PricePerPerson,
 			MaxParticipants:  r.MaxParticipants,
-			MeetingTime:      formatNullableMeetingTime(r.MeetingTime),
 			MeetingPlace:     r.MeetingPlace,
-			StartTime:        formatMeetingTime(r.StartTime),
 			PurchaserName:    r.PurchaserName,
 			ParticipantNames: []string{},
 		})
@@ -108,12 +103,11 @@ func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazo
 		EventId:          row.EventID,
 		EventTitle:       row.EventTitle,
 		EventUrl:         row.EventUrl,
-		AttendedOn:       row.AttendedOn.Format(dateLayout),
+		StartAt:          formatJSTDateTime(row.StartAt),
+		MeetingAt:        formatNullableJSTDateTime(row.MeetingAt),
 		PricePerPerson:   row.PricePerPerson,
 		MaxParticipants:  row.MaxParticipants,
-		MeetingTime:      formatNullableMeetingTime(row.MeetingTime),
 		MeetingPlace:     row.MeetingPlace,
-		StartTime:        formatMeetingTime(row.StartTime),
 		PurchaserName:    row.PurchaserName,
 		ParticipantNames: participantNames,
 	}
@@ -137,7 +131,6 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 
 	msg := req.Msg
 	eventID := strings.TrimSpace(msg.GetEventId())
-	attendedOn := strings.TrimSpace(msg.GetAttendedOn())
 	meetingPlace := strings.TrimSpace(msg.GetMeetingPlace())
 	price := msg.GetPricePerPerson()
 	maxParticipants := msg.GetMaxParticipants()
@@ -146,15 +139,11 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 	if eventID == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("event_id は必須"))
 	}
-	attendedOnTime, err := time.ParseInLocation(dateLayout, attendedOn, jst)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("attended_on は YYYY-MM-DD"))
-	}
-	meetingTime, err := parseNullableMeetingTime(msg.GetMeetingTime(), "meeting_time")
+	startAt, err := parseRequiredJSTDateTime(msg.GetStartAt(), "start_at")
 	if err != nil {
 		return nil, err
 	}
-	startTime, err := parseRequiredMeetingTime(msg.GetStartTime(), "start_time")
+	meetingAt, err := parseNullableJSTDateTime(msg.GetMeetingAt(), "meeting_at")
 	if err != nil {
 		return nil, err
 	}
@@ -195,13 +184,12 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 	if err := qtx.CreateTicket(ctx, queries.CreateTicketParams{
 		ID:              id,
 		EventID:         eventID,
-		AttendedOn:      attendedOnTime,
+		StartAt:         startAt,
+		MeetingAt:       meetingAt,
 		PricePerPerson:  price,
 		MaxParticipants: maxParticipants,
 		PurchasedBy:     purchasedBy,
-		MeetingTime:     meetingTime,
 		MeetingPlace:    meetingPlace,
-		StartTime:       startTime,
 	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket の登録に失敗: %w", err))
 	}
@@ -229,12 +217,11 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 		EventId:          r.EventID,
 		EventTitle:       r.EventTitle,
 		EventUrl:         r.EventUrl,
-		AttendedOn:       r.AttendedOn.Format(dateLayout),
+		StartAt:          formatJSTDateTime(r.StartAt),
+		MeetingAt:        formatNullableJSTDateTime(r.MeetingAt),
 		PricePerPerson:   r.PricePerPerson,
 		MaxParticipants:  r.MaxParticipants,
-		MeetingTime:      formatNullableMeetingTime(r.MeetingTime),
 		MeetingPlace:     r.MeetingPlace,
-		StartTime:        formatMeetingTime(r.StartTime),
 		PurchaserName:    r.PurchaserName,
 		ParticipantNames: []string{},
 	}
@@ -267,21 +254,16 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("ticket の編集は admin もしくは立替者のみ"))
 	}
 
-	attendedOn := strings.TrimSpace(msg.GetAttendedOn())
 	meetingPlace := strings.TrimSpace(msg.GetMeetingPlace())
 	purchasedBy := strings.TrimSpace(msg.GetPurchasedByUserId())
 	price := msg.GetPricePerPerson()
 	maxParticipants := msg.GetMaxParticipants()
 
-	attendedOnTime, err := time.ParseInLocation(dateLayout, attendedOn, jst)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("attended_on は YYYY-MM-DD"))
-	}
-	meetingTime, err := parseNullableMeetingTime(msg.GetMeetingTime(), "meeting_time")
+	startAt, err := parseRequiredJSTDateTime(msg.GetStartAt(), "start_at")
 	if err != nil {
 		return nil, err
 	}
-	startTime, err := parseRequiredMeetingTime(msg.GetStartTime(), "start_time")
+	meetingAt, err := parseNullableJSTDateTime(msg.GetMeetingAt(), "meeting_at")
 	if err != nil {
 		return nil, err
 	}
@@ -321,12 +303,11 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 
 	if err := s.q.UpdateTicket(ctx, queries.UpdateTicketParams{
 		ID:              ticketID,
-		AttendedOn:      attendedOnTime,
+		StartAt:         startAt,
+		MeetingAt:       meetingAt,
 		PricePerPerson:  price,
 		MaxParticipants: maxParticipants,
-		MeetingTime:     meetingTime,
 		MeetingPlace:    meetingPlace,
-		StartTime:       startTime,
 		PurchasedBy:     purchasedBy,
 	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket の更新に失敗: %w", err))
@@ -342,12 +323,11 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 		EventId:          r.EventID,
 		EventTitle:       r.EventTitle,
 		EventUrl:         r.EventUrl,
-		AttendedOn:       r.AttendedOn.Format(dateLayout),
+		StartAt:          formatJSTDateTime(r.StartAt),
+		MeetingAt:        formatNullableJSTDateTime(r.MeetingAt),
 		PricePerPerson:   r.PricePerPerson,
 		MaxParticipants:  r.MaxParticipants,
-		MeetingTime:      formatNullableMeetingTime(r.MeetingTime),
 		MeetingPlace:     r.MeetingPlace,
-		StartTime:        formatMeetingTime(r.StartTime),
 		PurchaserName:    r.PurchaserName,
 		ParticipantNames: []string{},
 	}
@@ -532,49 +512,44 @@ func canEditTicket(user *auth.User, purchasedBy string) bool {
 	return user.Role == auth.RoleAdmin || user.ID == purchasedBy
 }
 
-// formatNullableMeetingTime は NULL 可な TIME カラム（"HH:MM:SS"）を "HH:MM"（NULL なら空文字）にする。
-func formatNullableMeetingTime(v sql.NullString) string {
+// formatJSTDateTime は DATETIME カラムの time.Time を JST RFC3339 文字列に整形する。
+func formatJSTDateTime(t time.Time) string {
+	return t.In(jst).Format(time.RFC3339)
+}
+
+// formatNullableJSTDateTime は NULL 可な DATETIME を JST RFC3339（NULL なら空文字）にする。
+func formatNullableJSTDateTime(v sql.NullTime) string {
 	if !v.Valid {
 		return ""
 	}
-	if len(v.String) >= 5 {
-		return v.String[:5]
-	}
-	return v.String
+	return formatJSTDateTime(v.Time)
 }
 
-// parseNullableMeetingTime は "HH:MM"（空文字なら NULL）として受け取る。
+// parseRequiredJSTDateTime は RFC3339 を必須として受け取り、JST 基準の time.Time に変換する。
 // field は invalid 時のエラーメッセージで参照する proto フィールド名。
-func parseNullableMeetingTime(raw, field string) (sql.NullString, error) {
+func parseRequiredJSTDateTime(raw, field string) (time.Time, error) {
 	s := strings.TrimSpace(raw)
 	if s == "" {
-		return sql.NullString{}, nil
+		return time.Time{}, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("%s は必須", field))
 	}
-	if _, err := time.ParseInLocation(timeLayout, s, jst); err != nil {
-		return sql.NullString{}, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("%s は HH:MM", field))
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		return time.Time{}, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("%s は RFC3339 の日時", field))
 	}
-	return sql.NullString{String: s, Valid: true}, nil
+	return t.In(jst), nil
 }
 
-// parseRequiredMeetingTime は "HH:MM" を必須として受け取る。
-// field は invalid 時のエラーメッセージで参照する proto フィールド名。
-func parseRequiredMeetingTime(raw, field string) (string, error) {
+// parseNullableJSTDateTime は RFC3339 を任意で受け取る（空文字なら NULL）。
+func parseNullableJSTDateTime(raw, field string) (sql.NullTime, error) {
 	s := strings.TrimSpace(raw)
 	if s == "" {
-		return "", connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("%s は必須", field))
+		return sql.NullTime{}, nil
 	}
-	if _, err := time.ParseInLocation(timeLayout, s, jst); err != nil {
-		return "", connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("%s は HH:MM", field))
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		return sql.NullTime{}, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("%s は RFC3339 の日時", field))
 	}
-	return s, nil
-}
-
-// formatMeetingTime は NOT NULL な TIME カラム（"HH:MM:SS"）を "HH:MM" にする。
-func formatMeetingTime(s string) string {
-	if len(s) >= 5 {
-		return s[:5]
-	}
-	return s
+	return sql.NullTime{Time: t.In(jst), Valid: true}, nil
 }
 
 func (s *ticketService) attachParticipants(ctx context.Context, tickets []*nazobuv1.Ticket) error {

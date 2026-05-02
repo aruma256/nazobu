@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file nazobu/v1/mypage.proto.
  */
 export const file_nazobu_v1_mypage: GenFile = /*@__PURE__*/
-  fileDesc("ChZuYXpvYnUvdjEvbXlwYWdlLnByb3RvEgluYXpvYnUudjEiEgoQR2V0TXlQYWdlUmVxdWVzdCKxAQoRR2V0TXlQYWdlUmVzcG9uc2USLQoJdW5zZXR0bGVkGAEgAygLMhoubmF6b2J1LnYxLlVuc2V0dGxlZFRpY2tldBIrCgh1cGNvbWluZxgCIAMoCzIZLm5hem9idS52MS5VcGNvbWluZ1RpY2tldBIpCgdtb250aGx5GAMgAygLMhgubmF6b2J1LnYxLk1vbnRobHlUaWNrZXQSFQoNbW9udGhseV9tb250aBgEIAEoBSJ8Cg9VbnNldHRsZWRUaWNrZXQSEQoJdGlja2V0X2lkGAEgASgJEhMKC2V2ZW50X3RpdGxlGAIgASgJEhgKEHByaWNlX3Blcl9wZXJzb24YAyABKAUSEgoKcGF5ZWVfbmFtZRgEIAEoCRITCgthdHRlbmRlZF9vbhgFIAEoCSJ5Cg5VcGNvbWluZ1RpY2tldBIRCgl0aWNrZXRfaWQYASABKAkSEwoLZXZlbnRfdGl0bGUYAiABKAkSEQoJZXZlbnRfdXJsGAMgASgJEhMKC2F0dGVuZGVkX29uGAQgASgJEhcKD2NvbXBhbmlvbl9uYW1lcxgFIAMoCSJdCg1Nb250aGx5VGlja2V0EhEKCXRpY2tldF9pZBgBIAEoCRITCgtldmVudF90aXRsZRgCIAEoCRITCgthdHRlbmRlZF9vbhgDIAEoCRIPCgdzZXR0bGVkGAQgASgIMlcKDU15UGFnZVNlcnZpY2USRgoJR2V0TXlQYWdlEhsubmF6b2J1LnYxLkdldE15UGFnZVJlcXVlc3QaHC5uYXpvYnUudjEuR2V0TXlQYWdlUmVzcG9uc2VCRFpCZ2l0aHViLmNvbS9hcnVtYTI1Ni9uYXpvYnUvYmFja2VuZC9pbnRlcm5hbC9nZW4vbmF6b2J1L3YxO25hem9idXYxYgZwcm90bzM");
+  fileDesc("ChZuYXpvYnUvdjEvbXlwYWdlLnByb3RvEgluYXpvYnUudjEiEgoQR2V0TXlQYWdlUmVxdWVzdCKxAQoRR2V0TXlQYWdlUmVzcG9uc2USLQoJdW5zZXR0bGVkGAEgAygLMhoubmF6b2J1LnYxLlVuc2V0dGxlZFRpY2tldBIrCgh1cGNvbWluZxgCIAMoCzIZLm5hem9idS52MS5VcGNvbWluZ1RpY2tldBIpCgdtb250aGx5GAMgAygLMhgubmF6b2J1LnYxLk1vbnRobHlUaWNrZXQSFQoNbW9udGhseV9tb250aBgEIAEoBSJ5Cg9VbnNldHRsZWRUaWNrZXQSEQoJdGlja2V0X2lkGAEgASgJEhMKC2V2ZW50X3RpdGxlGAIgASgJEhgKEHByaWNlX3Blcl9wZXJzb24YAyABKAUSEgoKcGF5ZWVfbmFtZRgEIAEoCRIQCghzdGFydF9hdBgFIAEoCSJ2Cg5VcGNvbWluZ1RpY2tldBIRCgl0aWNrZXRfaWQYASABKAkSEwoLZXZlbnRfdGl0bGUYAiABKAkSEQoJZXZlbnRfdXJsGAMgASgJEhAKCHN0YXJ0X2F0GAQgASgJEhcKD2NvbXBhbmlvbl9uYW1lcxgFIAMoCSJaCg1Nb250aGx5VGlja2V0EhEKCXRpY2tldF9pZBgBIAEoCRITCgtldmVudF90aXRsZRgCIAEoCRIQCghzdGFydF9hdBgDIAEoCRIPCgdzZXR0bGVkGAQgASgIMlcKDU15UGFnZVNlcnZpY2USRgoJR2V0TXlQYWdlEhsubmF6b2J1LnYxLkdldE15UGFnZVJlcXVlc3QaHC5uYXpvYnUudjEuR2V0TXlQYWdlUmVzcG9uc2VCRFpCZ2l0aHViLmNvbS9hcnVtYTI1Ni9uYXpvYnUvYmFja2VuZC9pbnRlcm5hbC9nZW4vbmF6b2J1L3YxO25hem9idXYxYgZwcm90bzM");
 
 /**
  * @generated from message nazobu.v1.GetMyPageRequest
@@ -30,21 +30,21 @@ export const GetMyPageRequestSchema: GenMessage<GetMyPageRequest> = /*@__PURE__*
  */
 export type GetMyPageResponse = Message<"nazobu.v1.GetMyPageResponse"> & {
   /**
-   * 自分の精算が未完了の ticket（attended_on 昇順）。自分が立て替えた分は含めない。
+   * 自分の精算が未完了の ticket（start_at 昇順）。自分が立て替えた分は含めない。
    *
    * @generated from field: repeated nazobu.v1.UnsettledTicket unsettled = 1;
    */
   unsettled: UnsettledTicket[];
 
   /**
-   * 自分が参加予定で attended_on が今日以降の ticket（attended_on 昇順）。
+   * 自分が参加予定で start_at が今日以降の ticket（start_at 昇順）。
    *
    * @generated from field: repeated nazobu.v1.UpcomingTicket upcoming = 2;
    */
   upcoming: UpcomingTicket[];
 
   /**
-   * サーバ基準の当月に attended_on がある自分の ticket（attended_on 降順）。
+   * サーバ基準の当月に start_at がある自分の ticket（start_at 降順）。
    *
    * @generated from field: repeated nazobu.v1.MonthlyTicket monthly = 3;
    */
@@ -94,11 +94,11 @@ export type UnsettledTicket = Message<"nazobu.v1.UnsettledTicket"> & {
   payeeName: string;
 
   /**
-   * YYYY-MM-DD（JST）。
+   * 開演日時（RFC3339, JST）。
    *
-   * @generated from field: string attended_on = 5;
+   * @generated from field: string start_at = 5;
    */
-  attendedOn: string;
+  startAt: string;
 };
 
 /**
@@ -128,11 +128,11 @@ export type UpcomingTicket = Message<"nazobu.v1.UpcomingTicket"> & {
   eventUrl: string;
 
   /**
-   * YYYY-MM-DD（JST）。
+   * 開演日時（RFC3339, JST）。
    *
-   * @generated from field: string attended_on = 4;
+   * @generated from field: string start_at = 4;
    */
-  attendedOn: string;
+  startAt: string;
 
   /**
    * 同じ ticket の他の参加者の表示名（自分は除く）。created_at 昇順。
@@ -164,11 +164,11 @@ export type MonthlyTicket = Message<"nazobu.v1.MonthlyTicket"> & {
   eventTitle: string;
 
   /**
-   * YYYY-MM-DD（JST）。
+   * 開演日時（RFC3339, JST）。
    *
-   * @generated from field: string attended_on = 3;
+   * @generated from field: string start_at = 3;
    */
-  attendedOn: string;
+  startAt: string;
 
   /**
    * 自分の精算が完了しているか。自分が立て替えた ticket は常に true 扱い。

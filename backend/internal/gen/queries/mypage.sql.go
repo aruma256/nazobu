@@ -67,15 +67,15 @@ func (q *Queries) ListCompanionNamesByTicketIDs(ctx context.Context, arg ListCom
 }
 
 const listMyMonthlyTicketsByUserID = `-- name: ListMyMonthlyTicketsByUserID :many
-SELECT t.id, e.title AS event_title, t.attended_on,
+SELECT t.id, e.title AS event_title, t.start_at,
        CAST((tp.settled_at IS NOT NULL OR t.purchased_by = tp.user_id) AS UNSIGNED) AS settled
 FROM ticket_participants tp
 JOIN tickets t ON t.id = tp.ticket_id
 JOIN events  e ON e.id = t.event_id
-WHERE tp.user_id     = ?
-  AND t.attended_on >= ?
-  AND t.attended_on <  ?
-ORDER BY t.attended_on DESC, t.id ASC
+WHERE tp.user_id  = ?
+  AND t.start_at >= ?
+  AND t.start_at <  ?
+ORDER BY t.start_at DESC, t.id ASC
 `
 
 type ListMyMonthlyTicketsByUserIDParams struct {
@@ -87,7 +87,7 @@ type ListMyMonthlyTicketsByUserIDParams struct {
 type ListMyMonthlyTicketsByUserIDRow struct {
 	ID         string
 	EventTitle string
-	AttendedOn time.Time
+	StartAt    time.Time
 	Settled    int64
 }
 
@@ -106,7 +106,7 @@ func (q *Queries) ListMyMonthlyTicketsByUserID(ctx context.Context, arg ListMyMo
 		if err := rows.Scan(
 			&i.ID,
 			&i.EventTitle,
-			&i.AttendedOn,
+			&i.StartAt,
 			&i.Settled,
 		); err != nil {
 			return nil, err
@@ -124,7 +124,7 @@ func (q *Queries) ListMyMonthlyTicketsByUserID(ctx context.Context, arg ListMyMo
 
 const listUnsettledTicketsByUserID = `-- name: ListUnsettledTicketsByUserID :many
 SELECT t.id, e.title AS event_title,
-       t.price_per_person, t.attended_on,
+       t.price_per_person, t.start_at,
        pu.display_name AS payee_name
 FROM ticket_participants tp
 JOIN tickets t  ON t.id  = tp.ticket_id
@@ -133,14 +133,14 @@ JOIN users   pu ON pu.id = t.purchased_by
 WHERE tp.user_id    = ?
   AND tp.settled_at IS NULL
   AND t.purchased_by <> tp.user_id
-ORDER BY t.attended_on ASC, t.id ASC
+ORDER BY t.start_at ASC, t.id ASC
 `
 
 type ListUnsettledTicketsByUserIDRow struct {
 	ID             string
 	EventTitle     string
 	PricePerPerson int32
-	AttendedOn     time.Time
+	StartAt        time.Time
 	PayeeName      string
 }
 
@@ -159,7 +159,7 @@ func (q *Queries) ListUnsettledTicketsByUserID(ctx context.Context, userID strin
 			&i.ID,
 			&i.EventTitle,
 			&i.PricePerPerson,
-			&i.AttendedOn,
+			&i.StartAt,
 			&i.PayeeName,
 		); err != nil {
 			return nil, err
@@ -176,30 +176,31 @@ func (q *Queries) ListUnsettledTicketsByUserID(ctx context.Context, userID strin
 }
 
 const listUpcomingTicketsByUserID = `-- name: ListUpcomingTicketsByUserID :many
-SELECT t.id, e.title AS event_title, e.url AS event_url, t.attended_on
+SELECT t.id, e.title AS event_title, e.url AS event_url, t.start_at
 FROM ticket_participants tp
 JOIN tickets t ON t.id = tp.ticket_id
 JOIN events  e ON e.id = t.event_id
-WHERE tp.user_id     = ?
-  AND t.attended_on >= ?
-ORDER BY t.attended_on ASC, t.id ASC
+WHERE tp.user_id  = ?
+  AND t.start_at >= ?
+ORDER BY t.start_at ASC, t.id ASC
 `
 
 type ListUpcomingTicketsByUserIDParams struct {
-	UserID string
-	Today  time.Time
+	UserID     string
+	TodayStart time.Time
 }
 
 type ListUpcomingTicketsByUserIDRow struct {
 	ID         string
 	EventTitle string
 	EventUrl   string
-	AttendedOn time.Time
+	StartAt    time.Time
 }
 
-// 今日以降に attended_on を持つ自分の参加チケット。
+// 当日 0:00（JST）以降に start_at を持つ自分の参加チケット。
+// 当日中は時刻が過ぎていても表示し続ける（今日の予定として残す）。
 func (q *Queries) ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcomingTicketsByUserIDParams) ([]ListUpcomingTicketsByUserIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, listUpcomingTicketsByUserID, arg.UserID, arg.Today)
+	rows, err := q.db.QueryContext(ctx, listUpcomingTicketsByUserID, arg.UserID, arg.TodayStart)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +212,7 @@ func (q *Queries) ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcom
 			&i.ID,
 			&i.EventTitle,
 			&i.EventUrl,
-			&i.AttendedOn,
+			&i.StartAt,
 		); err != nil {
 			return nil, err
 		}

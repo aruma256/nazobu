@@ -57,13 +57,13 @@ const (
 
 // TicketServiceClient is a client for the nazobu.v1.TicketService service.
 type TicketServiceClient interface {
-	// ListTickets は登録済み ticket を attended_on 降順で返す。
+	// ListTickets は登録済み ticket を start_at 降順で返す。
 	ListTickets(context.Context, *connect.Request[v1.ListTicketsRequest]) (*connect.Response[v1.ListTicketsResponse], error)
 	// GetTicket は 1 件の ticket を詳細表示用の形（参加者の精算状況を含む）で返す。
 	GetTicket(context.Context, *connect.Request[v1.GetTicketRequest]) (*connect.Response[v1.GetTicketResponse], error)
 	// CreateTicket は新規 ticket を 1 件登録する。参加者（割り勘元）も同時に登録する。
 	CreateTicket(context.Context, *connect.Request[v1.CreateTicketRequest]) (*connect.Response[v1.CreateTicketResponse], error)
-	// UpdateTicket は ticket 本体（attended_on / price_per_person / max_participants / meeting_time / meeting_place / start_time / purchased_by_user_id）を更新する。
+	// UpdateTicket は ticket 本体（start_at / meeting_at / price_per_person / max_participants / meeting_place / purchased_by_user_id）を更新する。
 	// admin もしくは立替者のみ実行可能。新しい立替者は ticket の参加者の中から選ぶ。
 	UpdateTicket(context.Context, *connect.Request[v1.UpdateTicketRequest]) (*connect.Response[v1.UpdateTicketResponse], error)
 	// AddTicketParticipants は ticket の参加者を 1 人以上追加する。
@@ -183,13 +183,13 @@ func (c *ticketServiceClient) UpdateTicketParticipantSettlement(ctx context.Cont
 
 // TicketServiceHandler is an implementation of the nazobu.v1.TicketService service.
 type TicketServiceHandler interface {
-	// ListTickets は登録済み ticket を attended_on 降順で返す。
+	// ListTickets は登録済み ticket を start_at 降順で返す。
 	ListTickets(context.Context, *connect.Request[v1.ListTicketsRequest]) (*connect.Response[v1.ListTicketsResponse], error)
 	// GetTicket は 1 件の ticket を詳細表示用の形（参加者の精算状況を含む）で返す。
 	GetTicket(context.Context, *connect.Request[v1.GetTicketRequest]) (*connect.Response[v1.GetTicketResponse], error)
 	// CreateTicket は新規 ticket を 1 件登録する。参加者（割り勘元）も同時に登録する。
 	CreateTicket(context.Context, *connect.Request[v1.CreateTicketRequest]) (*connect.Response[v1.CreateTicketResponse], error)
-	// UpdateTicket は ticket 本体（attended_on / price_per_person / max_participants / meeting_time / meeting_place / start_time / purchased_by_user_id）を更新する。
+	// UpdateTicket は ticket 本体（start_at / meeting_at / price_per_person / max_participants / meeting_place / purchased_by_user_id）を更新する。
 	// admin もしくは立替者のみ実行可能。新しい立替者は ticket の参加者の中から選ぶ。
 	UpdateTicket(context.Context, *connect.Request[v1.UpdateTicketRequest]) (*connect.Response[v1.UpdateTicketResponse], error)
 	// AddTicketParticipants は ticket の参加者を 1 人以上追加する。

@@ -56,7 +56,7 @@ CREATE TABLE events (
   id          VARCHAR(26)  NOT NULL,
   title       VARCHAR(255) NOT NULL,
   url         VARCHAR(512) NOT NULL,
-  -- 開場時間が開演時刻（ticket.start_time）の何分前か。0 以上、NULL = 未設定。
+  -- 開場時間が開演時刻（ticket.start_at）の何分前か。0 以上、NULL = 未設定。
   doors_open_minutes_before     INT NULL,
   -- 入場締切が開演時刻の何分前か。これを過ぎると参加できない。0 以上、NULL = 未設定。
   entry_deadline_minutes_before INT NULL,
@@ -68,26 +68,28 @@ CREATE TABLE events (
 -- チケット 1 枚。グループチケットなら 1 枚で複数人が参加でき、参加者で割り勘する。
 -- price_per_person は一人あたりの税込・円（割り勘済み）。purchased_by が立て替え、
 -- ticket_participants が割り勘元。
+--
+-- 開演日時 / 集合時刻はいずれも JST naive な DATETIME として保持する
+-- （driver は loc=Asia/Tokyo で動かしているため Go の time.Time は JST で出入りする）。
 CREATE TABLE tickets (
   id                VARCHAR(26)  NOT NULL,
   event_id          VARCHAR(26)  NOT NULL,
-  attended_on       DATE         NOT NULL,
+  -- 公演の開演日時（JST）。日付 / 時刻はここから派生する。
+  start_at          DATETIME(6)  NOT NULL,
+  -- 集合日時（JST）。集合時刻が決まっていないときは NULL。日跨ぎ集合にも対応できる。
+  meeting_at        DATETIME(6)  NULL,
   price_per_person  INT          NOT NULL,
   -- このチケット 1 枚で参加できる最大人数（ticket_participants の最大紐づけ数）。
   max_participants  INT          NOT NULL,
   purchased_by      VARCHAR(26)  NOT NULL,
-  -- 集合時刻（attended_on の JST 当日基準）と集合場所。集合時刻が決まっていないときは NULL。
-  -- 集合場所は空文字を「未設定」として許容する。
-  meeting_time      TIME         NULL,
+  -- 集合場所。空文字を「未設定」として許容する。
   meeting_place     VARCHAR(255) NOT NULL,
-  -- 公演の開演時刻（attended_on の JST 当日基準）。
-  start_time        TIME         NOT NULL,
   created_at        DATETIME(6)  NOT NULL,
   updated_at        DATETIME(6)  NOT NULL,
   PRIMARY KEY (id),
   KEY idx_tickets_event_id (event_id),
-  KEY idx_tickets_attended_on (attended_on),
-  KEY idx_tickets_purchased_by_attended_on (purchased_by, attended_on),
+  KEY idx_tickets_start_at (start_at),
+  KEY idx_tickets_purchased_by_start_at (purchased_by, start_at),
   CONSTRAINT fk_tickets_event_id     FOREIGN KEY (event_id)     REFERENCES events(id) ON DELETE CASCADE,
   CONSTRAINT fk_tickets_purchased_by FOREIGN KEY (purchased_by) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

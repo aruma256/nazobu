@@ -6,13 +6,13 @@ option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;n
 
 // TicketService は ticket（公演に対する 1 枚分の参加チケット）の参照・登録 RPC を提供する。
 service TicketService {
-  // ListTickets は登録済み ticket を attended_on 降順で返す。
+  // ListTickets は登録済み ticket を start_at 降順で返す。
   rpc ListTickets(ListTicketsRequest) returns (ListTicketsResponse);
   // GetTicket は 1 件の ticket を詳細表示用の形（参加者の精算状況を含む）で返す。
   rpc GetTicket(GetTicketRequest) returns (GetTicketResponse);
   // CreateTicket は新規 ticket を 1 件登録する。参加者（割り勘元）も同時に登録する。
   rpc CreateTicket(CreateTicketRequest) returns (CreateTicketResponse);
-  // UpdateTicket は ticket 本体（attended_on / price_per_person / max_participants / meeting_time / meeting_place / start_time / purchased_by_user_id）を更新する。
+  // UpdateTicket は ticket 本体（start_at / meeting_at / price_per_person / max_participants / meeting_place / purchased_by_user_id）を更新する。
   // admin もしくは立替者のみ実行可能。新しい立替者は ticket の参加者の中から選ぶ。
   rpc UpdateTicket(UpdateTicketRequest) returns (UpdateTicketResponse);
   // AddTicketParticipants は ticket の参加者を 1 人以上追加する。
@@ -30,7 +30,7 @@ service TicketService {
 message ListTicketsRequest {}
 
 message ListTicketsResponse {
-  // tickets は attended_on 降順 / id 昇順。
+  // tickets は start_at 降順 / id 昇順。
   repeated Ticket tickets = 1;
 }
 
@@ -38,12 +38,11 @@ message Ticket {
   string id = 1;
   string event_id = 2;
   string event_title = 3;
-  // YYYY-MM-DD（JST）。
-  string attended_on = 4;
+  reserved 4; // 旧 attended_on (DATE 単独保持)。start_at に統合。
   // 一人あたりの精算額（円）。
   int32 price_per_person = 5;
-  // 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
-  string meeting_time = 6;
+  // 集合日時（RFC3339, JST オフセット +09:00。集合時刻が決まっていない場合は空文字）。
+  string meeting_at = 6;
   // 集合場所（空文字なら未設定）。
   string meeting_place = 7;
   // 立て替えてくれた人の表示名。
@@ -52,8 +51,8 @@ message Ticket {
   repeated string participant_names = 9;
   // 公演の URL（任意。空文字なら未設定）。
   string event_url = 10;
-  // 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
-  string start_time = 11;
+  // 開演日時（RFC3339, JST オフセット +09:00）。
+  string start_at = 11;
   // このチケット 1 枚で参加できる最大人数。1 以上。
   int32 max_participants = 12;
 }
@@ -82,19 +81,18 @@ message TicketParticipant {
 
 message CreateTicketRequest {
   string event_id = 1;
-  // YYYY-MM-DD（JST）。
-  string attended_on = 2;
+  reserved 2; // 旧 attended_on。start_at に統合。
   // 一人あたりの精算額（円、0 以上）。
   int32 price_per_person = 3;
-  // 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
-  string meeting_time = 4;
+  // 集合日時（RFC3339, JST。集合時刻が決まっていない場合は空文字）。
+  string meeting_at = 4;
   // 集合場所（空文字なら未設定）。
   string meeting_place = 5;
   // 参加者（割り勘元）の user id。立替者（= ログイン中の user）を含めても構わない。1 件以上。
   // 立替者は session の user で固定するため、ここでは指定しない。
   repeated string participant_user_ids = 6;
-  // 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
-  string start_time = 7;
+  // 開演日時（RFC3339, JST）。
+  string start_at = 7;
   // このチケット 1 枚で参加できる最大人数。新規登録では必須・1 以上。
   // participant_user_ids の件数以上である必要がある。
   int32 max_participants = 8;
@@ -106,16 +104,15 @@ message CreateTicketResponse {
 
 message UpdateTicketRequest {
   string ticket_id = 1;
-  // YYYY-MM-DD（JST）。
-  string attended_on = 2;
+  reserved 2; // 旧 attended_on。start_at に統合。
   // 一人あたりの精算額（円、0 以上）。
   int32 price_per_person = 3;
-  // 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
-  string meeting_time = 4;
+  // 集合日時（RFC3339, JST。集合時刻が決まっていない場合は空文字）。
+  string meeting_at = 4;
   // 集合場所（空文字なら未設定）。
   string meeting_place = 5;
-  // 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
-  string start_time = 6;
+  // 開演日時（RFC3339, JST）。
+  string start_at = 6;
   // 立替者の user id。ticket の参加者のいずれかを指定する。
   string purchased_by_user_id = 7;
   // このチケット 1 枚で参加できる最大人数。1 以上、現在の参加者数以上である必要がある。

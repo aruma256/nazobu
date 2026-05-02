@@ -18,8 +18,9 @@ import {
 } from "@/app/_components";
 import {
   formatDateJa,
+  formatTimeHM,
   formatYen,
-  parseAttendedOn,
+  parseDateTime,
 } from "@/app/_format";
 import { redirectToLogin } from "@/app/lib/auth";
 
@@ -104,16 +105,20 @@ export function TicketsView() {
 }
 
 function TicketCard({ ticket, myName }: { ticket: Ticket; myName: string }) {
-  const date = parseAttendedOn(ticket.attendedOn);
+  const startAt = parseDateTime(ticket.startAt);
+  const meetingAt =
+    ticket.meetingAt !== "" ? parseDateTime(ticket.meetingAt) : null;
   return (
     <li className="overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-colors hover:bg-zinc-50">
       <Link href={`/tickets/${ticket.id}`} className="block">
         <div className="flex items-baseline gap-3 px-4 pt-4">
           <Mono className="text-sm font-semibold text-emerald-700">
-            {formatDateJa(date)}
+            {formatDateJa(startAt)}
           </Mono>
-          {ticket.meetingTime !== "" && (
-            <Mono className="text-xs text-zinc-500">{ticket.meetingTime}</Mono>
+          {meetingAt !== null && (
+            <Mono className="text-xs text-zinc-500">
+              {formatTimeHM(meetingAt)}
+            </Mono>
           )}
           <Mono className="ml-auto text-sm font-semibold tracking-tight">
             {formatYen(ticket.pricePerPerson)}
@@ -125,7 +130,7 @@ function TicketCard({ ticket, myName }: { ticket: Ticket; myName: string }) {
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 pt-3 pb-4 text-xs text-zinc-600">
           <dt className="text-zinc-400">開演</dt>
           <dd>
-            <Mono>{ticket.startTime}</Mono>
+            <Mono>{formatTimeHM(startAt)}</Mono>
           </dd>
           {ticket.meetingPlace !== "" && (
             <>

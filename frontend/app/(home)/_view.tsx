@@ -28,7 +28,7 @@ import {
   formatDateJa,
   formatMonoDate,
   formatYen,
-  parseAttendedOn,
+  parseDateTime,
 } from "@/app/_format";
 import { redirectToLogin } from "@/app/lib/auth";
 
@@ -111,7 +111,7 @@ export function HomeView() {
                   <p className="mt-2 text-xs text-zinc-600">
                     立替: {s.payeeName}
                     <span className="mx-1.5 text-zinc-300">/</span>
-                    <Mono>{formatMonoDate(parseAttendedOn(s.attendedOn))}</Mono>{" "}
+                    <Mono>{formatMonoDate(parseDateTime(s.startAt))}</Mono>{" "}
                     参加分
                   </p>
                 </AlertItem>
@@ -129,7 +129,7 @@ export function HomeView() {
           ) : (
             <ListCard>
               {data.upcoming.map((e) => {
-                const date = parseAttendedOn(e.attendedOn);
+                const date = parseDateTime(e.startAt);
                 const days = daysFromToday(date, today);
                 const dayLabel =
                   days <= 0
@@ -192,7 +192,7 @@ export function HomeView() {
                   className="flex items-center gap-3 px-4 py-3"
                 >
                   <Mono className="text-xs text-zinc-500">
-                    {formatMonoDate(parseAttendedOn(a.attendedOn))}
+                    {formatMonoDate(parseDateTime(a.startAt))}
                   </Mono>
                   <span className="flex-1 truncate text-sm">
                     {a.eventTitle}

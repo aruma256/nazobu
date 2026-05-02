@@ -159,7 +159,7 @@ func (s *eventService) attachTickets(ctx context.Context, events []*nazobuv1.Eve
 	for _, r := range ticketRows {
 		t := &nazobuv1.EventTicket{
 			Id:               r.ID,
-			AttendedOn:       r.AttendedOn.Format(dateLayout),
+			StartAt:          formatJSTDateTime(r.StartAt),
 			PricePerPerson:   r.PricePerPerson,
 			PurchaserName:    r.PurchaserName,
 			ParticipantNames: []string{},

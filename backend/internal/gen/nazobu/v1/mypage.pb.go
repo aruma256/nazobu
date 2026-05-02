@@ -59,11 +59,11 @@ func (*GetMyPageRequest) Descriptor() ([]byte, []int) {
 
 type GetMyPageResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 自分の精算が未完了の ticket（attended_on 昇順）。自分が立て替えた分は含めない。
+	// 自分の精算が未完了の ticket（start_at 昇順）。自分が立て替えた分は含めない。
 	Unsettled []*UnsettledTicket `protobuf:"bytes,1,rep,name=unsettled,proto3" json:"unsettled,omitempty"`
-	// 自分が参加予定で attended_on が今日以降の ticket（attended_on 昇順）。
+	// 自分が参加予定で start_at が今日以降の ticket（start_at 昇順）。
 	Upcoming []*UpcomingTicket `protobuf:"bytes,2,rep,name=upcoming,proto3" json:"upcoming,omitempty"`
-	// サーバ基準の当月に attended_on がある自分の ticket（attended_on 降順）。
+	// サーバ基準の当月に start_at がある自分の ticket（start_at 降順）。
 	Monthly []*MonthlyTicket `protobuf:"bytes,3,rep,name=monthly,proto3" json:"monthly,omitempty"`
 	// monthly セクションの基準月（サーバ基準、JST）。1〜12。
 	MonthlyMonth  int32 `protobuf:"varint,4,opt,name=monthly_month,json=monthlyMonth,proto3" json:"monthly_month,omitempty"`
@@ -137,8 +137,8 @@ type UnsettledTicket struct {
 	PricePerPerson int32 `protobuf:"varint,3,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
 	// 立て替えてくれた人の表示名。
 	PayeeName string `protobuf:"bytes,4,opt,name=payee_name,json=payeeName,proto3" json:"payee_name,omitempty"`
-	// YYYY-MM-DD（JST）。
-	AttendedOn    string `protobuf:"bytes,5,opt,name=attended_on,json=attendedOn,proto3" json:"attended_on,omitempty"`
+	// 開演日時（RFC3339, JST）。
+	StartAt       string `protobuf:"bytes,5,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -201,9 +201,9 @@ func (x *UnsettledTicket) GetPayeeName() string {
 	return ""
 }
 
-func (x *UnsettledTicket) GetAttendedOn() string {
+func (x *UnsettledTicket) GetStartAt() string {
 	if x != nil {
-		return x.AttendedOn
+		return x.StartAt
 	}
 	return ""
 }
@@ -213,8 +213,8 @@ type UpcomingTicket struct {
 	TicketId   string                 `protobuf:"bytes,1,opt,name=ticket_id,json=ticketId,proto3" json:"ticket_id,omitempty"`
 	EventTitle string                 `protobuf:"bytes,2,opt,name=event_title,json=eventTitle,proto3" json:"event_title,omitempty"`
 	EventUrl   string                 `protobuf:"bytes,3,opt,name=event_url,json=eventUrl,proto3" json:"event_url,omitempty"`
-	// YYYY-MM-DD（JST）。
-	AttendedOn string `protobuf:"bytes,4,opt,name=attended_on,json=attendedOn,proto3" json:"attended_on,omitempty"`
+	// 開演日時（RFC3339, JST）。
+	StartAt string `protobuf:"bytes,4,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
 	// 同じ ticket の他の参加者の表示名（自分は除く）。created_at 昇順。
 	CompanionNames []string `protobuf:"bytes,5,rep,name=companion_names,json=companionNames,proto3" json:"companion_names,omitempty"`
 	unknownFields  protoimpl.UnknownFields
@@ -272,9 +272,9 @@ func (x *UpcomingTicket) GetEventUrl() string {
 	return ""
 }
 
-func (x *UpcomingTicket) GetAttendedOn() string {
+func (x *UpcomingTicket) GetStartAt() string {
 	if x != nil {
-		return x.AttendedOn
+		return x.StartAt
 	}
 	return ""
 }
@@ -290,8 +290,8 @@ type MonthlyTicket struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
 	TicketId   string                 `protobuf:"bytes,1,opt,name=ticket_id,json=ticketId,proto3" json:"ticket_id,omitempty"`
 	EventTitle string                 `protobuf:"bytes,2,opt,name=event_title,json=eventTitle,proto3" json:"event_title,omitempty"`
-	// YYYY-MM-DD（JST）。
-	AttendedOn string `protobuf:"bytes,3,opt,name=attended_on,json=attendedOn,proto3" json:"attended_on,omitempty"`
+	// 開演日時（RFC3339, JST）。
+	StartAt string `protobuf:"bytes,3,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
 	// 自分の精算が完了しているか。自分が立て替えた ticket は常に true 扱い。
 	Settled       bool `protobuf:"varint,4,opt,name=settled,proto3" json:"settled,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -342,9 +342,9 @@ func (x *MonthlyTicket) GetEventTitle() string {
 	return ""
 }
 
-func (x *MonthlyTicket) GetAttendedOn() string {
+func (x *MonthlyTicket) GetStartAt() string {
 	if x != nil {
-		return x.AttendedOn
+		return x.StartAt
 	}
 	return ""
 }
@@ -366,30 +366,27 @@ const file_nazobu_v1_mypage_proto_rawDesc = "" +
 	"\tunsettled\x18\x01 \x03(\v2\x1a.nazobu.v1.UnsettledTicketR\tunsettled\x125\n" +
 	"\bupcoming\x18\x02 \x03(\v2\x19.nazobu.v1.UpcomingTicketR\bupcoming\x122\n" +
 	"\amonthly\x18\x03 \x03(\v2\x18.nazobu.v1.MonthlyTicketR\amonthly\x12#\n" +
-	"\rmonthly_month\x18\x04 \x01(\x05R\fmonthlyMonth\"\xb9\x01\n" +
+	"\rmonthly_month\x18\x04 \x01(\x05R\fmonthlyMonth\"\xb3\x01\n" +
 	"\x0fUnsettledTicket\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x1f\n" +
 	"\vevent_title\x18\x02 \x01(\tR\n" +
 	"eventTitle\x12(\n" +
 	"\x10price_per_person\x18\x03 \x01(\x05R\x0epricePerPerson\x12\x1d\n" +
 	"\n" +
-	"payee_name\x18\x04 \x01(\tR\tpayeeName\x12\x1f\n" +
-	"\vattended_on\x18\x05 \x01(\tR\n" +
-	"attendedOn\"\xb5\x01\n" +
+	"payee_name\x18\x04 \x01(\tR\tpayeeName\x12\x19\n" +
+	"\bstart_at\x18\x05 \x01(\tR\astartAt\"\xaf\x01\n" +
 	"\x0eUpcomingTicket\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x1f\n" +
 	"\vevent_title\x18\x02 \x01(\tR\n" +
 	"eventTitle\x12\x1b\n" +
-	"\tevent_url\x18\x03 \x01(\tR\beventUrl\x12\x1f\n" +
-	"\vattended_on\x18\x04 \x01(\tR\n" +
-	"attendedOn\x12'\n" +
-	"\x0fcompanion_names\x18\x05 \x03(\tR\x0ecompanionNames\"\x88\x01\n" +
+	"\tevent_url\x18\x03 \x01(\tR\beventUrl\x12\x19\n" +
+	"\bstart_at\x18\x04 \x01(\tR\astartAt\x12'\n" +
+	"\x0fcompanion_names\x18\x05 \x03(\tR\x0ecompanionNames\"\x82\x01\n" +
 	"\rMonthlyTicket\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x1f\n" +
 	"\vevent_title\x18\x02 \x01(\tR\n" +
-	"eventTitle\x12\x1f\n" +
-	"\vattended_on\x18\x03 \x01(\tR\n" +
-	"attendedOn\x12\x18\n" +
+	"eventTitle\x12\x19\n" +
+	"\bstart_at\x18\x03 \x01(\tR\astartAt\x12\x18\n" +
 	"\asettled\x18\x04 \x01(\bR\asettled2W\n" +
 	"\rMyPageService\x12F\n" +
 	"\tGetMyPage\x12\x1b.nazobu.v1.GetMyPageRequest\x1a\x1c.nazobu.v1.GetMyPageResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"

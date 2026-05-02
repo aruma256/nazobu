@@ -107,9 +107,9 @@ type Event struct {
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Title string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	Url   string                 `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
-	// 紐づく ticket（attended_on 降順）。
+	// 紐づく ticket（start_at 降順）。
 	Tickets []*EventTicket `protobuf:"bytes,4,rep,name=tickets,proto3" json:"tickets,omitempty"`
-	// 開場時間が開演時刻（ticket.start_time）の何分前か。任意。
+	// 開場時間が開演時刻（ticket.start_at）の何分前か。任意。
 	DoorsOpenMinutesBefore *int32 `protobuf:"varint,5,opt,name=doors_open_minutes_before,json=doorsOpenMinutesBefore,proto3,oneof" json:"doors_open_minutes_before,omitempty"`
 	// 入場締切が開演時刻の何分前か（これを過ぎると参加できない）。任意。
 	EntryDeadlineMinutesBefore *int32 `protobuf:"varint,6,opt,name=entry_deadline_minutes_before,json=entryDeadlineMinutesBefore,proto3,oneof" json:"entry_deadline_minutes_before,omitempty"`
@@ -192,8 +192,8 @@ func (x *Event) GetEntryDeadlineMinutesBefore() int32 {
 type EventTicket struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// YYYY-MM-DD（JST）。
-	AttendedOn string `protobuf:"bytes,2,opt,name=attended_on,json=attendedOn,proto3" json:"attended_on,omitempty"`
+	// 開演日時（RFC3339, JST）。表示は日付部分のみ使われることが多い。
+	StartAt string `protobuf:"bytes,2,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
 	// 一人あたりの精算額（円）。
 	PricePerPerson int32 `protobuf:"varint,3,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
 	// 立て替えてくれた人の表示名。
@@ -241,9 +241,9 @@ func (x *EventTicket) GetId() string {
 	return ""
 }
 
-func (x *EventTicket) GetAttendedOn() string {
+func (x *EventTicket) GetStartAt() string {
 	if x != nil {
-		return x.AttendedOn
+		return x.StartAt
 	}
 	return ""
 }
@@ -399,11 +399,10 @@ const file_nazobu_v1_event_proto_rawDesc = "" +
 	"\x19doors_open_minutes_before\x18\x05 \x01(\x05H\x00R\x16doorsOpenMinutesBefore\x88\x01\x01\x12F\n" +
 	"\x1dentry_deadline_minutes_before\x18\x06 \x01(\x05H\x01R\x1aentryDeadlineMinutesBefore\x88\x01\x01B\x1c\n" +
 	"\x1a_doors_open_minutes_beforeB \n" +
-	"\x1e_entry_deadline_minutes_before\"\xbc\x01\n" +
+	"\x1e_entry_deadline_minutes_before\"\xb6\x01\n" +
 	"\vEventTicket\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
-	"\vattended_on\x18\x02 \x01(\tR\n" +
-	"attendedOn\x12(\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
+	"\bstart_at\x18\x02 \x01(\tR\astartAt\x12(\n" +
 	"\x10price_per_person\x18\x03 \x01(\x05R\x0epricePerPerson\x12%\n" +
 	"\x0epurchaser_name\x18\x04 \x01(\tR\rpurchaserName\x12+\n" +
 	"\x11participant_names\x18\x05 \x03(\tR\x10participantNames\"\x84\x02\n" +

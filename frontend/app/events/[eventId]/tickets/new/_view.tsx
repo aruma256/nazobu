@@ -17,6 +17,7 @@ import {
   Section,
   SectionTitle,
 } from "@/app/_components";
+import { joinJSTDateTime } from "@/app/_format";
 import { redirectToLogin } from "@/app/lib/auth";
 
 type LoadState =
@@ -114,9 +115,9 @@ function Form({
   event: NazobuEvent;
   users: User[];
 }) {
-  const [attendedOn, setAttendedOn] = useState("");
-  const [meetingTime, setMeetingTime] = useState("");
+  const [startDate, setStartDate] = useState("");
   const [startTime, setStartTime] = useState("");
+  const [meetingTime, setMeetingTime] = useState("");
   const [meetingPlace, setMeetingPlace] = useState("");
   const [pricePerPerson, setPricePerPerson] = useState("");
   const [maxParticipants, setMaxParticipants] = useState("");
@@ -139,7 +140,7 @@ function Form({
     const priceNum = Number(pricePerPerson);
     const maxNum = Number(maxParticipants);
     if (
-      attendedOn === "" ||
+      startDate === "" ||
       startTime === "" ||
       pricePerPerson === "" ||
       maxParticipants === ""
@@ -164,13 +165,19 @@ function Form({
       return;
     }
 
+    const startAt = joinJSTDateTime(startDate, startTime);
+    const meetingAt = joinJSTDateTime(startDate, meetingTime) ?? "";
+    if (startAt === null) {
+      setState({ kind: "error", message: "未入力の項目があります" });
+      return;
+    }
+
     setState({ kind: "submitting" });
     try {
       await ticketClient.createTicket({
         eventId: event.id,
-        attendedOn,
-        meetingTime,
-        startTime,
+        startAt,
+        meetingAt,
         meetingPlace: trimmedPlace,
         pricePerPerson: priceNum,
         maxParticipants: maxNum,
@@ -201,13 +208,25 @@ function Form({
           </p>
 
           <form onSubmit={onSubmit} className="mt-3 space-y-4">
-            <Field label="参加日" htmlFor="ticket-attended-on">
+            <Field label="参加日" htmlFor="ticket-start-date">
               <input
-                id="ticket-attended-on"
+                id="ticket-start-date"
                 type="date"
                 required
-                value={attendedOn}
-                onChange={(e) => setAttendedOn(e.target.value)}
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                disabled={submitting}
+                className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+              />
+            </Field>
+
+            <Field label="開演時刻" htmlFor="ticket-start-time">
+              <input
+                id="ticket-start-time"
+                type="time"
+                required
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
                 disabled={submitting}
                 className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
               />
@@ -223,20 +242,8 @@ function Form({
                 className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
               />
               <p className="mt-1 text-xs text-zinc-500">
-                集合時刻が決まっている場合のみ入力してください。
+                集合時刻が決まっている場合のみ入力してください。参加日と同じ日として登録されます。
               </p>
-            </Field>
-
-            <Field label="開演時刻" htmlFor="ticket-start-time">
-              <input
-                id="ticket-start-time"
-                type="time"
-                required
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                disabled={submitting}
-                className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
-              />
             </Field>
 
             <Field label="集合場所（任意）" htmlFor="ticket-meeting-place">

@@ -24,10 +24,8 @@ func newMyPageService(db *sql.DB) nazobuv1connect.MyPageServiceHandler {
 	return &myPageService{db: db, q: queries.New(db), now: time.Now}
 }
 
-// jst はサーバの想定タイムゾーン。attended_on の DATE 比較や月跨ぎの基準に使う。
+// jst はサーバの想定タイムゾーン。当日 0:00 や月初の境界算出に使う。
 var jst = time.FixedZone("Asia/Tokyo", 9*60*60)
-
-const dateLayout = "2006-01-02"
 
 func (s *myPageService) GetMyPage(ctx context.Context, req *connect.Request[nazobuv1.GetMyPageRequest]) (*connect.Response[nazobuv1.GetMyPageResponse], error) {
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
@@ -36,7 +34,7 @@ func (s *myPageService) GetMyPage(ctx context.Context, req *connect.Request[nazo
 	}
 
 	now := s.now().In(jst)
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, jst)
+	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, jst)
 	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, jst)
 	nextMonthStart := time.Date(now.Year(), now.Month()+1, 1, 0, 0, 0, 0, jst)
 
@@ -45,7 +43,7 @@ func (s *myPageService) GetMyPage(ctx context.Context, req *connect.Request[nazo
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("未精算の取得に失敗: %w", err))
 	}
 
-	upcoming, err := s.queryUpcoming(ctx, user.ID, today)
+	upcoming, err := s.queryUpcoming(ctx, user.ID, todayStart)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("今後の予定の取得に失敗: %w", err))
 	}
@@ -78,16 +76,16 @@ func (s *myPageService) queryUnsettled(ctx context.Context, userID string) ([]*n
 			EventTitle:     r.EventTitle,
 			PricePerPerson: r.PricePerPerson,
 			PayeeName:      r.PayeeName,
-			AttendedOn:     r.AttendedOn.Format(dateLayout),
+			StartAt:        formatJSTDateTime(r.StartAt),
 		})
 	}
 	return out, nil
 }
 
-func (s *myPageService) queryUpcoming(ctx context.Context, userID string, today time.Time) ([]*nazobuv1.UpcomingTicket, error) {
+func (s *myPageService) queryUpcoming(ctx context.Context, userID string, todayStart time.Time) ([]*nazobuv1.UpcomingTicket, error) {
 	rows, err := s.q.ListUpcomingTicketsByUserID(ctx, queries.ListUpcomingTicketsByUserIDParams{
-		UserID: userID,
-		Today:  today,
+		UserID:     userID,
+		TodayStart: todayStart,
 	})
 	if err != nil {
 		return nil, err
@@ -98,7 +96,7 @@ func (s *myPageService) queryUpcoming(ctx context.Context, userID string, today 
 			TicketId:   r.ID,
 			EventTitle: r.EventTitle,
 			EventUrl:   r.EventUrl,
-			AttendedOn: r.AttendedOn.Format(dateLayout),
+			StartAt:    formatJSTDateTime(r.StartAt),
 		})
 	}
 	return out, nil
@@ -146,7 +144,7 @@ func (s *myPageService) queryMonthly(ctx context.Context, userID string, monthSt
 		out = append(out, &nazobuv1.MonthlyTicket{
 			TicketId:   r.ID,
 			EventTitle: r.EventTitle,
-			AttendedOn: r.AttendedOn.Format(dateLayout),
+			StartAt:    formatJSTDateTime(r.StartAt),
 			Settled:    r.Settled != 0,
 		})
 	}

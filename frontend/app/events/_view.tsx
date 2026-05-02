@@ -19,7 +19,7 @@ import {
 import {
   formatDateJa,
   formatYen,
-  parseAttendedOn,
+  parseDateTime,
 } from "@/app/_format";
 import { redirectToLogin } from "@/app/lib/auth";
 
@@ -174,7 +174,7 @@ function EventCard({ event, myName }: { event: NazobuEvent; myName: string }) {
 }
 
 function TicketRow({ ticket, myName }: { ticket: EventTicket; myName: string }) {
-  const date = parseAttendedOn(ticket.attendedOn);
+  const date = parseDateTime(ticket.startAt);
   return (
     <li className="transition-colors hover:bg-zinc-50">
       <Link href={`/tickets/${ticket.id}`} className="block px-4 py-3">

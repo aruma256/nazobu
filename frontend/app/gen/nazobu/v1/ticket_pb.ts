@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file nazobu/v1/ticket.proto.
  */
 export const file_nazobu_v1_ticket: GenFile = /*@__PURE__*/
-  fileDesc("ChZuYXpvYnUvdjEvdGlja2V0LnByb3RvEgluYXpvYnUudjEiFAoSTGlzdFRpY2tldHNSZXF1ZXN0IjkKE0xpc3RUaWNrZXRzUmVzcG9uc2USIgoHdGlja2V0cxgBIAMoCzIRLm5hem9idS52MS5UaWNrZXQiiwIKBlRpY2tldBIKCgJpZBgBIAEoCRIQCghldmVudF9pZBgCIAEoCRITCgtldmVudF90aXRsZRgDIAEoCRITCgthdHRlbmRlZF9vbhgEIAEoCRIYChBwcmljZV9wZXJfcGVyc29uGAUgASgFEhQKDG1lZXRpbmdfdGltZRgGIAEoCRIVCg1tZWV0aW5nX3BsYWNlGAcgASgJEhYKDnB1cmNoYXNlcl9uYW1lGAggASgJEhkKEXBhcnRpY2lwYW50X25hbWVzGAkgAygJEhEKCWV2ZW50X3VybBgKIAEoCRISCgpzdGFydF90aW1lGAsgASgJEhgKEG1heF9wYXJ0aWNpcGFudHMYDCABKAUiJQoQR2V0VGlja2V0UmVxdWVzdBIRCgl0aWNrZXRfaWQYASABKAkifAoRR2V0VGlja2V0UmVzcG9uc2USIQoGdGlja2V0GAEgASgLMhEubmF6b2J1LnYxLlRpY2tldBIyCgxwYXJ0aWNpcGFudHMYAiADKAsyHC5uYXpvYnUudjEuVGlja2V0UGFydGljaXBhbnQSEAoIY2FuX2VkaXQYAyABKAgiWQoRVGlja2V0UGFydGljaXBhbnQSDwoHdXNlcl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEg8KB3NldHRsZWQYAyABKAgSFAoMaXNfcHVyY2hhc2VyGAQgASgIIs8BChNDcmVhdGVUaWNrZXRSZXF1ZXN0EhAKCGV2ZW50X2lkGAEgASgJEhMKC2F0dGVuZGVkX29uGAIgASgJEhgKEHByaWNlX3Blcl9wZXJzb24YAyABKAUSFAoMbWVldGluZ190aW1lGAQgASgJEhUKDW1lZXRpbmdfcGxhY2UYBSABKAkSHAoUcGFydGljaXBhbnRfdXNlcl9pZHMYBiADKAkSEgoKc3RhcnRfdGltZRgHIAEoCRIYChBtYXhfcGFydGljaXBhbnRzGAggASgFIjkKFENyZWF0ZVRpY2tldFJlc3BvbnNlEiEKBnRpY2tldBgBIAEoCzIRLm5hem9idS52MS5UaWNrZXQi0AEKE1VwZGF0ZVRpY2tldFJlcXVlc3QSEQoJdGlja2V0X2lkGAEgASgJEhMKC2F0dGVuZGVkX29uGAIgASgJEhgKEHByaWNlX3Blcl9wZXJzb24YAyABKAUSFAoMbWVldGluZ190aW1lGAQgASgJEhUKDW1lZXRpbmdfcGxhY2UYBSABKAkSEgoKc3RhcnRfdGltZRgGIAEoCRIcChRwdXJjaGFzZWRfYnlfdXNlcl9pZBgHIAEoCRIYChBtYXhfcGFydGljaXBhbnRzGAggASgFIjkKFFVwZGF0ZVRpY2tldFJlc3BvbnNlEiEKBnRpY2tldBgBIAEoCzIRLm5hem9idS52MS5UaWNrZXQiQwocQWRkVGlja2V0UGFydGljaXBhbnRzUmVxdWVzdBIRCgl0aWNrZXRfaWQYASABKAkSEAoIdXNlcl9pZHMYAiADKAkiHwodQWRkVGlja2V0UGFydGljaXBhbnRzUmVzcG9uc2UiRAoeUmVtb3ZlVGlja2V0UGFydGljaXBhbnRSZXF1ZXN0EhEKCXRpY2tldF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJIiEKH1JlbW92ZVRpY2tldFBhcnRpY2lwYW50UmVzcG9uc2UiXwooVXBkYXRlVGlja2V0UGFydGljaXBhbnRTZXR0bGVtZW50UmVxdWVzdBIRCgl0aWNrZXRfaWQYASABKAkSDwoHdXNlcl9pZBgCIAEoCRIPCgdzZXR0bGVkGAMgASgIIisKKVVwZGF0ZVRpY2tldFBhcnRpY2lwYW50U2V0dGxlbWVudFJlc3BvbnNlMrYFCg1UaWNrZXRTZXJ2aWNlEkwKC0xpc3RUaWNrZXRzEh0ubmF6b2J1LnYxLkxpc3RUaWNrZXRzUmVxdWVzdBoeLm5hem9idS52MS5MaXN0VGlja2V0c1Jlc3BvbnNlEkYKCUdldFRpY2tldBIbLm5hem9idS52MS5HZXRUaWNrZXRSZXF1ZXN0GhwubmF6b2J1LnYxLkdldFRpY2tldFJlc3BvbnNlEk8KDENyZWF0ZVRpY2tldBIeLm5hem9idS52MS5DcmVhdGVUaWNrZXRSZXF1ZXN0Gh8ubmF6b2J1LnYxLkNyZWF0ZVRpY2tldFJlc3BvbnNlEk8KDFVwZGF0ZVRpY2tldBIeLm5hem9idS52MS5VcGRhdGVUaWNrZXRSZXF1ZXN0Gh8ubmF6b2J1LnYxLlVwZGF0ZVRpY2tldFJlc3BvbnNlEmoKFUFkZFRpY2tldFBhcnRpY2lwYW50cxInLm5hem9idS52MS5BZGRUaWNrZXRQYXJ0aWNpcGFudHNSZXF1ZXN0GigubmF6b2J1LnYxLkFkZFRpY2tldFBhcnRpY2lwYW50c1Jlc3BvbnNlEnAKF1JlbW92ZVRpY2tldFBhcnRpY2lwYW50EikubmF6b2J1LnYxLlJlbW92ZVRpY2tldFBhcnRpY2lwYW50UmVxdWVzdBoqLm5hem9idS52MS5SZW1vdmVUaWNrZXRQYXJ0aWNpcGFudFJlc3BvbnNlEo4BCiFVcGRhdGVUaWNrZXRQYXJ0aWNpcGFudFNldHRsZW1lbnQSMy5uYXpvYnUudjEuVXBkYXRlVGlja2V0UGFydGljaXBhbnRTZXR0bGVtZW50UmVxdWVzdBo0Lm5hem9idS52MS5VcGRhdGVUaWNrZXRQYXJ0aWNpcGFudFNldHRsZW1lbnRSZXNwb25zZUJEWkJnaXRodWIuY29tL2FydW1hMjU2L25hem9idS9iYWNrZW5kL2ludGVybmFsL2dlbi9uYXpvYnUvdjE7bmF6b2J1djFiBnByb3RvMw");
+  fileDesc("ChZuYXpvYnUvdjEvdGlja2V0LnByb3RvEgluYXpvYnUudjEiFAoSTGlzdFRpY2tldHNSZXF1ZXN0IjkKE0xpc3RUaWNrZXRzUmVzcG9uc2USIgoHdGlja2V0cxgBIAMoCzIRLm5hem9idS52MS5UaWNrZXQi+AEKBlRpY2tldBIKCgJpZBgBIAEoCRIQCghldmVudF9pZBgCIAEoCRITCgtldmVudF90aXRsZRgDIAEoCRIYChBwcmljZV9wZXJfcGVyc29uGAUgASgFEhIKCm1lZXRpbmdfYXQYBiABKAkSFQoNbWVldGluZ19wbGFjZRgHIAEoCRIWCg5wdXJjaGFzZXJfbmFtZRgIIAEoCRIZChFwYXJ0aWNpcGFudF9uYW1lcxgJIAMoCRIRCglldmVudF91cmwYCiABKAkSEAoIc3RhcnRfYXQYCyABKAkSGAoQbWF4X3BhcnRpY2lwYW50cxgMIAEoBUoECAQQBSIlChBHZXRUaWNrZXRSZXF1ZXN0EhEKCXRpY2tldF9pZBgBIAEoCSJ8ChFHZXRUaWNrZXRSZXNwb25zZRIhCgZ0aWNrZXQYASABKAsyES5uYXpvYnUudjEuVGlja2V0EjIKDHBhcnRpY2lwYW50cxgCIAMoCzIcLm5hem9idS52MS5UaWNrZXRQYXJ0aWNpcGFudBIQCghjYW5fZWRpdBgDIAEoCCJZChFUaWNrZXRQYXJ0aWNpcGFudBIPCgd1c2VyX2lkGAEgASgJEgwKBG5hbWUYAiABKAkSDwoHc2V0dGxlZBgDIAEoCBIUCgxpc19wdXJjaGFzZXIYBCABKAgivAEKE0NyZWF0ZVRpY2tldFJlcXVlc3QSEAoIZXZlbnRfaWQYASABKAkSGAoQcHJpY2VfcGVyX3BlcnNvbhgDIAEoBRISCgptZWV0aW5nX2F0GAQgASgJEhUKDW1lZXRpbmdfcGxhY2UYBSABKAkSHAoUcGFydGljaXBhbnRfdXNlcl9pZHMYBiADKAkSEAoIc3RhcnRfYXQYByABKAkSGAoQbWF4X3BhcnRpY2lwYW50cxgIIAEoBUoECAIQAyI5ChRDcmVhdGVUaWNrZXRSZXNwb25zZRIhCgZ0aWNrZXQYASABKAsyES5uYXpvYnUudjEuVGlja2V0Ir0BChNVcGRhdGVUaWNrZXRSZXF1ZXN0EhEKCXRpY2tldF9pZBgBIAEoCRIYChBwcmljZV9wZXJfcGVyc29uGAMgASgFEhIKCm1lZXRpbmdfYXQYBCABKAkSFQoNbWVldGluZ19wbGFjZRgFIAEoCRIQCghzdGFydF9hdBgGIAEoCRIcChRwdXJjaGFzZWRfYnlfdXNlcl9pZBgHIAEoCRIYChBtYXhfcGFydGljaXBhbnRzGAggASgFSgQIAhADIjkKFFVwZGF0ZVRpY2tldFJlc3BvbnNlEiEKBnRpY2tldBgBIAEoCzIRLm5hem9idS52MS5UaWNrZXQiQwocQWRkVGlja2V0UGFydGljaXBhbnRzUmVxdWVzdBIRCgl0aWNrZXRfaWQYASABKAkSEAoIdXNlcl9pZHMYAiADKAkiHwodQWRkVGlja2V0UGFydGljaXBhbnRzUmVzcG9uc2UiRAoeUmVtb3ZlVGlja2V0UGFydGljaXBhbnRSZXF1ZXN0EhEKCXRpY2tldF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJIiEKH1JlbW92ZVRpY2tldFBhcnRpY2lwYW50UmVzcG9uc2UiXwooVXBkYXRlVGlja2V0UGFydGljaXBhbnRTZXR0bGVtZW50UmVxdWVzdBIRCgl0aWNrZXRfaWQYASABKAkSDwoHdXNlcl9pZBgCIAEoCRIPCgdzZXR0bGVkGAMgASgIIisKKVVwZGF0ZVRpY2tldFBhcnRpY2lwYW50U2V0dGxlbWVudFJlc3BvbnNlMrYFCg1UaWNrZXRTZXJ2aWNlEkwKC0xpc3RUaWNrZXRzEh0ubmF6b2J1LnYxLkxpc3RUaWNrZXRzUmVxdWVzdBoeLm5hem9idS52MS5MaXN0VGlja2V0c1Jlc3BvbnNlEkYKCUdldFRpY2tldBIbLm5hem9idS52MS5HZXRUaWNrZXRSZXF1ZXN0GhwubmF6b2J1LnYxLkdldFRpY2tldFJlc3BvbnNlEk8KDENyZWF0ZVRpY2tldBIeLm5hem9idS52MS5DcmVhdGVUaWNrZXRSZXF1ZXN0Gh8ubmF6b2J1LnYxLkNyZWF0ZVRpY2tldFJlc3BvbnNlEk8KDFVwZGF0ZVRpY2tldBIeLm5hem9idS52MS5VcGRhdGVUaWNrZXRSZXF1ZXN0Gh8ubmF6b2J1LnYxLlVwZGF0ZVRpY2tldFJlc3BvbnNlEmoKFUFkZFRpY2tldFBhcnRpY2lwYW50cxInLm5hem9idS52MS5BZGRUaWNrZXRQYXJ0aWNpcGFudHNSZXF1ZXN0GigubmF6b2J1LnYxLkFkZFRpY2tldFBhcnRpY2lwYW50c1Jlc3BvbnNlEnAKF1JlbW92ZVRpY2tldFBhcnRpY2lwYW50EikubmF6b2J1LnYxLlJlbW92ZVRpY2tldFBhcnRpY2lwYW50UmVxdWVzdBoqLm5hem9idS52MS5SZW1vdmVUaWNrZXRQYXJ0aWNpcGFudFJlc3BvbnNlEo4BCiFVcGRhdGVUaWNrZXRQYXJ0aWNpcGFudFNldHRsZW1lbnQSMy5uYXpvYnUudjEuVXBkYXRlVGlja2V0UGFydGljaXBhbnRTZXR0bGVtZW50UmVxdWVzdBo0Lm5hem9idS52MS5VcGRhdGVUaWNrZXRQYXJ0aWNpcGFudFNldHRsZW1lbnRSZXNwb25zZUJEWkJnaXRodWIuY29tL2FydW1hMjU2L25hem9idS9iYWNrZW5kL2ludGVybmFsL2dlbi9uYXpvYnUvdjE7bmF6b2J1djFiBnByb3RvMw");
 
 /**
  * @generated from message nazobu.v1.ListTicketsRequest
@@ -30,7 +30,7 @@ export const ListTicketsRequestSchema: GenMessage<ListTicketsRequest> = /*@__PUR
  */
 export type ListTicketsResponse = Message<"nazobu.v1.ListTicketsResponse"> & {
   /**
-   * tickets は attended_on 降順 / id 昇順。
+   * tickets は start_at 降順 / id 昇順。
    *
    * @generated from field: repeated nazobu.v1.Ticket tickets = 1;
    */
@@ -64,13 +64,6 @@ export type Ticket = Message<"nazobu.v1.Ticket"> & {
   eventTitle: string;
 
   /**
-   * YYYY-MM-DD（JST）。
-   *
-   * @generated from field: string attended_on = 4;
-   */
-  attendedOn: string;
-
-  /**
    * 一人あたりの精算額（円）。
    *
    * @generated from field: int32 price_per_person = 5;
@@ -78,11 +71,11 @@ export type Ticket = Message<"nazobu.v1.Ticket"> & {
   pricePerPerson: number;
 
   /**
-   * 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
+   * 集合日時（RFC3339, JST オフセット +09:00。集合時刻が決まっていない場合は空文字）。
    *
-   * @generated from field: string meeting_time = 6;
+   * @generated from field: string meeting_at = 6;
    */
-  meetingTime: string;
+  meetingAt: string;
 
   /**
    * 集合場所（空文字なら未設定）。
@@ -113,11 +106,11 @@ export type Ticket = Message<"nazobu.v1.Ticket"> & {
   eventUrl: string;
 
   /**
-   * 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
+   * 開演日時（RFC3339, JST オフセット +09:00）。
    *
-   * @generated from field: string start_time = 11;
+   * @generated from field: string start_at = 11;
    */
-  startTime: string;
+  startAt: string;
 
   /**
    * このチケット 1 枚で参加できる最大人数。1 以上。
@@ -230,13 +223,6 @@ export type CreateTicketRequest = Message<"nazobu.v1.CreateTicketRequest"> & {
   eventId: string;
 
   /**
-   * YYYY-MM-DD（JST）。
-   *
-   * @generated from field: string attended_on = 2;
-   */
-  attendedOn: string;
-
-  /**
    * 一人あたりの精算額（円、0 以上）。
    *
    * @generated from field: int32 price_per_person = 3;
@@ -244,11 +230,11 @@ export type CreateTicketRequest = Message<"nazobu.v1.CreateTicketRequest"> & {
   pricePerPerson: number;
 
   /**
-   * 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
+   * 集合日時（RFC3339, JST。集合時刻が決まっていない場合は空文字）。
    *
-   * @generated from field: string meeting_time = 4;
+   * @generated from field: string meeting_at = 4;
    */
-  meetingTime: string;
+  meetingAt: string;
 
   /**
    * 集合場所（空文字なら未設定）。
@@ -266,11 +252,11 @@ export type CreateTicketRequest = Message<"nazobu.v1.CreateTicketRequest"> & {
   participantUserIds: string[];
 
   /**
-   * 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
+   * 開演日時（RFC3339, JST）。
    *
-   * @generated from field: string start_time = 7;
+   * @generated from field: string start_at = 7;
    */
-  startTime: string;
+  startAt: string;
 
   /**
    * このチケット 1 枚で参加できる最大人数。新規登録では必須・1 以上。
@@ -315,13 +301,6 @@ export type UpdateTicketRequest = Message<"nazobu.v1.UpdateTicketRequest"> & {
   ticketId: string;
 
   /**
-   * YYYY-MM-DD（JST）。
-   *
-   * @generated from field: string attended_on = 2;
-   */
-  attendedOn: string;
-
-  /**
    * 一人あたりの精算額（円、0 以上）。
    *
    * @generated from field: int32 price_per_person = 3;
@@ -329,11 +308,11 @@ export type UpdateTicketRequest = Message<"nazobu.v1.UpdateTicketRequest"> & {
   pricePerPerson: number;
 
   /**
-   * 集合時刻 "HH:MM"（attended_on の JST 当日基準。集合時刻が決まっていない場合は空文字）。
+   * 集合日時（RFC3339, JST。集合時刻が決まっていない場合は空文字）。
    *
-   * @generated from field: string meeting_time = 4;
+   * @generated from field: string meeting_at = 4;
    */
-  meetingTime: string;
+  meetingAt: string;
 
   /**
    * 集合場所（空文字なら未設定）。
@@ -343,11 +322,11 @@ export type UpdateTicketRequest = Message<"nazobu.v1.UpdateTicketRequest"> & {
   meetingPlace: string;
 
   /**
-   * 開演時刻 "HH:MM"（attended_on の JST 当日基準）。
+   * 開演日時（RFC3339, JST）。
    *
-   * @generated from field: string start_time = 6;
+   * @generated from field: string start_at = 6;
    */
-  startTime: string;
+  startAt: string;
 
   /**
    * 立替者の user id。ticket の参加者のいずれかを指定する。
@@ -509,7 +488,7 @@ export const UpdateTicketParticipantSettlementResponseSchema: GenMessage<UpdateT
  */
 export const TicketService: GenService<{
   /**
-   * ListTickets は登録済み ticket を attended_on 降順で返す。
+   * ListTickets は登録済み ticket を start_at 降順で返す。
    *
    * @generated from rpc nazobu.v1.TicketService.ListTickets
    */
@@ -539,7 +518,7 @@ export const TicketService: GenService<{
     output: typeof CreateTicketResponseSchema;
   },
   /**
-   * UpdateTicket は ticket 本体（attended_on / price_per_person / max_participants / meeting_time / meeting_place / start_time / purchased_by_user_id）を更新する。
+   * UpdateTicket は ticket 本体（start_at / meeting_at / price_per_person / max_participants / meeting_place / purchased_by_user_id）を更新する。
    * admin もしくは立替者のみ実行可能。新しい立替者は ticket の参加者の中から選ぶ。
    *
    * @generated from rpc nazobu.v1.TicketService.UpdateTicket

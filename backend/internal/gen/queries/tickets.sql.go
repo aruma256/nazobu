@@ -42,33 +42,31 @@ func (q *Queries) CountTicketParticipantsByTicketID(ctx context.Context, ticketI
 }
 
 const createTicket = `-- name: CreateTicket :exec
-INSERT INTO tickets (id, event_id, attended_on, price_per_person, max_participants, purchased_by, meeting_time, meeting_place, start_time, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6))
+INSERT INTO tickets (id, event_id, start_at, meeting_at, price_per_person, max_participants, purchased_by, meeting_place, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6))
 `
 
 type CreateTicketParams struct {
 	ID              string
 	EventID         string
-	AttendedOn      time.Time
+	StartAt         time.Time
+	MeetingAt       sql.NullTime
 	PricePerPerson  int32
 	MaxParticipants int32
 	PurchasedBy     string
-	MeetingTime     sql.NullString
 	MeetingPlace    string
-	StartTime       string
 }
 
 func (q *Queries) CreateTicket(ctx context.Context, arg CreateTicketParams) error {
 	_, err := q.db.ExecContext(ctx, createTicket,
 		arg.ID,
 		arg.EventID,
-		arg.AttendedOn,
+		arg.StartAt,
+		arg.MeetingAt,
 		arg.PricePerPerson,
 		arg.MaxParticipants,
 		arg.PurchasedBy,
-		arg.MeetingTime,
 		arg.MeetingPlace,
-		arg.StartTime,
 	)
 	return err
 }
@@ -104,8 +102,8 @@ func (q *Queries) DeleteTicketParticipant(ctx context.Context, arg DeleteTicketP
 
 const getTicketByID = `-- name: GetTicketByID :one
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
-       t.attended_on, t.price_per_person, t.max_participants,
-       t.meeting_time, t.meeting_place, t.start_time,
+       t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
+       t.meeting_place,
        t.purchased_by,
        pu.display_name AS purchaser_name
 FROM tickets t
@@ -119,12 +117,11 @@ type GetTicketByIDRow struct {
 	EventID         string
 	EventTitle      string
 	EventUrl        string
-	AttendedOn      time.Time
+	StartAt         time.Time
+	MeetingAt       sql.NullTime
 	PricePerPerson  int32
 	MaxParticipants int32
-	MeetingTime     sql.NullString
 	MeetingPlace    string
-	StartTime       string
 	PurchasedBy     string
 	PurchaserName   string
 }
@@ -138,12 +135,11 @@ func (q *Queries) GetTicketByID(ctx context.Context, id string) (GetTicketByIDRo
 		&i.EventID,
 		&i.EventTitle,
 		&i.EventUrl,
-		&i.AttendedOn,
+		&i.StartAt,
+		&i.MeetingAt,
 		&i.PricePerPerson,
 		&i.MaxParticipants,
-		&i.MeetingTime,
 		&i.MeetingPlace,
-		&i.StartTime,
 		&i.PurchasedBy,
 		&i.PurchaserName,
 	)
@@ -241,13 +237,13 @@ func (q *Queries) ListTicketParticipantsByTicketID(ctx context.Context, ticketID
 
 const listTickets = `-- name: ListTickets :many
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
-       t.attended_on, t.price_per_person, t.max_participants,
-       t.meeting_time, t.meeting_place, t.start_time,
+       t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
+       t.meeting_place,
        pu.display_name AS purchaser_name
 FROM tickets t
 JOIN events e  ON e.id  = t.event_id
 JOIN users  pu ON pu.id = t.purchased_by
-ORDER BY t.attended_on DESC, t.id ASC
+ORDER BY t.start_at DESC, t.id ASC
 `
 
 type ListTicketsRow struct {
@@ -255,12 +251,11 @@ type ListTicketsRow struct {
 	EventID         string
 	EventTitle      string
 	EventUrl        string
-	AttendedOn      time.Time
+	StartAt         time.Time
+	MeetingAt       sql.NullTime
 	PricePerPerson  int32
 	MaxParticipants int32
-	MeetingTime     sql.NullString
 	MeetingPlace    string
-	StartTime       string
 	PurchaserName   string
 }
 
@@ -279,12 +274,11 @@ func (q *Queries) ListTickets(ctx context.Context) ([]ListTicketsRow, error) {
 			&i.EventID,
 			&i.EventTitle,
 			&i.EventUrl,
-			&i.AttendedOn,
+			&i.StartAt,
+			&i.MeetingAt,
 			&i.PricePerPerson,
 			&i.MaxParticipants,
-			&i.MeetingTime,
 			&i.MeetingPlace,
-			&i.StartTime,
 			&i.PurchaserName,
 		); err != nil {
 			return nil, err
@@ -302,14 +296,14 @@ func (q *Queries) ListTickets(ctx context.Context) ([]ListTicketsRow, error) {
 
 const listTicketsByIDs = `-- name: ListTicketsByIDs :many
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
-       t.attended_on, t.price_per_person, t.max_participants,
-       t.meeting_time, t.meeting_place, t.start_time,
+       t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
+       t.meeting_place,
        pu.display_name AS purchaser_name
 FROM tickets t
 JOIN events e  ON e.id  = t.event_id
 JOIN users  pu ON pu.id = t.purchased_by
 WHERE t.id IN (/*SLICE:ids*/?)
-ORDER BY t.attended_on DESC, t.id ASC
+ORDER BY t.start_at DESC, t.id ASC
 `
 
 type ListTicketsByIDsRow struct {
@@ -317,12 +311,11 @@ type ListTicketsByIDsRow struct {
 	EventID         string
 	EventTitle      string
 	EventUrl        string
-	AttendedOn      time.Time
+	StartAt         time.Time
+	MeetingAt       sql.NullTime
 	PricePerPerson  int32
 	MaxParticipants int32
-	MeetingTime     sql.NullString
 	MeetingPlace    string
-	StartTime       string
 	PurchaserName   string
 }
 
@@ -351,12 +344,11 @@ func (q *Queries) ListTicketsByIDs(ctx context.Context, ids []string) ([]ListTic
 			&i.EventID,
 			&i.EventTitle,
 			&i.EventUrl,
-			&i.AttendedOn,
+			&i.StartAt,
+			&i.MeetingAt,
 			&i.PricePerPerson,
 			&i.MaxParticipants,
-			&i.MeetingTime,
 			&i.MeetingPlace,
-			&i.StartTime,
 			&i.PurchaserName,
 		); err != nil {
 			return nil, err
@@ -408,24 +400,22 @@ func (q *Queries) MarkTicketParticipantUnsettled(ctx context.Context, arg MarkTi
 
 const updateTicket = `-- name: UpdateTicket :exec
 UPDATE tickets
-SET attended_on      = ?,
+SET start_at         = ?,
+    meeting_at       = ?,
     price_per_person = ?,
     max_participants = ?,
-    meeting_time     = ?,
     meeting_place    = ?,
-    start_time       = ?,
     purchased_by     = ?,
     updated_at       = NOW(6)
 WHERE id = ?
 `
 
 type UpdateTicketParams struct {
-	AttendedOn      time.Time
+	StartAt         time.Time
+	MeetingAt       sql.NullTime
 	PricePerPerson  int32
 	MaxParticipants int32
-	MeetingTime     sql.NullString
 	MeetingPlace    string
-	StartTime       string
 	PurchasedBy     string
 	ID              string
 }
@@ -435,12 +425,11 @@ type UpdateTicketParams struct {
 // 呼び出し側で参加者数を下回らないことを保証する。
 func (q *Queries) UpdateTicket(ctx context.Context, arg UpdateTicketParams) error {
 	_, err := q.db.ExecContext(ctx, updateTicket,
-		arg.AttendedOn,
+		arg.StartAt,
+		arg.MeetingAt,
 		arg.PricePerPerson,
 		arg.MaxParticipants,
-		arg.MeetingTime,
 		arg.MeetingPlace,
-		arg.StartTime,
 		arg.PurchasedBy,
 		arg.ID,
 	)

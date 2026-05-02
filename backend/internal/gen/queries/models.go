@@ -30,13 +30,12 @@ type Session struct {
 type Ticket struct {
 	ID              string
 	EventID         string
-	AttendedOn      time.Time
+	StartAt         time.Time
+	MeetingAt       sql.NullTime
 	PricePerPerson  int32
 	MaxParticipants int32
 	PurchasedBy     string
-	MeetingTime     sql.NullString
 	MeetingPlace    string
-	StartTime       string
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }

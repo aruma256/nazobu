@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file nazobu/v1/event.proto.
  */
 export const file_nazobu_v1_event: GenFile = /*@__PURE__*/
-  fileDesc("ChVuYXpvYnUvdjEvZXZlbnQucHJvdG8SCW5hem9idS52MSITChFMaXN0RXZlbnRzUmVxdWVzdCI2ChJMaXN0RXZlbnRzUmVzcG9uc2USIAoGZXZlbnRzGAEgAygLMhAubmF6b2J1LnYxLkV2ZW50IuwBCgVFdmVudBIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRILCgN1cmwYAyABKAkSJwoHdGlja2V0cxgEIAMoCzIWLm5hem9idS52MS5FdmVudFRpY2tldBImChlkb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlGAUgASgFSACIAQESKgodZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUYBiABKAVIAYgBAUIcChpfZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZUIgCh5fZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUiewoLRXZlbnRUaWNrZXQSCgoCaWQYASABKAkSEwoLYXR0ZW5kZWRfb24YAiABKAkSGAoQcHJpY2VfcGVyX3BlcnNvbhgDIAEoBRIWCg5wdXJjaGFzZXJfbmFtZRgEIAEoCRIZChFwYXJ0aWNpcGFudF9uYW1lcxgFIAMoCSLEAQoSQ3JlYXRlRXZlbnRSZXF1ZXN0Eg0KBXRpdGxlGAEgASgJEgsKA3VybBgCIAEoCRImChlkb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlGAMgASgFSACIAQESKgodZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUYBCABKAVIAYgBAUIcChpfZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZUIgCh5fZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUiNgoTQ3JlYXRlRXZlbnRSZXNwb25zZRIfCgVldmVudBgBIAEoCzIQLm5hem9idS52MS5FdmVudDKnAQoMRXZlbnRTZXJ2aWNlEkkKCkxpc3RFdmVudHMSHC5uYXpvYnUudjEuTGlzdEV2ZW50c1JlcXVlc3QaHS5uYXpvYnUudjEuTGlzdEV2ZW50c1Jlc3BvbnNlEkwKC0NyZWF0ZUV2ZW50Eh0ubmF6b2J1LnYxLkNyZWF0ZUV2ZW50UmVxdWVzdBoeLm5hem9idS52MS5DcmVhdGVFdmVudFJlc3BvbnNlQkRaQmdpdGh1Yi5jb20vYXJ1bWEyNTYvbmF6b2J1L2JhY2tlbmQvaW50ZXJuYWwvZ2VuL25hem9idS92MTtuYXpvYnV2MWIGcHJvdG8z");
+  fileDesc("ChVuYXpvYnUvdjEvZXZlbnQucHJvdG8SCW5hem9idS52MSITChFMaXN0RXZlbnRzUmVxdWVzdCI2ChJMaXN0RXZlbnRzUmVzcG9uc2USIAoGZXZlbnRzGAEgAygLMhAubmF6b2J1LnYxLkV2ZW50IuwBCgVFdmVudBIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRILCgN1cmwYAyABKAkSJwoHdGlja2V0cxgEIAMoCzIWLm5hem9idS52MS5FdmVudFRpY2tldBImChlkb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlGAUgASgFSACIAQESKgodZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUYBiABKAVIAYgBAUIcChpfZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZUIgCh5fZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUieAoLRXZlbnRUaWNrZXQSCgoCaWQYASABKAkSEAoIc3RhcnRfYXQYAiABKAkSGAoQcHJpY2VfcGVyX3BlcnNvbhgDIAEoBRIWCg5wdXJjaGFzZXJfbmFtZRgEIAEoCRIZChFwYXJ0aWNpcGFudF9uYW1lcxgFIAMoCSLEAQoSQ3JlYXRlRXZlbnRSZXF1ZXN0Eg0KBXRpdGxlGAEgASgJEgsKA3VybBgCIAEoCRImChlkb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlGAMgASgFSACIAQESKgodZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUYBCABKAVIAYgBAUIcChpfZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZUIgCh5fZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUiNgoTQ3JlYXRlRXZlbnRSZXNwb25zZRIfCgVldmVudBgBIAEoCzIQLm5hem9idS52MS5FdmVudDKnAQoMRXZlbnRTZXJ2aWNlEkkKCkxpc3RFdmVudHMSHC5uYXpvYnUudjEuTGlzdEV2ZW50c1JlcXVlc3QaHS5uYXpvYnUudjEuTGlzdEV2ZW50c1Jlc3BvbnNlEkwKC0NyZWF0ZUV2ZW50Eh0ubmF6b2J1LnYxLkNyZWF0ZUV2ZW50UmVxdWVzdBoeLm5hem9idS52MS5DcmVhdGVFdmVudFJlc3BvbnNlQkRaQmdpdGh1Yi5jb20vYXJ1bWEyNTYvbmF6b2J1L2JhY2tlbmQvaW50ZXJuYWwvZ2VuL25hem9idS92MTtuYXpvYnV2MWIGcHJvdG8z");
 
 /**
  * @generated from message nazobu.v1.ListEventsRequest
@@ -64,14 +64,14 @@ export type Event = Message<"nazobu.v1.Event"> & {
   url: string;
 
   /**
-   * 紐づく ticket（attended_on 降順）。
+   * 紐づく ticket（start_at 降順）。
    *
    * @generated from field: repeated nazobu.v1.EventTicket tickets = 4;
    */
   tickets: EventTicket[];
 
   /**
-   * 開場時間が開演時刻（ticket.start_time）の何分前か。任意。
+   * 開場時間が開演時刻（ticket.start_at）の何分前か。任意。
    *
    * @generated from field: optional int32 doors_open_minutes_before = 5;
    */
@@ -102,11 +102,11 @@ export type EventTicket = Message<"nazobu.v1.EventTicket"> & {
   id: string;
 
   /**
-   * YYYY-MM-DD（JST）。
+   * 開演日時（RFC3339, JST）。表示は日付部分のみ使われることが多い。
    *
-   * @generated from field: string attended_on = 2;
+   * @generated from field: string start_at = 2;
    */
-  attendedOn: string;
+  startAt: string;
 
   /**
    * 一人あたりの精算額（円）。

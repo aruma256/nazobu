@@ -49,18 +49,18 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) error 
 }
 
 const listEventTicketsByEventIDs = `-- name: ListEventTicketsByEventIDs :many
-SELECT t.id, t.event_id, t.attended_on, t.price_per_person,
+SELECT t.id, t.event_id, t.start_at, t.price_per_person,
        pu.display_name AS purchaser_name
 FROM tickets t
 JOIN users pu ON pu.id = t.purchased_by
 WHERE t.event_id IN (/*SLICE:event_ids*/?)
-ORDER BY t.attended_on DESC, t.id ASC
+ORDER BY t.start_at DESC, t.id ASC
 `
 
 type ListEventTicketsByEventIDsRow struct {
 	ID             string
 	EventID        string
-	AttendedOn     time.Time
+	StartAt        time.Time
 	PricePerPerson int32
 	PurchaserName  string
 }
@@ -89,7 +89,7 @@ func (q *Queries) ListEventTicketsByEventIDs(ctx context.Context, eventIds []str
 		if err := rows.Scan(
 			&i.ID,
 			&i.EventID,
-			&i.AttendedOn,
+			&i.StartAt,
 			&i.PricePerPerson,
 			&i.PurchaserName,
 		); err != nil {

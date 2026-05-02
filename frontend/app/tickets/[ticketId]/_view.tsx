@@ -20,7 +20,12 @@ import {
   Section,
   SectionTitle,
 } from "@/app/_components";
-import { formatDateJa, formatYen, parseAttendedOn } from "@/app/_format";
+import {
+  formatDateJa,
+  formatTimeHM,
+  formatYen,
+  parseDateTime,
+} from "@/app/_format";
 import { redirectToLogin } from "@/app/lib/auth";
 
 type LoadState =
@@ -156,7 +161,9 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
   }
 
   const displayName = me.displayName;
-  const date = parseAttendedOn(ticket.attendedOn);
+  const startAt = parseDateTime(ticket.startAt);
+  const meetingAt =
+    ticket.meetingAt !== "" ? parseDateTime(ticket.meetingAt) : null;
   const canEdit = detail.canEdit;
 
   return (
@@ -169,10 +176,12 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
           <div className="mt-3 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
             <div className="flex items-baseline gap-3 px-4 pt-4">
               <Mono className="text-sm font-semibold text-emerald-700">
-                {formatDateJa(date)}
+                {formatDateJa(startAt)}
               </Mono>
-              {ticket.meetingTime !== "" && (
-                <Mono className="text-xs text-zinc-500">{ticket.meetingTime}</Mono>
+              {meetingAt !== null && (
+                <Mono className="text-xs text-zinc-500">
+                  {formatTimeHM(meetingAt)}
+                </Mono>
               )}
               <Mono className="ml-auto text-sm font-semibold tracking-tight">
                 {formatYen(ticket.pricePerPerson)}
@@ -194,7 +203,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
             <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 pt-3 pb-4 text-xs text-zinc-600">
               <dt className="text-zinc-400">開演</dt>
               <dd>
-                <Mono>{ticket.startTime}</Mono>
+                <Mono>{formatTimeHM(startAt)}</Mono>
               </dd>
               {ticket.meetingPlace !== "" && (
                 <>
