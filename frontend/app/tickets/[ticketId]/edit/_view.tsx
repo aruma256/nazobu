@@ -292,7 +292,7 @@ function Form({
                 onChange={(e) => setPricePerPerson(e.target.value)}
                 disabled={submitting}
                 className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
-                placeholder="例: 3500"
+                placeholder="例: 4000"
               />
             </Field>
 
