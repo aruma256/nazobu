@@ -52,10 +52,13 @@ function shiftMonth(
   return { year: Math.floor(total / 12), month: (total % 12) + 1 };
 }
 
+type CopyState = "idle" | "copied" | "failed";
+
 export function HomeView() {
   const router = useRouter();
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [monthView, setMonthView] = useState<MonthView | null>(null);
+  const [copyState, setCopyState] = useState<CopyState>("idle");
 
   useEffect(() => {
     let cancelled = false;
@@ -119,6 +122,7 @@ export function HomeView() {
 
   const switchMonth = (diff: number) => {
     if (!monthView || monthView.loading) return;
+    setCopyState("idle");
     const next = shiftMonth({ year: monthView.year, month: monthView.month }, diff);
     setMonthView({ ...monthView, ...next, loading: true });
     myPageClient
@@ -139,6 +143,18 @@ export function HomeView() {
         // 失敗時は読み込み中を解除して直前の表示を維持する。
         setMonthView((prev) => (prev ? { ...prev, loading: false } : prev));
       });
+  };
+
+  const copyTitles = async () => {
+    if (!monthView) return;
+    const text = monthView.monthly.map((t) => t.eventTitle).join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyState("copied");
+    } catch {
+      setCopyState("failed");
+    }
+    window.setTimeout(() => setCopyState("idle"), 2000);
   };
 
   return (
@@ -186,11 +202,16 @@ export function HomeView() {
                   : "この月に参加した公演はありません。"}
               </p>
             ) : (
-              <ul className="mt-3 divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-                {monthView.monthly.map((a) => (
-                  <MonthlyRow key={a.ticketId} ticket={a} />
-                ))}
-              </ul>
+              <>
+                <ul className="mt-3 divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+                  {monthView.monthly.map((a) => (
+                    <MonthlyRow key={a.ticketId} ticket={a} />
+                  ))}
+                </ul>
+                <div className="mt-2 flex justify-end">
+                  <CopyTitlesButton state={copyState} onClick={copyTitles} />
+                </div>
+              </>
             )}
           </Section>
         )}
@@ -243,6 +264,62 @@ function MonthlyHeader({
         {monthView.loading ? "…" : `${monthView.monthly.length} 件`}
       </span>
     </div>
+  );
+}
+
+function CopyTitlesButton({
+  state,
+  onClick,
+}: {
+  state: CopyState;
+  onClick: () => void;
+}) {
+  const label =
+    state === "copied"
+      ? "コピーしました"
+      : state === "failed"
+        ? "コピーに失敗しました"
+        : "公演名をコピー";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-700 transition-colors hover:bg-zinc-50"
+    >
+      {state === "copied" ? <CheckIcon /> : <CopyIcon />}
+      {label}
+    </button>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className="size-4 text-zinc-500"
+    >
+      <path d="M7 3.5A1.5 1.5 0 0 1 8.5 2h6A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5H13v-1h1.5a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-6a.5.5 0 0 0-.5.5V5H7V3.5Z" />
+      <path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h6A1.5 1.5 0 0 1 13 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-6A1.5 1.5 0 0 1 4 16.5v-9Zm1.5-.5a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-6Z" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className="size-4 text-emerald-700"
+    >
+      <path
+        fillRule="evenodd"
+        d="M16.704 5.29a1 1 0 0 1 .006 1.414l-7.5 7.6a1 1 0 0 1-1.42.005l-3.5-3.5a1 1 0 1 1 1.414-1.414l2.79 2.79 6.793-6.881a1 1 0 0 1 1.417-.014Z"
+        clipRule="evenodd"
+      />
+    </svg>
   );
 }
 
