@@ -21,6 +21,7 @@ export default async function LoginPage({
   const params = await searchParams;
   const next = sanitizeNext(params.next);
   const loginHref = `/auth/discord/login?next=${encodeURIComponent(next)}`;
+  const notRegistered = params.error === "not_registered";
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-6 px-4 py-12">
@@ -31,6 +32,18 @@ export default async function LoginPage({
         />
         <h1 className="text-2xl font-semibold tracking-tight">謎部</h1>
       </div>
+
+      {notRegistered ? (
+        <div
+          role="alert"
+          className="w-full rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+        >
+          <p className="font-semibold">ログインできませんでした</p>
+          <p className="mt-1">
+            謎部は招待制です。アカウントを登録するには管理者にお声がけください。
+          </p>
+        </div>
+      ) : null}
 
       <a
         href={loginHref}

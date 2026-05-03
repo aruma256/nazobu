@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -101,9 +102,16 @@ func (s *Server) handleDiscordCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := auth.UpsertUserFromIdentity(ctx, s.db, auth.ProviderDiscord, du.ID, du.ToProfile())
+	user, err := auth.LoginWithIdentity(ctx, s.db, auth.ProviderDiscord, du.ID, du.ToProfile())
 	if err != nil {
-		http.Error(w, "user upsert 失敗: "+err.Error(), http.StatusInternalServerError)
+		// 招待制：未登録ユーザーは login 画面にエラー付きで戻す。
+		// next cookie はもう使わないので破棄しておく。
+		if errors.Is(err, auth.ErrUserNotRegistered) {
+			clearCookie(w, nextCookieName, s.cfg.CookieSecure)
+			http.Redirect(w, r, s.cfg.FrontendURL+"/login?error=not_registered", http.StatusFound)
+			return
+		}
+		http.Error(w, "user lookup 失敗: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 

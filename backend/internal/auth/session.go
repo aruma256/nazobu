@@ -26,6 +26,10 @@ const (
 
 var ErrNoSession = errors.New("session が見つからないか期限切れ")
 
+// ErrUserNotRegistered は LoginWithIdentity で identity が事前登録されていない
+// ことを示す。サービスを招待制にするため、未登録ユーザーのログインを弾く合図。
+var ErrUserNotRegistered = errors.New("ユーザーが事前登録されていない")
+
 type User struct {
 	ID          string
 	DisplayName string
@@ -104,6 +108,38 @@ func UpsertUserFromIdentity(ctx context.Context, db *sql.DB, provider, subject s
 			AvatarURL:   avatarURL,
 		}, nil
 	}
+}
+
+// LoginWithIdentity は (provider, subject) で識別される IdP identity に紐づく
+// 既存ユーザーを取得しプロフィールを最新化する。事前登録（add-user CLI）が
+// 行われていない identity に対しては ErrUserNotRegistered を返し、新規ユーザーを
+// 作成しない。サービスを招待制に保つためのログインゲート。
+func LoginWithIdentity(ctx context.Context, db *sql.DB, provider, subject string, profile UserProfile) (*User, error) {
+	avatarURL := nullString(profile.AvatarURL)
+
+	q := queries.New(db)
+	existingUserID, err := q.GetUserIDByIdentity(ctx, queries.GetUserIDByIdentityParams{
+		Provider: provider,
+		Subject:  subject,
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrUserNotRegistered
+	}
+	if err != nil {
+		return nil, err
+	}
+	if err := q.UpdateUserProfile(ctx, queries.UpdateUserProfileParams{
+		DisplayName: profile.DisplayName,
+		AvatarUrl:   avatarURL,
+		ID:          existingUserID,
+	}); err != nil {
+		return nil, err
+	}
+	return &User{
+		ID:          existingUserID,
+		DisplayName: profile.DisplayName,
+		AvatarURL:   avatarURL,
+	}, nil
 }
 
 // CreateSession は新しい session を発行する。
