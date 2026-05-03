@@ -21,7 +21,6 @@ import { redirectToLogin } from "@/app/lib/auth";
 type LoadState =
   | { kind: "loading" }
   | { kind: "not_found" }
-  | { kind: "forbidden" }
   | { kind: "error"; message: string }
   | { kind: "ready"; event: NazobuEvent };
 
@@ -42,10 +41,6 @@ export function EventEditView({ eventId }: { eventId: string }) {
         if (cancelled) return;
         if (!res.event) {
           setLoad({ kind: "not_found" });
-          return;
-        }
-        if (!res.canEdit) {
-          setLoad({ kind: "forbidden" });
           return;
         }
         setLoad({ kind: "ready", event: res.event });
@@ -72,7 +67,7 @@ export function EventEditView({ eventId }: { eventId: string }) {
   if (load.kind === "loading") {
     return (
       <>
-        <AppHeader brand="謎部" user="" />
+        <AppHeader brand="謎部" user="" isAdmin />
         <PageShell>
           <p className="pt-8 text-sm text-zinc-500">読み込み中…</p>
         </PageShell>
@@ -82,7 +77,7 @@ export function EventEditView({ eventId }: { eventId: string }) {
   if (load.kind === "not_found") {
     return (
       <>
-        <AppHeader brand="謎部" user="" />
+        <AppHeader brand="謎部" user="" isAdmin />
         <PageShell>
           <div className="space-y-4 pt-8 text-sm text-zinc-700">
             <p>指定された公演が見つかりませんでした。</p>
@@ -97,28 +92,10 @@ export function EventEditView({ eventId }: { eventId: string }) {
       </>
     );
   }
-  if (load.kind === "forbidden") {
-    return (
-      <>
-        <AppHeader brand="謎部" user="" />
-        <PageShell>
-          <div className="space-y-4 pt-8 text-sm text-zinc-700">
-            <p>公演の編集は管理者のみ行えます。</p>
-            <Link
-              href="/events"
-              className="inline-flex h-11 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
-            >
-              公演一覧に戻る
-            </Link>
-          </div>
-        </PageShell>
-      </>
-    );
-  }
   if (load.kind === "error") {
     return (
       <>
-        <AppHeader brand="謎部" user="" />
+        <AppHeader brand="謎部" user="" isAdmin />
         <PageShell>
           <p className="pt-8 text-sm text-amber-800">
             読み込みに失敗しました: {load.message}
@@ -199,7 +176,7 @@ function Form({
 
   return (
     <>
-      <AppHeader brand="謎部" user="" />
+      <AppHeader brand="謎部" user="" isAdmin />
       <PageShell>
         <Section>
           <SectionTitle>公演を編集</SectionTitle>

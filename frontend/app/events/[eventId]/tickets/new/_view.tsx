@@ -65,7 +65,7 @@ export function NewTicketForEventView({ eventId }: { eventId: string }) {
   if (load.kind === "loading") {
     return (
       <>
-        <AppHeader brand="謎部" user="" />
+        <AppHeader brand="謎部" user="" isAdmin />
         <PageShell>
           <p className="pt-8 text-sm text-zinc-500">読み込み中…</p>
         </PageShell>
@@ -75,7 +75,7 @@ export function NewTicketForEventView({ eventId }: { eventId: string }) {
   if (load.kind === "not_found") {
     return (
       <>
-        <AppHeader brand="謎部" user="" />
+        <AppHeader brand="謎部" user="" isAdmin />
         <PageShell>
           <div className="space-y-4 pt-8 text-sm text-zinc-700">
             <p>指定された公演が見つかりませんでした。</p>
@@ -93,7 +93,7 @@ export function NewTicketForEventView({ eventId }: { eventId: string }) {
   if (load.kind === "error") {
     return (
       <>
-        <AppHeader brand="謎部" user="" />
+        <AppHeader brand="謎部" user="" isAdmin />
         <PageShell>
           <p className="pt-8 text-sm text-amber-800">
             読み込みに失敗しました: {load.message}
@@ -197,7 +197,7 @@ function Form({
 
   return (
     <>
-      <AppHeader brand="謎部" user="" />
+      <AppHeader brand="謎部" user="" isAdmin />
       <PageShell>
         <Section>
           <SectionTitle>チケットを登録</SectionTitle>

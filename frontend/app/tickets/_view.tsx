@@ -81,10 +81,11 @@ export function TicketsView() {
 
   const { me, tickets } = state;
   const displayName = me.displayName;
+  const isAdmin = me.role === "admin";
 
   return (
     <>
-      <AppHeader brand="謎部" user={displayName} />
+      <AppHeader brand="謎部" user={displayName} isAdmin={isAdmin} />
       <PageShell>
         <Section>
           <SectionTitle count={tickets.length}>チケット一覧</SectionTitle>

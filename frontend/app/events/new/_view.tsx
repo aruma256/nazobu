@@ -21,7 +21,6 @@ import { redirectToLogin } from "@/app/lib/auth";
 type LoadState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
-  | { kind: "forbidden"; me: GetMeResponse }
   | { kind: "ready"; me: GetMeResponse };
 
 type SubmitState =
@@ -44,10 +43,6 @@ export function NewEventView() {
       .getMe({})
       .then((me) => {
         if (cancelled) return;
-        if (me.role !== "admin") {
-          setLoad({ kind: "forbidden", me });
-          return;
-        }
         setLoad({ kind: "ready", me });
       })
       .catch((err: unknown) => {
@@ -110,7 +105,7 @@ export function NewEventView() {
   if (load.kind === "loading") {
     return (
       <>
-        <AppHeader brand="謎部" user="" />
+        <AppHeader brand="謎部" user="" isAdmin />
         <PageShell>
           <p className="pt-8 text-sm text-zinc-500">読み込み中…</p>
         </PageShell>
@@ -121,7 +116,7 @@ export function NewEventView() {
   if (load.kind === "error") {
     return (
       <>
-        <AppHeader brand="謎部" user="" />
+        <AppHeader brand="謎部" user="" isAdmin />
         <PageShell>
           <p className="pt-8 text-sm text-amber-800">
             読み込みに失敗しました: {load.message}
@@ -132,36 +127,11 @@ export function NewEventView() {
   }
 
   const displayName = load.me.displayName;
-
-  if (load.kind === "forbidden") {
-    return (
-      <>
-        <AppHeader brand="謎部" user={displayName} />
-        <PageShell>
-          <Section>
-            <SectionTitle>公演を登録</SectionTitle>
-            <p className="mt-3 text-sm text-amber-800">
-              公演の登録は管理者のみ行えます。
-            </p>
-            <div className="pt-4">
-              <Link
-                href="/events"
-                className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
-              >
-                公演一覧へ戻る
-              </Link>
-            </div>
-          </Section>
-        </PageShell>
-      </>
-    );
-  }
-
   const submitting = submit.kind === "submitting";
 
   return (
     <>
-      <AppHeader brand="謎部" user={displayName} />
+      <AppHeader brand="謎部" user={displayName} isAdmin />
       <PageShell>
         <Section>
           <SectionTitle>公演を登録</SectionTitle>

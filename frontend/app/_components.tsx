@@ -14,9 +14,11 @@ export function PageShell({ children }: { children: ReactNode }) {
   );
 }
 
-const NAV_ITEMS = [
+type NavItem = { href: string; label: string; adminOnly?: boolean };
+
+const NAV_ITEMS: readonly NavItem[] = [
   { href: "/", label: "ホーム" },
-  { href: "/events", label: "公演" },
+  { href: "/events", label: "公演", adminOnly: true },
   { href: "/tickets", label: "チケット" },
 ] as const;
 
@@ -28,11 +30,14 @@ function isNavActive(pathname: string, href: string): boolean {
 export function AppHeader({
   brand,
   user,
+  isAdmin = false,
 }: {
   brand: string;
   user: string;
+  isAdmin?: boolean;
 }) {
   const pathname = usePathname();
+  const navItems = NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin);
   return (
     <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
@@ -44,7 +49,7 @@ export function AppHeader({
           <span className="text-base font-semibold tracking-tight">{brand}</span>
         </Link>
         <nav className="flex items-center gap-1 text-sm">
-          {NAV_ITEMS.map(({ href, label }) => {
+          {navItems.map(({ href, label }) => {
             const active = isNavActive(pathname, href);
             return (
               <Link

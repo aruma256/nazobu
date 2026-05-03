@@ -161,6 +161,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
   }
 
   const displayName = me.displayName;
+  const isAdmin = me.role === "admin";
   const startAt = parseDateTime(ticket.startAt);
   const meetingAt =
     ticket.meetingAt !== "" ? parseDateTime(ticket.meetingAt) : null;
@@ -169,7 +170,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
 
   return (
     <>
-      <AppHeader brand="謎部" user={displayName} />
+      <AppHeader brand="謎部" user={displayName} isAdmin={isAdmin} />
       <PageShell>
         <Section>
           <SectionTitle>チケット詳細</SectionTitle>

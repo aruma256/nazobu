@@ -57,7 +57,7 @@ export function EventsView() {
   if (state.kind === "loading") {
     return (
       <>
-        <AppHeader brand="謎部" user="" />
+        <AppHeader brand="謎部" user="" isAdmin />
         <PageShell>
           <p className="pt-8 text-sm text-zinc-500">読み込み中…</p>
         </PageShell>
@@ -68,7 +68,7 @@ export function EventsView() {
   if (state.kind === "error") {
     return (
       <>
-        <AppHeader brand="謎部" user="" />
+        <AppHeader brand="謎部" user="" isAdmin />
         <PageShell>
           <p className="pt-8 text-sm text-amber-800">
             読み込みに失敗しました: {state.message}
@@ -80,22 +80,19 @@ export function EventsView() {
 
   const { me, events } = state;
   const displayName = me.displayName;
-  const isAdmin = me.role === "admin";
 
   return (
     <>
-      <AppHeader brand="謎部" user={displayName} />
+      <AppHeader brand="謎部" user={displayName} isAdmin />
       <PageShell>
-        {isAdmin && (
-          <Section>
-            <Link
-              href="/events/new"
-              className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 active:bg-emerald-900"
-            >
-              公演を登録
-            </Link>
-          </Section>
-        )}
+        <Section>
+          <Link
+            href="/events/new"
+            className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 active:bg-emerald-900"
+          >
+            公演を登録
+          </Link>
+        </Section>
 
         <Section>
           <SectionTitle count={events.length}>公演一覧</SectionTitle>
@@ -106,12 +103,7 @@ export function EventsView() {
           ) : (
             <ul className="mt-3 space-y-4">
               {events.map((e) => (
-                <EventCard
-                  key={e.id}
-                  event={e}
-                  myName={displayName}
-                  isAdmin={isAdmin}
-                />
+                <EventCard key={e.id} event={e} myName={displayName} />
               ))}
             </ul>
           )}
@@ -124,11 +116,9 @@ export function EventsView() {
 function EventCard({
   event,
   myName,
-  isAdmin,
 }: {
   event: NazobuEvent;
   myName: string;
-  isAdmin: boolean;
 }) {
   const hasOffsets =
     event.doorsOpenMinutesBefore !== undefined ||
@@ -183,14 +173,12 @@ function EventCard({
         >
           この公演のチケットを登録
         </Link>
-        {isAdmin && (
-          <Link
-            href={`/events/${event.id}/edit`}
-            className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
-          >
-            公演情報を編集
-          </Link>
-        )}
+        <Link
+          href={`/events/${event.id}/edit`}
+          className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
+        >
+          公演情報を編集
+        </Link>
       </div>
     </li>
   );

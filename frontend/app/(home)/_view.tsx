@@ -118,6 +118,7 @@ export function HomeView() {
 
   const { me, data } = state;
   const displayName = me.displayName;
+  const isAdmin = me.role === "admin";
   const today = new Date();
   const currentYM = { year: data.monthlyYear, month: data.monthlyMonth };
 
@@ -160,7 +161,7 @@ export function HomeView() {
 
   return (
     <>
-      <AppHeader brand="謎部" user={displayName} />
+      <AppHeader brand="謎部" user={displayName} isAdmin={isAdmin} />
       <PageShell>
         {data.unsettled.length > 0 && (
           <Section>
