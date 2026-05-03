@@ -10,6 +10,9 @@ service MyPageService {
   // GetMyPage は cookie session の user 向けにマイページの全セクションを返す。
   // 未ログインなら unauthenticated。
   rpc GetMyPage(GetMyPageRequest) returns (GetMyPageResponse);
+  // ListMonthlyTickets は指定された年月の自分の参加チケット履歴を返す。
+  // 履歴セクションの月切り替え用。未ログインなら unauthenticated。
+  rpc ListMonthlyTickets(ListMonthlyTicketsRequest) returns (ListMonthlyTicketsResponse);
 }
 
 message GetMyPageRequest {}
@@ -23,6 +26,22 @@ message GetMyPageResponse {
   repeated MonthlyTicket monthly = 3;
   // monthly セクションの基準月（サーバ基準、JST）。1〜12。
   int32 monthly_month = 4;
+  // monthly セクションの基準年（サーバ基準、JST）。
+  int32 monthly_year = 5;
+}
+
+message ListMonthlyTicketsRequest {
+  // JST での年。
+  int32 year = 1;
+  // JST での月（1〜12）。
+  int32 month = 2;
+}
+
+message ListMonthlyTicketsResponse {
+  // 指定月に start_at がある自分の ticket（start_at 降順）。
+  repeated MonthlyTicket monthly = 1;
+  int32 year = 2;
+  int32 month = 3;
 }
 
 message UnsettledTicket {

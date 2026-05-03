@@ -66,7 +66,9 @@ type GetMyPageResponse struct {
 	// サーバ基準の当月に start_at がある自分の ticket（start_at 降順）。
 	Monthly []*MonthlyTicket `protobuf:"bytes,3,rep,name=monthly,proto3" json:"monthly,omitempty"`
 	// monthly セクションの基準月（サーバ基準、JST）。1〜12。
-	MonthlyMonth  int32 `protobuf:"varint,4,opt,name=monthly_month,json=monthlyMonth,proto3" json:"monthly_month,omitempty"`
+	MonthlyMonth int32 `protobuf:"varint,4,opt,name=monthly_month,json=monthlyMonth,proto3" json:"monthly_month,omitempty"`
+	// monthly セクションの基準年（サーバ基準、JST）。
+	MonthlyYear   int32 `protobuf:"varint,5,opt,name=monthly_year,json=monthlyYear,proto3" json:"monthly_year,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -129,6 +131,128 @@ func (x *GetMyPageResponse) GetMonthlyMonth() int32 {
 	return 0
 }
 
+func (x *GetMyPageResponse) GetMonthlyYear() int32 {
+	if x != nil {
+		return x.MonthlyYear
+	}
+	return 0
+}
+
+type ListMonthlyTicketsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// JST での年。
+	Year int32 `protobuf:"varint,1,opt,name=year,proto3" json:"year,omitempty"`
+	// JST での月（1〜12）。
+	Month         int32 `protobuf:"varint,2,opt,name=month,proto3" json:"month,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMonthlyTicketsRequest) Reset() {
+	*x = ListMonthlyTicketsRequest{}
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMonthlyTicketsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMonthlyTicketsRequest) ProtoMessage() {}
+
+func (x *ListMonthlyTicketsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMonthlyTicketsRequest.ProtoReflect.Descriptor instead.
+func (*ListMonthlyTicketsRequest) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ListMonthlyTicketsRequest) GetYear() int32 {
+	if x != nil {
+		return x.Year
+	}
+	return 0
+}
+
+func (x *ListMonthlyTicketsRequest) GetMonth() int32 {
+	if x != nil {
+		return x.Month
+	}
+	return 0
+}
+
+type ListMonthlyTicketsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 指定月に start_at がある自分の ticket（start_at 降順）。
+	Monthly       []*MonthlyTicket `protobuf:"bytes,1,rep,name=monthly,proto3" json:"monthly,omitempty"`
+	Year          int32            `protobuf:"varint,2,opt,name=year,proto3" json:"year,omitempty"`
+	Month         int32            `protobuf:"varint,3,opt,name=month,proto3" json:"month,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMonthlyTicketsResponse) Reset() {
+	*x = ListMonthlyTicketsResponse{}
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMonthlyTicketsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMonthlyTicketsResponse) ProtoMessage() {}
+
+func (x *ListMonthlyTicketsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMonthlyTicketsResponse.ProtoReflect.Descriptor instead.
+func (*ListMonthlyTicketsResponse) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ListMonthlyTicketsResponse) GetMonthly() []*MonthlyTicket {
+	if x != nil {
+		return x.Monthly
+	}
+	return nil
+}
+
+func (x *ListMonthlyTicketsResponse) GetYear() int32 {
+	if x != nil {
+		return x.Year
+	}
+	return 0
+}
+
+func (x *ListMonthlyTicketsResponse) GetMonth() int32 {
+	if x != nil {
+		return x.Month
+	}
+	return 0
+}
+
 type UnsettledTicket struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
 	TicketId   string                 `protobuf:"bytes,1,opt,name=ticket_id,json=ticketId,proto3" json:"ticket_id,omitempty"`
@@ -145,7 +269,7 @@ type UnsettledTicket struct {
 
 func (x *UnsettledTicket) Reset() {
 	*x = UnsettledTicket{}
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[2]
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -157,7 +281,7 @@ func (x *UnsettledTicket) String() string {
 func (*UnsettledTicket) ProtoMessage() {}
 
 func (x *UnsettledTicket) ProtoReflect() protoreflect.Message {
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[2]
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -170,7 +294,7 @@ func (x *UnsettledTicket) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnsettledTicket.ProtoReflect.Descriptor instead.
 func (*UnsettledTicket) Descriptor() ([]byte, []int) {
-	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{2}
+	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *UnsettledTicket) GetTicketId() string {
@@ -223,7 +347,7 @@ type UpcomingTicket struct {
 
 func (x *UpcomingTicket) Reset() {
 	*x = UpcomingTicket{}
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[3]
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -235,7 +359,7 @@ func (x *UpcomingTicket) String() string {
 func (*UpcomingTicket) ProtoMessage() {}
 
 func (x *UpcomingTicket) ProtoReflect() protoreflect.Message {
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[3]
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -248,7 +372,7 @@ func (x *UpcomingTicket) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpcomingTicket.ProtoReflect.Descriptor instead.
 func (*UpcomingTicket) Descriptor() ([]byte, []int) {
-	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{3}
+	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *UpcomingTicket) GetTicketId() string {
@@ -300,7 +424,7 @@ type MonthlyTicket struct {
 
 func (x *MonthlyTicket) Reset() {
 	*x = MonthlyTicket{}
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[4]
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -312,7 +436,7 @@ func (x *MonthlyTicket) String() string {
 func (*MonthlyTicket) ProtoMessage() {}
 
 func (x *MonthlyTicket) ProtoReflect() protoreflect.Message {
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[4]
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -325,7 +449,7 @@ func (x *MonthlyTicket) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MonthlyTicket.ProtoReflect.Descriptor instead.
 func (*MonthlyTicket) Descriptor() ([]byte, []int) {
-	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{4}
+	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *MonthlyTicket) GetTicketId() string {
@@ -361,12 +485,20 @@ var File_nazobu_v1_mypage_proto protoreflect.FileDescriptor
 const file_nazobu_v1_mypage_proto_rawDesc = "" +
 	"\n" +
 	"\x16nazobu/v1/mypage.proto\x12\tnazobu.v1\"\x12\n" +
-	"\x10GetMyPageRequest\"\xdd\x01\n" +
+	"\x10GetMyPageRequest\"\x80\x02\n" +
 	"\x11GetMyPageResponse\x128\n" +
 	"\tunsettled\x18\x01 \x03(\v2\x1a.nazobu.v1.UnsettledTicketR\tunsettled\x125\n" +
 	"\bupcoming\x18\x02 \x03(\v2\x19.nazobu.v1.UpcomingTicketR\bupcoming\x122\n" +
 	"\amonthly\x18\x03 \x03(\v2\x18.nazobu.v1.MonthlyTicketR\amonthly\x12#\n" +
-	"\rmonthly_month\x18\x04 \x01(\x05R\fmonthlyMonth\"\xb3\x01\n" +
+	"\rmonthly_month\x18\x04 \x01(\x05R\fmonthlyMonth\x12!\n" +
+	"\fmonthly_year\x18\x05 \x01(\x05R\vmonthlyYear\"E\n" +
+	"\x19ListMonthlyTicketsRequest\x12\x12\n" +
+	"\x04year\x18\x01 \x01(\x05R\x04year\x12\x14\n" +
+	"\x05month\x18\x02 \x01(\x05R\x05month\"z\n" +
+	"\x1aListMonthlyTicketsResponse\x122\n" +
+	"\amonthly\x18\x01 \x03(\v2\x18.nazobu.v1.MonthlyTicketR\amonthly\x12\x12\n" +
+	"\x04year\x18\x02 \x01(\x05R\x04year\x12\x14\n" +
+	"\x05month\x18\x03 \x01(\x05R\x05month\"\xb3\x01\n" +
 	"\x0fUnsettledTicket\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x1f\n" +
 	"\vevent_title\x18\x02 \x01(\tR\n" +
@@ -387,9 +519,10 @@ const file_nazobu_v1_mypage_proto_rawDesc = "" +
 	"\vevent_title\x18\x02 \x01(\tR\n" +
 	"eventTitle\x12\x19\n" +
 	"\bstart_at\x18\x03 \x01(\tR\astartAt\x12\x18\n" +
-	"\asettled\x18\x04 \x01(\bR\asettled2W\n" +
+	"\asettled\x18\x04 \x01(\bR\asettled2\xba\x01\n" +
 	"\rMyPageService\x12F\n" +
-	"\tGetMyPage\x12\x1b.nazobu.v1.GetMyPageRequest\x1a\x1c.nazobu.v1.GetMyPageResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
+	"\tGetMyPage\x12\x1b.nazobu.v1.GetMyPageRequest\x1a\x1c.nazobu.v1.GetMyPageResponse\x12a\n" +
+	"\x12ListMonthlyTickets\x12$.nazobu.v1.ListMonthlyTicketsRequest\x1a%.nazobu.v1.ListMonthlyTicketsResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
 
 var (
 	file_nazobu_v1_mypage_proto_rawDescOnce sync.Once
@@ -403,25 +536,30 @@ func file_nazobu_v1_mypage_proto_rawDescGZIP() []byte {
 	return file_nazobu_v1_mypage_proto_rawDescData
 }
 
-var file_nazobu_v1_mypage_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_nazobu_v1_mypage_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_nazobu_v1_mypage_proto_goTypes = []any{
-	(*GetMyPageRequest)(nil),  // 0: nazobu.v1.GetMyPageRequest
-	(*GetMyPageResponse)(nil), // 1: nazobu.v1.GetMyPageResponse
-	(*UnsettledTicket)(nil),   // 2: nazobu.v1.UnsettledTicket
-	(*UpcomingTicket)(nil),    // 3: nazobu.v1.UpcomingTicket
-	(*MonthlyTicket)(nil),     // 4: nazobu.v1.MonthlyTicket
+	(*GetMyPageRequest)(nil),           // 0: nazobu.v1.GetMyPageRequest
+	(*GetMyPageResponse)(nil),          // 1: nazobu.v1.GetMyPageResponse
+	(*ListMonthlyTicketsRequest)(nil),  // 2: nazobu.v1.ListMonthlyTicketsRequest
+	(*ListMonthlyTicketsResponse)(nil), // 3: nazobu.v1.ListMonthlyTicketsResponse
+	(*UnsettledTicket)(nil),            // 4: nazobu.v1.UnsettledTicket
+	(*UpcomingTicket)(nil),             // 5: nazobu.v1.UpcomingTicket
+	(*MonthlyTicket)(nil),              // 6: nazobu.v1.MonthlyTicket
 }
 var file_nazobu_v1_mypage_proto_depIdxs = []int32{
-	2, // 0: nazobu.v1.GetMyPageResponse.unsettled:type_name -> nazobu.v1.UnsettledTicket
-	3, // 1: nazobu.v1.GetMyPageResponse.upcoming:type_name -> nazobu.v1.UpcomingTicket
-	4, // 2: nazobu.v1.GetMyPageResponse.monthly:type_name -> nazobu.v1.MonthlyTicket
-	0, // 3: nazobu.v1.MyPageService.GetMyPage:input_type -> nazobu.v1.GetMyPageRequest
-	1, // 4: nazobu.v1.MyPageService.GetMyPage:output_type -> nazobu.v1.GetMyPageResponse
-	4, // [4:5] is the sub-list for method output_type
-	3, // [3:4] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	4, // 0: nazobu.v1.GetMyPageResponse.unsettled:type_name -> nazobu.v1.UnsettledTicket
+	5, // 1: nazobu.v1.GetMyPageResponse.upcoming:type_name -> nazobu.v1.UpcomingTicket
+	6, // 2: nazobu.v1.GetMyPageResponse.monthly:type_name -> nazobu.v1.MonthlyTicket
+	6, // 3: nazobu.v1.ListMonthlyTicketsResponse.monthly:type_name -> nazobu.v1.MonthlyTicket
+	0, // 4: nazobu.v1.MyPageService.GetMyPage:input_type -> nazobu.v1.GetMyPageRequest
+	2, // 5: nazobu.v1.MyPageService.ListMonthlyTickets:input_type -> nazobu.v1.ListMonthlyTicketsRequest
+	1, // 6: nazobu.v1.MyPageService.GetMyPage:output_type -> nazobu.v1.GetMyPageResponse
+	3, // 7: nazobu.v1.MyPageService.ListMonthlyTickets:output_type -> nazobu.v1.ListMonthlyTicketsResponse
+	6, // [6:8] is the sub-list for method output_type
+	4, // [4:6] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_nazobu_v1_mypage_proto_init() }
@@ -435,7 +573,7 @@ func file_nazobu_v1_mypage_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_nazobu_v1_mypage_proto_rawDesc), len(file_nazobu_v1_mypage_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

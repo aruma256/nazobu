@@ -51,7 +51,7 @@ func (s *myPageService) GetMyPage(ctx context.Context, req *connect.Request[nazo
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("同行者の取得に失敗: %w", err))
 	}
 
-	monthly, err := s.queryMonthly(ctx, user.ID, monthStart, nextMonthStart)
+	monthly, err := s.queryMonthly(ctx, user.ID, monthStart, clipHistoryEnd(nextMonthStart, todayStart))
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("当月履歴の取得に失敗: %w", err))
 	}
@@ -61,7 +61,50 @@ func (s *myPageService) GetMyPage(ctx context.Context, req *connect.Request[nazo
 		Upcoming:     upcoming,
 		Monthly:      monthly,
 		MonthlyMonth: int32(now.Month()),
+		MonthlyYear:  int32(now.Year()),
 	}), nil
+}
+
+func (s *myPageService) ListMonthlyTickets(ctx context.Context, req *connect.Request[nazobuv1.ListMonthlyTicketsRequest]) (*connect.Response[nazobuv1.ListMonthlyTicketsResponse], error) {
+	user, err := lookupSessionUser(ctx, s.db, req.Header())
+	if err != nil {
+		return nil, err
+	}
+
+	year := req.Msg.Year
+	month := req.Msg.Month
+	if month < 1 || month > 12 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("month は 1〜12 の範囲で指定してください"))
+	}
+	if year < 1 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("year は正の整数で指定してください"))
+	}
+
+	now := s.now().In(jst)
+	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, jst)
+	monthStart := time.Date(int(year), time.Month(month), 1, 0, 0, 0, 0, jst)
+	nextMonthStart := monthStart.AddDate(0, 1, 0)
+
+	monthly, err := s.queryMonthly(ctx, user.ID, monthStart, clipHistoryEnd(nextMonthStart, todayStart))
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("月別履歴の取得に失敗: %w", err))
+	}
+
+	return connect.NewResponse(&nazobuv1.ListMonthlyTicketsResponse{
+		Monthly: monthly,
+		Year:    year,
+		Month:   month,
+	}), nil
+}
+
+// clipHistoryEnd は履歴の上限を「当日 0:00」で切る。
+// 履歴に未来分（今後の予定と重なる範囲）を入れないため。
+// monthStart >= todayStart の月は upper <= monthStart になり、結果は空になる。
+func clipHistoryEnd(nextMonthStart, todayStart time.Time) time.Time {
+	if todayStart.Before(nextMonthStart) {
+		return todayStart
+	}
+	return nextMonthStart
 }
 
 func (s *myPageService) queryUnsettled(ctx context.Context, userID string, now time.Time) ([]*nazobuv1.UnsettledTicket, error) {

@@ -35,6 +35,9 @@ const (
 const (
 	// MyPageServiceGetMyPageProcedure is the fully-qualified name of the MyPageService's GetMyPage RPC.
 	MyPageServiceGetMyPageProcedure = "/nazobu.v1.MyPageService/GetMyPage"
+	// MyPageServiceListMonthlyTicketsProcedure is the fully-qualified name of the MyPageService's
+	// ListMonthlyTickets RPC.
+	MyPageServiceListMonthlyTicketsProcedure = "/nazobu.v1.MyPageService/ListMonthlyTickets"
 )
 
 // MyPageServiceClient is a client for the nazobu.v1.MyPageService service.
@@ -42,6 +45,9 @@ type MyPageServiceClient interface {
 	// GetMyPage は cookie session の user 向けにマイページの全セクションを返す。
 	// 未ログインなら unauthenticated。
 	GetMyPage(context.Context, *connect.Request[v1.GetMyPageRequest]) (*connect.Response[v1.GetMyPageResponse], error)
+	// ListMonthlyTickets は指定された年月の自分の参加チケット履歴を返す。
+	// 履歴セクションの月切り替え用。未ログインなら unauthenticated。
+	ListMonthlyTickets(context.Context, *connect.Request[v1.ListMonthlyTicketsRequest]) (*connect.Response[v1.ListMonthlyTicketsResponse], error)
 }
 
 // NewMyPageServiceClient constructs a client for the nazobu.v1.MyPageService service. By default,
@@ -61,12 +67,19 @@ func NewMyPageServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(myPageServiceMethods.ByName("GetMyPage")),
 			connect.WithClientOptions(opts...),
 		),
+		listMonthlyTickets: connect.NewClient[v1.ListMonthlyTicketsRequest, v1.ListMonthlyTicketsResponse](
+			httpClient,
+			baseURL+MyPageServiceListMonthlyTicketsProcedure,
+			connect.WithSchema(myPageServiceMethods.ByName("ListMonthlyTickets")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // myPageServiceClient implements MyPageServiceClient.
 type myPageServiceClient struct {
-	getMyPage *connect.Client[v1.GetMyPageRequest, v1.GetMyPageResponse]
+	getMyPage          *connect.Client[v1.GetMyPageRequest, v1.GetMyPageResponse]
+	listMonthlyTickets *connect.Client[v1.ListMonthlyTicketsRequest, v1.ListMonthlyTicketsResponse]
 }
 
 // GetMyPage calls nazobu.v1.MyPageService.GetMyPage.
@@ -74,11 +87,19 @@ func (c *myPageServiceClient) GetMyPage(ctx context.Context, req *connect.Reques
 	return c.getMyPage.CallUnary(ctx, req)
 }
 
+// ListMonthlyTickets calls nazobu.v1.MyPageService.ListMonthlyTickets.
+func (c *myPageServiceClient) ListMonthlyTickets(ctx context.Context, req *connect.Request[v1.ListMonthlyTicketsRequest]) (*connect.Response[v1.ListMonthlyTicketsResponse], error) {
+	return c.listMonthlyTickets.CallUnary(ctx, req)
+}
+
 // MyPageServiceHandler is an implementation of the nazobu.v1.MyPageService service.
 type MyPageServiceHandler interface {
 	// GetMyPage は cookie session の user 向けにマイページの全セクションを返す。
 	// 未ログインなら unauthenticated。
 	GetMyPage(context.Context, *connect.Request[v1.GetMyPageRequest]) (*connect.Response[v1.GetMyPageResponse], error)
+	// ListMonthlyTickets は指定された年月の自分の参加チケット履歴を返す。
+	// 履歴セクションの月切り替え用。未ログインなら unauthenticated。
+	ListMonthlyTickets(context.Context, *connect.Request[v1.ListMonthlyTicketsRequest]) (*connect.Response[v1.ListMonthlyTicketsResponse], error)
 }
 
 // NewMyPageServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -94,10 +115,18 @@ func NewMyPageServiceHandler(svc MyPageServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(myPageServiceMethods.ByName("GetMyPage")),
 		connect.WithHandlerOptions(opts...),
 	)
+	myPageServiceListMonthlyTicketsHandler := connect.NewUnaryHandler(
+		MyPageServiceListMonthlyTicketsProcedure,
+		svc.ListMonthlyTickets,
+		connect.WithSchema(myPageServiceMethods.ByName("ListMonthlyTickets")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/nazobu.v1.MyPageService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case MyPageServiceGetMyPageProcedure:
 			myPageServiceGetMyPageHandler.ServeHTTP(w, r)
+		case MyPageServiceListMonthlyTicketsProcedure:
+			myPageServiceListMonthlyTicketsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -109,4 +138,8 @@ type UnimplementedMyPageServiceHandler struct{}
 
 func (UnimplementedMyPageServiceHandler) GetMyPage(context.Context, *connect.Request[v1.GetMyPageRequest]) (*connect.Response[v1.GetMyPageResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.MyPageService.GetMyPage is not implemented"))
+}
+
+func (UnimplementedMyPageServiceHandler) ListMonthlyTickets(context.Context, *connect.Request[v1.ListMonthlyTicketsRequest]) (*connect.Response[v1.ListMonthlyTicketsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.MyPageService.ListMonthlyTickets is not implemented"))
 }

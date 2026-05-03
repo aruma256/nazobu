@@ -36,15 +36,39 @@ type LoadState =
   | { kind: "error"; message: string }
   | { kind: "ready"; me: GetMeResponse; data: GetMyPageResponse };
 
+type MonthView = {
+  year: number;
+  month: number;
+  monthly: MonthlyTicket[];
+  loading: boolean;
+};
+
+// 当月（サーバ基準の現在年月）から相対的に diff ヶ月ぶんずらした年月を返す。
+function shiftMonth(
+  base: { year: number; month: number },
+  diff: number,
+): { year: number; month: number } {
+  const total = base.year * 12 + (base.month - 1) + diff;
+  return { year: Math.floor(total / 12), month: (total % 12) + 1 };
+}
+
 export function HomeView() {
   const router = useRouter();
   const [state, setState] = useState<LoadState>({ kind: "loading" });
+  const [monthView, setMonthView] = useState<MonthView | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     Promise.all([userClient.getMe({}), myPageClient.getMyPage({})])
       .then(([me, data]) => {
-        if (!cancelled) setState({ kind: "ready", me, data });
+        if (cancelled) return;
+        setState({ kind: "ready", me, data });
+        setMonthView({
+          year: data.monthlyYear,
+          month: data.monthlyMonth,
+          monthly: data.monthly,
+          loading: false,
+        });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -91,6 +115,31 @@ export function HomeView() {
   const { me, data } = state;
   const displayName = me.displayName;
   const today = new Date();
+  const currentYM = { year: data.monthlyYear, month: data.monthlyMonth };
+
+  const switchMonth = (diff: number) => {
+    if (!monthView || monthView.loading) return;
+    const next = shiftMonth({ year: monthView.year, month: monthView.month }, diff);
+    setMonthView({ ...monthView, ...next, loading: true });
+    myPageClient
+      .listMonthlyTickets(next)
+      .then((res) => {
+        setMonthView({
+          year: res.year,
+          month: res.month,
+          monthly: res.monthly,
+          loading: false,
+        });
+      })
+      .catch((err: unknown) => {
+        if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
+          redirectToLogin(router, "/");
+          return;
+        }
+        // 失敗時は読み込み中を解除して直前の表示を維持する。
+        setMonthView((prev) => (prev ? { ...prev, loading: false } : prev));
+      });
+  };
 
   return (
     <>
@@ -122,24 +171,99 @@ export function HomeView() {
           )}
         </Section>
 
-        <Section>
-          <SectionTitle count={data.monthly.length}>
-            {data.monthlyMonth} 月の履歴
-          </SectionTitle>
-          {data.monthly.length === 0 ? (
-            <p className="mt-3 text-sm text-zinc-500">
-              今月参加した公演はまだありません。
-            </p>
-          ) : (
-            <ul className="mt-3 divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-              {data.monthly.map((a) => (
-                <MonthlyRow key={a.ticketId} ticket={a} />
-              ))}
-            </ul>
-          )}
-        </Section>
+        {monthView && (
+          <Section>
+            <MonthlyHeader
+              monthView={monthView}
+              currentYM={currentYM}
+              onPrev={() => switchMonth(-1)}
+              onNext={() => switchMonth(1)}
+            />
+            {monthView.monthly.length === 0 ? (
+              <p className="mt-3 text-sm text-zinc-500">
+                {monthView.year === currentYM.year && monthView.month === currentYM.month
+                  ? "今月参加した公演はまだありません。"
+                  : "この月に参加した公演はありません。"}
+              </p>
+            ) : (
+              <ul className="mt-3 divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+                {monthView.monthly.map((a) => (
+                  <MonthlyRow key={a.ticketId} ticket={a} />
+                ))}
+              </ul>
+            )}
+          </Section>
+        )}
       </PageShell>
     </>
+  );
+}
+
+function MonthlyHeader({
+  monthView,
+  currentYM,
+  onPrev,
+  onNext,
+}: {
+  monthView: MonthView;
+  currentYM: { year: number; month: number };
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  const atCurrent =
+    monthView.year === currentYM.year && monthView.month === currentYM.month;
+  const navButtonClass =
+    "inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-zinc-500";
+  return (
+    <div className="flex items-baseline justify-between">
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          aria-label="前の月"
+          onClick={onPrev}
+          disabled={monthView.loading}
+          className={navButtonClass}
+        >
+          <ChevronIcon direction="left" />
+        </button>
+        <h2 className="text-sm font-semibold tracking-wider text-zinc-700 uppercase">
+          <Mono>{monthView.year}</Mono> 年 <Mono>{monthView.month}</Mono> 月の履歴
+        </h2>
+        <button
+          type="button"
+          aria-label="次の月"
+          onClick={onNext}
+          disabled={monthView.loading || atCurrent}
+          className={navButtonClass}
+        >
+          <ChevronIcon direction="right" />
+        </button>
+      </div>
+      <span className="font-mono text-xs tabular-nums text-zinc-500">
+        {monthView.loading ? "…" : `${monthView.monthly.length} 件`}
+      </span>
+    </div>
+  );
+}
+
+function ChevronIcon({ direction }: { direction: "left" | "right" }) {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className="size-4"
+    >
+      <path
+        fillRule="evenodd"
+        d={
+          direction === "left"
+            ? "M12.707 4.293a1 1 0 0 1 0 1.414L8.414 10l4.293 4.293a1 1 0 1 1-1.414 1.414l-5-5a1 1 0 0 1 0-1.414l5-5a1 1 0 0 1 1.414 0Z"
+            : "M7.293 4.293a1 1 0 0 1 1.414 0l5 5a1 1 0 0 1 0 1.414l-5 5a1 1 0 0 1-1.414-1.414L11.586 10 7.293 5.707a1 1 0 0 1 0-1.414Z"
+        }
+        clipRule="evenodd"
+      />
+    </svg>
   );
 }
 

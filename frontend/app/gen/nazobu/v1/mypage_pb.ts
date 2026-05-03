@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file nazobu/v1/mypage.proto.
  */
 export const file_nazobu_v1_mypage: GenFile = /*@__PURE__*/
-  fileDesc("ChZuYXpvYnUvdjEvbXlwYWdlLnByb3RvEgluYXpvYnUudjEiEgoQR2V0TXlQYWdlUmVxdWVzdCKxAQoRR2V0TXlQYWdlUmVzcG9uc2USLQoJdW5zZXR0bGVkGAEgAygLMhoubmF6b2J1LnYxLlVuc2V0dGxlZFRpY2tldBIrCgh1cGNvbWluZxgCIAMoCzIZLm5hem9idS52MS5VcGNvbWluZ1RpY2tldBIpCgdtb250aGx5GAMgAygLMhgubmF6b2J1LnYxLk1vbnRobHlUaWNrZXQSFQoNbW9udGhseV9tb250aBgEIAEoBSJ5Cg9VbnNldHRsZWRUaWNrZXQSEQoJdGlja2V0X2lkGAEgASgJEhMKC2V2ZW50X3RpdGxlGAIgASgJEhgKEHByaWNlX3Blcl9wZXJzb24YAyABKAUSEgoKcGF5ZWVfbmFtZRgEIAEoCRIQCghzdGFydF9hdBgFIAEoCSJ2Cg5VcGNvbWluZ1RpY2tldBIRCgl0aWNrZXRfaWQYASABKAkSEwoLZXZlbnRfdGl0bGUYAiABKAkSEQoJZXZlbnRfdXJsGAMgASgJEhAKCHN0YXJ0X2F0GAQgASgJEhcKD2NvbXBhbmlvbl9uYW1lcxgFIAMoCSJaCg1Nb250aGx5VGlja2V0EhEKCXRpY2tldF9pZBgBIAEoCRITCgtldmVudF90aXRsZRgCIAEoCRIQCghzdGFydF9hdBgDIAEoCRIPCgdzZXR0bGVkGAQgASgIMlcKDU15UGFnZVNlcnZpY2USRgoJR2V0TXlQYWdlEhsubmF6b2J1LnYxLkdldE15UGFnZVJlcXVlc3QaHC5uYXpvYnUudjEuR2V0TXlQYWdlUmVzcG9uc2VCRFpCZ2l0aHViLmNvbS9hcnVtYTI1Ni9uYXpvYnUvYmFja2VuZC9pbnRlcm5hbC9nZW4vbmF6b2J1L3YxO25hem9idXYxYgZwcm90bzM");
+  fileDesc("ChZuYXpvYnUvdjEvbXlwYWdlLnByb3RvEgluYXpvYnUudjEiEgoQR2V0TXlQYWdlUmVxdWVzdCLHAQoRR2V0TXlQYWdlUmVzcG9uc2USLQoJdW5zZXR0bGVkGAEgAygLMhoubmF6b2J1LnYxLlVuc2V0dGxlZFRpY2tldBIrCgh1cGNvbWluZxgCIAMoCzIZLm5hem9idS52MS5VcGNvbWluZ1RpY2tldBIpCgdtb250aGx5GAMgAygLMhgubmF6b2J1LnYxLk1vbnRobHlUaWNrZXQSFQoNbW9udGhseV9tb250aBgEIAEoBRIUCgxtb250aGx5X3llYXIYBSABKAUiOAoZTGlzdE1vbnRobHlUaWNrZXRzUmVxdWVzdBIMCgR5ZWFyGAEgASgFEg0KBW1vbnRoGAIgASgFImQKGkxpc3RNb250aGx5VGlja2V0c1Jlc3BvbnNlEikKB21vbnRobHkYASADKAsyGC5uYXpvYnUudjEuTW9udGhseVRpY2tldBIMCgR5ZWFyGAIgASgFEg0KBW1vbnRoGAMgASgFInkKD1Vuc2V0dGxlZFRpY2tldBIRCgl0aWNrZXRfaWQYASABKAkSEwoLZXZlbnRfdGl0bGUYAiABKAkSGAoQcHJpY2VfcGVyX3BlcnNvbhgDIAEoBRISCgpwYXllZV9uYW1lGAQgASgJEhAKCHN0YXJ0X2F0GAUgASgJInYKDlVwY29taW5nVGlja2V0EhEKCXRpY2tldF9pZBgBIAEoCRITCgtldmVudF90aXRsZRgCIAEoCRIRCglldmVudF91cmwYAyABKAkSEAoIc3RhcnRfYXQYBCABKAkSFwoPY29tcGFuaW9uX25hbWVzGAUgAygJIloKDU1vbnRobHlUaWNrZXQSEQoJdGlja2V0X2lkGAEgASgJEhMKC2V2ZW50X3RpdGxlGAIgASgJEhAKCHN0YXJ0X2F0GAMgASgJEg8KB3NldHRsZWQYBCABKAgyugEKDU15UGFnZVNlcnZpY2USRgoJR2V0TXlQYWdlEhsubmF6b2J1LnYxLkdldE15UGFnZVJlcXVlc3QaHC5uYXpvYnUudjEuR2V0TXlQYWdlUmVzcG9uc2USYQoSTGlzdE1vbnRobHlUaWNrZXRzEiQubmF6b2J1LnYxLkxpc3RNb250aGx5VGlja2V0c1JlcXVlc3QaJS5uYXpvYnUudjEuTGlzdE1vbnRobHlUaWNrZXRzUmVzcG9uc2VCRFpCZ2l0aHViLmNvbS9hcnVtYTI1Ni9uYXpvYnUvYmFja2VuZC9pbnRlcm5hbC9nZW4vbmF6b2J1L3YxO25hem9idXYxYgZwcm90bzM");
 
 /**
  * @generated from message nazobu.v1.GetMyPageRequest
@@ -56,6 +56,13 @@ export type GetMyPageResponse = Message<"nazobu.v1.GetMyPageResponse"> & {
    * @generated from field: int32 monthly_month = 4;
    */
   monthlyMonth: number;
+
+  /**
+   * monthly セクションの基準年（サーバ基準、JST）。
+   *
+   * @generated from field: int32 monthly_year = 5;
+   */
+  monthlyYear: number;
 };
 
 /**
@@ -64,6 +71,61 @@ export type GetMyPageResponse = Message<"nazobu.v1.GetMyPageResponse"> & {
  */
 export const GetMyPageResponseSchema: GenMessage<GetMyPageResponse> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_mypage, 1);
+
+/**
+ * @generated from message nazobu.v1.ListMonthlyTicketsRequest
+ */
+export type ListMonthlyTicketsRequest = Message<"nazobu.v1.ListMonthlyTicketsRequest"> & {
+  /**
+   * JST での年。
+   *
+   * @generated from field: int32 year = 1;
+   */
+  year: number;
+
+  /**
+   * JST での月（1〜12）。
+   *
+   * @generated from field: int32 month = 2;
+   */
+  month: number;
+};
+
+/**
+ * Describes the message nazobu.v1.ListMonthlyTicketsRequest.
+ * Use `create(ListMonthlyTicketsRequestSchema)` to create a new message.
+ */
+export const ListMonthlyTicketsRequestSchema: GenMessage<ListMonthlyTicketsRequest> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_mypage, 2);
+
+/**
+ * @generated from message nazobu.v1.ListMonthlyTicketsResponse
+ */
+export type ListMonthlyTicketsResponse = Message<"nazobu.v1.ListMonthlyTicketsResponse"> & {
+  /**
+   * 指定月に start_at がある自分の ticket（start_at 降順）。
+   *
+   * @generated from field: repeated nazobu.v1.MonthlyTicket monthly = 1;
+   */
+  monthly: MonthlyTicket[];
+
+  /**
+   * @generated from field: int32 year = 2;
+   */
+  year: number;
+
+  /**
+   * @generated from field: int32 month = 3;
+   */
+  month: number;
+};
+
+/**
+ * Describes the message nazobu.v1.ListMonthlyTicketsResponse.
+ * Use `create(ListMonthlyTicketsResponseSchema)` to create a new message.
+ */
+export const ListMonthlyTicketsResponseSchema: GenMessage<ListMonthlyTicketsResponse> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_mypage, 3);
 
 /**
  * @generated from message nazobu.v1.UnsettledTicket
@@ -106,7 +168,7 @@ export type UnsettledTicket = Message<"nazobu.v1.UnsettledTicket"> & {
  * Use `create(UnsettledTicketSchema)` to create a new message.
  */
 export const UnsettledTicketSchema: GenMessage<UnsettledTicket> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_mypage, 2);
+  messageDesc(file_nazobu_v1_mypage, 4);
 
 /**
  * @generated from message nazobu.v1.UpcomingTicket
@@ -147,7 +209,7 @@ export type UpcomingTicket = Message<"nazobu.v1.UpcomingTicket"> & {
  * Use `create(UpcomingTicketSchema)` to create a new message.
  */
 export const UpcomingTicketSchema: GenMessage<UpcomingTicket> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_mypage, 3);
+  messageDesc(file_nazobu_v1_mypage, 5);
 
 /**
  * @generated from message nazobu.v1.MonthlyTicket
@@ -183,7 +245,7 @@ export type MonthlyTicket = Message<"nazobu.v1.MonthlyTicket"> & {
  * Use `create(MonthlyTicketSchema)` to create a new message.
  */
 export const MonthlyTicketSchema: GenMessage<MonthlyTicket> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_mypage, 4);
+  messageDesc(file_nazobu_v1_mypage, 6);
 
 /**
  * MyPageService はマイページ表示に必要な集約データを返す。
@@ -202,6 +264,17 @@ export const MyPageService: GenService<{
     methodKind: "unary";
     input: typeof GetMyPageRequestSchema;
     output: typeof GetMyPageResponseSchema;
+  },
+  /**
+   * ListMonthlyTickets は指定された年月の自分の参加チケット履歴を返す。
+   * 履歴セクションの月切り替え用。未ログインなら unauthenticated。
+   *
+   * @generated from rpc nazobu.v1.MyPageService.ListMonthlyTickets
+   */
+  listMonthlyTickets: {
+    methodKind: "unary";
+    input: typeof ListMonthlyTicketsRequestSchema;
+    output: typeof ListMonthlyTicketsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_nazobu_v1_mypage, 0);
