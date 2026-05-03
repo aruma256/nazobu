@@ -4,6 +4,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
@@ -13,6 +14,17 @@ export function PageShell({ children }: { children: ReactNode }) {
   );
 }
 
+const NAV_ITEMS = [
+  { href: "/", label: "ホーム" },
+  { href: "/events", label: "公演" },
+  { href: "/tickets", label: "チケット" },
+] as const;
+
+function isNavActive(pathname: string, href: string): boolean {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function AppHeader({
   brand,
   user,
@@ -20,6 +32,7 @@ export function AppHeader({
   brand: string;
   user: string;
 }) {
+  const pathname = usePathname();
   return (
     <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
@@ -30,13 +43,24 @@ export function AppHeader({
           />
           <span className="text-base font-semibold tracking-tight">{brand}</span>
         </Link>
-        <nav className="flex items-center gap-3 text-sm text-zinc-600">
-          <Link href="/events" className="hover:text-zinc-900">
-            公演一覧
-          </Link>
-          <Link href="/tickets" className="hover:text-zinc-900">
-            チケット一覧
-          </Link>
+        <nav className="flex items-center gap-1 text-sm">
+          {NAV_ITEMS.map(({ href, label }) => {
+            const active = isNavActive(pathname, href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className={
+                  active
+                    ? "rounded-md bg-zinc-100 px-2 py-1 font-semibold text-zinc-900"
+                    : "rounded-md px-2 py-1 text-zinc-600 hover:text-zinc-900"
+                }
+              >
+                {label}
+              </Link>
+            );
+          })}
         </nav>
         <div className="ml-auto flex items-center gap-3">
           {user !== "" && (
