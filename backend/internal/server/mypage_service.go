@@ -35,8 +35,9 @@ func (s *myPageService) GetMyPage(ctx context.Context, req *connect.Request[nazo
 
 	now := s.now().In(jst)
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, jst)
-	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, jst)
-	nextMonthStart := time.Date(now.Year(), now.Month()+1, 1, 0, 0, 0, 0, jst)
+	currentMonthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, jst)
+	// 履歴セクションは前月をデフォルト表示にする。
+	prevMonthStart := currentMonthStart.AddDate(0, -1, 0)
 
 	unsettled, err := s.queryUnsettled(ctx, user.ID, now)
 	if err != nil {
@@ -51,17 +52,19 @@ func (s *myPageService) GetMyPage(ctx context.Context, req *connect.Request[nazo
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("同行者の取得に失敗: %w", err))
 	}
 
-	monthly, err := s.queryMonthly(ctx, user.ID, monthStart, clipHistoryEnd(nextMonthStart, todayStart))
+	monthly, err := s.queryMonthly(ctx, user.ID, prevMonthStart, clipHistoryEnd(currentMonthStart, todayStart))
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("当月履歴の取得に失敗: %w", err))
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("前月履歴の取得に失敗: %w", err))
 	}
 
 	return connect.NewResponse(&nazobuv1.GetMyPageResponse{
 		Unsettled:    unsettled,
 		Upcoming:     upcoming,
 		Monthly:      monthly,
-		MonthlyMonth: int32(now.Month()),
-		MonthlyYear:  int32(now.Year()),
+		MonthlyMonth: int32(prevMonthStart.Month()),
+		MonthlyYear:  int32(prevMonthStart.Year()),
+		CurrentMonth: int32(now.Month()),
+		CurrentYear:  int32(now.Year()),
 	}), nil
 }
 

@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file nazobu/v1/mypage.proto.
  */
 export const file_nazobu_v1_mypage: GenFile = /*@__PURE__*/
-  fileDesc("ChZuYXpvYnUvdjEvbXlwYWdlLnByb3RvEgluYXpvYnUudjEiEgoQR2V0TXlQYWdlUmVxdWVzdCLHAQoRR2V0TXlQYWdlUmVzcG9uc2USLQoJdW5zZXR0bGVkGAEgAygLMhoubmF6b2J1LnYxLlVuc2V0dGxlZFRpY2tldBIrCgh1cGNvbWluZxgCIAMoCzIZLm5hem9idS52MS5VcGNvbWluZ1RpY2tldBIpCgdtb250aGx5GAMgAygLMhgubmF6b2J1LnYxLk1vbnRobHlUaWNrZXQSFQoNbW9udGhseV9tb250aBgEIAEoBRIUCgxtb250aGx5X3llYXIYBSABKAUiOAoZTGlzdE1vbnRobHlUaWNrZXRzUmVxdWVzdBIMCgR5ZWFyGAEgASgFEg0KBW1vbnRoGAIgASgFImQKGkxpc3RNb250aGx5VGlja2V0c1Jlc3BvbnNlEikKB21vbnRobHkYASADKAsyGC5uYXpvYnUudjEuTW9udGhseVRpY2tldBIMCgR5ZWFyGAIgASgFEg0KBW1vbnRoGAMgASgFInkKD1Vuc2V0dGxlZFRpY2tldBIRCgl0aWNrZXRfaWQYASABKAkSEwoLZXZlbnRfdGl0bGUYAiABKAkSGAoQcHJpY2VfcGVyX3BlcnNvbhgDIAEoBRISCgpwYXllZV9uYW1lGAQgASgJEhAKCHN0YXJ0X2F0GAUgASgJIo8BCg5VcGNvbWluZ1RpY2tldBIRCgl0aWNrZXRfaWQYASABKAkSEwoLZXZlbnRfdGl0bGUYAiABKAkSEQoJZXZlbnRfdXJsGAMgASgJEhAKCHN0YXJ0X2F0GAQgASgJEhcKD2NvbXBhbmlvbl9uYW1lcxgFIAMoCRIXCg9ldmVudF9pbWFnZV91cmwYBiABKAkiWgoNTW9udGhseVRpY2tldBIRCgl0aWNrZXRfaWQYASABKAkSEwoLZXZlbnRfdGl0bGUYAiABKAkSEAoIc3RhcnRfYXQYAyABKAkSDwoHc2V0dGxlZBgEIAEoCDK6AQoNTXlQYWdlU2VydmljZRJGCglHZXRNeVBhZ2USGy5uYXpvYnUudjEuR2V0TXlQYWdlUmVxdWVzdBocLm5hem9idS52MS5HZXRNeVBhZ2VSZXNwb25zZRJhChJMaXN0TW9udGhseVRpY2tldHMSJC5uYXpvYnUudjEuTGlzdE1vbnRobHlUaWNrZXRzUmVxdWVzdBolLm5hem9idS52MS5MaXN0TW9udGhseVRpY2tldHNSZXNwb25zZUJEWkJnaXRodWIuY29tL2FydW1hMjU2L25hem9idS9iYWNrZW5kL2ludGVybmFsL2dlbi9uYXpvYnUvdjE7bmF6b2J1djFiBnByb3RvMw");
+  fileDesc("ChZuYXpvYnUvdjEvbXlwYWdlLnByb3RvEgluYXpvYnUudjEiEgoQR2V0TXlQYWdlUmVxdWVzdCL0AQoRR2V0TXlQYWdlUmVzcG9uc2USLQoJdW5zZXR0bGVkGAEgAygLMhoubmF6b2J1LnYxLlVuc2V0dGxlZFRpY2tldBIrCgh1cGNvbWluZxgCIAMoCzIZLm5hem9idS52MS5VcGNvbWluZ1RpY2tldBIpCgdtb250aGx5GAMgAygLMhgubmF6b2J1LnYxLk1vbnRobHlUaWNrZXQSFQoNbW9udGhseV9tb250aBgEIAEoBRIUCgxtb250aGx5X3llYXIYBSABKAUSFQoNY3VycmVudF9tb250aBgGIAEoBRIUCgxjdXJyZW50X3llYXIYByABKAUiOAoZTGlzdE1vbnRobHlUaWNrZXRzUmVxdWVzdBIMCgR5ZWFyGAEgASgFEg0KBW1vbnRoGAIgASgFImQKGkxpc3RNb250aGx5VGlja2V0c1Jlc3BvbnNlEikKB21vbnRobHkYASADKAsyGC5uYXpvYnUudjEuTW9udGhseVRpY2tldBIMCgR5ZWFyGAIgASgFEg0KBW1vbnRoGAMgASgFInkKD1Vuc2V0dGxlZFRpY2tldBIRCgl0aWNrZXRfaWQYASABKAkSEwoLZXZlbnRfdGl0bGUYAiABKAkSGAoQcHJpY2VfcGVyX3BlcnNvbhgDIAEoBRISCgpwYXllZV9uYW1lGAQgASgJEhAKCHN0YXJ0X2F0GAUgASgJIo8BCg5VcGNvbWluZ1RpY2tldBIRCgl0aWNrZXRfaWQYASABKAkSEwoLZXZlbnRfdGl0bGUYAiABKAkSEQoJZXZlbnRfdXJsGAMgASgJEhAKCHN0YXJ0X2F0GAQgASgJEhcKD2NvbXBhbmlvbl9uYW1lcxgFIAMoCRIXCg9ldmVudF9pbWFnZV91cmwYBiABKAkiWgoNTW9udGhseVRpY2tldBIRCgl0aWNrZXRfaWQYASABKAkSEwoLZXZlbnRfdGl0bGUYAiABKAkSEAoIc3RhcnRfYXQYAyABKAkSDwoHc2V0dGxlZBgEIAEoCDK6AQoNTXlQYWdlU2VydmljZRJGCglHZXRNeVBhZ2USGy5uYXpvYnUudjEuR2V0TXlQYWdlUmVxdWVzdBocLm5hem9idS52MS5HZXRNeVBhZ2VSZXNwb25zZRJhChJMaXN0TW9udGhseVRpY2tldHMSJC5uYXpvYnUudjEuTGlzdE1vbnRobHlUaWNrZXRzUmVxdWVzdBolLm5hem9idS52MS5MaXN0TW9udGhseVRpY2tldHNSZXNwb25zZUJEWkJnaXRodWIuY29tL2FydW1hMjU2L25hem9idS9iYWNrZW5kL2ludGVybmFsL2dlbi9uYXpvYnUvdjE7bmF6b2J1djFiBnByb3RvMw");
 
 /**
  * @generated from message nazobu.v1.GetMyPageRequest
@@ -44,25 +44,39 @@ export type GetMyPageResponse = Message<"nazobu.v1.GetMyPageResponse"> & {
   upcoming: UpcomingTicket[];
 
   /**
-   * サーバ基準の当月に start_at がある自分の ticket（start_at 昇順）。
+   * monthly セクションの初期表示月（= 前月）に start_at がある自分の ticket（start_at 昇順）。
    *
    * @generated from field: repeated nazobu.v1.MonthlyTicket monthly = 3;
    */
   monthly: MonthlyTicket[];
 
   /**
-   * monthly セクションの基準月（サーバ基準、JST）。1〜12。
+   * monthly セクションの初期表示月（サーバ基準、JST）。1〜12。既定は前月。
    *
    * @generated from field: int32 monthly_month = 4;
    */
   monthlyMonth: number;
 
   /**
-   * monthly セクションの基準年（サーバ基準、JST）。
+   * monthly セクションの初期表示年（サーバ基準、JST）。既定は前月の年。
    *
    * @generated from field: int32 monthly_year = 5;
    */
   monthlyYear: number;
+
+  /**
+   * 当月の月（サーバ基準、JST）。1〜12。月切り替えの上限判定に使う。
+   *
+   * @generated from field: int32 current_month = 6;
+   */
+  currentMonth: number;
+
+  /**
+   * 当月の年（サーバ基準、JST）。
+   *
+   * @generated from field: int32 current_year = 7;
+   */
+  currentYear: number;
 };
 
 /**

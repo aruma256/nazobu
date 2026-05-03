@@ -120,7 +120,7 @@ export function HomeView() {
   const displayName = me.displayName;
   const isAdmin = me.role === "admin";
   const today = new Date();
-  const currentYM = { year: data.monthlyYear, month: data.monthlyMonth };
+  const currentYM = { year: data.currentYear, month: data.currentMonth };
 
   const switchMonth = (diff: number) => {
     if (!monthView || monthView.loading) return;

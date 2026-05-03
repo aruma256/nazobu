@@ -63,12 +63,16 @@ type GetMyPageResponse struct {
 	Unsettled []*UnsettledTicket `protobuf:"bytes,1,rep,name=unsettled,proto3" json:"unsettled,omitempty"`
 	// 自分が参加予定で start_at が今日以降の ticket（start_at 昇順）。
 	Upcoming []*UpcomingTicket `protobuf:"bytes,2,rep,name=upcoming,proto3" json:"upcoming,omitempty"`
-	// サーバ基準の当月に start_at がある自分の ticket（start_at 昇順）。
+	// monthly セクションの初期表示月（= 前月）に start_at がある自分の ticket（start_at 昇順）。
 	Monthly []*MonthlyTicket `protobuf:"bytes,3,rep,name=monthly,proto3" json:"monthly,omitempty"`
-	// monthly セクションの基準月（サーバ基準、JST）。1〜12。
+	// monthly セクションの初期表示月（サーバ基準、JST）。1〜12。既定は前月。
 	MonthlyMonth int32 `protobuf:"varint,4,opt,name=monthly_month,json=monthlyMonth,proto3" json:"monthly_month,omitempty"`
-	// monthly セクションの基準年（サーバ基準、JST）。
-	MonthlyYear   int32 `protobuf:"varint,5,opt,name=monthly_year,json=monthlyYear,proto3" json:"monthly_year,omitempty"`
+	// monthly セクションの初期表示年（サーバ基準、JST）。既定は前月の年。
+	MonthlyYear int32 `protobuf:"varint,5,opt,name=monthly_year,json=monthlyYear,proto3" json:"monthly_year,omitempty"`
+	// 当月の月（サーバ基準、JST）。1〜12。月切り替えの上限判定に使う。
+	CurrentMonth int32 `protobuf:"varint,6,opt,name=current_month,json=currentMonth,proto3" json:"current_month,omitempty"`
+	// 当月の年（サーバ基準、JST）。
+	CurrentYear   int32 `protobuf:"varint,7,opt,name=current_year,json=currentYear,proto3" json:"current_year,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -134,6 +138,20 @@ func (x *GetMyPageResponse) GetMonthlyMonth() int32 {
 func (x *GetMyPageResponse) GetMonthlyYear() int32 {
 	if x != nil {
 		return x.MonthlyYear
+	}
+	return 0
+}
+
+func (x *GetMyPageResponse) GetCurrentMonth() int32 {
+	if x != nil {
+		return x.CurrentMonth
+	}
+	return 0
+}
+
+func (x *GetMyPageResponse) GetCurrentYear() int32 {
+	if x != nil {
+		return x.CurrentYear
 	}
 	return 0
 }
@@ -494,13 +512,15 @@ var File_nazobu_v1_mypage_proto protoreflect.FileDescriptor
 const file_nazobu_v1_mypage_proto_rawDesc = "" +
 	"\n" +
 	"\x16nazobu/v1/mypage.proto\x12\tnazobu.v1\"\x12\n" +
-	"\x10GetMyPageRequest\"\x80\x02\n" +
+	"\x10GetMyPageRequest\"\xc8\x02\n" +
 	"\x11GetMyPageResponse\x128\n" +
 	"\tunsettled\x18\x01 \x03(\v2\x1a.nazobu.v1.UnsettledTicketR\tunsettled\x125\n" +
 	"\bupcoming\x18\x02 \x03(\v2\x19.nazobu.v1.UpcomingTicketR\bupcoming\x122\n" +
 	"\amonthly\x18\x03 \x03(\v2\x18.nazobu.v1.MonthlyTicketR\amonthly\x12#\n" +
 	"\rmonthly_month\x18\x04 \x01(\x05R\fmonthlyMonth\x12!\n" +
-	"\fmonthly_year\x18\x05 \x01(\x05R\vmonthlyYear\"E\n" +
+	"\fmonthly_year\x18\x05 \x01(\x05R\vmonthlyYear\x12#\n" +
+	"\rcurrent_month\x18\x06 \x01(\x05R\fcurrentMonth\x12!\n" +
+	"\fcurrent_year\x18\a \x01(\x05R\vcurrentYear\"E\n" +
 	"\x19ListMonthlyTicketsRequest\x12\x12\n" +
 	"\x04year\x18\x01 \x01(\x05R\x04year\x12\x14\n" +
 	"\x05month\x18\x02 \x01(\x05R\x05month\"z\n" +
