@@ -1,23 +1,22 @@
 "use client";
 
 import { Code, ConnectError } from "@connectrpc/connect";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import type {
-  GetMeResponse,
-} from "@/app/gen/nazobu/v1/user_pb";
+import type { GetMeResponse } from "@/app/gen/nazobu/v1/user_pb";
 import type {
   GetMyPageResponse,
+  MonthlyTicket,
+  UnsettledTicket,
+  UpcomingTicket,
 } from "@/app/gen/nazobu/v1/mypage_pb";
 import { myPageClient, userClient } from "@/app/lib/rpc";
 
 import {
-  AlertCard,
-  AlertItem,
   AppHeader,
   Badge,
-  ListCard,
   Mono,
   PageShell,
   Section,
@@ -99,24 +98,12 @@ export function HomeView() {
       <PageShell>
         {data.unsettled.length > 0 && (
           <Section>
-            <AlertCard title={`未精算 ${data.unsettled.length} 件`}>
+            <SectionTitle count={data.unsettled.length}>未精算</SectionTitle>
+            <ul className="mt-3 space-y-3">
               {data.unsettled.map((s) => (
-                <AlertItem key={s.ticketId}>
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="text-base font-medium">{s.eventTitle}</p>
-                    <Mono className="text-base font-semibold tracking-tight">
-                      {formatYen(s.pricePerPerson)}
-                    </Mono>
-                  </div>
-                  <p className="mt-2 text-xs text-zinc-600">
-                    立替: {s.payeeName}
-                    <span className="mx-1.5 text-zinc-300">/</span>
-                    <Mono>{formatMonoDate(parseDateTime(s.startAt))}</Mono>{" "}
-                    参加分
-                  </p>
-                </AlertItem>
+                <UnsettledItem key={s.ticketId} ticket={s} />
               ))}
-            </AlertCard>
+            </ul>
           </Section>
         )}
 
@@ -127,52 +114,11 @@ export function HomeView() {
               参加予定の公演はありません。
             </p>
           ) : (
-            <ListCard>
-              {data.upcoming.map((e) => {
-                const date = parseDateTime(e.startAt);
-                const days = daysFromToday(date, today);
-                const dayLabel =
-                  days <= 0
-                    ? "本日"
-                    : days === 1
-                      ? "明日"
-                      : `あと ${days} 日`;
-                return (
-                  <li key={e.ticketId} className="px-4 py-4">
-                    <div className="flex items-baseline gap-3">
-                      <Mono className="text-sm font-semibold text-emerald-700">
-                        {formatDateJa(date)}
-                      </Mono>
-                      <span className="ml-auto text-xs text-zinc-500">
-                        {dayLabel}
-                      </span>
-                    </div>
-                    <p className="mt-1.5 text-base leading-snug font-medium">
-                      {e.eventUrl !== "" ? (
-                        <a
-                          href={e.eventUrl}
-                          target="_blank"
-                          rel="noreferrer noopener"
-                          className="underline decoration-zinc-300 underline-offset-4 hover:decoration-zinc-500"
-                        >
-                          {e.eventTitle}
-                        </a>
-                      ) : (
-                        e.eventTitle
-                      )}
-                    </p>
-                    {e.companionNames.length > 0 && (
-                      <p className="mt-2 text-xs text-zinc-600">
-                        <span className="text-zinc-400">参加</span>{" "}
-                        {[...e.companionNames]
-                          .sort((a, b) => a.localeCompare(b, "ja"))
-                          .join("・")}
-                      </p>
-                    )}
-                  </li>
-                );
-              })}
-            </ListCard>
+            <ul className="mt-3 space-y-3">
+              {data.upcoming.map((e) => (
+                <UpcomingCard key={e.ticketId} ticket={e} today={today} />
+              ))}
+            </ul>
           )}
         </Section>
 
@@ -185,27 +131,97 @@ export function HomeView() {
               今月参加した公演はまだありません。
             </p>
           ) : (
-            <ListCard>
+            <ul className="mt-3 divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
               {data.monthly.map((a) => (
-                <li
-                  key={a.ticketId}
-                  className="flex items-center gap-3 px-4 py-3"
-                >
-                  <Mono className="text-xs text-zinc-500">
-                    {formatMonoDate(parseDateTime(a.startAt))}
-                  </Mono>
-                  <span className="flex-1 truncate text-sm">
-                    {a.eventTitle}
-                  </span>
-                  <Badge tone={a.settled ? "settled" : "unsettled"}>
-                    {a.settled ? "精算済み" : "未精算"}
-                  </Badge>
-                </li>
+                <MonthlyRow key={a.ticketId} ticket={a} />
               ))}
-            </ListCard>
+            </ul>
           )}
         </Section>
       </PageShell>
     </>
+  );
+}
+
+function UnsettledItem({ ticket }: { ticket: UnsettledTicket }) {
+  const date = parseDateTime(ticket.startAt);
+  return (
+    <li className="overflow-hidden rounded-2xl border border-amber-300 bg-amber-50 transition-colors hover:bg-amber-100">
+      <Link href={`/tickets/${ticket.ticketId}`} className="block">
+        <div className="flex items-baseline gap-3 px-4 pt-4">
+          <Mono className="text-sm font-semibold text-amber-800">
+            {formatDateJa(date)}
+          </Mono>
+          <Mono className="ml-auto text-base font-semibold tracking-tight">
+            {formatYen(ticket.pricePerPerson)}
+          </Mono>
+        </div>
+        <h3 className="px-4 pt-1 text-base leading-snug font-semibold">
+          {ticket.eventTitle}
+        </h3>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 pt-3 pb-4 text-xs text-zinc-600">
+          <dt className="text-zinc-400">立替</dt>
+          <dd>{ticket.payeeName}</dd>
+        </dl>
+      </Link>
+    </li>
+  );
+}
+
+function UpcomingCard({
+  ticket,
+  today,
+}: {
+  ticket: UpcomingTicket;
+  today: Date;
+}) {
+  const date = parseDateTime(ticket.startAt);
+  const days = daysFromToday(date, today);
+  const dayLabel =
+    days <= 0 ? "本日" : days === 1 ? "明日" : `あと ${days} 日`;
+  const sortedCompanions = [...ticket.companionNames].sort((a, b) =>
+    a.localeCompare(b, "ja"),
+  );
+  return (
+    <li className="overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-colors hover:bg-zinc-50">
+      <Link href={`/tickets/${ticket.ticketId}`} className="block">
+        <div className="flex items-baseline gap-3 px-4 pt-4">
+          <Mono className="text-sm font-semibold text-emerald-700">
+            {formatDateJa(date)}
+          </Mono>
+          <span className="ml-auto text-xs text-zinc-500">{dayLabel}</span>
+        </div>
+        <h3 className="px-4 pt-1 text-base leading-snug font-semibold">
+          {ticket.eventTitle}
+        </h3>
+        {sortedCompanions.length > 0 ? (
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 pt-3 pb-4 text-xs text-zinc-600">
+            <dt className="text-zinc-400">同行</dt>
+            <dd>{sortedCompanions.join("・")}</dd>
+          </dl>
+        ) : (
+          <div className="pb-4" />
+        )}
+      </Link>
+    </li>
+  );
+}
+
+function MonthlyRow({ ticket }: { ticket: MonthlyTicket }) {
+  return (
+    <li>
+      <Link
+        href={`/tickets/${ticket.ticketId}`}
+        className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-zinc-50"
+      >
+        <Mono className="text-xs text-zinc-500">
+          {formatMonoDate(parseDateTime(ticket.startAt))}
+        </Mono>
+        <span className="flex-1 truncate text-sm">{ticket.eventTitle}</span>
+        <Badge tone={ticket.settled ? "settled" : "unsettled"}>
+          {ticket.settled ? "精算済み" : "未精算"}
+        </Badge>
+      </Link>
+    </li>
   );
 }
