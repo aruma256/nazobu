@@ -56,6 +56,9 @@ CREATE TABLE events (
   id          VARCHAR(26)  NOT NULL,
   title       VARCHAR(255) NOT NULL,
   url         VARCHAR(512) NOT NULL,
+  -- 公演 URL から取得した OG 画像の URL。allowlist ドメインのみ取得し、
+  -- 取得失敗時は NULL のまま。表示は外部画像 URL を直接埋め込む方針。
+  image_url   VARCHAR(2048) NULL,
   -- 開場時間が開演時刻（ticket.start_at）の何分前か。0 以上、NULL = 未設定。
   doors_open_minutes_before     INT NULL,
   -- 入場締切が開演時刻の何分前か。これを過ぎると参加できない。0 以上、NULL = 未設定。

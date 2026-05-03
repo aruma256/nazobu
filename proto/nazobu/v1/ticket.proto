@@ -55,6 +55,8 @@ message Ticket {
   string start_at = 11;
   // このチケット 1 枚で参加できる最大人数。1 以上。
   int32 max_participants = 12;
+  // 公演 URL から取得した OG 画像の URL。未取得 / 取得失敗時は空文字。
+  string event_image_url = 13;
 }
 
 message GetTicketRequest {

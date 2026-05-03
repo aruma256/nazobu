@@ -123,8 +123,10 @@ type Ticket struct {
 	StartAt string `protobuf:"bytes,11,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
 	// このチケット 1 枚で参加できる最大人数。1 以上。
 	MaxParticipants int32 `protobuf:"varint,12,opt,name=max_participants,json=maxParticipants,proto3" json:"max_participants,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// 公演 URL から取得した OG 画像の URL。未取得 / 取得失敗時は空文字。
+	EventImageUrl string `protobuf:"bytes,13,opt,name=event_image_url,json=eventImageUrl,proto3" json:"event_image_url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Ticket) Reset() {
@@ -232,6 +234,13 @@ func (x *Ticket) GetMaxParticipants() int32 {
 		return x.MaxParticipants
 	}
 	return 0
+}
+
+func (x *Ticket) GetEventImageUrl() string {
+	if x != nil {
+		return x.EventImageUrl
+	}
+	return ""
 }
 
 type GetTicketRequest struct {
@@ -978,7 +987,7 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\x16nazobu/v1/ticket.proto\x12\tnazobu.v1\"\x14\n" +
 	"\x12ListTicketsRequest\"B\n" +
 	"\x13ListTicketsResponse\x12+\n" +
-	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"\xff\x02\n" +
+	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"\xa7\x03\n" +
 	"\x06Ticket\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\bevent_id\x18\x02 \x01(\tR\aeventId\x12\x1f\n" +
@@ -993,7 +1002,8 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\tevent_url\x18\n" +
 	" \x01(\tR\beventUrl\x12\x19\n" +
 	"\bstart_at\x18\v \x01(\tR\astartAt\x12)\n" +
-	"\x10max_participants\x18\f \x01(\x05R\x0fmaxParticipantsJ\x04\b\x04\x10\x05\"/\n" +
+	"\x10max_participants\x18\f \x01(\x05R\x0fmaxParticipants\x12&\n" +
+	"\x0fevent_image_url\x18\r \x01(\tR\reventImageUrlJ\x04\b\x04\x10\x05\"/\n" +
 	"\x10GetTicketRequest\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\"\x9b\x01\n" +
 	"\x11GetTicketResponse\x12)\n" +

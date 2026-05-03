@@ -18,7 +18,7 @@ ORDER BY t.start_at ASC, t.id ASC;
 -- name: ListUpcomingTicketsByUserID :many
 -- 当日 0:00（JST）以降に start_at を持つ自分の参加チケット。
 -- 当日中は時刻が過ぎていても表示し続ける（今日の予定として残す）。
-SELECT t.id, e.title AS event_title, e.url AS event_url, t.start_at
+SELECT t.id, e.title AS event_title, e.url AS event_url, e.image_url AS event_image_url, t.start_at
 FROM ticket_participants tp
 JOIN tickets t ON t.id = tp.ticket_id
 JOIN events  e ON e.id = t.event_id

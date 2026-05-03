@@ -63,6 +63,8 @@ message UpcomingTicket {
   string start_at = 4;
   // 同じ ticket の他の参加者の表示名（自分は除く）。created_at 昇順。
   repeated string companion_names = 5;
+  // 公演 URL から取得した OG 画像の URL。未取得 / 取得失敗時は空文字。
+  string event_image_url = 6;
 }
 
 message MonthlyTicket {

@@ -7,6 +7,7 @@ package queries
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 	"time"
 )
@@ -183,7 +184,7 @@ func (q *Queries) ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnse
 }
 
 const listUpcomingTicketsByUserID = `-- name: ListUpcomingTicketsByUserID :many
-SELECT t.id, e.title AS event_title, e.url AS event_url, t.start_at
+SELECT t.id, e.title AS event_title, e.url AS event_url, e.image_url AS event_image_url, t.start_at
 FROM ticket_participants tp
 JOIN tickets t ON t.id = tp.ticket_id
 JOIN events  e ON e.id = t.event_id
@@ -198,10 +199,11 @@ type ListUpcomingTicketsByUserIDParams struct {
 }
 
 type ListUpcomingTicketsByUserIDRow struct {
-	ID         string
-	EventTitle string
-	EventUrl   string
-	StartAt    time.Time
+	ID            string
+	EventTitle    string
+	EventUrl      string
+	EventImageUrl sql.NullString
+	StartAt       time.Time
 }
 
 // 当日 0:00（JST）以降に start_at を持つ自分の参加チケット。
@@ -219,6 +221,7 @@ func (q *Queries) ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcom
 			&i.ID,
 			&i.EventTitle,
 			&i.EventUrl,
+			&i.EventImageUrl,
 			&i.StartAt,
 		); err != nil {
 			return nil, err

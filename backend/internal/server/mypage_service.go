@@ -139,10 +139,11 @@ func (s *myPageService) queryUpcoming(ctx context.Context, userID string, todayS
 	out := make([]*nazobuv1.UpcomingTicket, 0, len(rows))
 	for _, r := range rows {
 		out = append(out, &nazobuv1.UpcomingTicket{
-			TicketId:   r.ID,
-			EventTitle: r.EventTitle,
-			EventUrl:   r.EventUrl,
-			StartAt:    formatJSTDateTime(r.StartAt),
+			TicketId:      r.ID,
+			EventTitle:    r.EventTitle,
+			EventUrl:      r.EventUrl,
+			EventImageUrl: nullStringToString(r.EventImageUrl),
+			StartAt:       formatJSTDateTime(r.StartAt),
 		})
 	}
 	return out, nil

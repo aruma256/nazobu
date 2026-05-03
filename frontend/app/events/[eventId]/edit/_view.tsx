@@ -242,6 +242,10 @@ function Form({
                 className="mt-1 block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
                 placeholder="https://..."
               />
+              <p className="mt-1 text-xs text-zinc-500">
+                <code className="font-mono">realdgame.jp</code> /{" "}
+                <code className="font-mono">escape.id</code> の URL を入れると、自動でカード画像も取得します。
+              </p>
             </div>
 
             <div>

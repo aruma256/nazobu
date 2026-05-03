@@ -341,8 +341,10 @@ type UpcomingTicket struct {
 	StartAt string `protobuf:"bytes,4,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
 	// 同じ ticket の他の参加者の表示名（自分は除く）。created_at 昇順。
 	CompanionNames []string `protobuf:"bytes,5,rep,name=companion_names,json=companionNames,proto3" json:"companion_names,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// 公演 URL から取得した OG 画像の URL。未取得 / 取得失敗時は空文字。
+	EventImageUrl string `protobuf:"bytes,6,opt,name=event_image_url,json=eventImageUrl,proto3" json:"event_image_url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpcomingTicket) Reset() {
@@ -408,6 +410,13 @@ func (x *UpcomingTicket) GetCompanionNames() []string {
 		return x.CompanionNames
 	}
 	return nil
+}
+
+func (x *UpcomingTicket) GetEventImageUrl() string {
+	if x != nil {
+		return x.EventImageUrl
+	}
+	return ""
 }
 
 type MonthlyTicket struct {
@@ -506,14 +515,15 @@ const file_nazobu_v1_mypage_proto_rawDesc = "" +
 	"\x10price_per_person\x18\x03 \x01(\x05R\x0epricePerPerson\x12\x1d\n" +
 	"\n" +
 	"payee_name\x18\x04 \x01(\tR\tpayeeName\x12\x19\n" +
-	"\bstart_at\x18\x05 \x01(\tR\astartAt\"\xaf\x01\n" +
+	"\bstart_at\x18\x05 \x01(\tR\astartAt\"\xd7\x01\n" +
 	"\x0eUpcomingTicket\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x1f\n" +
 	"\vevent_title\x18\x02 \x01(\tR\n" +
 	"eventTitle\x12\x1b\n" +
 	"\tevent_url\x18\x03 \x01(\tR\beventUrl\x12\x19\n" +
 	"\bstart_at\x18\x04 \x01(\tR\astartAt\x12'\n" +
-	"\x0fcompanion_names\x18\x05 \x03(\tR\x0ecompanionNames\"\x82\x01\n" +
+	"\x0fcompanion_names\x18\x05 \x03(\tR\x0ecompanionNames\x12&\n" +
+	"\x0fevent_image_url\x18\x06 \x01(\tR\reventImageUrl\"\x82\x01\n" +
 	"\rMonthlyTicket\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x1f\n" +
 	"\vevent_title\x18\x02 \x01(\tR\n" +

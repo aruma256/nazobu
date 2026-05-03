@@ -101,7 +101,7 @@ func (q *Queries) DeleteTicketParticipant(ctx context.Context, arg DeleteTicketP
 }
 
 const getTicketByID = `-- name: GetTicketByID :one
-SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
+SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.image_url AS event_image_url,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        t.purchased_by,
@@ -117,6 +117,7 @@ type GetTicketByIDRow struct {
 	EventID         string
 	EventTitle      string
 	EventUrl        string
+	EventImageUrl   sql.NullString
 	StartAt         time.Time
 	MeetingAt       sql.NullTime
 	PricePerPerson  int32
@@ -135,6 +136,7 @@ func (q *Queries) GetTicketByID(ctx context.Context, id string) (GetTicketByIDRo
 		&i.EventID,
 		&i.EventTitle,
 		&i.EventUrl,
+		&i.EventImageUrl,
 		&i.StartAt,
 		&i.MeetingAt,
 		&i.PricePerPerson,
@@ -236,7 +238,7 @@ func (q *Queries) ListTicketParticipantsByTicketID(ctx context.Context, ticketID
 }
 
 const listTickets = `-- name: ListTickets :many
-SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
+SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.image_url AS event_image_url,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        pu.display_name AS purchaser_name
@@ -251,6 +253,7 @@ type ListTicketsRow struct {
 	EventID         string
 	EventTitle      string
 	EventUrl        string
+	EventImageUrl   sql.NullString
 	StartAt         time.Time
 	MeetingAt       sql.NullTime
 	PricePerPerson  int32
@@ -274,6 +277,7 @@ func (q *Queries) ListTickets(ctx context.Context) ([]ListTicketsRow, error) {
 			&i.EventID,
 			&i.EventTitle,
 			&i.EventUrl,
+			&i.EventImageUrl,
 			&i.StartAt,
 			&i.MeetingAt,
 			&i.PricePerPerson,
@@ -295,7 +299,7 @@ func (q *Queries) ListTickets(ctx context.Context) ([]ListTicketsRow, error) {
 }
 
 const listTicketsByIDs = `-- name: ListTicketsByIDs :many
-SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url,
+SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.image_url AS event_image_url,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        pu.display_name AS purchaser_name
@@ -311,6 +315,7 @@ type ListTicketsByIDsRow struct {
 	EventID         string
 	EventTitle      string
 	EventUrl        string
+	EventImageUrl   sql.NullString
 	StartAt         time.Time
 	MeetingAt       sql.NullTime
 	PricePerPerson  int32
@@ -344,6 +349,7 @@ func (q *Queries) ListTicketsByIDs(ctx context.Context, ids []string) ([]ListTic
 			&i.EventID,
 			&i.EventTitle,
 			&i.EventUrl,
+			&i.EventImageUrl,
 			&i.StartAt,
 			&i.MeetingAt,
 			&i.PricePerPerson,

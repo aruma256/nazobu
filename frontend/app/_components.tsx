@@ -1,7 +1,10 @@
 // 共通の再利用 UI 部品。スタイルはここに集約し、
 // 個別ページからは意味のある単位（Card / Badge / Section など）で組み合わせる。
 
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 export function PageShell({ children }: { children: ReactNode }) {
@@ -166,6 +169,27 @@ export function Mono({
 }) {
   return (
     <span className={`font-mono tabular-nums ${className}`}>{children}</span>
+  );
+}
+
+// EventCover は公演 URL から取得した OG 画像を表示するカード上部用カバー。
+// 読み込み失敗時は要素ごと隠す（壊れた画像アイコンが残らないように）。
+export function EventCover({ src, alt }: { src: string; alt: string }) {
+  const [hidden, setHidden] = useState(false);
+  if (hidden) return null;
+  return (
+    <div className="aspect-[1.91/1] w-full overflow-hidden bg-zinc-100">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+        onError={() => setHidden(true)}
+        className="h-full w-full object-cover"
+      />
+    </div>
   );
 }
 

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -18,12 +19,13 @@ import (
 )
 
 type eventService struct {
-	db *sql.DB
-	q  *queries.Queries
+	db         *sql.DB
+	q          *queries.Queries
+	httpClient *http.Client
 }
 
 func newEventService(db *sql.DB) nazobuv1connect.EventServiceHandler {
-	return &eventService{db: db, q: queries.New(db)}
+	return &eventService{db: db, q: queries.New(db), httpClient: http.DefaultClient}
 }
 
 const (
@@ -46,6 +48,7 @@ func (s *eventService) ListEvents(ctx context.Context, req *connect.Request[nazo
 			Id:                         r.ID,
 			Title:                      r.Title,
 			Url:                        r.Url,
+			ImageUrl:                   nullStringToString(r.ImageUrl),
 			DoorsOpenMinutesBefore:     nullInt32ToPtr(r.DoorsOpenMinutesBefore),
 			EntryDeadlineMinutesBefore: nullInt32ToPtr(r.EntryDeadlineMinutesBefore),
 			Tickets:                    []*nazobuv1.EventTicket{},
@@ -84,6 +87,7 @@ func (s *eventService) GetEvent(ctx context.Context, req *connect.Request[nazobu
 			Id:                         row.ID,
 			Title:                      row.Title,
 			Url:                        row.Url,
+			ImageUrl:                   nullStringToString(row.ImageUrl),
 			DoorsOpenMinutesBefore:     nullInt32ToPtr(row.DoorsOpenMinutesBefore),
 			EntryDeadlineMinutesBefore: nullInt32ToPtr(row.EntryDeadlineMinutesBefore),
 			Tickets:                    []*nazobuv1.EventTicket{},
@@ -129,11 +133,14 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("url は http(s) スキーマの URL"))
 	}
 
+	imageURL := stringToNullString(fetchOGImageURL(ctx, s.httpClient, rawURL))
+
 	id := ulid.Make().String()
 	if err := s.q.CreateEvent(ctx, queries.CreateEventParams{
 		ID:                         id,
 		Title:                      title,
 		Url:                        rawURL,
+		ImageUrl:                   imageURL,
 		DoorsOpenMinutesBefore:     doorsOpen,
 		EntryDeadlineMinutesBefore: entryDeadline,
 	}); err != nil {
@@ -145,6 +152,7 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 			Id:                         id,
 			Title:                      title,
 			Url:                        rawURL,
+			ImageUrl:                   nullStringToString(imageURL),
 			DoorsOpenMinutesBefore:     nullInt32ToPtr(doorsOpen),
 			EntryDeadlineMinutesBefore: nullInt32ToPtr(entryDeadline),
 			Tickets:                    []*nazobuv1.EventTicket{},
@@ -199,10 +207,13 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の取得に失敗: %w", err))
 	}
 
+	imageURL := stringToNullString(fetchOGImageURL(ctx, s.httpClient, rawURL))
+
 	if err := s.q.UpdateEvent(ctx, queries.UpdateEventParams{
 		ID:                         eventID,
 		Title:                      title,
 		Url:                        rawURL,
+		ImageUrl:                   imageURL,
 		DoorsOpenMinutesBefore:     doorsOpen,
 		EntryDeadlineMinutesBefore: entryDeadline,
 	}); err != nil {
@@ -214,6 +225,7 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 			Id:                         eventID,
 			Title:                      title,
 			Url:                        rawURL,
+			ImageUrl:                   nullStringToString(imageURL),
 			DoorsOpenMinutesBefore:     nullInt32ToPtr(doorsOpen),
 			EntryDeadlineMinutesBefore: nullInt32ToPtr(entryDeadline),
 			Tickets:                    []*nazobuv1.EventTicket{},
@@ -238,6 +250,21 @@ func nullInt32ToPtr(v sql.NullInt32) *int32 {
 	}
 	x := v.Int32
 	return &x
+}
+
+func nullStringToString(v sql.NullString) string {
+	if !v.Valid {
+		return ""
+	}
+	return v.String
+}
+
+// 空文字は NULL にする（DB 側でも意味的に未取得 = NULL を貫く）。
+func stringToNullString(s string) sql.NullString {
+	if s == "" {
+		return sql.NullString{}
+	}
+	return sql.NullString{String: s, Valid: true}
 }
 
 // attachTickets は events に紐づく ticket と参加者を埋める。1 イベントずつ N+1 で叩かず、

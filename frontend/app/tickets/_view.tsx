@@ -11,6 +11,7 @@ import { ticketClient, userClient } from "@/app/lib/rpc";
 
 import {
   AppHeader,
+  EventCover,
   Mono,
   PageShell,
   Section,
@@ -112,6 +113,9 @@ function TicketCard({ ticket, myName }: { ticket: Ticket; myName: string }) {
   return (
     <li className="overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-colors hover:bg-zinc-50">
       <Link href={`/tickets/${ticket.id}`} className="block">
+        {ticket.eventImageUrl !== "" && (
+          <EventCover src={ticket.eventImageUrl} alt={ticket.eventTitle} />
+        )}
         <div className="flex items-baseline gap-3 px-4 pt-4">
           <Mono className="text-sm font-semibold text-emerald-700">
             {formatDateJa(startAt)}

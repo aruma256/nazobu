@@ -11,6 +11,7 @@ import { eventClient, userClient } from "@/app/lib/rpc";
 
 import {
   AppHeader,
+  EventCover,
   Mono,
   PageShell,
   Section,
@@ -134,6 +135,7 @@ function EventCard({
     event.entryDeadlineMinutesBefore !== undefined;
   return (
     <li className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+      {event.imageUrl !== "" && <EventCover src={event.imageUrl} alt={event.title} />}
       <div className="px-4 pt-4">
         <h3 className="text-base leading-snug font-semibold">{event.title}</h3>
         {event.url !== "" && (
