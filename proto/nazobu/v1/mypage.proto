@@ -22,7 +22,7 @@ message GetMyPageResponse {
   repeated UnsettledTicket unsettled = 1;
   // 自分が参加予定で start_at が今日以降の ticket（start_at 昇順）。
   repeated UpcomingTicket upcoming = 2;
-  // サーバ基準の当月に start_at がある自分の ticket（start_at 降順）。
+  // サーバ基準の当月に start_at がある自分の ticket（start_at 昇順）。
   repeated MonthlyTicket monthly = 3;
   // monthly セクションの基準月（サーバ基準、JST）。1〜12。
   int32 monthly_month = 4;
@@ -38,7 +38,7 @@ message ListMonthlyTicketsRequest {
 }
 
 message ListMonthlyTicketsResponse {
-  // 指定月に start_at がある自分の ticket（start_at 降順）。
+  // 指定月に start_at がある自分の ticket（start_at 昇順）。
   repeated MonthlyTicket monthly = 1;
   int32 year = 2;
   int32 month = 3;

@@ -44,7 +44,7 @@ export type GetMyPageResponse = Message<"nazobu.v1.GetMyPageResponse"> & {
   upcoming: UpcomingTicket[];
 
   /**
-   * サーバ基準の当月に start_at がある自分の ticket（start_at 降順）。
+   * サーバ基準の当月に start_at がある自分の ticket（start_at 昇順）。
    *
    * @generated from field: repeated nazobu.v1.MonthlyTicket monthly = 3;
    */
@@ -103,7 +103,7 @@ export const ListMonthlyTicketsRequestSchema: GenMessage<ListMonthlyTicketsReque
  */
 export type ListMonthlyTicketsResponse = Message<"nazobu.v1.ListMonthlyTicketsResponse"> & {
   /**
-   * 指定月に start_at がある自分の ticket（start_at 降順）。
+   * 指定月に start_at がある自分の ticket（start_at 昇順）。
    *
    * @generated from field: repeated nazobu.v1.MonthlyTicket monthly = 1;
    */

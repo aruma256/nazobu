@@ -63,7 +63,7 @@ type GetMyPageResponse struct {
 	Unsettled []*UnsettledTicket `protobuf:"bytes,1,rep,name=unsettled,proto3" json:"unsettled,omitempty"`
 	// 自分が参加予定で start_at が今日以降の ticket（start_at 昇順）。
 	Upcoming []*UpcomingTicket `protobuf:"bytes,2,rep,name=upcoming,proto3" json:"upcoming,omitempty"`
-	// サーバ基準の当月に start_at がある自分の ticket（start_at 降順）。
+	// サーバ基準の当月に start_at がある自分の ticket（start_at 昇順）。
 	Monthly []*MonthlyTicket `protobuf:"bytes,3,rep,name=monthly,proto3" json:"monthly,omitempty"`
 	// monthly セクションの基準月（サーバ基準、JST）。1〜12。
 	MonthlyMonth int32 `protobuf:"varint,4,opt,name=monthly_month,json=monthlyMonth,proto3" json:"monthly_month,omitempty"`
@@ -194,7 +194,7 @@ func (x *ListMonthlyTicketsRequest) GetMonth() int32 {
 
 type ListMonthlyTicketsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 指定月に start_at がある自分の ticket（start_at 降順）。
+	// 指定月に start_at がある自分の ticket（start_at 昇順）。
 	Monthly       []*MonthlyTicket `protobuf:"bytes,1,rep,name=monthly,proto3" json:"monthly,omitempty"`
 	Year          int32            `protobuf:"varint,2,opt,name=year,proto3" json:"year,omitempty"`
 	Month         int32            `protobuf:"varint,3,opt,name=month,proto3" json:"month,omitempty"`

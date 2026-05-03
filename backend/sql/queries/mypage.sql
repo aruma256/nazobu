@@ -38,7 +38,7 @@ JOIN events  e ON e.id = t.event_id
 WHERE tp.user_id  = sqlc.arg('user_id')
   AND t.start_at >= sqlc.arg('month_start')
   AND t.start_at <  sqlc.arg('next_month_start')
-ORDER BY t.start_at DESC, t.id ASC;
+ORDER BY t.start_at ASC, t.id ASC;
 
 -- name: ListCompanionNamesByTicketIDs :many
 -- 自分以外の参加者（同行者）名を ticket_id ごとにまとめて引く（N+1 回避）。

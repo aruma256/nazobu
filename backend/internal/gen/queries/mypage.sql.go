@@ -75,7 +75,7 @@ JOIN events  e ON e.id = t.event_id
 WHERE tp.user_id  = ?
   AND t.start_at >= ?
   AND t.start_at <  ?
-ORDER BY t.start_at DESC, t.id ASC
+ORDER BY t.start_at ASC, t.id ASC
 `
 
 type ListMyMonthlyTicketsByUserIDParams struct {
