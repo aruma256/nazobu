@@ -4,12 +4,16 @@ package nazobu.v1;
 
 option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1";
 
-// EventService は event（公演）の参照・登録 RPC を提供する。
+// EventService は event（公演）の参照・登録・更新 RPC を提供する。
 service EventService {
   // ListEvents は登録済み event を新しい順で返す。各 event には紐づく ticket を含める。
   rpc ListEvents(ListEventsRequest) returns (ListEventsResponse);
+  // GetEvent は 1 件の event を返す。詳細・編集画面の初期表示用。
+  rpc GetEvent(GetEventRequest) returns (GetEventResponse);
   // CreateEvent は新規 event を 1 件登録する。
   rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse);
+  // UpdateEvent は event の title / url / 開場・締切オフセットを更新する。admin のみ実行可能。
+  rpc UpdateEvent(UpdateEventRequest) returns (UpdateEventResponse);
 }
 
 message ListEventsRequest {}
@@ -53,5 +57,29 @@ message CreateEventRequest {
 }
 
 message CreateEventResponse {
+  Event event = 1;
+}
+
+message GetEventRequest {
+  string event_id = 1;
+}
+
+message GetEventResponse {
+  Event event = 1;
+  // 現在ログイン中の user が編集権限を持つか（admin のみ）。
+  bool can_edit = 2;
+}
+
+message UpdateEventRequest {
+  string event_id = 1;
+  string title = 2;
+  string url = 3;
+  // 開場時間が開演時刻の何分前か。任意。
+  optional int32 doors_open_minutes_before = 4;
+  // 入場締切が開演時刻の何分前か。任意。
+  optional int32 entry_deadline_minutes_before = 5;
+}
+
+message UpdateEventResponse {
   Event event = 1;
 }

@@ -35,17 +35,26 @@ const (
 const (
 	// EventServiceListEventsProcedure is the fully-qualified name of the EventService's ListEvents RPC.
 	EventServiceListEventsProcedure = "/nazobu.v1.EventService/ListEvents"
+	// EventServiceGetEventProcedure is the fully-qualified name of the EventService's GetEvent RPC.
+	EventServiceGetEventProcedure = "/nazobu.v1.EventService/GetEvent"
 	// EventServiceCreateEventProcedure is the fully-qualified name of the EventService's CreateEvent
 	// RPC.
 	EventServiceCreateEventProcedure = "/nazobu.v1.EventService/CreateEvent"
+	// EventServiceUpdateEventProcedure is the fully-qualified name of the EventService's UpdateEvent
+	// RPC.
+	EventServiceUpdateEventProcedure = "/nazobu.v1.EventService/UpdateEvent"
 )
 
 // EventServiceClient is a client for the nazobu.v1.EventService service.
 type EventServiceClient interface {
 	// ListEvents は登録済み event を新しい順で返す。各 event には紐づく ticket を含める。
 	ListEvents(context.Context, *connect.Request[v1.ListEventsRequest]) (*connect.Response[v1.ListEventsResponse], error)
+	// GetEvent は 1 件の event を返す。詳細・編集画面の初期表示用。
+	GetEvent(context.Context, *connect.Request[v1.GetEventRequest]) (*connect.Response[v1.GetEventResponse], error)
 	// CreateEvent は新規 event を 1 件登録する。
 	CreateEvent(context.Context, *connect.Request[v1.CreateEventRequest]) (*connect.Response[v1.CreateEventResponse], error)
+	// UpdateEvent は event の title / url / 開場・締切オフセットを更新する。admin のみ実行可能。
+	UpdateEvent(context.Context, *connect.Request[v1.UpdateEventRequest]) (*connect.Response[v1.UpdateEventResponse], error)
 }
 
 // NewEventServiceClient constructs a client for the nazobu.v1.EventService service. By default, it
@@ -65,10 +74,22 @@ func NewEventServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(eventServiceMethods.ByName("ListEvents")),
 			connect.WithClientOptions(opts...),
 		),
+		getEvent: connect.NewClient[v1.GetEventRequest, v1.GetEventResponse](
+			httpClient,
+			baseURL+EventServiceGetEventProcedure,
+			connect.WithSchema(eventServiceMethods.ByName("GetEvent")),
+			connect.WithClientOptions(opts...),
+		),
 		createEvent: connect.NewClient[v1.CreateEventRequest, v1.CreateEventResponse](
 			httpClient,
 			baseURL+EventServiceCreateEventProcedure,
 			connect.WithSchema(eventServiceMethods.ByName("CreateEvent")),
+			connect.WithClientOptions(opts...),
+		),
+		updateEvent: connect.NewClient[v1.UpdateEventRequest, v1.UpdateEventResponse](
+			httpClient,
+			baseURL+EventServiceUpdateEventProcedure,
+			connect.WithSchema(eventServiceMethods.ByName("UpdateEvent")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -77,7 +98,9 @@ func NewEventServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 // eventServiceClient implements EventServiceClient.
 type eventServiceClient struct {
 	listEvents  *connect.Client[v1.ListEventsRequest, v1.ListEventsResponse]
+	getEvent    *connect.Client[v1.GetEventRequest, v1.GetEventResponse]
 	createEvent *connect.Client[v1.CreateEventRequest, v1.CreateEventResponse]
+	updateEvent *connect.Client[v1.UpdateEventRequest, v1.UpdateEventResponse]
 }
 
 // ListEvents calls nazobu.v1.EventService.ListEvents.
@@ -85,17 +108,31 @@ func (c *eventServiceClient) ListEvents(ctx context.Context, req *connect.Reques
 	return c.listEvents.CallUnary(ctx, req)
 }
 
+// GetEvent calls nazobu.v1.EventService.GetEvent.
+func (c *eventServiceClient) GetEvent(ctx context.Context, req *connect.Request[v1.GetEventRequest]) (*connect.Response[v1.GetEventResponse], error) {
+	return c.getEvent.CallUnary(ctx, req)
+}
+
 // CreateEvent calls nazobu.v1.EventService.CreateEvent.
 func (c *eventServiceClient) CreateEvent(ctx context.Context, req *connect.Request[v1.CreateEventRequest]) (*connect.Response[v1.CreateEventResponse], error) {
 	return c.createEvent.CallUnary(ctx, req)
+}
+
+// UpdateEvent calls nazobu.v1.EventService.UpdateEvent.
+func (c *eventServiceClient) UpdateEvent(ctx context.Context, req *connect.Request[v1.UpdateEventRequest]) (*connect.Response[v1.UpdateEventResponse], error) {
+	return c.updateEvent.CallUnary(ctx, req)
 }
 
 // EventServiceHandler is an implementation of the nazobu.v1.EventService service.
 type EventServiceHandler interface {
 	// ListEvents は登録済み event を新しい順で返す。各 event には紐づく ticket を含める。
 	ListEvents(context.Context, *connect.Request[v1.ListEventsRequest]) (*connect.Response[v1.ListEventsResponse], error)
+	// GetEvent は 1 件の event を返す。詳細・編集画面の初期表示用。
+	GetEvent(context.Context, *connect.Request[v1.GetEventRequest]) (*connect.Response[v1.GetEventResponse], error)
 	// CreateEvent は新規 event を 1 件登録する。
 	CreateEvent(context.Context, *connect.Request[v1.CreateEventRequest]) (*connect.Response[v1.CreateEventResponse], error)
+	// UpdateEvent は event の title / url / 開場・締切オフセットを更新する。admin のみ実行可能。
+	UpdateEvent(context.Context, *connect.Request[v1.UpdateEventRequest]) (*connect.Response[v1.UpdateEventResponse], error)
 }
 
 // NewEventServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -111,18 +148,34 @@ func NewEventServiceHandler(svc EventServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(eventServiceMethods.ByName("ListEvents")),
 		connect.WithHandlerOptions(opts...),
 	)
+	eventServiceGetEventHandler := connect.NewUnaryHandler(
+		EventServiceGetEventProcedure,
+		svc.GetEvent,
+		connect.WithSchema(eventServiceMethods.ByName("GetEvent")),
+		connect.WithHandlerOptions(opts...),
+	)
 	eventServiceCreateEventHandler := connect.NewUnaryHandler(
 		EventServiceCreateEventProcedure,
 		svc.CreateEvent,
 		connect.WithSchema(eventServiceMethods.ByName("CreateEvent")),
 		connect.WithHandlerOptions(opts...),
 	)
+	eventServiceUpdateEventHandler := connect.NewUnaryHandler(
+		EventServiceUpdateEventProcedure,
+		svc.UpdateEvent,
+		connect.WithSchema(eventServiceMethods.ByName("UpdateEvent")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/nazobu.v1.EventService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case EventServiceListEventsProcedure:
 			eventServiceListEventsHandler.ServeHTTP(w, r)
+		case EventServiceGetEventProcedure:
+			eventServiceGetEventHandler.ServeHTTP(w, r)
 		case EventServiceCreateEventProcedure:
 			eventServiceCreateEventHandler.ServeHTTP(w, r)
+		case EventServiceUpdateEventProcedure:
+			eventServiceUpdateEventHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -136,6 +189,14 @@ func (UnimplementedEventServiceHandler) ListEvents(context.Context, *connect.Req
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.EventService.ListEvents is not implemented"))
 }
 
+func (UnimplementedEventServiceHandler) GetEvent(context.Context, *connect.Request[v1.GetEventRequest]) (*connect.Response[v1.GetEventResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.EventService.GetEvent is not implemented"))
+}
+
 func (UnimplementedEventServiceHandler) CreateEvent(context.Context, *connect.Request[v1.CreateEventRequest]) (*connect.Response[v1.CreateEventResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.EventService.CreateEvent is not implemented"))
+}
+
+func (UnimplementedEventServiceHandler) UpdateEvent(context.Context, *connect.Request[v1.UpdateEventRequest]) (*connect.Response[v1.UpdateEventResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.EventService.UpdateEvent is not implemented"))
 }

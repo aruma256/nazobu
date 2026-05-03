@@ -105,7 +105,12 @@ export function EventsView() {
           ) : (
             <ul className="mt-3 space-y-4">
               {events.map((e) => (
-                <EventCard key={e.id} event={e} myName={displayName} />
+                <EventCard
+                  key={e.id}
+                  event={e}
+                  myName={displayName}
+                  isAdmin={isAdmin}
+                />
               ))}
             </ul>
           )}
@@ -115,7 +120,15 @@ export function EventsView() {
   );
 }
 
-function EventCard({ event, myName }: { event: NazobuEvent; myName: string }) {
+function EventCard({
+  event,
+  myName,
+  isAdmin,
+}: {
+  event: NazobuEvent;
+  myName: string;
+  isAdmin: boolean;
+}) {
   const hasOffsets =
     event.doorsOpenMinutesBefore !== undefined ||
     event.entryDeadlineMinutesBefore !== undefined;
@@ -161,13 +174,21 @@ function EventCard({ event, myName }: { event: NazobuEvent; myName: string }) {
         </ul>
       )}
 
-      <div className="px-4 pt-4 pb-4">
+      <div className="space-y-3 px-4 pt-4 pb-4">
         <Link
           href={`/events/${event.id}/tickets/new`}
           className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-emerald-700 hover:bg-zinc-50"
         >
           この公演のチケットを登録
         </Link>
+        {isAdmin && (
+          <Link
+            href={`/events/${event.id}/edit`}
+            className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
+          >
+            公演情報を編集
+          </Link>
+        )}
       </div>
     </li>
   );

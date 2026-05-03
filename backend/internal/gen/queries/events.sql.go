@@ -48,6 +48,34 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) error 
 	return err
 }
 
+const getEventByID = `-- name: GetEventByID :one
+SELECT id, title, url, doors_open_minutes_before, entry_deadline_minutes_before
+FROM events
+WHERE id = ?
+`
+
+type GetEventByIDRow struct {
+	ID                         string
+	Title                      string
+	Url                        string
+	DoorsOpenMinutesBefore     sql.NullInt32
+	EntryDeadlineMinutesBefore sql.NullInt32
+}
+
+// 1 件の event を取得する。詳細・編集画面用。
+func (q *Queries) GetEventByID(ctx context.Context, id string) (GetEventByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getEventByID, id)
+	var i GetEventByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Url,
+		&i.DoorsOpenMinutesBefore,
+		&i.EntryDeadlineMinutesBefore,
+	)
+	return i, err
+}
+
 const listEventTicketsByEventIDs = `-- name: ListEventTicketsByEventIDs :many
 SELECT t.id, t.event_id, t.start_at, t.price_per_person,
        pu.display_name AS purchaser_name
@@ -148,4 +176,33 @@ func (q *Queries) ListEvents(ctx context.Context) ([]ListEventsRow, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateEvent = `-- name: UpdateEvent :exec
+UPDATE events
+SET title = ?,
+    url = ?,
+    doors_open_minutes_before = ?,
+    entry_deadline_minutes_before = ?,
+    updated_at = NOW(6)
+WHERE id = ?
+`
+
+type UpdateEventParams struct {
+	Title                      string
+	Url                        string
+	DoorsOpenMinutesBefore     sql.NullInt32
+	EntryDeadlineMinutesBefore sql.NullInt32
+	ID                         string
+}
+
+func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) error {
+	_, err := q.db.ExecContext(ctx, updateEvent,
+		arg.Title,
+		arg.Url,
+		arg.DoorsOpenMinutesBefore,
+		arg.EntryDeadlineMinutesBefore,
+		arg.ID,
+	)
+	return err
 }

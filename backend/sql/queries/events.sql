@@ -4,9 +4,24 @@ SELECT id, title, url, doors_open_minutes_before, entry_deadline_minutes_before
 FROM events
 ORDER BY created_at DESC, id DESC;
 
+-- name: GetEventByID :one
+-- 1 件の event を取得する。詳細・編集画面用。
+SELECT id, title, url, doors_open_minutes_before, entry_deadline_minutes_before
+FROM events
+WHERE id = ?;
+
 -- name: CreateEvent :exec
 INSERT INTO events (id, title, url, doors_open_minutes_before, entry_deadline_minutes_before, created_at, updated_at)
 VALUES (?, ?, ?, ?, ?, NOW(6), NOW(6));
+
+-- name: UpdateEvent :exec
+UPDATE events
+SET title = ?,
+    url = ?,
+    doors_open_minutes_before = ?,
+    entry_deadline_minutes_before = ?,
+    updated_at = NOW(6)
+WHERE id = ?;
 
 -- name: CountEventByID :one
 -- 参照整合性のフレンドリーなプリチェック用。FK でも担保されるが UX のために事前に存在確認する。

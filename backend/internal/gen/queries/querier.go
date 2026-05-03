@@ -25,6 +25,8 @@ type Querier interface {
 	CreateUserIdentity(ctx context.Context, arg CreateUserIdentityParams) error
 	DeleteSessionByTokenHash(ctx context.Context, tokenHash string) error
 	DeleteTicketParticipant(ctx context.Context, arg DeleteTicketParticipantParams) error
+	// 1 件の event を取得する。詳細・編集画面用。
+	GetEventByID(ctx context.Context, id string) (GetEventByIDRow, error)
 	// session 引きで紐づく user と expires_at を一発で取得する。
 	// 期限切れ判定は呼び出し側で行う。
 	GetSessionUserByTokenHash(ctx context.Context, tokenHash string) (GetSessionUserByTokenHashRow, error)
@@ -64,6 +66,7 @@ type Querier interface {
 	MarkTicketParticipantSettled(ctx context.Context, arg MarkTicketParticipantSettledParams) error
 	// 精算済み → 未精算。settled_at を NULL に戻す。
 	MarkTicketParticipantUnsettled(ctx context.Context, arg MarkTicketParticipantUnsettledParams) error
+	UpdateEvent(ctx context.Context, arg UpdateEventParams) error
 	// ticket 本体の更新。event_id は変更しない。purchased_by の変更は呼び出し側で
 	// 新しい立替者が ticket_participants に含まれることを保証する。max_participants は
 	// 呼び出し側で参加者数を下回らないことを保証する。

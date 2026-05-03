@@ -383,6 +383,225 @@ func (x *CreateEventResponse) GetEvent() *Event {
 	return nil
 }
 
+type GetEventRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EventId       string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetEventRequest) Reset() {
+	*x = GetEventRequest{}
+	mi := &file_nazobu_v1_event_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetEventRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetEventRequest) ProtoMessage() {}
+
+func (x *GetEventRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_event_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetEventRequest.ProtoReflect.Descriptor instead.
+func (*GetEventRequest) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_event_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *GetEventRequest) GetEventId() string {
+	if x != nil {
+		return x.EventId
+	}
+	return ""
+}
+
+type GetEventResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Event *Event                 `protobuf:"bytes,1,opt,name=event,proto3" json:"event,omitempty"`
+	// 現在ログイン中の user が編集権限を持つか（admin のみ）。
+	CanEdit       bool `protobuf:"varint,2,opt,name=can_edit,json=canEdit,proto3" json:"can_edit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetEventResponse) Reset() {
+	*x = GetEventResponse{}
+	mi := &file_nazobu_v1_event_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetEventResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetEventResponse) ProtoMessage() {}
+
+func (x *GetEventResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_event_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetEventResponse.ProtoReflect.Descriptor instead.
+func (*GetEventResponse) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_event_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *GetEventResponse) GetEvent() *Event {
+	if x != nil {
+		return x.Event
+	}
+	return nil
+}
+
+func (x *GetEventResponse) GetCanEdit() bool {
+	if x != nil {
+		return x.CanEdit
+	}
+	return false
+}
+
+type UpdateEventRequest struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	EventId string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
+	Title   string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Url     string                 `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
+	// 開場時間が開演時刻の何分前か。任意。
+	DoorsOpenMinutesBefore *int32 `protobuf:"varint,4,opt,name=doors_open_minutes_before,json=doorsOpenMinutesBefore,proto3,oneof" json:"doors_open_minutes_before,omitempty"`
+	// 入場締切が開演時刻の何分前か。任意。
+	EntryDeadlineMinutesBefore *int32 `protobuf:"varint,5,opt,name=entry_deadline_minutes_before,json=entryDeadlineMinutesBefore,proto3,oneof" json:"entry_deadline_minutes_before,omitempty"`
+	unknownFields              protoimpl.UnknownFields
+	sizeCache                  protoimpl.SizeCache
+}
+
+func (x *UpdateEventRequest) Reset() {
+	*x = UpdateEventRequest{}
+	mi := &file_nazobu_v1_event_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateEventRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateEventRequest) ProtoMessage() {}
+
+func (x *UpdateEventRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_event_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateEventRequest.ProtoReflect.Descriptor instead.
+func (*UpdateEventRequest) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_event_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *UpdateEventRequest) GetEventId() string {
+	if x != nil {
+		return x.EventId
+	}
+	return ""
+}
+
+func (x *UpdateEventRequest) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *UpdateEventRequest) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *UpdateEventRequest) GetDoorsOpenMinutesBefore() int32 {
+	if x != nil && x.DoorsOpenMinutesBefore != nil {
+		return *x.DoorsOpenMinutesBefore
+	}
+	return 0
+}
+
+func (x *UpdateEventRequest) GetEntryDeadlineMinutesBefore() int32 {
+	if x != nil && x.EntryDeadlineMinutesBefore != nil {
+		return *x.EntryDeadlineMinutesBefore
+	}
+	return 0
+}
+
+type UpdateEventResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Event         *Event                 `protobuf:"bytes,1,opt,name=event,proto3" json:"event,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateEventResponse) Reset() {
+	*x = UpdateEventResponse{}
+	mi := &file_nazobu_v1_event_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateEventResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateEventResponse) ProtoMessage() {}
+
+func (x *UpdateEventResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_event_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateEventResponse.ProtoReflect.Descriptor instead.
+func (*UpdateEventResponse) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_event_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *UpdateEventResponse) GetEvent() *Event {
+	if x != nil {
+		return x.Event
+	}
+	return nil
+}
+
 var File_nazobu_v1_event_proto protoreflect.FileDescriptor
 
 const file_nazobu_v1_event_proto_rawDesc = "" +
@@ -414,11 +633,28 @@ const file_nazobu_v1_event_proto_rawDesc = "" +
 	"\x1a_doors_open_minutes_beforeB \n" +
 	"\x1e_entry_deadline_minutes_before\"=\n" +
 	"\x13CreateEventResponse\x12&\n" +
-	"\x05event\x18\x01 \x01(\v2\x10.nazobu.v1.EventR\x05event2\xa7\x01\n" +
+	"\x05event\x18\x01 \x01(\v2\x10.nazobu.v1.EventR\x05event\",\n" +
+	"\x0fGetEventRequest\x12\x19\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\"U\n" +
+	"\x10GetEventResponse\x12&\n" +
+	"\x05event\x18\x01 \x01(\v2\x10.nazobu.v1.EventR\x05event\x12\x19\n" +
+	"\bcan_edit\x18\x02 \x01(\bR\acanEdit\"\x9f\x02\n" +
+	"\x12UpdateEventRequest\x12\x19\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12\x10\n" +
+	"\x03url\x18\x03 \x01(\tR\x03url\x12>\n" +
+	"\x19doors_open_minutes_before\x18\x04 \x01(\x05H\x00R\x16doorsOpenMinutesBefore\x88\x01\x01\x12F\n" +
+	"\x1dentry_deadline_minutes_before\x18\x05 \x01(\x05H\x01R\x1aentryDeadlineMinutesBefore\x88\x01\x01B\x1c\n" +
+	"\x1a_doors_open_minutes_beforeB \n" +
+	"\x1e_entry_deadline_minutes_before\"=\n" +
+	"\x13UpdateEventResponse\x12&\n" +
+	"\x05event\x18\x01 \x01(\v2\x10.nazobu.v1.EventR\x05event2\xba\x02\n" +
 	"\fEventService\x12I\n" +
 	"\n" +
-	"ListEvents\x12\x1c.nazobu.v1.ListEventsRequest\x1a\x1d.nazobu.v1.ListEventsResponse\x12L\n" +
-	"\vCreateEvent\x12\x1d.nazobu.v1.CreateEventRequest\x1a\x1e.nazobu.v1.CreateEventResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
+	"ListEvents\x12\x1c.nazobu.v1.ListEventsRequest\x1a\x1d.nazobu.v1.ListEventsResponse\x12C\n" +
+	"\bGetEvent\x12\x1a.nazobu.v1.GetEventRequest\x1a\x1b.nazobu.v1.GetEventResponse\x12L\n" +
+	"\vCreateEvent\x12\x1d.nazobu.v1.CreateEventRequest\x1a\x1e.nazobu.v1.CreateEventResponse\x12L\n" +
+	"\vUpdateEvent\x12\x1d.nazobu.v1.UpdateEventRequest\x1a\x1e.nazobu.v1.UpdateEventResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
 
 var (
 	file_nazobu_v1_event_proto_rawDescOnce sync.Once
@@ -432,7 +668,7 @@ func file_nazobu_v1_event_proto_rawDescGZIP() []byte {
 	return file_nazobu_v1_event_proto_rawDescData
 }
 
-var file_nazobu_v1_event_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_nazobu_v1_event_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_nazobu_v1_event_proto_goTypes = []any{
 	(*ListEventsRequest)(nil),   // 0: nazobu.v1.ListEventsRequest
 	(*ListEventsResponse)(nil),  // 1: nazobu.v1.ListEventsResponse
@@ -440,20 +676,30 @@ var file_nazobu_v1_event_proto_goTypes = []any{
 	(*EventTicket)(nil),         // 3: nazobu.v1.EventTicket
 	(*CreateEventRequest)(nil),  // 4: nazobu.v1.CreateEventRequest
 	(*CreateEventResponse)(nil), // 5: nazobu.v1.CreateEventResponse
+	(*GetEventRequest)(nil),     // 6: nazobu.v1.GetEventRequest
+	(*GetEventResponse)(nil),    // 7: nazobu.v1.GetEventResponse
+	(*UpdateEventRequest)(nil),  // 8: nazobu.v1.UpdateEventRequest
+	(*UpdateEventResponse)(nil), // 9: nazobu.v1.UpdateEventResponse
 }
 var file_nazobu_v1_event_proto_depIdxs = []int32{
 	2, // 0: nazobu.v1.ListEventsResponse.events:type_name -> nazobu.v1.Event
 	3, // 1: nazobu.v1.Event.tickets:type_name -> nazobu.v1.EventTicket
 	2, // 2: nazobu.v1.CreateEventResponse.event:type_name -> nazobu.v1.Event
-	0, // 3: nazobu.v1.EventService.ListEvents:input_type -> nazobu.v1.ListEventsRequest
-	4, // 4: nazobu.v1.EventService.CreateEvent:input_type -> nazobu.v1.CreateEventRequest
-	1, // 5: nazobu.v1.EventService.ListEvents:output_type -> nazobu.v1.ListEventsResponse
-	5, // 6: nazobu.v1.EventService.CreateEvent:output_type -> nazobu.v1.CreateEventResponse
-	5, // [5:7] is the sub-list for method output_type
-	3, // [3:5] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	2, // 3: nazobu.v1.GetEventResponse.event:type_name -> nazobu.v1.Event
+	2, // 4: nazobu.v1.UpdateEventResponse.event:type_name -> nazobu.v1.Event
+	0, // 5: nazobu.v1.EventService.ListEvents:input_type -> nazobu.v1.ListEventsRequest
+	6, // 6: nazobu.v1.EventService.GetEvent:input_type -> nazobu.v1.GetEventRequest
+	4, // 7: nazobu.v1.EventService.CreateEvent:input_type -> nazobu.v1.CreateEventRequest
+	8, // 8: nazobu.v1.EventService.UpdateEvent:input_type -> nazobu.v1.UpdateEventRequest
+	1, // 9: nazobu.v1.EventService.ListEvents:output_type -> nazobu.v1.ListEventsResponse
+	7, // 10: nazobu.v1.EventService.GetEvent:output_type -> nazobu.v1.GetEventResponse
+	5, // 11: nazobu.v1.EventService.CreateEvent:output_type -> nazobu.v1.CreateEventResponse
+	9, // 12: nazobu.v1.EventService.UpdateEvent:output_type -> nazobu.v1.UpdateEventResponse
+	9, // [9:13] is the sub-list for method output_type
+	5, // [5:9] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_nazobu_v1_event_proto_init() }
@@ -463,13 +709,14 @@ func file_nazobu_v1_event_proto_init() {
 	}
 	file_nazobu_v1_event_proto_msgTypes[2].OneofWrappers = []any{}
 	file_nazobu_v1_event_proto_msgTypes[4].OneofWrappers = []any{}
+	file_nazobu_v1_event_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_nazobu_v1_event_proto_rawDesc), len(file_nazobu_v1_event_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

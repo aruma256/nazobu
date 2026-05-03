@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file nazobu/v1/event.proto.
  */
 export const file_nazobu_v1_event: GenFile = /*@__PURE__*/
-  fileDesc("ChVuYXpvYnUvdjEvZXZlbnQucHJvdG8SCW5hem9idS52MSITChFMaXN0RXZlbnRzUmVxdWVzdCI2ChJMaXN0RXZlbnRzUmVzcG9uc2USIAoGZXZlbnRzGAEgAygLMhAubmF6b2J1LnYxLkV2ZW50IuwBCgVFdmVudBIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRILCgN1cmwYAyABKAkSJwoHdGlja2V0cxgEIAMoCzIWLm5hem9idS52MS5FdmVudFRpY2tldBImChlkb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlGAUgASgFSACIAQESKgodZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUYBiABKAVIAYgBAUIcChpfZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZUIgCh5fZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUieAoLRXZlbnRUaWNrZXQSCgoCaWQYASABKAkSEAoIc3RhcnRfYXQYAiABKAkSGAoQcHJpY2VfcGVyX3BlcnNvbhgDIAEoBRIWCg5wdXJjaGFzZXJfbmFtZRgEIAEoCRIZChFwYXJ0aWNpcGFudF9uYW1lcxgFIAMoCSLEAQoSQ3JlYXRlRXZlbnRSZXF1ZXN0Eg0KBXRpdGxlGAEgASgJEgsKA3VybBgCIAEoCRImChlkb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlGAMgASgFSACIAQESKgodZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUYBCABKAVIAYgBAUIcChpfZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZUIgCh5fZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUiNgoTQ3JlYXRlRXZlbnRSZXNwb25zZRIfCgVldmVudBgBIAEoCzIQLm5hem9idS52MS5FdmVudDKnAQoMRXZlbnRTZXJ2aWNlEkkKCkxpc3RFdmVudHMSHC5uYXpvYnUudjEuTGlzdEV2ZW50c1JlcXVlc3QaHS5uYXpvYnUudjEuTGlzdEV2ZW50c1Jlc3BvbnNlEkwKC0NyZWF0ZUV2ZW50Eh0ubmF6b2J1LnYxLkNyZWF0ZUV2ZW50UmVxdWVzdBoeLm5hem9idS52MS5DcmVhdGVFdmVudFJlc3BvbnNlQkRaQmdpdGh1Yi5jb20vYXJ1bWEyNTYvbmF6b2J1L2JhY2tlbmQvaW50ZXJuYWwvZ2VuL25hem9idS92MTtuYXpvYnV2MWIGcHJvdG8z");
+  fileDesc("ChVuYXpvYnUvdjEvZXZlbnQucHJvdG8SCW5hem9idS52MSITChFMaXN0RXZlbnRzUmVxdWVzdCI2ChJMaXN0RXZlbnRzUmVzcG9uc2USIAoGZXZlbnRzGAEgAygLMhAubmF6b2J1LnYxLkV2ZW50IuwBCgVFdmVudBIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRILCgN1cmwYAyABKAkSJwoHdGlja2V0cxgEIAMoCzIWLm5hem9idS52MS5FdmVudFRpY2tldBImChlkb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlGAUgASgFSACIAQESKgodZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUYBiABKAVIAYgBAUIcChpfZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZUIgCh5fZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUieAoLRXZlbnRUaWNrZXQSCgoCaWQYASABKAkSEAoIc3RhcnRfYXQYAiABKAkSGAoQcHJpY2VfcGVyX3BlcnNvbhgDIAEoBRIWCg5wdXJjaGFzZXJfbmFtZRgEIAEoCRIZChFwYXJ0aWNpcGFudF9uYW1lcxgFIAMoCSLEAQoSQ3JlYXRlRXZlbnRSZXF1ZXN0Eg0KBXRpdGxlGAEgASgJEgsKA3VybBgCIAEoCRImChlkb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlGAMgASgFSACIAQESKgodZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUYBCABKAVIAYgBAUIcChpfZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZUIgCh5fZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUiNgoTQ3JlYXRlRXZlbnRSZXNwb25zZRIfCgVldmVudBgBIAEoCzIQLm5hem9idS52MS5FdmVudCIjCg9HZXRFdmVudFJlcXVlc3QSEAoIZXZlbnRfaWQYASABKAkiRQoQR2V0RXZlbnRSZXNwb25zZRIfCgVldmVudBgBIAEoCzIQLm5hem9idS52MS5FdmVudBIQCghjYW5fZWRpdBgCIAEoCCLWAQoSVXBkYXRlRXZlbnRSZXF1ZXN0EhAKCGV2ZW50X2lkGAEgASgJEg0KBXRpdGxlGAIgASgJEgsKA3VybBgDIAEoCRImChlkb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlGAQgASgFSACIAQESKgodZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUYBSABKAVIAYgBAUIcChpfZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZUIgCh5fZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUiNgoTVXBkYXRlRXZlbnRSZXNwb25zZRIfCgVldmVudBgBIAEoCzIQLm5hem9idS52MS5FdmVudDK6AgoMRXZlbnRTZXJ2aWNlEkkKCkxpc3RFdmVudHMSHC5uYXpvYnUudjEuTGlzdEV2ZW50c1JlcXVlc3QaHS5uYXpvYnUudjEuTGlzdEV2ZW50c1Jlc3BvbnNlEkMKCEdldEV2ZW50EhoubmF6b2J1LnYxLkdldEV2ZW50UmVxdWVzdBobLm5hem9idS52MS5HZXRFdmVudFJlc3BvbnNlEkwKC0NyZWF0ZUV2ZW50Eh0ubmF6b2J1LnYxLkNyZWF0ZUV2ZW50UmVxdWVzdBoeLm5hem9idS52MS5DcmVhdGVFdmVudFJlc3BvbnNlEkwKC1VwZGF0ZUV2ZW50Eh0ubmF6b2J1LnYxLlVwZGF0ZUV2ZW50UmVxdWVzdBoeLm5hem9idS52MS5VcGRhdGVFdmVudFJlc3BvbnNlQkRaQmdpdGh1Yi5jb20vYXJ1bWEyNTYvbmF6b2J1L2JhY2tlbmQvaW50ZXJuYWwvZ2VuL25hem9idS92MTtuYXpvYnV2MWIGcHJvdG8z");
 
 /**
  * @generated from message nazobu.v1.ListEventsRequest
@@ -191,7 +191,106 @@ export const CreateEventResponseSchema: GenMessage<CreateEventResponse> = /*@__P
   messageDesc(file_nazobu_v1_event, 5);
 
 /**
- * EventService は event（公演）の参照・登録 RPC を提供する。
+ * @generated from message nazobu.v1.GetEventRequest
+ */
+export type GetEventRequest = Message<"nazobu.v1.GetEventRequest"> & {
+  /**
+   * @generated from field: string event_id = 1;
+   */
+  eventId: string;
+};
+
+/**
+ * Describes the message nazobu.v1.GetEventRequest.
+ * Use `create(GetEventRequestSchema)` to create a new message.
+ */
+export const GetEventRequestSchema: GenMessage<GetEventRequest> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_event, 6);
+
+/**
+ * @generated from message nazobu.v1.GetEventResponse
+ */
+export type GetEventResponse = Message<"nazobu.v1.GetEventResponse"> & {
+  /**
+   * @generated from field: nazobu.v1.Event event = 1;
+   */
+  event?: Event;
+
+  /**
+   * 現在ログイン中の user が編集権限を持つか（admin のみ）。
+   *
+   * @generated from field: bool can_edit = 2;
+   */
+  canEdit: boolean;
+};
+
+/**
+ * Describes the message nazobu.v1.GetEventResponse.
+ * Use `create(GetEventResponseSchema)` to create a new message.
+ */
+export const GetEventResponseSchema: GenMessage<GetEventResponse> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_event, 7);
+
+/**
+ * @generated from message nazobu.v1.UpdateEventRequest
+ */
+export type UpdateEventRequest = Message<"nazobu.v1.UpdateEventRequest"> & {
+  /**
+   * @generated from field: string event_id = 1;
+   */
+  eventId: string;
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string url = 3;
+   */
+  url: string;
+
+  /**
+   * 開場時間が開演時刻の何分前か。任意。
+   *
+   * @generated from field: optional int32 doors_open_minutes_before = 4;
+   */
+  doorsOpenMinutesBefore?: number;
+
+  /**
+   * 入場締切が開演時刻の何分前か。任意。
+   *
+   * @generated from field: optional int32 entry_deadline_minutes_before = 5;
+   */
+  entryDeadlineMinutesBefore?: number;
+};
+
+/**
+ * Describes the message nazobu.v1.UpdateEventRequest.
+ * Use `create(UpdateEventRequestSchema)` to create a new message.
+ */
+export const UpdateEventRequestSchema: GenMessage<UpdateEventRequest> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_event, 8);
+
+/**
+ * @generated from message nazobu.v1.UpdateEventResponse
+ */
+export type UpdateEventResponse = Message<"nazobu.v1.UpdateEventResponse"> & {
+  /**
+   * @generated from field: nazobu.v1.Event event = 1;
+   */
+  event?: Event;
+};
+
+/**
+ * Describes the message nazobu.v1.UpdateEventResponse.
+ * Use `create(UpdateEventResponseSchema)` to create a new message.
+ */
+export const UpdateEventResponseSchema: GenMessage<UpdateEventResponse> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_event, 9);
+
+/**
+ * EventService は event（公演）の参照・登録・更新 RPC を提供する。
  *
  * @generated from service nazobu.v1.EventService
  */
@@ -207,6 +306,16 @@ export const EventService: GenService<{
     output: typeof ListEventsResponseSchema;
   },
   /**
+   * GetEvent は 1 件の event を返す。詳細・編集画面の初期表示用。
+   *
+   * @generated from rpc nazobu.v1.EventService.GetEvent
+   */
+  getEvent: {
+    methodKind: "unary";
+    input: typeof GetEventRequestSchema;
+    output: typeof GetEventResponseSchema;
+  },
+  /**
    * CreateEvent は新規 event を 1 件登録する。
    *
    * @generated from rpc nazobu.v1.EventService.CreateEvent
@@ -215,6 +324,16 @@ export const EventService: GenService<{
     methodKind: "unary";
     input: typeof CreateEventRequestSchema;
     output: typeof CreateEventResponseSchema;
+  },
+  /**
+   * UpdateEvent は event の title / url / 開場・締切オフセットを更新する。admin のみ実行可能。
+   *
+   * @generated from rpc nazobu.v1.EventService.UpdateEvent
+   */
+  updateEvent: {
+    methodKind: "unary";
+    input: typeof UpdateEventRequestSchema;
+    output: typeof UpdateEventResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_nazobu_v1_event, 0);
