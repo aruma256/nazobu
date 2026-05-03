@@ -173,7 +173,7 @@ export function HomeView() {
         )}
 
         <Section>
-          <SectionTitle count={data.upcoming.length}>今後の予定</SectionTitle>
+          <SectionTitle count={data.upcoming.length}>あなたの今後の予定</SectionTitle>
           {data.upcoming.length === 0 ? (
             <p className="mt-3 text-sm text-zinc-500">
               参加予定の公演はありません。
@@ -248,7 +248,7 @@ function MonthlyHeader({
           <ChevronIcon direction="left" />
         </button>
         <h2 className="text-sm font-semibold tracking-wider text-zinc-700 uppercase">
-          <Mono>{monthView.year}</Mono> 年 <Mono>{monthView.month}</Mono> 月の履歴
+          あなたの <Mono>{monthView.year}</Mono> 年 <Mono>{monthView.month}</Mono> 月の履歴
         </h2>
         <button
           type="button"
