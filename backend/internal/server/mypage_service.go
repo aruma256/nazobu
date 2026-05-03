@@ -38,7 +38,7 @@ func (s *myPageService) GetMyPage(ctx context.Context, req *connect.Request[nazo
 	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, jst)
 	nextMonthStart := time.Date(now.Year(), now.Month()+1, 1, 0, 0, 0, 0, jst)
 
-	unsettled, err := s.queryUnsettled(ctx, user.ID)
+	unsettled, err := s.queryUnsettled(ctx, user.ID, now)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("未精算の取得に失敗: %w", err))
 	}
@@ -64,8 +64,11 @@ func (s *myPageService) GetMyPage(ctx context.Context, req *connect.Request[nazo
 	}), nil
 }
 
-func (s *myPageService) queryUnsettled(ctx context.Context, userID string) ([]*nazobuv1.UnsettledTicket, error) {
-	rows, err := s.q.ListUnsettledTicketsByUserID(ctx, userID)
+func (s *myPageService) queryUnsettled(ctx context.Context, userID string, now time.Time) ([]*nazobuv1.UnsettledTicket, error) {
+	rows, err := s.q.ListUnsettledTicketsByUserID(ctx, queries.ListUnsettledTicketsByUserIDParams{
+		UserID: userID,
+		Now:    now,
+	})
 	if err != nil {
 		return nil, err
 	}

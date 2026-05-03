@@ -51,9 +51,10 @@ type Querier interface {
 	ListTickets(ctx context.Context) ([]ListTicketsRow, error)
 	// CreateTicket 直後の返却用。1 件のことが多いがインタフェースは ListTickets と揃える。
 	ListTicketsByIDs(ctx context.Context, ids []string) ([]ListTicketsByIDsRow, error)
-	// 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」を取る。
+	// 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」かつ「開演が現在以前」を取る。
 	// 立替者本人の自己持ち分は精算対象ではないので除外する。
-	ListUnsettledTicketsByUserID(ctx context.Context, userID string) ([]ListUnsettledTicketsByUserIDRow, error)
+	// 未来分は精算対象として扱わない（公演前に表示しない）。
+	ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnsettledTicketsByUserIDParams) ([]ListUnsettledTicketsByUserIDRow, error)
 	// 当日 0:00（JST）以降に start_at を持つ自分の参加チケット。
 	// 当日中は時刻が過ぎていても表示し続ける（今日の予定として残す）。
 	ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcomingTicketsByUserIDParams) ([]ListUpcomingTicketsByUserIDRow, error)

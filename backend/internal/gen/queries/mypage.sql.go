@@ -133,8 +133,14 @@ JOIN users   pu ON pu.id = t.purchased_by
 WHERE tp.user_id    = ?
   AND tp.settled_at IS NULL
   AND t.purchased_by <> tp.user_id
+  AND t.start_at <= ?
 ORDER BY t.start_at ASC, t.id ASC
 `
+
+type ListUnsettledTicketsByUserIDParams struct {
+	UserID string
+	Now    time.Time
+}
 
 type ListUnsettledTicketsByUserIDRow struct {
 	ID             string
@@ -144,10 +150,11 @@ type ListUnsettledTicketsByUserIDRow struct {
 	PayeeName      string
 }
 
-// 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」を取る。
+// 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」かつ「開演が現在以前」を取る。
 // 立替者本人の自己持ち分は精算対象ではないので除外する。
-func (q *Queries) ListUnsettledTicketsByUserID(ctx context.Context, userID string) ([]ListUnsettledTicketsByUserIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, listUnsettledTicketsByUserID, userID)
+// 未来分は精算対象として扱わない（公演前に表示しない）。
+func (q *Queries) ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnsettledTicketsByUserIDParams) ([]ListUnsettledTicketsByUserIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, listUnsettledTicketsByUserID, arg.UserID, arg.Now)
 	if err != nil {
 		return nil, err
 	}

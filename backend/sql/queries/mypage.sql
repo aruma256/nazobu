@@ -1,6 +1,7 @@
 -- name: ListUnsettledTicketsByUserID :many
--- 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」を取る。
+-- 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」かつ「開演が現在以前」を取る。
 -- 立替者本人の自己持ち分は精算対象ではないので除外する。
+-- 未来分は精算対象として扱わない（公演前に表示しない）。
 SELECT t.id, e.title AS event_title,
        t.price_per_person, t.start_at,
        pu.display_name AS payee_name
@@ -11,6 +12,7 @@ JOIN users   pu ON pu.id = t.purchased_by
 WHERE tp.user_id    = sqlc.arg('user_id')
   AND tp.settled_at IS NULL
   AND t.purchased_by <> tp.user_id
+  AND t.start_at <= sqlc.arg('now')
 ORDER BY t.start_at ASC, t.id ASC;
 
 -- name: ListUpcomingTicketsByUserID :many
