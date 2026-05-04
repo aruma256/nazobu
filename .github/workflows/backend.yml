@@ -25,7 +25,21 @@ jobs:
       - run: go mod download
       - run: go build ./...
       - run: go vet ./...
-      - run: go test ./...
+      - name: test (with coverage)
+        run: |
+          # 自動生成物 (internal/gen) と cobra コマンド (cmd) は -coverpkg で母数から除外
+          PKGS=$(go list ./... | grep -v '/internal/gen' | grep -v '/cmd' | paste -sd,)
+          go test -coverprofile=coverage.out -covermode=atomic -coverpkg="$PKGS" ./...
+      - name: coverage summary
+        run: |
+          go tool cover -func=coverage.out | tee /tmp/cov-func.txt
+          {
+            echo '## Coverage'
+            echo
+            echo '```'
+            cat /tmp/cov-func.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   golangci-lint:
     name: golangci-lint
