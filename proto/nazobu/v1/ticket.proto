@@ -57,6 +57,8 @@ message Ticket {
   int32 max_participants = 12;
   // 公演 URL から取得した OG 画像の URL。未取得 / 取得失敗時は空文字。
   string event_image_url = 13;
+  // 公演の想定所要時間（分）。カレンダー連携で終了時刻を算出する用途。1 以上。
+  int32 event_expected_duration_minutes = 14;
 }
 
 message GetTicketRequest {

@@ -40,18 +40,19 @@ func (s *ticketService) ListTickets(ctx context.Context, req *connect.Request[na
 	tickets := make([]*nazobuv1.Ticket, 0, len(rows))
 	for _, r := range rows {
 		tickets = append(tickets, &nazobuv1.Ticket{
-			Id:               r.ID,
-			EventId:          r.EventID,
-			EventTitle:       r.EventTitle,
-			EventUrl:         r.EventUrl,
-			EventImageUrl:    nullStringToString(r.EventImageUrl),
-			StartAt:          formatJSTDateTime(r.StartAt),
-			MeetingAt:        formatNullableJSTDateTime(r.MeetingAt),
-			PricePerPerson:   r.PricePerPerson,
-			MaxParticipants:  r.MaxParticipants,
-			MeetingPlace:     r.MeetingPlace,
-			PurchaserName:    r.PurchaserName,
-			ParticipantNames: []string{},
+			Id:                            r.ID,
+			EventId:                       r.EventID,
+			EventTitle:                    r.EventTitle,
+			EventUrl:                      r.EventUrl,
+			EventImageUrl:                 nullStringToString(r.EventImageUrl),
+			EventExpectedDurationMinutes:  r.EventExpectedDurationMinutes,
+			StartAt:                       formatJSTDateTime(r.StartAt),
+			MeetingAt:                     formatNullableJSTDateTime(r.MeetingAt),
+			PricePerPerson:                r.PricePerPerson,
+			MaxParticipants:               r.MaxParticipants,
+			MeetingPlace:                  r.MeetingPlace,
+			PurchaserName:                 r.PurchaserName,
+			ParticipantNames:              []string{},
 		})
 	}
 	if len(tickets) == 0 {
@@ -100,18 +101,19 @@ func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazo
 	}
 
 	ticket := &nazobuv1.Ticket{
-		Id:               row.ID,
-		EventId:          row.EventID,
-		EventTitle:       row.EventTitle,
-		EventUrl:         row.EventUrl,
-		EventImageUrl:    nullStringToString(row.EventImageUrl),
-		StartAt:          formatJSTDateTime(row.StartAt),
-		MeetingAt:        formatNullableJSTDateTime(row.MeetingAt),
-		PricePerPerson:   row.PricePerPerson,
-		MaxParticipants:  row.MaxParticipants,
-		MeetingPlace:     row.MeetingPlace,
-		PurchaserName:    row.PurchaserName,
-		ParticipantNames: participantNames,
+		Id:                            row.ID,
+		EventId:                       row.EventID,
+		EventTitle:                    row.EventTitle,
+		EventUrl:                      row.EventUrl,
+		EventImageUrl:                 nullStringToString(row.EventImageUrl),
+		EventExpectedDurationMinutes:  row.EventExpectedDurationMinutes,
+		StartAt:                       formatJSTDateTime(row.StartAt),
+		MeetingAt:                     formatNullableJSTDateTime(row.MeetingAt),
+		PricePerPerson:                row.PricePerPerson,
+		MaxParticipants:               row.MaxParticipants,
+		MeetingPlace:                  row.MeetingPlace,
+		PurchaserName:                 row.PurchaserName,
+		ParticipantNames:              participantNames,
 	}
 
 	canEdit := canEditTicket(user, row.PurchasedBy)
@@ -218,18 +220,19 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 	}
 	r := rows[0]
 	ticket := &nazobuv1.Ticket{
-		Id:               r.ID,
-		EventId:          r.EventID,
-		EventTitle:       r.EventTitle,
-		EventUrl:         r.EventUrl,
-		EventImageUrl:    nullStringToString(r.EventImageUrl),
-		StartAt:          formatJSTDateTime(r.StartAt),
-		MeetingAt:        formatNullableJSTDateTime(r.MeetingAt),
-		PricePerPerson:   r.PricePerPerson,
-		MaxParticipants:  r.MaxParticipants,
-		MeetingPlace:     r.MeetingPlace,
-		PurchaserName:    r.PurchaserName,
-		ParticipantNames: []string{},
+		Id:                            r.ID,
+		EventId:                       r.EventID,
+		EventTitle:                    r.EventTitle,
+		EventUrl:                      r.EventUrl,
+		EventImageUrl:                 nullStringToString(r.EventImageUrl),
+		EventExpectedDurationMinutes:  r.EventExpectedDurationMinutes,
+		StartAt:                       formatJSTDateTime(r.StartAt),
+		MeetingAt:                     formatNullableJSTDateTime(r.MeetingAt),
+		PricePerPerson:                r.PricePerPerson,
+		MaxParticipants:               r.MaxParticipants,
+		MeetingPlace:                  r.MeetingPlace,
+		PurchaserName:                 r.PurchaserName,
+		ParticipantNames:              []string{},
 	}
 	if err := s.attachParticipants(ctx, []*nazobuv1.Ticket{ticket}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の取得に失敗: %w", err))
@@ -325,18 +328,19 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 	}
 	r := rows[0]
 	ticket := &nazobuv1.Ticket{
-		Id:               r.ID,
-		EventId:          r.EventID,
-		EventTitle:       r.EventTitle,
-		EventUrl:         r.EventUrl,
-		EventImageUrl:    nullStringToString(r.EventImageUrl),
-		StartAt:          formatJSTDateTime(r.StartAt),
-		MeetingAt:        formatNullableJSTDateTime(r.MeetingAt),
-		PricePerPerson:   r.PricePerPerson,
-		MaxParticipants:  r.MaxParticipants,
-		MeetingPlace:     r.MeetingPlace,
-		PurchaserName:    r.PurchaserName,
-		ParticipantNames: []string{},
+		Id:                            r.ID,
+		EventId:                       r.EventID,
+		EventTitle:                    r.EventTitle,
+		EventUrl:                      r.EventUrl,
+		EventImageUrl:                 nullStringToString(r.EventImageUrl),
+		EventExpectedDurationMinutes:  r.EventExpectedDurationMinutes,
+		StartAt:                       formatJSTDateTime(r.StartAt),
+		MeetingAt:                     formatNullableJSTDateTime(r.MeetingAt),
+		PricePerPerson:                r.PricePerPerson,
+		MaxParticipants:               r.MaxParticipants,
+		MeetingPlace:                  r.MeetingPlace,
+		PurchaserName:                 r.PurchaserName,
+		ParticipantNames:              []string{},
 	}
 	if err := s.attachParticipants(ctx, []*nazobuv1.Ticket{ticket}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の取得に失敗: %w", err))

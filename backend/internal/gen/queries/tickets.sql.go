@@ -102,6 +102,7 @@ func (q *Queries) DeleteTicketParticipant(ctx context.Context, arg DeleteTicketP
 
 const getTicketByID = `-- name: GetTicketByID :one
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.image_url AS event_image_url,
+       e.expected_duration_minutes AS event_expected_duration_minutes,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        t.purchased_by,
@@ -113,18 +114,19 @@ WHERE t.id = ?
 `
 
 type GetTicketByIDRow struct {
-	ID              string
-	EventID         string
-	EventTitle      string
-	EventUrl        string
-	EventImageUrl   sql.NullString
-	StartAt         time.Time
-	MeetingAt       sql.NullTime
-	PricePerPerson  int32
-	MaxParticipants int32
-	MeetingPlace    string
-	PurchasedBy     string
-	PurchaserName   string
+	ID                           string
+	EventID                      string
+	EventTitle                   string
+	EventUrl                     string
+	EventImageUrl                sql.NullString
+	EventExpectedDurationMinutes int32
+	StartAt                      time.Time
+	MeetingAt                    sql.NullTime
+	PricePerPerson               int32
+	MaxParticipants              int32
+	MeetingPlace                 string
+	PurchasedBy                  string
+	PurchaserName                string
 }
 
 // ticket 詳細表示用。立替者の id と表示名も返す（権限判定 / UI 表示で使う）。
@@ -137,6 +139,7 @@ func (q *Queries) GetTicketByID(ctx context.Context, id string) (GetTicketByIDRo
 		&i.EventTitle,
 		&i.EventUrl,
 		&i.EventImageUrl,
+		&i.EventExpectedDurationMinutes,
 		&i.StartAt,
 		&i.MeetingAt,
 		&i.PricePerPerson,
@@ -239,6 +242,7 @@ func (q *Queries) ListTicketParticipantsByTicketID(ctx context.Context, ticketID
 
 const listTickets = `-- name: ListTickets :many
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.image_url AS event_image_url,
+       e.expected_duration_minutes AS event_expected_duration_minutes,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        pu.display_name AS purchaser_name
@@ -249,17 +253,18 @@ ORDER BY t.start_at DESC, t.id ASC
 `
 
 type ListTicketsRow struct {
-	ID              string
-	EventID         string
-	EventTitle      string
-	EventUrl        string
-	EventImageUrl   sql.NullString
-	StartAt         time.Time
-	MeetingAt       sql.NullTime
-	PricePerPerson  int32
-	MaxParticipants int32
-	MeetingPlace    string
-	PurchaserName   string
+	ID                           string
+	EventID                      string
+	EventTitle                   string
+	EventUrl                     string
+	EventImageUrl                sql.NullString
+	EventExpectedDurationMinutes int32
+	StartAt                      time.Time
+	MeetingAt                    sql.NullTime
+	PricePerPerson               int32
+	MaxParticipants              int32
+	MeetingPlace                 string
+	PurchaserName                string
 }
 
 // ticket 一覧画面用。event 名と立替者名を join して返す。
@@ -278,6 +283,7 @@ func (q *Queries) ListTickets(ctx context.Context) ([]ListTicketsRow, error) {
 			&i.EventTitle,
 			&i.EventUrl,
 			&i.EventImageUrl,
+			&i.EventExpectedDurationMinutes,
 			&i.StartAt,
 			&i.MeetingAt,
 			&i.PricePerPerson,
@@ -300,6 +306,7 @@ func (q *Queries) ListTickets(ctx context.Context) ([]ListTicketsRow, error) {
 
 const listTicketsByIDs = `-- name: ListTicketsByIDs :many
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.image_url AS event_image_url,
+       e.expected_duration_minutes AS event_expected_duration_minutes,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        pu.display_name AS purchaser_name
@@ -311,17 +318,18 @@ ORDER BY t.start_at DESC, t.id ASC
 `
 
 type ListTicketsByIDsRow struct {
-	ID              string
-	EventID         string
-	EventTitle      string
-	EventUrl        string
-	EventImageUrl   sql.NullString
-	StartAt         time.Time
-	MeetingAt       sql.NullTime
-	PricePerPerson  int32
-	MaxParticipants int32
-	MeetingPlace    string
-	PurchaserName   string
+	ID                           string
+	EventID                      string
+	EventTitle                   string
+	EventUrl                     string
+	EventImageUrl                sql.NullString
+	EventExpectedDurationMinutes int32
+	StartAt                      time.Time
+	MeetingAt                    sql.NullTime
+	PricePerPerson               int32
+	MaxParticipants              int32
+	MeetingPlace                 string
+	PurchaserName                string
 }
 
 // CreateTicket 直後の返却用。1 件のことが多いがインタフェースは ListTickets と揃える。
@@ -350,6 +358,7 @@ func (q *Queries) ListTicketsByIDs(ctx context.Context, ids []string) ([]ListTic
 			&i.EventTitle,
 			&i.EventUrl,
 			&i.EventImageUrl,
+			&i.EventExpectedDurationMinutes,
 			&i.StartAt,
 			&i.MeetingAt,
 			&i.PricePerPerson,

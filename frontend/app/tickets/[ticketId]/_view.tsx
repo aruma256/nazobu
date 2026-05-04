@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type {
   GetTicketResponse,
+  Ticket,
   TicketParticipant,
 } from "@/app/gen/nazobu/v1/ticket_pb";
 import type { GetMeResponse, User } from "@/app/gen/nazobu/v1/user_pb";
@@ -227,16 +228,24 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
               </dd>
             </dl>
 
-            {canEdit && (
-              <div className="border-t border-zinc-200 px-4 py-3">
+            <div className="flex flex-wrap gap-2 border-t border-zinc-200 px-4 py-3">
+              <a
+                href={buildGoogleCalendarUrl(ticket)}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-emerald-700 hover:bg-zinc-50"
+              >
+                Google カレンダーに追加
+              </a>
+              {canEdit && (
                 <Link
                   href={`/tickets/${ticket.id}/edit`}
                   className="inline-flex h-10 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-emerald-700 hover:bg-zinc-50"
                 >
                   チケット情報を編集
                 </Link>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </Section>
 
@@ -292,6 +301,50 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
       </PageShell>
     </>
   );
+}
+
+// Google カレンダーの「予定を作成」プリフィル URL を組み立てる。
+// 開始 = meeting_at（あれば）/ start_at、終了 = start_at + event.expected_duration_minutes。
+// 立替・参加者は意図的に説明欄に含めない。
+function buildGoogleCalendarUrl(ticket: Ticket): string {
+  const startAt = parseDateTime(ticket.startAt);
+  const startMs =
+    ticket.meetingAt !== ""
+      ? parseDateTime(ticket.meetingAt).getTime()
+      : startAt.getTime();
+  const endMs =
+    startAt.getTime() + ticket.eventExpectedDurationMinutes * 60 * 1000;
+
+  const detailLines = [
+    `開演 ${formatTimeHM(startAt)}`,
+    `一人 ${formatYen(ticket.pricePerPerson)}`,
+  ];
+  if (ticket.eventUrl !== "") {
+    detailLines.push("", `公演 ${ticket.eventUrl}`);
+  }
+  if (typeof window !== "undefined") {
+    detailLines.push(`謎部 ${window.location.href}`);
+  }
+
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: ticket.eventTitle,
+    dates: `${jstCompactDateTime(startMs)}/${jstCompactDateTime(endMs)}`,
+    ctz: "Asia/Tokyo",
+    location: ticket.meetingPlace,
+    details: detailLines.join("\n"),
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+// JST の壁時計を "YYYYMMDDTHHMMSS" に整形する。Google カレンダーの dates 引数用。
+// sv-SE ロケールは ISO 8601 形式 ("YYYY-MM-DD HH:MM:SS") を返すため、区切りを除くだけで済む。
+function jstCompactDateTime(ms: number): string {
+  const s = new Date(ms).toLocaleString("sv-SE", {
+    timeZone: "Asia/Tokyo",
+    hour12: false,
+  });
+  return s.replace(/[-:]/g, "").replace(" ", "T");
 }
 
 function ParticipantsSection({

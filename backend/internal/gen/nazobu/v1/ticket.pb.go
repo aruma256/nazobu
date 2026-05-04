@@ -125,8 +125,10 @@ type Ticket struct {
 	MaxParticipants int32 `protobuf:"varint,12,opt,name=max_participants,json=maxParticipants,proto3" json:"max_participants,omitempty"`
 	// 公演 URL から取得した OG 画像の URL。未取得 / 取得失敗時は空文字。
 	EventImageUrl string `protobuf:"bytes,13,opt,name=event_image_url,json=eventImageUrl,proto3" json:"event_image_url,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// 公演の想定所要時間（分）。カレンダー連携で終了時刻を算出する用途。1 以上。
+	EventExpectedDurationMinutes int32 `protobuf:"varint,14,opt,name=event_expected_duration_minutes,json=eventExpectedDurationMinutes,proto3" json:"event_expected_duration_minutes,omitempty"`
+	unknownFields                protoimpl.UnknownFields
+	sizeCache                    protoimpl.SizeCache
 }
 
 func (x *Ticket) Reset() {
@@ -241,6 +243,13 @@ func (x *Ticket) GetEventImageUrl() string {
 		return x.EventImageUrl
 	}
 	return ""
+}
+
+func (x *Ticket) GetEventExpectedDurationMinutes() int32 {
+	if x != nil {
+		return x.EventExpectedDurationMinutes
+	}
+	return 0
 }
 
 type GetTicketRequest struct {
@@ -987,7 +996,7 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\x16nazobu/v1/ticket.proto\x12\tnazobu.v1\"\x14\n" +
 	"\x12ListTicketsRequest\"B\n" +
 	"\x13ListTicketsResponse\x12+\n" +
-	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"\xa7\x03\n" +
+	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"\xee\x03\n" +
 	"\x06Ticket\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\bevent_id\x18\x02 \x01(\tR\aeventId\x12\x1f\n" +
@@ -1003,7 +1012,8 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	" \x01(\tR\beventUrl\x12\x19\n" +
 	"\bstart_at\x18\v \x01(\tR\astartAt\x12)\n" +
 	"\x10max_participants\x18\f \x01(\x05R\x0fmaxParticipants\x12&\n" +
-	"\x0fevent_image_url\x18\r \x01(\tR\reventImageUrlJ\x04\b\x04\x10\x05\"/\n" +
+	"\x0fevent_image_url\x18\r \x01(\tR\reventImageUrl\x12E\n" +
+	"\x1fevent_expected_duration_minutes\x18\x0e \x01(\x05R\x1ceventExpectedDurationMinutesJ\x04\b\x04\x10\x05\"/\n" +
 	"\x10GetTicketRequest\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\"\x9b\x01\n" +
 	"\x11GetTicketResponse\x12)\n" +
