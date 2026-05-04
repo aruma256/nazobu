@@ -292,10 +292,10 @@ export function TicketCard({
           <h3 className="pt-1 text-base leading-snug font-semibold">
             {ticket.eventTitle}
           </h3>
-          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 pt-3 text-xs text-zinc-600">
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 pt-3 text-xs text-zinc-900">
             {hasMeeting && (
               <>
-                <dt className="text-zinc-400">集合</dt>
+                <dt>集合</dt>
                 <dd>
                   {meetingAt !== null && (
                     <Mono>{formatTimeHM(meetingAt)}</Mono>
@@ -305,11 +305,11 @@ export function TicketCard({
                 </dd>
               </>
             )}
-            <dt className="text-zinc-400">開演</dt>
+            <dt>開演</dt>
             <dd>
               <Mono>{formatTimeHM(startAt)}</Mono>
             </dd>
-            <dt className="text-zinc-400">定員</dt>
+            <dt>定員</dt>
             <dd>
               <Mono>
                 {ticket.participantNames.length}/{ticket.maxParticipants}
@@ -326,7 +326,7 @@ export function TicketCard({
             </dd>
             {ticket.participantNames.length > 0 && (
               <>
-                <dt className="text-zinc-400">参加</dt>
+                <dt>参加</dt>
                 <dd>
                   {[...ticket.participantNames]
                     .sort((a, b) => a.localeCompare(b, "ja"))

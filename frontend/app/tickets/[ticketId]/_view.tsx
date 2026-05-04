@@ -198,10 +198,10 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
                 {ticket.eventUrl}
               </a>
             )}
-            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 pt-3 pb-4 text-xs text-zinc-600">
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 pt-3 pb-4 text-xs text-zinc-900">
               {hasMeeting && (
                 <>
-                  <dt className="text-zinc-400">集合</dt>
+                  <dt>集合</dt>
                   <dd>
                     {meetingAt !== null && (
                       <Mono>{formatTimeHM(meetingAt)}</Mono>
@@ -211,17 +211,17 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
                   </dd>
                 </>
               )}
-              <dt className="text-zinc-400">開演</dt>
+              <dt>開演</dt>
               <dd>
                 <Mono>{formatTimeHM(startAt)}</Mono>
               </dd>
-              <dt className="text-zinc-400">立替</dt>
+              <dt>立替</dt>
               <dd>{ticket.purchaserName}</dd>
-              <dt className="text-zinc-400">定員</dt>
+              <dt>定員</dt>
               <dd>
                 <Mono>
                   {detail.participants.length}
-                  <span className="text-zinc-400"> / </span>
+                  <span className="text-zinc-500"> / </span>
                   {ticket.maxParticipants}
                 </Mono>
                 <span className="text-zinc-500"> 人</span>

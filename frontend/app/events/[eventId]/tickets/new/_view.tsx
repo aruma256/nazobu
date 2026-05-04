@@ -202,8 +202,8 @@ function Form({
         <Section>
           <SectionTitle>チケットを登録</SectionTitle>
 
-          <p className="mt-3 text-sm text-zinc-600">
-            <span className="text-zinc-400">公演</span>{" "}
+          <p className="mt-3 text-sm text-zinc-900">
+            公演{" "}
             <span className="font-semibold text-zinc-900">{event.title}</span>
           </p>
 

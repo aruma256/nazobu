@@ -139,16 +139,16 @@ function EventCard({
           </a>
         )}
         {hasOffsets && (
-          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-zinc-600">
+          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-zinc-900">
             {event.doorsOpenMinutesBefore !== undefined && (
               <>
-                <dt className="text-zinc-400">開場</dt>
+                <dt>開場</dt>
                 <dd>開始 {event.doorsOpenMinutesBefore} 分前</dd>
               </>
             )}
             {event.entryDeadlineMinutesBefore !== undefined && (
               <>
-                <dt className="text-zinc-400">締切</dt>
+                <dt>締切</dt>
                 <dd>開始 {event.entryDeadlineMinutesBefore} 分前</dd>
               </>
             )}
@@ -197,12 +197,12 @@ function TicketRow({ ticket, myName }: { ticket: EventTicket; myName: string }) 
             {formatYen(ticket.pricePerPerson)}
           </Mono>
         </div>
-        <p className="mt-1 text-xs text-zinc-600">
-          <span className="text-zinc-400">立替</span> {ticket.purchaserName}
+        <p className="mt-1 text-xs text-zinc-900">
+          立替 {ticket.purchaserName}
         </p>
         {ticket.participantNames.length > 0 && (
-          <p className="mt-1 text-xs text-zinc-600">
-            <span className="text-zinc-400">参加</span>{" "}
+          <p className="mt-1 text-xs text-zinc-900">
+            参加{" "}
             {[...ticket.participantNames]
               .sort((a, b) => a.localeCompare(b, "ja"))
               .map((name, i) => (
