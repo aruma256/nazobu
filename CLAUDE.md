@@ -4,7 +4,7 @@
 
 - ドメイン: `nazobu.aruma256.dev`
 - ホスティング: 自宅 Synology NAS 上の docker compose
-- インターネット公開: Tailscale もしくは Cloudflare 経由（未確定）
+- インターネット公開: Cloudflare Tunnel 経由
 - 想定機能（初期）:
   - 公演ごとの参加者管理（誰がどの公演に参加するか）
   - 参加費の精算管理（誰の精算が済んでいるか）
