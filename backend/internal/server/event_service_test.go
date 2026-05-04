@@ -2,7 +2,6 @@ package server
 
 import (
 	"database/sql"
-	"errors"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -43,16 +42,7 @@ func TestValidateMinutesBefore(t *testing.T) {
 
 	t.Run("負の値は InvalidArgument", func(t *testing.T) {
 		_, err := validateMinutesBefore(ptrInt32(-1), "doors_open_minutes_before")
-		if err == nil {
-			t.Fatal("err = nil, want error")
-		}
-		var cerr *connect.Error
-		if !errors.As(err, &cerr) {
-			t.Fatalf("err is not *connect.Error: %T", err)
-		}
-		if cerr.Code() != connect.CodeInvalidArgument {
-			t.Errorf("code = %v", cerr.Code())
-		}
+		assertConnectCode(t, err, connect.CodeInvalidArgument)
 	})
 }
 

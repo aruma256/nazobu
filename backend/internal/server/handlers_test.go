@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -62,7 +63,7 @@ func TestGenerateRandomString(t *testing.T) {
 
 func TestClearCookie(t *testing.T) {
 	for _, secure := range []bool{true, false} {
-		t.Run("", func(t *testing.T) {
+		t.Run(fmt.Sprintf("secure=%v", secure), func(t *testing.T) {
 			rec := httptest.NewRecorder()
 			clearCookie(rec, "test_cookie", secure)
 

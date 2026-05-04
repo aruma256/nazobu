@@ -3,7 +3,8 @@ package config
 import "testing"
 
 func TestEnv(t *testing.T) {
-	t.Run("環境変数が未設定ならデフォルト値を返す", func(t *testing.T) {
+	// 未設定 / 空文字は os.Getenv からは区別できず、どちらもデフォルト値に倒れる。
+	t.Run("空文字（= 未設定相当）ならデフォルト値を返す", func(t *testing.T) {
 		t.Setenv("NAZOBU_TEST_UNSET", "")
 		if got := env("NAZOBU_TEST_UNSET", "default"); got != "default" {
 			t.Errorf("env = %q, want %q", got, "default")
@@ -14,13 +15,6 @@ func TestEnv(t *testing.T) {
 		t.Setenv("NAZOBU_TEST_SET", "actual")
 		if got := env("NAZOBU_TEST_SET", "default"); got != "actual" {
 			t.Errorf("env = %q, want %q", got, "actual")
-		}
-	})
-
-	t.Run("空文字はデフォルト値とみなす", func(t *testing.T) {
-		t.Setenv("NAZOBU_TEST_EMPTY", "")
-		if got := env("NAZOBU_TEST_EMPTY", "fallback"); got != "fallback" {
-			t.Errorf("env = %q, want %q", got, "fallback")
 		}
 	})
 }
@@ -125,9 +119,11 @@ func TestCookieSecureOnlyExactlyTrue(t *testing.T) {
 		{"false", false},
 	}
 	for _, c := range cases {
-		t.Setenv("COOKIE_SECURE", c.in)
-		if got := Load().CookieSecure; got != c.want {
-			t.Errorf("COOKIE_SECURE=%q -> CookieSecure=%v, want %v", c.in, got, c.want)
-		}
+		t.Run(c.in, func(t *testing.T) {
+			t.Setenv("COOKIE_SECURE", c.in)
+			if got := Load().CookieSecure; got != c.want {
+				t.Errorf("CookieSecure=%v, want %v", got, c.want)
+			}
+		})
 	}
 }
