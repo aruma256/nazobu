@@ -1,9 +1,8 @@
 "use client";
 
 import { Code, ConnectError } from "@connectrpc/connect";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { Ticket } from "@/app/gen/nazobu/v1/ticket_pb";
 import type { GetMeResponse } from "@/app/gen/nazobu/v1/user_pb";
@@ -11,18 +10,11 @@ import { ticketClient, userClient } from "@/app/lib/rpc";
 
 import {
   AppHeader,
-  EventCover,
-  Mono,
   PageShell,
   Section,
   SectionTitle,
+  TicketCard,
 } from "@/app/_components";
-import {
-  formatDateJa,
-  formatTimeHM,
-  formatYen,
-  parseDateTime,
-} from "@/app/_format";
 import { redirectToLogin } from "@/app/lib/auth";
 
 type LoadState =
@@ -103,95 +95,5 @@ export function TicketsView() {
         </Section>
       </PageShell>
     </>
-  );
-}
-
-function TicketCard({ ticket, myName }: { ticket: Ticket; myName: string }) {
-  const startAt = parseDateTime(ticket.startAt);
-  const meetingAt =
-    ticket.meetingAt !== "" ? parseDateTime(ticket.meetingAt) : null;
-  const hasMeeting = meetingAt !== null || ticket.meetingPlace !== "";
-  return (
-    <li className="overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-colors hover:bg-zinc-50">
-      <Link
-        href={`/tickets/${ticket.id}`}
-        className="flex items-stretch gap-3 p-3"
-      >
-        {ticket.eventImageUrl !== "" && (
-          <EventCover
-            src={ticket.eventImageUrl}
-            alt={ticket.eventTitle}
-            variant="side"
-          />
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-3">
-            <Mono className="text-sm font-semibold text-emerald-700">
-              {formatDateJa(startAt)}
-            </Mono>
-            <Mono className="ml-auto text-sm font-semibold tracking-tight">
-              {formatYen(ticket.pricePerPerson)}
-            </Mono>
-          </div>
-          <h3 className="pt-1 text-base leading-snug font-semibold">
-            {ticket.eventTitle}
-          </h3>
-          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 pt-3 text-xs text-zinc-600">
-            {hasMeeting && (
-              <>
-                <dt className="text-zinc-400">集合</dt>
-                <dd>
-                  {meetingAt !== null && (
-                    <Mono>{formatTimeHM(meetingAt)}</Mono>
-                  )}
-                  {meetingAt !== null && ticket.meetingPlace !== "" && " "}
-                  {ticket.meetingPlace !== "" && ticket.meetingPlace}
-                </dd>
-              </>
-            )}
-            <dt className="text-zinc-400">開演</dt>
-            <dd>
-              <Mono>{formatTimeHM(startAt)}</Mono>
-            </dd>
-            <dt className="text-zinc-400">定員</dt>
-            <dd>
-              <Mono>
-                {ticket.participantNames.length}/{ticket.maxParticipants}
-              </Mono>
-              {ticket.participantNames.length < ticket.maxParticipants && (
-                <span className="ml-2 text-amber-800">
-                  （残り
-                  <Mono className="font-semibold">
-                    {ticket.maxParticipants - ticket.participantNames.length}
-                  </Mono>
-                  ）
-                </span>
-              )}
-            </dd>
-            {ticket.participantNames.length > 0 && (
-              <>
-                <dt className="text-zinc-400">参加</dt>
-                <dd>
-                  {[...ticket.participantNames]
-                    .sort((a, b) => a.localeCompare(b, "ja"))
-                    .map((name, i) => (
-                      <Fragment key={i}>
-                        {i > 0 && "・"}
-                        {name === myName ? (
-                          <span className="font-semibold text-zinc-900">
-                            {name}
-                          </span>
-                        ) : (
-                          name
-                        )}
-                      </Fragment>
-                    ))}
-                </dd>
-              </>
-            )}
-          </dl>
-        </div>
-      </Link>
-    </li>
   );
 }

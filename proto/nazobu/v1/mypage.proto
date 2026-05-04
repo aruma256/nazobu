@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package nazobu.v1;
 
+import "nazobu/v1/ticket.proto";
+
 option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1";
 
 // MyPageService はマイページ表示に必要な集約データを返す。
@@ -19,9 +21,10 @@ message GetMyPageRequest {}
 
 message GetMyPageResponse {
   // 自分の精算が未完了の ticket（start_at 昇順）。自分が立て替えた分は含めない。
-  repeated UnsettledTicket unsettled = 1;
+  // /tickets と同じ表示で扱うため Ticket 型に揃える。
+  repeated Ticket unsettled = 1;
   // 自分が参加予定で start_at が今日以降の ticket（start_at 昇順）。
-  repeated UpcomingTicket upcoming = 2;
+  repeated Ticket upcoming = 2;
   // monthly セクションの初期表示月（= 前月）に start_at がある自分の ticket（start_at 昇順）。
   repeated MonthlyTicket monthly = 3;
   // monthly セクションの初期表示月（サーバ基準、JST）。1〜12。既定は前月。
@@ -46,29 +49,6 @@ message ListMonthlyTicketsResponse {
   repeated MonthlyTicket monthly = 1;
   int32 year = 2;
   int32 month = 3;
-}
-
-message UnsettledTicket {
-  string ticket_id = 1;
-  string event_title = 2;
-  // 一人あたりの精算額（円）。
-  int32 price_per_person = 3;
-  // 立て替えてくれた人の表示名。
-  string payee_name = 4;
-  // 開演日時（RFC3339, JST）。
-  string start_at = 5;
-}
-
-message UpcomingTicket {
-  string ticket_id = 1;
-  string event_title = 2;
-  string event_url = 3;
-  // 開演日時（RFC3339, JST）。
-  string start_at = 4;
-  // 同じ ticket の他の参加者の表示名（自分は除く）。created_at 昇順。
-  repeated string companion_names = 5;
-  // 公演 URL から取得した OG 画像の URL。未取得 / 取得失敗時は空文字。
-  string event_image_url = 6;
 }
 
 message MonthlyTicket {

@@ -33,8 +33,6 @@ type Querier interface {
 	// ticket 詳細表示用。立替者の id と表示名も返す（権限判定 / UI 表示で使う）。
 	GetTicketByID(ctx context.Context, id string) (GetTicketByIDRow, error)
 	GetUserIDByIdentity(ctx context.Context, arg GetUserIDByIdentityParams) (string, error)
-	// 自分以外の参加者（同行者）名を ticket_id ごとにまとめて引く（N+1 回避）。
-	ListCompanionNamesByTicketIDs(ctx context.Context, arg ListCompanionNamesByTicketIDsParams) ([]ListCompanionNamesByTicketIDsRow, error)
 	// 公演一覧画面で各 event に紐づく ticket をまとめて引く。
 	// 呼び出し側で event_id ごとに in-memory で振り分ける（N+1 回避）。
 	ListEventTicketsByEventIDs(ctx context.Context, eventIds []string) ([]ListEventTicketsByEventIDsRow, error)
@@ -56,9 +54,11 @@ type Querier interface {
 	// 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」かつ「開演が現在以前」を取る。
 	// 立替者本人の自己持ち分は精算対象ではないので除外する。
 	// 未来分は精算対象として扱わない（公演前に表示しない）。
+	// 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
 	ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnsettledTicketsByUserIDParams) ([]ListUnsettledTicketsByUserIDRow, error)
 	// 当日 0:00（JST）以降に start_at を持つ自分の参加チケット。
 	// 当日中は時刻が過ぎていても表示し続ける（今日の予定として残す）。
+	// 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
 	ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcomingTicketsByUserIDParams) ([]ListUpcomingTicketsByUserIDRow, error)
 	// 表示用の最低限フィールドだけ返す。avatar_url 等は GetMe 経路（session join）で取る。
 	ListUsers(ctx context.Context) ([]ListUsersRow, error)

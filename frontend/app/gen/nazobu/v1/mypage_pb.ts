@@ -4,13 +4,15 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv1";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv1";
+import type { Ticket } from "./ticket_pb";
+import { file_nazobu_v1_ticket } from "./ticket_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file nazobu/v1/mypage.proto.
  */
 export const file_nazobu_v1_mypage: GenFile = /*@__PURE__*/
-  fileDesc("ChZuYXpvYnUvdjEvbXlwYWdlLnByb3RvEgluYXpvYnUudjEiEgoQR2V0TXlQYWdlUmVxdWVzdCL0AQoRR2V0TXlQYWdlUmVzcG9uc2USLQoJdW5zZXR0bGVkGAEgAygLMhoubmF6b2J1LnYxLlVuc2V0dGxlZFRpY2tldBIrCgh1cGNvbWluZxgCIAMoCzIZLm5hem9idS52MS5VcGNvbWluZ1RpY2tldBIpCgdtb250aGx5GAMgAygLMhgubmF6b2J1LnYxLk1vbnRobHlUaWNrZXQSFQoNbW9udGhseV9tb250aBgEIAEoBRIUCgxtb250aGx5X3llYXIYBSABKAUSFQoNY3VycmVudF9tb250aBgGIAEoBRIUCgxjdXJyZW50X3llYXIYByABKAUiOAoZTGlzdE1vbnRobHlUaWNrZXRzUmVxdWVzdBIMCgR5ZWFyGAEgASgFEg0KBW1vbnRoGAIgASgFImQKGkxpc3RNb250aGx5VGlja2V0c1Jlc3BvbnNlEikKB21vbnRobHkYASADKAsyGC5uYXpvYnUudjEuTW9udGhseVRpY2tldBIMCgR5ZWFyGAIgASgFEg0KBW1vbnRoGAMgASgFInkKD1Vuc2V0dGxlZFRpY2tldBIRCgl0aWNrZXRfaWQYASABKAkSEwoLZXZlbnRfdGl0bGUYAiABKAkSGAoQcHJpY2VfcGVyX3BlcnNvbhgDIAEoBRISCgpwYXllZV9uYW1lGAQgASgJEhAKCHN0YXJ0X2F0GAUgASgJIo8BCg5VcGNvbWluZ1RpY2tldBIRCgl0aWNrZXRfaWQYASABKAkSEwoLZXZlbnRfdGl0bGUYAiABKAkSEQoJZXZlbnRfdXJsGAMgASgJEhAKCHN0YXJ0X2F0GAQgASgJEhcKD2NvbXBhbmlvbl9uYW1lcxgFIAMoCRIXCg9ldmVudF9pbWFnZV91cmwYBiABKAkiWgoNTW9udGhseVRpY2tldBIRCgl0aWNrZXRfaWQYASABKAkSEwoLZXZlbnRfdGl0bGUYAiABKAkSEAoIc3RhcnRfYXQYAyABKAkSDwoHc2V0dGxlZBgEIAEoCDK6AQoNTXlQYWdlU2VydmljZRJGCglHZXRNeVBhZ2USGy5uYXpvYnUudjEuR2V0TXlQYWdlUmVxdWVzdBocLm5hem9idS52MS5HZXRNeVBhZ2VSZXNwb25zZRJhChJMaXN0TW9udGhseVRpY2tldHMSJC5uYXpvYnUudjEuTGlzdE1vbnRobHlUaWNrZXRzUmVxdWVzdBolLm5hem9idS52MS5MaXN0TW9udGhseVRpY2tldHNSZXNwb25zZUJEWkJnaXRodWIuY29tL2FydW1hMjU2L25hem9idS9iYWNrZW5kL2ludGVybmFsL2dlbi9uYXpvYnUvdjE7bmF6b2J1djFiBnByb3RvMw");
+  fileDesc("ChZuYXpvYnUvdjEvbXlwYWdlLnByb3RvEgluYXpvYnUudjEiEgoQR2V0TXlQYWdlUmVxdWVzdCLjAQoRR2V0TXlQYWdlUmVzcG9uc2USJAoJdW5zZXR0bGVkGAEgAygLMhEubmF6b2J1LnYxLlRpY2tldBIjCgh1cGNvbWluZxgCIAMoCzIRLm5hem9idS52MS5UaWNrZXQSKQoHbW9udGhseRgDIAMoCzIYLm5hem9idS52MS5Nb250aGx5VGlja2V0EhUKDW1vbnRobHlfbW9udGgYBCABKAUSFAoMbW9udGhseV95ZWFyGAUgASgFEhUKDWN1cnJlbnRfbW9udGgYBiABKAUSFAoMY3VycmVudF95ZWFyGAcgASgFIjgKGUxpc3RNb250aGx5VGlja2V0c1JlcXVlc3QSDAoEeWVhchgBIAEoBRINCgVtb250aBgCIAEoBSJkChpMaXN0TW9udGhseVRpY2tldHNSZXNwb25zZRIpCgdtb250aGx5GAEgAygLMhgubmF6b2J1LnYxLk1vbnRobHlUaWNrZXQSDAoEeWVhchgCIAEoBRINCgVtb250aBgDIAEoBSJaCg1Nb250aGx5VGlja2V0EhEKCXRpY2tldF9pZBgBIAEoCRITCgtldmVudF90aXRsZRgCIAEoCRIQCghzdGFydF9hdBgDIAEoCRIPCgdzZXR0bGVkGAQgASgIMroBCg1NeVBhZ2VTZXJ2aWNlEkYKCUdldE15UGFnZRIbLm5hem9idS52MS5HZXRNeVBhZ2VSZXF1ZXN0GhwubmF6b2J1LnYxLkdldE15UGFnZVJlc3BvbnNlEmEKEkxpc3RNb250aGx5VGlja2V0cxIkLm5hem9idS52MS5MaXN0TW9udGhseVRpY2tldHNSZXF1ZXN0GiUubmF6b2J1LnYxLkxpc3RNb250aGx5VGlja2V0c1Jlc3BvbnNlQkRaQmdpdGh1Yi5jb20vYXJ1bWEyNTYvbmF6b2J1L2JhY2tlbmQvaW50ZXJuYWwvZ2VuL25hem9idS92MTtuYXpvYnV2MWIGcHJvdG8z", [file_nazobu_v1_ticket]);
 
 /**
  * @generated from message nazobu.v1.GetMyPageRequest
@@ -31,17 +33,18 @@ export const GetMyPageRequestSchema: GenMessage<GetMyPageRequest> = /*@__PURE__*
 export type GetMyPageResponse = Message<"nazobu.v1.GetMyPageResponse"> & {
   /**
    * 自分の精算が未完了の ticket（start_at 昇順）。自分が立て替えた分は含めない。
+   * /tickets と同じ表示で扱うため Ticket 型に揃える。
    *
-   * @generated from field: repeated nazobu.v1.UnsettledTicket unsettled = 1;
+   * @generated from field: repeated nazobu.v1.Ticket unsettled = 1;
    */
-  unsettled: UnsettledTicket[];
+  unsettled: Ticket[];
 
   /**
    * 自分が参加予定で start_at が今日以降の ticket（start_at 昇順）。
    *
-   * @generated from field: repeated nazobu.v1.UpcomingTicket upcoming = 2;
+   * @generated from field: repeated nazobu.v1.Ticket upcoming = 2;
    */
-  upcoming: UpcomingTicket[];
+  upcoming: Ticket[];
 
   /**
    * monthly セクションの初期表示月（= 前月）に start_at がある自分の ticket（start_at 昇順）。
@@ -142,97 +145,6 @@ export const ListMonthlyTicketsResponseSchema: GenMessage<ListMonthlyTicketsResp
   messageDesc(file_nazobu_v1_mypage, 3);
 
 /**
- * @generated from message nazobu.v1.UnsettledTicket
- */
-export type UnsettledTicket = Message<"nazobu.v1.UnsettledTicket"> & {
-  /**
-   * @generated from field: string ticket_id = 1;
-   */
-  ticketId: string;
-
-  /**
-   * @generated from field: string event_title = 2;
-   */
-  eventTitle: string;
-
-  /**
-   * 一人あたりの精算額（円）。
-   *
-   * @generated from field: int32 price_per_person = 3;
-   */
-  pricePerPerson: number;
-
-  /**
-   * 立て替えてくれた人の表示名。
-   *
-   * @generated from field: string payee_name = 4;
-   */
-  payeeName: string;
-
-  /**
-   * 開演日時（RFC3339, JST）。
-   *
-   * @generated from field: string start_at = 5;
-   */
-  startAt: string;
-};
-
-/**
- * Describes the message nazobu.v1.UnsettledTicket.
- * Use `create(UnsettledTicketSchema)` to create a new message.
- */
-export const UnsettledTicketSchema: GenMessage<UnsettledTicket> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_mypage, 4);
-
-/**
- * @generated from message nazobu.v1.UpcomingTicket
- */
-export type UpcomingTicket = Message<"nazobu.v1.UpcomingTicket"> & {
-  /**
-   * @generated from field: string ticket_id = 1;
-   */
-  ticketId: string;
-
-  /**
-   * @generated from field: string event_title = 2;
-   */
-  eventTitle: string;
-
-  /**
-   * @generated from field: string event_url = 3;
-   */
-  eventUrl: string;
-
-  /**
-   * 開演日時（RFC3339, JST）。
-   *
-   * @generated from field: string start_at = 4;
-   */
-  startAt: string;
-
-  /**
-   * 同じ ticket の他の参加者の表示名（自分は除く）。created_at 昇順。
-   *
-   * @generated from field: repeated string companion_names = 5;
-   */
-  companionNames: string[];
-
-  /**
-   * 公演 URL から取得した OG 画像の URL。未取得 / 取得失敗時は空文字。
-   *
-   * @generated from field: string event_image_url = 6;
-   */
-  eventImageUrl: string;
-};
-
-/**
- * Describes the message nazobu.v1.UpcomingTicket.
- * Use `create(UpcomingTicketSchema)` to create a new message.
- */
-export const UpcomingTicketSchema: GenMessage<UpcomingTicket> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_mypage, 5);
-
-/**
  * @generated from message nazobu.v1.MonthlyTicket
  */
 export type MonthlyTicket = Message<"nazobu.v1.MonthlyTicket"> & {
@@ -266,7 +178,7 @@ export type MonthlyTicket = Message<"nazobu.v1.MonthlyTicket"> & {
  * Use `create(MonthlyTicketSchema)` to create a new message.
  */
 export const MonthlyTicketSchema: GenMessage<MonthlyTicket> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_mypage, 6);
+  messageDesc(file_nazobu_v1_mypage, 4);
 
 /**
  * MyPageService はマイページ表示に必要な集約データを返す。

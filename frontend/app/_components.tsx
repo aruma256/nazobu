@@ -5,8 +5,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+
+import type { Ticket } from "@/app/gen/nazobu/v1/ticket_pb";
+import {
+  formatDateJa,
+  formatTimeHM,
+  formatYen,
+  parseDateTime,
+} from "@/app/_format";
 
 export function PageShell({ children }: { children: ReactNode }) {
   return (
@@ -233,6 +241,114 @@ export function EventCover({
         className="h-full w-full object-cover"
       />
     </div>
+  );
+}
+
+// TicketCard は /tickets と mypage（未精算 / 今後の予定）で使う共通カード。
+// tone="alert" は amber 系のトーンで未精算カードに使う。
+export type TicketCardTone = "default" | "alert";
+
+export function TicketCard({
+  ticket,
+  myName,
+  tone = "default",
+}: {
+  ticket: Ticket;
+  myName: string;
+  tone?: TicketCardTone;
+}) {
+  const startAt = parseDateTime(ticket.startAt);
+  const meetingAt =
+    ticket.meetingAt !== "" ? parseDateTime(ticket.meetingAt) : null;
+  const hasMeeting = meetingAt !== null || ticket.meetingPlace !== "";
+  const wrapperClass =
+    tone === "alert"
+      ? "overflow-hidden rounded-2xl border border-amber-300 bg-amber-50 transition-colors hover:bg-amber-100"
+      : "overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-colors hover:bg-zinc-50";
+  const dateClass =
+    tone === "alert"
+      ? "text-sm font-semibold text-amber-800"
+      : "text-sm font-semibold text-emerald-700";
+  return (
+    <li className={wrapperClass}>
+      <Link
+        href={`/tickets/${ticket.id}`}
+        className="flex items-stretch gap-3 p-3"
+      >
+        {ticket.eventImageUrl !== "" && (
+          <EventCover
+            src={ticket.eventImageUrl}
+            alt={ticket.eventTitle}
+            variant="side"
+          />
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-3">
+            <Mono className={dateClass}>{formatDateJa(startAt)}</Mono>
+            <Mono className="ml-auto text-sm font-semibold tracking-tight">
+              {formatYen(ticket.pricePerPerson)}
+            </Mono>
+          </div>
+          <h3 className="pt-1 text-base leading-snug font-semibold">
+            {ticket.eventTitle}
+          </h3>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 pt-3 text-xs text-zinc-600">
+            {hasMeeting && (
+              <>
+                <dt className="text-zinc-400">集合</dt>
+                <dd>
+                  {meetingAt !== null && (
+                    <Mono>{formatTimeHM(meetingAt)}</Mono>
+                  )}
+                  {meetingAt !== null && ticket.meetingPlace !== "" && " "}
+                  {ticket.meetingPlace !== "" && ticket.meetingPlace}
+                </dd>
+              </>
+            )}
+            <dt className="text-zinc-400">開演</dt>
+            <dd>
+              <Mono>{formatTimeHM(startAt)}</Mono>
+            </dd>
+            <dt className="text-zinc-400">定員</dt>
+            <dd>
+              <Mono>
+                {ticket.participantNames.length}/{ticket.maxParticipants}
+              </Mono>
+              {ticket.participantNames.length < ticket.maxParticipants && (
+                <span className="ml-2 text-amber-800">
+                  （残り
+                  <Mono className="font-semibold">
+                    {ticket.maxParticipants - ticket.participantNames.length}
+                  </Mono>
+                  ）
+                </span>
+              )}
+            </dd>
+            {ticket.participantNames.length > 0 && (
+              <>
+                <dt className="text-zinc-400">参加</dt>
+                <dd>
+                  {[...ticket.participantNames]
+                    .sort((a, b) => a.localeCompare(b, "ja"))
+                    .map((name, i) => (
+                      <Fragment key={i}>
+                        {i > 0 && "・"}
+                        {name === myName ? (
+                          <span className="font-semibold text-zinc-900">
+                            {name}
+                          </span>
+                        ) : (
+                          name
+                        )}
+                      </Fragment>
+                    ))}
+                </dd>
+              </>
+            )}
+          </dl>
+        </div>
+      </Link>
+    </li>
   );
 }
 

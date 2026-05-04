@@ -8,64 +8,8 @@ package queries
 import (
 	"context"
 	"database/sql"
-	"strings"
 	"time"
 )
-
-const listCompanionNamesByTicketIDs = `-- name: ListCompanionNamesByTicketIDs :many
-SELECT tp.ticket_id,
-       u.display_name AS name
-FROM ticket_participants tp
-JOIN users u ON u.id = tp.user_id
-WHERE tp.ticket_id IN (/*SLICE:ticket_ids*/?)
-  AND tp.user_id   <> ?
-ORDER BY tp.ticket_id, tp.created_at ASC
-`
-
-type ListCompanionNamesByTicketIDsParams struct {
-	TicketIds     []string
-	ExcludeUserID string
-}
-
-type ListCompanionNamesByTicketIDsRow struct {
-	TicketID string
-	Name     string
-}
-
-// 自分以外の参加者（同行者）名を ticket_id ごとにまとめて引く（N+1 回避）。
-func (q *Queries) ListCompanionNamesByTicketIDs(ctx context.Context, arg ListCompanionNamesByTicketIDsParams) ([]ListCompanionNamesByTicketIDsRow, error) {
-	query := listCompanionNamesByTicketIDs
-	var queryParams []interface{}
-	if len(arg.TicketIds) > 0 {
-		for _, v := range arg.TicketIds {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:ticket_ids*/?", strings.Repeat(",?", len(arg.TicketIds))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:ticket_ids*/?", "NULL", 1)
-	}
-	queryParams = append(queryParams, arg.ExcludeUserID)
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListCompanionNamesByTicketIDsRow
-	for rows.Next() {
-		var i ListCompanionNamesByTicketIDsRow
-		if err := rows.Scan(&i.TicketID, &i.Name); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
 
 const listMyMonthlyTicketsByUserID = `-- name: ListMyMonthlyTicketsByUserID :many
 SELECT t.id, e.title AS event_title, t.start_at,
@@ -124,9 +68,11 @@ func (q *Queries) ListMyMonthlyTicketsByUserID(ctx context.Context, arg ListMyMo
 }
 
 const listUnsettledTicketsByUserID = `-- name: ListUnsettledTicketsByUserID :many
-SELECT t.id, e.title AS event_title,
-       t.price_per_person, t.start_at,
-       pu.display_name AS payee_name
+SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.image_url AS event_image_url,
+       e.expected_duration_minutes AS event_expected_duration_minutes,
+       t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
+       t.meeting_place,
+       pu.display_name AS purchaser_name
 FROM ticket_participants tp
 JOIN tickets t  ON t.id  = tp.ticket_id
 JOIN events  e  ON e.id  = t.event_id
@@ -144,16 +90,24 @@ type ListUnsettledTicketsByUserIDParams struct {
 }
 
 type ListUnsettledTicketsByUserIDRow struct {
-	ID             string
-	EventTitle     string
-	PricePerPerson int32
-	StartAt        time.Time
-	PayeeName      string
+	ID                           string
+	EventID                      string
+	EventTitle                   string
+	EventUrl                     string
+	EventImageUrl                sql.NullString
+	EventExpectedDurationMinutes int32
+	StartAt                      time.Time
+	MeetingAt                    sql.NullTime
+	PricePerPerson               int32
+	MaxParticipants              int32
+	MeetingPlace                 string
+	PurchaserName                string
 }
 
 // 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」かつ「開演が現在以前」を取る。
 // 立替者本人の自己持ち分は精算対象ではないので除外する。
 // 未来分は精算対象として扱わない（公演前に表示しない）。
+// 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
 func (q *Queries) ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnsettledTicketsByUserIDParams) ([]ListUnsettledTicketsByUserIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUnsettledTicketsByUserID, arg.UserID, arg.Now)
 	if err != nil {
@@ -165,10 +119,17 @@ func (q *Queries) ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnse
 		var i ListUnsettledTicketsByUserIDRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.EventID,
 			&i.EventTitle,
-			&i.PricePerPerson,
+			&i.EventUrl,
+			&i.EventImageUrl,
+			&i.EventExpectedDurationMinutes,
 			&i.StartAt,
-			&i.PayeeName,
+			&i.MeetingAt,
+			&i.PricePerPerson,
+			&i.MaxParticipants,
+			&i.MeetingPlace,
+			&i.PurchaserName,
 		); err != nil {
 			return nil, err
 		}
@@ -184,10 +145,15 @@ func (q *Queries) ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnse
 }
 
 const listUpcomingTicketsByUserID = `-- name: ListUpcomingTicketsByUserID :many
-SELECT t.id, e.title AS event_title, e.url AS event_url, e.image_url AS event_image_url, t.start_at
+SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.image_url AS event_image_url,
+       e.expected_duration_minutes AS event_expected_duration_minutes,
+       t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
+       t.meeting_place,
+       pu.display_name AS purchaser_name
 FROM ticket_participants tp
 JOIN tickets t ON t.id = tp.ticket_id
 JOIN events  e ON e.id = t.event_id
+JOIN users   pu ON pu.id = t.purchased_by
 WHERE tp.user_id  = ?
   AND t.start_at >= ?
 ORDER BY t.start_at ASC, t.id ASC
@@ -199,15 +165,23 @@ type ListUpcomingTicketsByUserIDParams struct {
 }
 
 type ListUpcomingTicketsByUserIDRow struct {
-	ID            string
-	EventTitle    string
-	EventUrl      string
-	EventImageUrl sql.NullString
-	StartAt       time.Time
+	ID                           string
+	EventID                      string
+	EventTitle                   string
+	EventUrl                     string
+	EventImageUrl                sql.NullString
+	EventExpectedDurationMinutes int32
+	StartAt                      time.Time
+	MeetingAt                    sql.NullTime
+	PricePerPerson               int32
+	MaxParticipants              int32
+	MeetingPlace                 string
+	PurchaserName                string
 }
 
 // 当日 0:00（JST）以降に start_at を持つ自分の参加チケット。
 // 当日中は時刻が過ぎていても表示し続ける（今日の予定として残す）。
+// 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
 func (q *Queries) ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcomingTicketsByUserIDParams) ([]ListUpcomingTicketsByUserIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUpcomingTicketsByUserID, arg.UserID, arg.TodayStart)
 	if err != nil {
@@ -219,10 +193,17 @@ func (q *Queries) ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcom
 		var i ListUpcomingTicketsByUserIDRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.EventID,
 			&i.EventTitle,
 			&i.EventUrl,
 			&i.EventImageUrl,
+			&i.EventExpectedDurationMinutes,
 			&i.StartAt,
+			&i.MeetingAt,
+			&i.PricePerPerson,
+			&i.MaxParticipants,
+			&i.MeetingPlace,
+			&i.PurchaserName,
 		); err != nil {
 			return nil, err
 		}

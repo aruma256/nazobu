@@ -58,7 +58,7 @@ func (s *ticketService) ListTickets(ctx context.Context, req *connect.Request[na
 	if len(tickets) == 0 {
 		return connect.NewResponse(&nazobuv1.ListTicketsResponse{Tickets: tickets}), nil
 	}
-	if err := s.attachParticipants(ctx, tickets); err != nil {
+	if err := attachTicketParticipantNames(ctx, s.q, tickets); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の取得に失敗: %w", err))
 	}
 	return connect.NewResponse(&nazobuv1.ListTicketsResponse{Tickets: tickets}), nil
@@ -234,7 +234,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 		PurchaserName:                 r.PurchaserName,
 		ParticipantNames:              []string{},
 	}
-	if err := s.attachParticipants(ctx, []*nazobuv1.Ticket{ticket}); err != nil {
+	if err := attachTicketParticipantNames(ctx, s.q, []*nazobuv1.Ticket{ticket}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の取得に失敗: %w", err))
 	}
 	return connect.NewResponse(&nazobuv1.CreateTicketResponse{Ticket: ticket}), nil
@@ -342,7 +342,7 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 		PurchaserName:                 r.PurchaserName,
 		ParticipantNames:              []string{},
 	}
-	if err := s.attachParticipants(ctx, []*nazobuv1.Ticket{ticket}); err != nil {
+	if err := attachTicketParticipantNames(ctx, s.q, []*nazobuv1.Ticket{ticket}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の取得に失敗: %w", err))
 	}
 	return connect.NewResponse(&nazobuv1.UpdateTicketResponse{Ticket: ticket}), nil
@@ -563,7 +563,12 @@ func parseNullableJSTDateTime(raw, field string) (sql.NullTime, error) {
 	return sql.NullTime{Time: t.In(jst), Valid: true}, nil
 }
 
-func (s *ticketService) attachParticipants(ctx context.Context, tickets []*nazobuv1.Ticket) error {
+// attachTicketParticipantNames は tickets の各 ticket に
+// 参加者名（created_at 昇順）を埋める。/tickets と mypage の両方から呼ぶ。
+func attachTicketParticipantNames(ctx context.Context, q *queries.Queries, tickets []*nazobuv1.Ticket) error {
+	if len(tickets) == 0 {
+		return nil
+	}
 	indexByTicket := make(map[string]*nazobuv1.Ticket, len(tickets))
 	ticketIDs := make([]string, 0, len(tickets))
 	for _, t := range tickets {
@@ -571,7 +576,7 @@ func (s *ticketService) attachParticipants(ctx context.Context, tickets []*nazob
 		ticketIDs = append(ticketIDs, t.Id)
 	}
 
-	rows, err := s.q.ListTicketParticipantNamesByTicketIDs(ctx, ticketIDs)
+	rows, err := q.ListTicketParticipantNamesByTicketIDs(ctx, ticketIDs)
 	if err != nil {
 		return err
 	}

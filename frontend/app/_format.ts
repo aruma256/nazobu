@@ -68,15 +68,6 @@ export function formatYen(amount: number): string {
   return `¥${amount.toLocaleString("ja-JP")}`;
 }
 
-// JST 基準のカレンダー日付差。同じ日 = 0 / 翌日 = 1。
-export function daysFromToday(date: Date, today: Date): number {
-  const a = jstParts(today);
-  const b = jstParts(date);
-  const aMs = Date.UTC(a.year, a.month - 1, a.day);
-  const bMs = Date.UTC(b.year, b.month - 1, b.day);
-  return Math.round((bMs - aMs) / (24 * 60 * 60 * 1000));
-}
-
 // <input type="date"> 用の "YYYY-MM-DD"（JST）。
 export function toDateInputValue(date: Date): string {
   const p = jstParts(date);

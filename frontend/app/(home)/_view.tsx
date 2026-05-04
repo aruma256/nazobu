@@ -9,25 +9,20 @@ import type { GetMeResponse } from "@/app/gen/nazobu/v1/user_pb";
 import type {
   GetMyPageResponse,
   MonthlyTicket,
-  UnsettledTicket,
-  UpcomingTicket,
 } from "@/app/gen/nazobu/v1/mypage_pb";
 import { myPageClient, userClient } from "@/app/lib/rpc";
 
 import {
   AppHeader,
   Badge,
-  EventCover,
   Mono,
   PageShell,
   Section,
   SectionTitle,
+  TicketCard,
 } from "@/app/_components";
 import {
-  daysFromToday,
-  formatDateJa,
   formatMonoDate,
-  formatYen,
   parseDateTime,
 } from "@/app/_format";
 import { redirectToLogin } from "@/app/lib/auth";
@@ -119,7 +114,6 @@ export function HomeView() {
   const { me, data } = state;
   const displayName = me.displayName;
   const isAdmin = me.role === "admin";
-  const today = new Date();
   const currentYM = { year: data.currentYear, month: data.currentMonth };
 
   const switchMonth = (diff: number) => {
@@ -167,8 +161,13 @@ export function HomeView() {
           <Section>
             <SectionTitle count={data.unsettled.length}>未精算</SectionTitle>
             <ul className="mt-3 space-y-3">
-              {data.unsettled.map((s) => (
-                <UnsettledItem key={s.ticketId} ticket={s} />
+              {data.unsettled.map((t) => (
+                <TicketCard
+                  key={t.id}
+                  ticket={t}
+                  myName={displayName}
+                  tone="alert"
+                />
               ))}
             </ul>
           </Section>
@@ -182,8 +181,8 @@ export function HomeView() {
             </p>
           ) : (
             <ul className="mt-3 space-y-3">
-              {data.upcoming.map((e) => (
-                <UpcomingCard key={e.ticketId} ticket={e} today={today} />
+              {data.upcoming.map((t) => (
+                <TicketCard key={t.id} ticket={t} myName={displayName} />
               ))}
             </ul>
           )}
@@ -343,80 +342,6 @@ function ChevronIcon({ direction }: { direction: "left" | "right" }) {
         clipRule="evenodd"
       />
     </svg>
-  );
-}
-
-function UnsettledItem({ ticket }: { ticket: UnsettledTicket }) {
-  const date = parseDateTime(ticket.startAt);
-  return (
-    <li className="overflow-hidden rounded-2xl border border-amber-300 bg-amber-50 transition-colors hover:bg-amber-100">
-      <Link href={`/tickets/${ticket.ticketId}`} className="block">
-        <div className="flex items-baseline gap-3 px-4 pt-4">
-          <Mono className="text-sm font-semibold text-amber-800">
-            {formatDateJa(date)}
-          </Mono>
-          <Mono className="ml-auto text-base font-semibold tracking-tight">
-            {formatYen(ticket.pricePerPerson)}
-          </Mono>
-        </div>
-        <h3 className="px-4 pt-1 text-base leading-snug font-semibold">
-          {ticket.eventTitle}
-        </h3>
-        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 pt-3 pb-4 text-xs text-zinc-600">
-          <dt className="text-zinc-400">立替</dt>
-          <dd>{ticket.payeeName}</dd>
-        </dl>
-      </Link>
-    </li>
-  );
-}
-
-function UpcomingCard({
-  ticket,
-  today,
-}: {
-  ticket: UpcomingTicket;
-  today: Date;
-}) {
-  const date = parseDateTime(ticket.startAt);
-  const days = daysFromToday(date, today);
-  const dayLabel =
-    days <= 0 ? "本日" : days === 1 ? "明日" : `あと ${days} 日`;
-  const sortedCompanions = [...ticket.companionNames].sort((a, b) =>
-    a.localeCompare(b, "ja"),
-  );
-  return (
-    <li className="overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-colors hover:bg-zinc-50">
-      <Link
-        href={`/tickets/${ticket.ticketId}`}
-        className="flex items-stretch gap-3 p-3"
-      >
-        {ticket.eventImageUrl !== "" && (
-          <EventCover
-            src={ticket.eventImageUrl}
-            alt={ticket.eventTitle}
-            variant="side"
-          />
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-3">
-            <Mono className="text-sm font-semibold text-emerald-700">
-              {formatDateJa(date)}
-            </Mono>
-            <span className="ml-auto text-xs text-zinc-500">{dayLabel}</span>
-          </div>
-          <h3 className="pt-1 text-base leading-snug font-semibold">
-            {ticket.eventTitle}
-          </h3>
-          {sortedCompanions.length > 0 && (
-            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 pt-3 text-xs text-zinc-600">
-              <dt className="text-zinc-400">同行</dt>
-              <dd>{sortedCompanions.join("・")}</dd>
-            </dl>
-          )}
-        </div>
-      </Link>
-    </li>
   );
 }
 

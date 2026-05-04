@@ -60,9 +60,10 @@ func (*GetMyPageRequest) Descriptor() ([]byte, []int) {
 type GetMyPageResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// 自分の精算が未完了の ticket（start_at 昇順）。自分が立て替えた分は含めない。
-	Unsettled []*UnsettledTicket `protobuf:"bytes,1,rep,name=unsettled,proto3" json:"unsettled,omitempty"`
+	// /tickets と同じ表示で扱うため Ticket 型に揃える。
+	Unsettled []*Ticket `protobuf:"bytes,1,rep,name=unsettled,proto3" json:"unsettled,omitempty"`
 	// 自分が参加予定で start_at が今日以降の ticket（start_at 昇順）。
-	Upcoming []*UpcomingTicket `protobuf:"bytes,2,rep,name=upcoming,proto3" json:"upcoming,omitempty"`
+	Upcoming []*Ticket `protobuf:"bytes,2,rep,name=upcoming,proto3" json:"upcoming,omitempty"`
 	// monthly セクションの初期表示月（= 前月）に start_at がある自分の ticket（start_at 昇順）。
 	Monthly []*MonthlyTicket `protobuf:"bytes,3,rep,name=monthly,proto3" json:"monthly,omitempty"`
 	// monthly セクションの初期表示月（サーバ基準、JST）。1〜12。既定は前月。
@@ -107,14 +108,14 @@ func (*GetMyPageResponse) Descriptor() ([]byte, []int) {
 	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *GetMyPageResponse) GetUnsettled() []*UnsettledTicket {
+func (x *GetMyPageResponse) GetUnsettled() []*Ticket {
 	if x != nil {
 		return x.Unsettled
 	}
 	return nil
 }
 
-func (x *GetMyPageResponse) GetUpcoming() []*UpcomingTicket {
+func (x *GetMyPageResponse) GetUpcoming() []*Ticket {
 	if x != nil {
 		return x.Upcoming
 	}
@@ -271,172 +272,6 @@ func (x *ListMonthlyTicketsResponse) GetMonth() int32 {
 	return 0
 }
 
-type UnsettledTicket struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	TicketId   string                 `protobuf:"bytes,1,opt,name=ticket_id,json=ticketId,proto3" json:"ticket_id,omitempty"`
-	EventTitle string                 `protobuf:"bytes,2,opt,name=event_title,json=eventTitle,proto3" json:"event_title,omitempty"`
-	// 一人あたりの精算額（円）。
-	PricePerPerson int32 `protobuf:"varint,3,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
-	// 立て替えてくれた人の表示名。
-	PayeeName string `protobuf:"bytes,4,opt,name=payee_name,json=payeeName,proto3" json:"payee_name,omitempty"`
-	// 開演日時（RFC3339, JST）。
-	StartAt       string `protobuf:"bytes,5,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UnsettledTicket) Reset() {
-	*x = UnsettledTicket{}
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UnsettledTicket) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UnsettledTicket) ProtoMessage() {}
-
-func (x *UnsettledTicket) ProtoReflect() protoreflect.Message {
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UnsettledTicket.ProtoReflect.Descriptor instead.
-func (*UnsettledTicket) Descriptor() ([]byte, []int) {
-	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *UnsettledTicket) GetTicketId() string {
-	if x != nil {
-		return x.TicketId
-	}
-	return ""
-}
-
-func (x *UnsettledTicket) GetEventTitle() string {
-	if x != nil {
-		return x.EventTitle
-	}
-	return ""
-}
-
-func (x *UnsettledTicket) GetPricePerPerson() int32 {
-	if x != nil {
-		return x.PricePerPerson
-	}
-	return 0
-}
-
-func (x *UnsettledTicket) GetPayeeName() string {
-	if x != nil {
-		return x.PayeeName
-	}
-	return ""
-}
-
-func (x *UnsettledTicket) GetStartAt() string {
-	if x != nil {
-		return x.StartAt
-	}
-	return ""
-}
-
-type UpcomingTicket struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	TicketId   string                 `protobuf:"bytes,1,opt,name=ticket_id,json=ticketId,proto3" json:"ticket_id,omitempty"`
-	EventTitle string                 `protobuf:"bytes,2,opt,name=event_title,json=eventTitle,proto3" json:"event_title,omitempty"`
-	EventUrl   string                 `protobuf:"bytes,3,opt,name=event_url,json=eventUrl,proto3" json:"event_url,omitempty"`
-	// 開演日時（RFC3339, JST）。
-	StartAt string `protobuf:"bytes,4,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
-	// 同じ ticket の他の参加者の表示名（自分は除く）。created_at 昇順。
-	CompanionNames []string `protobuf:"bytes,5,rep,name=companion_names,json=companionNames,proto3" json:"companion_names,omitempty"`
-	// 公演 URL から取得した OG 画像の URL。未取得 / 取得失敗時は空文字。
-	EventImageUrl string `protobuf:"bytes,6,opt,name=event_image_url,json=eventImageUrl,proto3" json:"event_image_url,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UpcomingTicket) Reset() {
-	*x = UpcomingTicket{}
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UpcomingTicket) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpcomingTicket) ProtoMessage() {}
-
-func (x *UpcomingTicket) ProtoReflect() protoreflect.Message {
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpcomingTicket.ProtoReflect.Descriptor instead.
-func (*UpcomingTicket) Descriptor() ([]byte, []int) {
-	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *UpcomingTicket) GetTicketId() string {
-	if x != nil {
-		return x.TicketId
-	}
-	return ""
-}
-
-func (x *UpcomingTicket) GetEventTitle() string {
-	if x != nil {
-		return x.EventTitle
-	}
-	return ""
-}
-
-func (x *UpcomingTicket) GetEventUrl() string {
-	if x != nil {
-		return x.EventUrl
-	}
-	return ""
-}
-
-func (x *UpcomingTicket) GetStartAt() string {
-	if x != nil {
-		return x.StartAt
-	}
-	return ""
-}
-
-func (x *UpcomingTicket) GetCompanionNames() []string {
-	if x != nil {
-		return x.CompanionNames
-	}
-	return nil
-}
-
-func (x *UpcomingTicket) GetEventImageUrl() string {
-	if x != nil {
-		return x.EventImageUrl
-	}
-	return ""
-}
-
 type MonthlyTicket struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
 	TicketId   string                 `protobuf:"bytes,1,opt,name=ticket_id,json=ticketId,proto3" json:"ticket_id,omitempty"`
@@ -451,7 +286,7 @@ type MonthlyTicket struct {
 
 func (x *MonthlyTicket) Reset() {
 	*x = MonthlyTicket{}
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[6]
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -463,7 +298,7 @@ func (x *MonthlyTicket) String() string {
 func (*MonthlyTicket) ProtoMessage() {}
 
 func (x *MonthlyTicket) ProtoReflect() protoreflect.Message {
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[6]
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -476,7 +311,7 @@ func (x *MonthlyTicket) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MonthlyTicket.ProtoReflect.Descriptor instead.
 func (*MonthlyTicket) Descriptor() ([]byte, []int) {
-	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{6}
+	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *MonthlyTicket) GetTicketId() string {
@@ -511,11 +346,11 @@ var File_nazobu_v1_mypage_proto protoreflect.FileDescriptor
 
 const file_nazobu_v1_mypage_proto_rawDesc = "" +
 	"\n" +
-	"\x16nazobu/v1/mypage.proto\x12\tnazobu.v1\"\x12\n" +
-	"\x10GetMyPageRequest\"\xc8\x02\n" +
-	"\x11GetMyPageResponse\x128\n" +
-	"\tunsettled\x18\x01 \x03(\v2\x1a.nazobu.v1.UnsettledTicketR\tunsettled\x125\n" +
-	"\bupcoming\x18\x02 \x03(\v2\x19.nazobu.v1.UpcomingTicketR\bupcoming\x122\n" +
+	"\x16nazobu/v1/mypage.proto\x12\tnazobu.v1\x1a\x16nazobu/v1/ticket.proto\"\x12\n" +
+	"\x10GetMyPageRequest\"\xb7\x02\n" +
+	"\x11GetMyPageResponse\x12/\n" +
+	"\tunsettled\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\tunsettled\x12-\n" +
+	"\bupcoming\x18\x02 \x03(\v2\x11.nazobu.v1.TicketR\bupcoming\x122\n" +
 	"\amonthly\x18\x03 \x03(\v2\x18.nazobu.v1.MonthlyTicketR\amonthly\x12#\n" +
 	"\rmonthly_month\x18\x04 \x01(\x05R\fmonthlyMonth\x12!\n" +
 	"\fmonthly_year\x18\x05 \x01(\x05R\vmonthlyYear\x12#\n" +
@@ -527,23 +362,7 @@ const file_nazobu_v1_mypage_proto_rawDesc = "" +
 	"\x1aListMonthlyTicketsResponse\x122\n" +
 	"\amonthly\x18\x01 \x03(\v2\x18.nazobu.v1.MonthlyTicketR\amonthly\x12\x12\n" +
 	"\x04year\x18\x02 \x01(\x05R\x04year\x12\x14\n" +
-	"\x05month\x18\x03 \x01(\x05R\x05month\"\xb3\x01\n" +
-	"\x0fUnsettledTicket\x12\x1b\n" +
-	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x1f\n" +
-	"\vevent_title\x18\x02 \x01(\tR\n" +
-	"eventTitle\x12(\n" +
-	"\x10price_per_person\x18\x03 \x01(\x05R\x0epricePerPerson\x12\x1d\n" +
-	"\n" +
-	"payee_name\x18\x04 \x01(\tR\tpayeeName\x12\x19\n" +
-	"\bstart_at\x18\x05 \x01(\tR\astartAt\"\xd7\x01\n" +
-	"\x0eUpcomingTicket\x12\x1b\n" +
-	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x1f\n" +
-	"\vevent_title\x18\x02 \x01(\tR\n" +
-	"eventTitle\x12\x1b\n" +
-	"\tevent_url\x18\x03 \x01(\tR\beventUrl\x12\x19\n" +
-	"\bstart_at\x18\x04 \x01(\tR\astartAt\x12'\n" +
-	"\x0fcompanion_names\x18\x05 \x03(\tR\x0ecompanionNames\x12&\n" +
-	"\x0fevent_image_url\x18\x06 \x01(\tR\reventImageUrl\"\x82\x01\n" +
+	"\x05month\x18\x03 \x01(\x05R\x05month\"\x82\x01\n" +
 	"\rMonthlyTicket\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x1f\n" +
 	"\vevent_title\x18\x02 \x01(\tR\n" +
@@ -566,21 +385,20 @@ func file_nazobu_v1_mypage_proto_rawDescGZIP() []byte {
 	return file_nazobu_v1_mypage_proto_rawDescData
 }
 
-var file_nazobu_v1_mypage_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_nazobu_v1_mypage_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_nazobu_v1_mypage_proto_goTypes = []any{
 	(*GetMyPageRequest)(nil),           // 0: nazobu.v1.GetMyPageRequest
 	(*GetMyPageResponse)(nil),          // 1: nazobu.v1.GetMyPageResponse
 	(*ListMonthlyTicketsRequest)(nil),  // 2: nazobu.v1.ListMonthlyTicketsRequest
 	(*ListMonthlyTicketsResponse)(nil), // 3: nazobu.v1.ListMonthlyTicketsResponse
-	(*UnsettledTicket)(nil),            // 4: nazobu.v1.UnsettledTicket
-	(*UpcomingTicket)(nil),             // 5: nazobu.v1.UpcomingTicket
-	(*MonthlyTicket)(nil),              // 6: nazobu.v1.MonthlyTicket
+	(*MonthlyTicket)(nil),              // 4: nazobu.v1.MonthlyTicket
+	(*Ticket)(nil),                     // 5: nazobu.v1.Ticket
 }
 var file_nazobu_v1_mypage_proto_depIdxs = []int32{
-	4, // 0: nazobu.v1.GetMyPageResponse.unsettled:type_name -> nazobu.v1.UnsettledTicket
-	5, // 1: nazobu.v1.GetMyPageResponse.upcoming:type_name -> nazobu.v1.UpcomingTicket
-	6, // 2: nazobu.v1.GetMyPageResponse.monthly:type_name -> nazobu.v1.MonthlyTicket
-	6, // 3: nazobu.v1.ListMonthlyTicketsResponse.monthly:type_name -> nazobu.v1.MonthlyTicket
+	5, // 0: nazobu.v1.GetMyPageResponse.unsettled:type_name -> nazobu.v1.Ticket
+	5, // 1: nazobu.v1.GetMyPageResponse.upcoming:type_name -> nazobu.v1.Ticket
+	4, // 2: nazobu.v1.GetMyPageResponse.monthly:type_name -> nazobu.v1.MonthlyTicket
+	4, // 3: nazobu.v1.ListMonthlyTicketsResponse.monthly:type_name -> nazobu.v1.MonthlyTicket
 	0, // 4: nazobu.v1.MyPageService.GetMyPage:input_type -> nazobu.v1.GetMyPageRequest
 	2, // 5: nazobu.v1.MyPageService.ListMonthlyTickets:input_type -> nazobu.v1.ListMonthlyTicketsRequest
 	1, // 6: nazobu.v1.MyPageService.GetMyPage:output_type -> nazobu.v1.GetMyPageResponse
@@ -597,13 +415,14 @@ func file_nazobu_v1_mypage_proto_init() {
 	if File_nazobu_v1_mypage_proto != nil {
 		return
 	}
+	file_nazobu_v1_ticket_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_nazobu_v1_mypage_proto_rawDesc), len(file_nazobu_v1_mypage_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

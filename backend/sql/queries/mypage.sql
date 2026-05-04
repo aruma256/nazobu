@@ -2,9 +2,12 @@
 -- 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」かつ「開演が現在以前」を取る。
 -- 立替者本人の自己持ち分は精算対象ではないので除外する。
 -- 未来分は精算対象として扱わない（公演前に表示しない）。
-SELECT t.id, e.title AS event_title,
-       t.price_per_person, t.start_at,
-       pu.display_name AS payee_name
+-- 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
+SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.image_url AS event_image_url,
+       e.expected_duration_minutes AS event_expected_duration_minutes,
+       t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
+       t.meeting_place,
+       pu.display_name AS purchaser_name
 FROM ticket_participants tp
 JOIN tickets t  ON t.id  = tp.ticket_id
 JOIN events  e  ON e.id  = t.event_id
@@ -18,10 +21,16 @@ ORDER BY t.start_at ASC, t.id ASC;
 -- name: ListUpcomingTicketsByUserID :many
 -- 当日 0:00（JST）以降に start_at を持つ自分の参加チケット。
 -- 当日中は時刻が過ぎていても表示し続ける（今日の予定として残す）。
-SELECT t.id, e.title AS event_title, e.url AS event_url, e.image_url AS event_image_url, t.start_at
+-- 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
+SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.image_url AS event_image_url,
+       e.expected_duration_minutes AS event_expected_duration_minutes,
+       t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
+       t.meeting_place,
+       pu.display_name AS purchaser_name
 FROM ticket_participants tp
 JOIN tickets t ON t.id = tp.ticket_id
 JOIN events  e ON e.id = t.event_id
+JOIN users   pu ON pu.id = t.purchased_by
 WHERE tp.user_id  = sqlc.arg('user_id')
   AND t.start_at >= sqlc.arg('today_start')
 ORDER BY t.start_at ASC, t.id ASC;
@@ -39,13 +48,3 @@ WHERE tp.user_id  = sqlc.arg('user_id')
   AND t.start_at >= sqlc.arg('month_start')
   AND t.start_at <  sqlc.arg('next_month_start')
 ORDER BY t.start_at ASC, t.id ASC;
-
--- name: ListCompanionNamesByTicketIDs :many
--- 自分以外の参加者（同行者）名を ticket_id ごとにまとめて引く（N+1 回避）。
-SELECT tp.ticket_id,
-       u.display_name AS name
-FROM ticket_participants tp
-JOIN users u ON u.id = tp.user_id
-WHERE tp.ticket_id IN (sqlc.slice('ticket_ids'))
-  AND tp.user_id   <> sqlc.arg('exclude_user_id')
-ORDER BY tp.ticket_id, tp.created_at ASC;

@@ -48,8 +48,14 @@ func (s *myPageService) GetMyPage(ctx context.Context, req *connect.Request[nazo
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("今後の予定の取得に失敗: %w", err))
 	}
-	if err := s.attachCompanions(ctx, user.ID, upcoming); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("同行者の取得に失敗: %w", err))
+
+	// 未精算は過去 / 今後の予定は当日以降と時間軸が分かれるので重複しない。
+	// 1 回の IN クエリにまとめて参加者名を引き、N+1 を避ける。
+	allTickets := make([]*nazobuv1.Ticket, 0, len(unsettled)+len(upcoming))
+	allTickets = append(allTickets, unsettled...)
+	allTickets = append(allTickets, upcoming...)
+	if err := attachTicketParticipantNames(ctx, s.q, allTickets); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の取得に失敗: %w", err))
 	}
 
 	monthly, err := s.queryMonthly(ctx, user.ID, prevMonthStart, clipHistoryEnd(currentMonthStart, todayStart))
@@ -110,7 +116,7 @@ func clipHistoryEnd(nextMonthStart, todayStart time.Time) time.Time {
 	return nextMonthStart
 }
 
-func (s *myPageService) queryUnsettled(ctx context.Context, userID string, now time.Time) ([]*nazobuv1.UnsettledTicket, error) {
+func (s *myPageService) queryUnsettled(ctx context.Context, userID string, now time.Time) ([]*nazobuv1.Ticket, error) {
 	rows, err := s.q.ListUnsettledTicketsByUserID(ctx, queries.ListUnsettledTicketsByUserIDParams{
 		UserID: userID,
 		Now:    now,
@@ -118,20 +124,28 @@ func (s *myPageService) queryUnsettled(ctx context.Context, userID string, now t
 	if err != nil {
 		return nil, err
 	}
-	out := make([]*nazobuv1.UnsettledTicket, 0, len(rows))
+	out := make([]*nazobuv1.Ticket, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, &nazobuv1.UnsettledTicket{
-			TicketId:       r.ID,
-			EventTitle:     r.EventTitle,
-			PricePerPerson: r.PricePerPerson,
-			PayeeName:      r.PayeeName,
-			StartAt:        formatJSTDateTime(r.StartAt),
+		out = append(out, &nazobuv1.Ticket{
+			Id:                           r.ID,
+			EventId:                      r.EventID,
+			EventTitle:                   r.EventTitle,
+			EventUrl:                     r.EventUrl,
+			EventImageUrl:                nullStringToString(r.EventImageUrl),
+			EventExpectedDurationMinutes: r.EventExpectedDurationMinutes,
+			StartAt:                      formatJSTDateTime(r.StartAt),
+			MeetingAt:                    formatNullableJSTDateTime(r.MeetingAt),
+			PricePerPerson:               r.PricePerPerson,
+			MaxParticipants:              r.MaxParticipants,
+			MeetingPlace:                 r.MeetingPlace,
+			PurchaserName:                r.PurchaserName,
+			ParticipantNames:             []string{},
 		})
 	}
 	return out, nil
 }
 
-func (s *myPageService) queryUpcoming(ctx context.Context, userID string, todayStart time.Time) ([]*nazobuv1.UpcomingTicket, error) {
+func (s *myPageService) queryUpcoming(ctx context.Context, userID string, todayStart time.Time) ([]*nazobuv1.Ticket, error) {
 	rows, err := s.q.ListUpcomingTicketsByUserID(ctx, queries.ListUpcomingTicketsByUserIDParams{
 		UserID:     userID,
 		TodayStart: todayStart,
@@ -139,45 +153,25 @@ func (s *myPageService) queryUpcoming(ctx context.Context, userID string, todayS
 	if err != nil {
 		return nil, err
 	}
-	out := make([]*nazobuv1.UpcomingTicket, 0, len(rows))
+	out := make([]*nazobuv1.Ticket, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, &nazobuv1.UpcomingTicket{
-			TicketId:      r.ID,
-			EventTitle:    r.EventTitle,
-			EventUrl:      r.EventUrl,
-			EventImageUrl: nullStringToString(r.EventImageUrl),
-			StartAt:       formatJSTDateTime(r.StartAt),
+		out = append(out, &nazobuv1.Ticket{
+			Id:                           r.ID,
+			EventId:                      r.EventID,
+			EventTitle:                   r.EventTitle,
+			EventUrl:                     r.EventUrl,
+			EventImageUrl:                nullStringToString(r.EventImageUrl),
+			EventExpectedDurationMinutes: r.EventExpectedDurationMinutes,
+			StartAt:                      formatJSTDateTime(r.StartAt),
+			MeetingAt:                    formatNullableJSTDateTime(r.MeetingAt),
+			PricePerPerson:               r.PricePerPerson,
+			MaxParticipants:              r.MaxParticipants,
+			MeetingPlace:                 r.MeetingPlace,
+			PurchaserName:                r.PurchaserName,
+			ParticipantNames:             []string{},
 		})
 	}
 	return out, nil
-}
-
-// attachCompanions は upcoming の各 ticket に同行者（自分以外の参加者）名を埋める。
-// ticket 数が 0 なら何もしない。1 回の IN クエリでまとめて取り、in-memory で振り分ける。
-func (s *myPageService) attachCompanions(ctx context.Context, userID string, upcoming []*nazobuv1.UpcomingTicket) error {
-	if len(upcoming) == 0 {
-		return nil
-	}
-	indexByTicket := make(map[string]*nazobuv1.UpcomingTicket, len(upcoming))
-	ticketIDs := make([]string, 0, len(upcoming))
-	for _, t := range upcoming {
-		indexByTicket[t.TicketId] = t
-		ticketIDs = append(ticketIDs, t.TicketId)
-	}
-
-	rows, err := s.q.ListCompanionNamesByTicketIDs(ctx, queries.ListCompanionNamesByTicketIDsParams{
-		TicketIds:     ticketIDs,
-		ExcludeUserID: userID,
-	})
-	if err != nil {
-		return err
-	}
-	for _, r := range rows {
-		if t, ok := indexByTicket[r.TicketID]; ok {
-			t.CompanionNames = append(t.CompanionNames, r.Name)
-		}
-	}
-	return nil
 }
 
 func (s *myPageService) queryMonthly(ctx context.Context, userID string, monthStart, nextMonthStart time.Time) ([]*nazobuv1.MonthlyTicket, error) {
