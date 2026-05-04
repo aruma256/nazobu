@@ -201,13 +201,27 @@ export function Mono({
   );
 }
 
-// EventCover は公演 URL から取得した OG 画像を表示するカード上部用カバー。
+// EventCover は公演 URL から取得した OG 画像を表示する。
+// variant="top" はカード上部の横幅いっぱいのカバー、
+// variant="side" は flex 行内で左側に並べる縦長サムネイル（高さは行に追従）。
 // 読み込み失敗時は要素ごと隠す（壊れた画像アイコンが残らないように）。
-export function EventCover({ src, alt }: { src: string; alt: string }) {
+export function EventCover({
+  src,
+  alt,
+  variant = "top",
+}: {
+  src: string;
+  alt: string;
+  variant?: "top" | "side";
+}) {
   const [hidden, setHidden] = useState(false);
   if (hidden) return null;
+  const wrapperClass =
+    variant === "side"
+      ? "w-24 flex-none self-stretch overflow-hidden rounded-lg bg-zinc-100 sm:w-32"
+      : "aspect-[1.91/1] w-full overflow-hidden bg-zinc-100";
   return (
-    <div className="aspect-[1.91/1] w-full overflow-hidden bg-zinc-100">
+    <div className={wrapperClass}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
