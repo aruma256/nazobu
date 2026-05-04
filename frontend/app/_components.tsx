@@ -17,9 +17,9 @@ export function PageShell({ children }: { children: ReactNode }) {
 type NavItem = { href: string; label: string; adminOnly?: boolean };
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { href: "/", label: "ホーム" },
+  { href: "/", label: "マイページ" },
   { href: "/events", label: "公演", adminOnly: true },
-  { href: "/tickets", label: "チケット" },
+  { href: "/tickets", label: "全てのチケット" },
 ] as const;
 
 function isNavActive(pathname: string, href: string): boolean {
