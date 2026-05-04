@@ -35,6 +35,8 @@ message Event {
   optional int32 entry_deadline_minutes_before = 6;
   // 公演 URL から取得した OG 画像の URL（外部）。未取得 / 取得失敗時は空文字。
   string image_url = 7;
+  // 想定所要時間（分）。カレンダー連携で終了時刻を算出する用途。1 以上。
+  int32 expected_duration_minutes = 8;
 }
 
 message EventTicket {
@@ -56,6 +58,8 @@ message CreateEventRequest {
   optional int32 doors_open_minutes_before = 3;
   // 入場締切が開演時刻の何分前か。任意。
   optional int32 entry_deadline_minutes_before = 4;
+  // 想定所要時間（分）。1 以上。
+  int32 expected_duration_minutes = 5;
 }
 
 message CreateEventResponse {
@@ -80,6 +84,8 @@ message UpdateEventRequest {
   optional int32 doors_open_minutes_before = 4;
   // 入場締切が開演時刻の何分前か。任意。
   optional int32 entry_deadline_minutes_before = 5;
+  // 想定所要時間（分）。1 以上。
+  int32 expected_duration_minutes = 6;
 }
 
 message UpdateEventResponse {

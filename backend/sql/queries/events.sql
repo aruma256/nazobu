@@ -1,18 +1,18 @@
 -- name: ListEvents :many
 -- 公演一覧（新しい順）。詳細表示用の最低限フィールドのみ返す。
-SELECT id, title, url, image_url, doors_open_minutes_before, entry_deadline_minutes_before
+SELECT id, title, url, image_url, doors_open_minutes_before, entry_deadline_minutes_before, expected_duration_minutes
 FROM events
 ORDER BY created_at DESC, id DESC;
 
 -- name: GetEventByID :one
 -- 1 件の event を取得する。詳細・編集画面用。
-SELECT id, title, url, image_url, doors_open_minutes_before, entry_deadline_minutes_before
+SELECT id, title, url, image_url, doors_open_minutes_before, entry_deadline_minutes_before, expected_duration_minutes
 FROM events
 WHERE id = ?;
 
 -- name: CreateEvent :exec
-INSERT INTO events (id, title, url, image_url, doors_open_minutes_before, entry_deadline_minutes_before, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, NOW(6), NOW(6));
+INSERT INTO events (id, title, url, image_url, doors_open_minutes_before, entry_deadline_minutes_before, expected_duration_minutes, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6));
 
 -- name: UpdateEvent :exec
 UPDATE events
@@ -21,6 +21,7 @@ SET title = ?,
     image_url = ?,
     doors_open_minutes_before = ?,
     entry_deadline_minutes_before = ?,
+    expected_duration_minutes = ?,
     updated_at = NOW(6)
 WHERE id = ?;
 

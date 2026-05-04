@@ -46,6 +46,28 @@ func TestValidateMinutesBefore(t *testing.T) {
 	})
 }
 
+func TestValidateExpectedDurationMinutes(t *testing.T) {
+	t.Run("1 以上はそのまま返す", func(t *testing.T) {
+		got, err := validateExpectedDurationMinutes(120)
+		if err != nil {
+			t.Fatalf("err = %v", err)
+		}
+		if got != 120 {
+			t.Errorf("got = %d, want 120", got)
+		}
+	})
+
+	t.Run("0 は InvalidArgument", func(t *testing.T) {
+		_, err := validateExpectedDurationMinutes(0)
+		assertConnectCode(t, err, connect.CodeInvalidArgument)
+	})
+
+	t.Run("負の値は InvalidArgument", func(t *testing.T) {
+		_, err := validateExpectedDurationMinutes(-30)
+		assertConnectCode(t, err, connect.CodeInvalidArgument)
+	})
+}
+
 func TestNullInt32ToPtr(t *testing.T) {
 	if got := nullInt32ToPtr(sql.NullInt32{}); got != nil {
 		t.Errorf("Invalid からは nil 想定だが %v", *got)

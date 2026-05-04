@@ -16,6 +16,7 @@ type Event struct {
 	ImageUrl                   sql.NullString
 	DoorsOpenMinutesBefore     sql.NullInt32
 	EntryDeadlineMinutesBefore sql.NullInt32
+	ExpectedDurationMinutes    int32
 	CreatedAt                  time.Time
 	UpdatedAt                  time.Time
 }

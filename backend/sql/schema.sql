@@ -63,6 +63,8 @@ CREATE TABLE events (
   doors_open_minutes_before     INT NULL,
   -- 入場締切が開演時刻の何分前か。これを過ぎると参加できない。0 以上、NULL = 未設定。
   entry_deadline_minutes_before INT NULL,
+  -- 想定所要時間（分）。カレンダー連携で終了時刻を算出するために使う。1 以上。デフォルトは 120 分。
+  expected_duration_minutes     INT NOT NULL DEFAULT 120,
   created_at  DATETIME(6)  NOT NULL,
   updated_at  DATETIME(6)  NOT NULL,
   PRIMARY KEY (id)

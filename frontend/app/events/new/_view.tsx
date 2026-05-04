@@ -35,6 +35,7 @@ export function NewEventView() {
   const [url, setUrl] = useState("");
   const [doorsOpen, setDoorsOpen] = useState("");
   const [entryDeadline, setEntryDeadline] = useState("");
+  const [expectedDuration, setExpectedDuration] = useState("120");
   const [submit, setSubmit] = useState<SubmitState>({ kind: "idle" });
 
   useEffect(() => {
@@ -81,6 +82,11 @@ export function NewEventView() {
       setSubmit({ kind: "error", message: "入場締切は 0 以上の整数で入力してください" });
       return;
     }
+    const parsedExpectedDuration = parsePositiveInt(expectedDuration);
+    if (parsedExpectedDuration === "invalid") {
+      setSubmit({ kind: "error", message: "想定所要時間は 1 以上の整数で入力してください" });
+      return;
+    }
 
     setSubmit({ kind: "submitting" });
     try {
@@ -89,6 +95,7 @@ export function NewEventView() {
         url: trimmedUrl,
         doorsOpenMinutesBefore: parsedDoorsOpen,
         entryDeadlineMinutesBefore: parsedEntryDeadline,
+        expectedDurationMinutes: parsedExpectedDuration,
       });
       router.push("/events");
     } catch (err) {
@@ -231,6 +238,30 @@ export function NewEventView() {
               </p>
             </div>
 
+            <div>
+              <label
+                htmlFor="event-expected-duration"
+                className="block text-sm font-medium text-zinc-700"
+              >
+                想定所要時間
+              </label>
+              <div className="mt-1 flex items-center gap-2">
+                <input
+                  id="event-expected-duration"
+                  type="number"
+                  required
+                  min={1}
+                  step={1}
+                  inputMode="numeric"
+                  value={expectedDuration}
+                  onChange={(e) => setExpectedDuration(e.target.value)}
+                  disabled={submitting}
+                  className="block h-11 w-32 rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+                />
+                <span className="text-sm text-zinc-600">分</span>
+              </div>
+            </div>
+
             {submit.kind === "error" && (
               <p className="text-sm text-amber-800">{submit.message}</p>
             )}
@@ -259,5 +290,14 @@ function parseOptionalNonNegativeInt(raw: string): number | undefined | "invalid
   if (trimmed === "") return undefined;
   const n = Number(trimmed);
   if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0) return "invalid";
+  return n;
+}
+
+// 必須 / 1 以上の整数。
+function parsePositiveInt(raw: string): number | "invalid" {
+  const trimmed = raw.trim();
+  if (trimmed === "") return "invalid";
+  const n = Number(trimmed);
+  if (!Number.isFinite(n) || !Number.isInteger(n) || n < 1) return "invalid";
   return n;
 }

@@ -51,6 +51,7 @@ func (s *eventService) ListEvents(ctx context.Context, req *connect.Request[nazo
 			ImageUrl:                   nullStringToString(r.ImageUrl),
 			DoorsOpenMinutesBefore:     nullInt32ToPtr(r.DoorsOpenMinutesBefore),
 			EntryDeadlineMinutesBefore: nullInt32ToPtr(r.EntryDeadlineMinutesBefore),
+			ExpectedDurationMinutes:    r.ExpectedDurationMinutes,
 			Tickets:                    []*nazobuv1.EventTicket{},
 		})
 	}
@@ -90,6 +91,7 @@ func (s *eventService) GetEvent(ctx context.Context, req *connect.Request[nazobu
 			ImageUrl:                   nullStringToString(row.ImageUrl),
 			DoorsOpenMinutesBefore:     nullInt32ToPtr(row.DoorsOpenMinutesBefore),
 			EntryDeadlineMinutesBefore: nullInt32ToPtr(row.EntryDeadlineMinutesBefore),
+			ExpectedDurationMinutes:    row.ExpectedDurationMinutes,
 			Tickets:                    []*nazobuv1.EventTicket{},
 		},
 		CanEdit: user.Role == auth.RoleAdmin,
@@ -112,6 +114,10 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 		return nil, err
 	}
 	entryDeadline, err := validateMinutesBefore(req.Msg.EntryDeadlineMinutesBefore, "entry_deadline_minutes_before")
+	if err != nil {
+		return nil, err
+	}
+	expectedDuration, err := validateExpectedDurationMinutes(req.Msg.GetExpectedDurationMinutes())
 	if err != nil {
 		return nil, err
 	}
@@ -143,6 +149,7 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 		ImageUrl:                   imageURL,
 		DoorsOpenMinutesBefore:     doorsOpen,
 		EntryDeadlineMinutesBefore: entryDeadline,
+		ExpectedDurationMinutes:    expectedDuration,
 	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の登録に失敗: %w", err))
 	}
@@ -155,6 +162,7 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 			ImageUrl:                   nullStringToString(imageURL),
 			DoorsOpenMinutesBefore:     nullInt32ToPtr(doorsOpen),
 			EntryDeadlineMinutesBefore: nullInt32ToPtr(entryDeadline),
+			ExpectedDurationMinutes:    expectedDuration,
 			Tickets:                    []*nazobuv1.EventTicket{},
 		},
 	}), nil
@@ -181,6 +189,10 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 		return nil, err
 	}
 	entryDeadline, err := validateMinutesBefore(msg.EntryDeadlineMinutesBefore, "entry_deadline_minutes_before")
+	if err != nil {
+		return nil, err
+	}
+	expectedDuration, err := validateExpectedDurationMinutes(msg.GetExpectedDurationMinutes())
 	if err != nil {
 		return nil, err
 	}
@@ -216,6 +228,7 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 		ImageUrl:                   imageURL,
 		DoorsOpenMinutesBefore:     doorsOpen,
 		EntryDeadlineMinutesBefore: entryDeadline,
+		ExpectedDurationMinutes:    expectedDuration,
 	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の更新に失敗: %w", err))
 	}
@@ -228,6 +241,7 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 			ImageUrl:                   nullStringToString(imageURL),
 			DoorsOpenMinutesBefore:     nullInt32ToPtr(doorsOpen),
 			EntryDeadlineMinutesBefore: nullInt32ToPtr(entryDeadline),
+			ExpectedDurationMinutes:    expectedDuration,
 			Tickets:                    []*nazobuv1.EventTicket{},
 		},
 	}), nil
@@ -242,6 +256,14 @@ func validateMinutesBefore(v *int32, fieldName string) (sql.NullInt32, error) {
 		return sql.NullInt32{}, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("%s は 0 以上", fieldName))
 	}
 	return sql.NullInt32{Int32: *v, Valid: true}, nil
+}
+
+// validateExpectedDurationMinutes は想定所要時間（分）を検証する。1 以上が必須。
+func validateExpectedDurationMinutes(v int32) (int32, error) {
+	if v < 1 {
+		return 0, connect.NewError(connect.CodeInvalidArgument, errors.New("expected_duration_minutes は 1 以上"))
+	}
+	return v, nil
 }
 
 func nullInt32ToPtr(v sql.NullInt32) *int32 {

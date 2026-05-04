@@ -114,9 +114,11 @@ type Event struct {
 	// 入場締切が開演時刻の何分前か（これを過ぎると参加できない）。任意。
 	EntryDeadlineMinutesBefore *int32 `protobuf:"varint,6,opt,name=entry_deadline_minutes_before,json=entryDeadlineMinutesBefore,proto3,oneof" json:"entry_deadline_minutes_before,omitempty"`
 	// 公演 URL から取得した OG 画像の URL（外部）。未取得 / 取得失敗時は空文字。
-	ImageUrl      string `protobuf:"bytes,7,opt,name=image_url,json=imageUrl,proto3" json:"image_url,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	ImageUrl string `protobuf:"bytes,7,opt,name=image_url,json=imageUrl,proto3" json:"image_url,omitempty"`
+	// 想定所要時間（分）。カレンダー連携で終了時刻を算出する用途。1 以上。
+	ExpectedDurationMinutes int32 `protobuf:"varint,8,opt,name=expected_duration_minutes,json=expectedDurationMinutes,proto3" json:"expected_duration_minutes,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *Event) Reset() {
@@ -196,6 +198,13 @@ func (x *Event) GetImageUrl() string {
 		return x.ImageUrl
 	}
 	return ""
+}
+
+func (x *Event) GetExpectedDurationMinutes() int32 {
+	if x != nil {
+		return x.ExpectedDurationMinutes
+	}
+	return 0
 }
 
 type EventTicket struct {
@@ -286,8 +295,10 @@ type CreateEventRequest struct {
 	DoorsOpenMinutesBefore *int32 `protobuf:"varint,3,opt,name=doors_open_minutes_before,json=doorsOpenMinutesBefore,proto3,oneof" json:"doors_open_minutes_before,omitempty"`
 	// 入場締切が開演時刻の何分前か。任意。
 	EntryDeadlineMinutesBefore *int32 `protobuf:"varint,4,opt,name=entry_deadline_minutes_before,json=entryDeadlineMinutesBefore,proto3,oneof" json:"entry_deadline_minutes_before,omitempty"`
-	unknownFields              protoimpl.UnknownFields
-	sizeCache                  protoimpl.SizeCache
+	// 想定所要時間（分）。1 以上。
+	ExpectedDurationMinutes int32 `protobuf:"varint,5,opt,name=expected_duration_minutes,json=expectedDurationMinutes,proto3" json:"expected_duration_minutes,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *CreateEventRequest) Reset() {
@@ -344,6 +355,13 @@ func (x *CreateEventRequest) GetDoorsOpenMinutesBefore() int32 {
 func (x *CreateEventRequest) GetEntryDeadlineMinutesBefore() int32 {
 	if x != nil && x.EntryDeadlineMinutesBefore != nil {
 		return *x.EntryDeadlineMinutesBefore
+	}
+	return 0
+}
+
+func (x *CreateEventRequest) GetExpectedDurationMinutes() int32 {
+	if x != nil {
+		return x.ExpectedDurationMinutes
 	}
 	return 0
 }
@@ -498,8 +516,10 @@ type UpdateEventRequest struct {
 	DoorsOpenMinutesBefore *int32 `protobuf:"varint,4,opt,name=doors_open_minutes_before,json=doorsOpenMinutesBefore,proto3,oneof" json:"doors_open_minutes_before,omitempty"`
 	// 入場締切が開演時刻の何分前か。任意。
 	EntryDeadlineMinutesBefore *int32 `protobuf:"varint,5,opt,name=entry_deadline_minutes_before,json=entryDeadlineMinutesBefore,proto3,oneof" json:"entry_deadline_minutes_before,omitempty"`
-	unknownFields              protoimpl.UnknownFields
-	sizeCache                  protoimpl.SizeCache
+	// 想定所要時間（分）。1 以上。
+	ExpectedDurationMinutes int32 `protobuf:"varint,6,opt,name=expected_duration_minutes,json=expectedDurationMinutes,proto3" json:"expected_duration_minutes,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *UpdateEventRequest) Reset() {
@@ -567,6 +587,13 @@ func (x *UpdateEventRequest) GetEntryDeadlineMinutesBefore() int32 {
 	return 0
 }
 
+func (x *UpdateEventRequest) GetExpectedDurationMinutes() int32 {
+	if x != nil {
+		return x.ExpectedDurationMinutes
+	}
+	return 0
+}
+
 type UpdateEventResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Event         *Event                 `protobuf:"bytes,1,opt,name=event,proto3" json:"event,omitempty"`
@@ -618,7 +645,7 @@ const file_nazobu_v1_event_proto_rawDesc = "" +
 	"\x15nazobu/v1/event.proto\x12\tnazobu.v1\"\x13\n" +
 	"\x11ListEventsRequest\">\n" +
 	"\x12ListEventsResponse\x12(\n" +
-	"\x06events\x18\x01 \x03(\v2\x10.nazobu.v1.EventR\x06events\"\xd6\x02\n" +
+	"\x06events\x18\x01 \x03(\v2\x10.nazobu.v1.EventR\x06events\"\x92\x03\n" +
 	"\x05Event\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x10\n" +
@@ -626,7 +653,8 @@ const file_nazobu_v1_event_proto_rawDesc = "" +
 	"\atickets\x18\x04 \x03(\v2\x16.nazobu.v1.EventTicketR\atickets\x12>\n" +
 	"\x19doors_open_minutes_before\x18\x05 \x01(\x05H\x00R\x16doorsOpenMinutesBefore\x88\x01\x01\x12F\n" +
 	"\x1dentry_deadline_minutes_before\x18\x06 \x01(\x05H\x01R\x1aentryDeadlineMinutesBefore\x88\x01\x01\x12\x1b\n" +
-	"\timage_url\x18\a \x01(\tR\bimageUrlB\x1c\n" +
+	"\timage_url\x18\a \x01(\tR\bimageUrl\x12:\n" +
+	"\x19expected_duration_minutes\x18\b \x01(\x05R\x17expectedDurationMinutesB\x1c\n" +
 	"\x1a_doors_open_minutes_beforeB \n" +
 	"\x1e_entry_deadline_minutes_before\"\xb6\x01\n" +
 	"\vEventTicket\x12\x0e\n" +
@@ -634,12 +662,13 @@ const file_nazobu_v1_event_proto_rawDesc = "" +
 	"\bstart_at\x18\x02 \x01(\tR\astartAt\x12(\n" +
 	"\x10price_per_person\x18\x03 \x01(\x05R\x0epricePerPerson\x12%\n" +
 	"\x0epurchaser_name\x18\x04 \x01(\tR\rpurchaserName\x12+\n" +
-	"\x11participant_names\x18\x05 \x03(\tR\x10participantNames\"\x84\x02\n" +
+	"\x11participant_names\x18\x05 \x03(\tR\x10participantNames\"\xc0\x02\n" +
 	"\x12CreateEventRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12>\n" +
 	"\x19doors_open_minutes_before\x18\x03 \x01(\x05H\x00R\x16doorsOpenMinutesBefore\x88\x01\x01\x12F\n" +
-	"\x1dentry_deadline_minutes_before\x18\x04 \x01(\x05H\x01R\x1aentryDeadlineMinutesBefore\x88\x01\x01B\x1c\n" +
+	"\x1dentry_deadline_minutes_before\x18\x04 \x01(\x05H\x01R\x1aentryDeadlineMinutesBefore\x88\x01\x01\x12:\n" +
+	"\x19expected_duration_minutes\x18\x05 \x01(\x05R\x17expectedDurationMinutesB\x1c\n" +
 	"\x1a_doors_open_minutes_beforeB \n" +
 	"\x1e_entry_deadline_minutes_before\"=\n" +
 	"\x13CreateEventResponse\x12&\n" +
@@ -648,13 +677,14 @@ const file_nazobu_v1_event_proto_rawDesc = "" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\"U\n" +
 	"\x10GetEventResponse\x12&\n" +
 	"\x05event\x18\x01 \x01(\v2\x10.nazobu.v1.EventR\x05event\x12\x19\n" +
-	"\bcan_edit\x18\x02 \x01(\bR\acanEdit\"\x9f\x02\n" +
+	"\bcan_edit\x18\x02 \x01(\bR\acanEdit\"\xdb\x02\n" +
 	"\x12UpdateEventRequest\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x10\n" +
 	"\x03url\x18\x03 \x01(\tR\x03url\x12>\n" +
 	"\x19doors_open_minutes_before\x18\x04 \x01(\x05H\x00R\x16doorsOpenMinutesBefore\x88\x01\x01\x12F\n" +
-	"\x1dentry_deadline_minutes_before\x18\x05 \x01(\x05H\x01R\x1aentryDeadlineMinutesBefore\x88\x01\x01B\x1c\n" +
+	"\x1dentry_deadline_minutes_before\x18\x05 \x01(\x05H\x01R\x1aentryDeadlineMinutesBefore\x88\x01\x01\x12:\n" +
+	"\x19expected_duration_minutes\x18\x06 \x01(\x05R\x17expectedDurationMinutesB\x1c\n" +
 	"\x1a_doors_open_minutes_beforeB \n" +
 	"\x1e_entry_deadline_minutes_before\"=\n" +
 	"\x13UpdateEventResponse\x12&\n" +
