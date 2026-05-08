@@ -117,6 +117,7 @@ function Form({
 }) {
   const [title, setTitle] = useState(event.title);
   const [url, setUrl] = useState(event.url);
+  const [catchphrase, setCatchphrase] = useState(event.catchphrase);
   const [doorsOpen, setDoorsOpen] = useState(
     event.doorsOpenMinutesBefore !== undefined
       ? String(event.doorsOpenMinutesBefore)
@@ -140,8 +141,13 @@ function Form({
 
     const trimmedTitle = title.trim();
     const trimmedUrl = url.trim();
+    const trimmedCatchphrase = catchphrase.trim();
     if (trimmedTitle === "" || trimmedUrl === "") {
       setSubmit({ kind: "error", message: "タイトルと URL を入力してください" });
+      return;
+    }
+    if (trimmedCatchphrase.length > 255) {
+      setSubmit({ kind: "error", message: "キャッチコピーは 255 文字以内で入力してください" });
       return;
     }
 
@@ -167,6 +173,7 @@ function Form({
         eventId: event.id,
         title: trimmedTitle,
         url: trimmedUrl,
+        catchphrase: trimmedCatchphrase,
         doorsOpenMinutesBefore: parsedDoorsOpen,
         entryDeadlineMinutesBefore: parsedEntryDeadline,
         expectedDurationMinutes: parsedExpectedDuration,
@@ -232,6 +239,25 @@ function Form({
                 <code className="font-mono">realdgame.jp</code> /{" "}
                 <code className="font-mono">escape.id</code> の URL を入れると、自動でカード画像も取得します。
               </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="event-catchphrase"
+                className="block text-sm font-medium text-zinc-700"
+              >
+                キャッチコピー（任意）
+              </label>
+              <input
+                id="event-catchphrase"
+                type="text"
+                maxLength={255}
+                value={catchphrase}
+                onChange={(e) => setCatchphrase(e.target.value)}
+                disabled={submitting}
+                className="mt-1 block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+                placeholder="例: 限られた時間で謎を解け！"
+              />
             </div>
 
             <div>

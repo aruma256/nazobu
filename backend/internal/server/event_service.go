@@ -29,8 +29,9 @@ func newEventService(db *sql.DB) nazobuv1connect.EventServiceHandler {
 }
 
 const (
-	eventTitleMaxLen = 255
-	eventURLMaxLen   = 512
+	eventTitleMaxLen       = 255
+	eventURLMaxLen         = 512
+	eventCatchphraseMaxLen = 255
 )
 
 func (s *eventService) ListEvents(ctx context.Context, req *connect.Request[nazobuv1.ListEventsRequest]) (*connect.Response[nazobuv1.ListEventsResponse], error) {
@@ -48,6 +49,7 @@ func (s *eventService) ListEvents(ctx context.Context, req *connect.Request[nazo
 			Id:                         r.ID,
 			Title:                      r.Title,
 			Url:                        r.Url,
+			Catchphrase:                r.Catchphrase,
 			ImageUrl:                   nullStringToString(r.ImageUrl),
 			DoorsOpenMinutesBefore:     nullInt32ToPtr(r.DoorsOpenMinutesBefore),
 			EntryDeadlineMinutesBefore: nullInt32ToPtr(r.EntryDeadlineMinutesBefore),
@@ -88,6 +90,7 @@ func (s *eventService) GetEvent(ctx context.Context, req *connect.Request[nazobu
 			Id:                         row.ID,
 			Title:                      row.Title,
 			Url:                        row.Url,
+			Catchphrase:                row.Catchphrase,
 			ImageUrl:                   nullStringToString(row.ImageUrl),
 			DoorsOpenMinutesBefore:     nullInt32ToPtr(row.DoorsOpenMinutesBefore),
 			EntryDeadlineMinutesBefore: nullInt32ToPtr(row.EntryDeadlineMinutesBefore),
@@ -109,6 +112,7 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 
 	title := strings.TrimSpace(req.Msg.GetTitle())
 	rawURL := strings.TrimSpace(req.Msg.GetUrl())
+	catchphrase := strings.TrimSpace(req.Msg.GetCatchphrase())
 	doorsOpen, err := validateMinutesBefore(req.Msg.DoorsOpenMinutesBefore, "doors_open_minutes_before")
 	if err != nil {
 		return nil, err
@@ -134,6 +138,9 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 	if len(rawURL) > eventURLMaxLen {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("url は %d 文字以内", eventURLMaxLen))
 	}
+	if len(catchphrase) > eventCatchphraseMaxLen {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("catchphrase は %d 文字以内", eventCatchphraseMaxLen))
+	}
 	parsed, err := url.Parse(rawURL)
 	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("url は http(s) スキーマの URL"))
@@ -146,6 +153,7 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 		ID:                         id,
 		Title:                      title,
 		Url:                        rawURL,
+		Catchphrase:                catchphrase,
 		ImageUrl:                   imageURL,
 		DoorsOpenMinutesBefore:     doorsOpen,
 		EntryDeadlineMinutesBefore: entryDeadline,
@@ -159,6 +167,7 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 			Id:                         id,
 			Title:                      title,
 			Url:                        rawURL,
+			Catchphrase:                catchphrase,
 			ImageUrl:                   nullStringToString(imageURL),
 			DoorsOpenMinutesBefore:     nullInt32ToPtr(doorsOpen),
 			EntryDeadlineMinutesBefore: nullInt32ToPtr(entryDeadline),
@@ -184,6 +193,7 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 	}
 	title := strings.TrimSpace(msg.GetTitle())
 	rawURL := strings.TrimSpace(msg.GetUrl())
+	catchphrase := strings.TrimSpace(msg.GetCatchphrase())
 	doorsOpen, err := validateMinutesBefore(msg.DoorsOpenMinutesBefore, "doors_open_minutes_before")
 	if err != nil {
 		return nil, err
@@ -208,6 +218,9 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 	if len(rawURL) > eventURLMaxLen {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("url は %d 文字以内", eventURLMaxLen))
 	}
+	if len(catchphrase) > eventCatchphraseMaxLen {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("catchphrase は %d 文字以内", eventCatchphraseMaxLen))
+	}
 	parsed, err := url.Parse(rawURL)
 	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("url は http(s) スキーマの URL"))
@@ -225,6 +238,7 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 		ID:                         eventID,
 		Title:                      title,
 		Url:                        rawURL,
+		Catchphrase:                catchphrase,
 		ImageUrl:                   imageURL,
 		DoorsOpenMinutesBefore:     doorsOpen,
 		EntryDeadlineMinutesBefore: entryDeadline,
@@ -238,6 +252,7 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 			Id:                         eventID,
 			Title:                      title,
 			Url:                        rawURL,
+			Catchphrase:                catchphrase,
 			ImageUrl:                   nullStringToString(imageURL),
 			DoorsOpenMinutesBefore:     nullInt32ToPtr(doorsOpen),
 			EntryDeadlineMinutesBefore: nullInt32ToPtr(entryDeadline),

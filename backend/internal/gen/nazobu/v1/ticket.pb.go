@@ -127,8 +127,10 @@ type Ticket struct {
 	EventImageUrl string `protobuf:"bytes,13,opt,name=event_image_url,json=eventImageUrl,proto3" json:"event_image_url,omitempty"`
 	// 公演の想定所要時間（分）。カレンダー連携で終了時刻を算出する用途。1 以上。
 	EventExpectedDurationMinutes int32 `protobuf:"varint,14,opt,name=event_expected_duration_minutes,json=eventExpectedDurationMinutes,proto3" json:"event_expected_duration_minutes,omitempty"`
-	unknownFields                protoimpl.UnknownFields
-	sizeCache                    protoimpl.SizeCache
+	// 公演のキャッチコピー（手動入力）。未設定なら空文字。
+	EventCatchphrase string `protobuf:"bytes,15,opt,name=event_catchphrase,json=eventCatchphrase,proto3" json:"event_catchphrase,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *Ticket) Reset() {
@@ -250,6 +252,13 @@ func (x *Ticket) GetEventExpectedDurationMinutes() int32 {
 		return x.EventExpectedDurationMinutes
 	}
 	return 0
+}
+
+func (x *Ticket) GetEventCatchphrase() string {
+	if x != nil {
+		return x.EventCatchphrase
+	}
+	return ""
 }
 
 type GetTicketRequest struct {
@@ -996,7 +1005,7 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\x16nazobu/v1/ticket.proto\x12\tnazobu.v1\"\x14\n" +
 	"\x12ListTicketsRequest\"B\n" +
 	"\x13ListTicketsResponse\x12+\n" +
-	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"\xee\x03\n" +
+	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"\x9b\x04\n" +
 	"\x06Ticket\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\bevent_id\x18\x02 \x01(\tR\aeventId\x12\x1f\n" +
@@ -1013,7 +1022,8 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\bstart_at\x18\v \x01(\tR\astartAt\x12)\n" +
 	"\x10max_participants\x18\f \x01(\x05R\x0fmaxParticipants\x12&\n" +
 	"\x0fevent_image_url\x18\r \x01(\tR\reventImageUrl\x12E\n" +
-	"\x1fevent_expected_duration_minutes\x18\x0e \x01(\x05R\x1ceventExpectedDurationMinutesJ\x04\b\x04\x10\x05\"/\n" +
+	"\x1fevent_expected_duration_minutes\x18\x0e \x01(\x05R\x1ceventExpectedDurationMinutes\x12+\n" +
+	"\x11event_catchphrase\x18\x0f \x01(\tR\x10eventCatchphraseJ\x04\b\x04\x10\x05\"/\n" +
 	"\x10GetTicketRequest\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\"\x9b\x01\n" +
 	"\x11GetTicketResponse\x12)\n" +

@@ -188,6 +188,11 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
             <h3 className="px-4 pt-1 text-base leading-snug font-semibold">
               {ticket.eventTitle}
             </h3>
+            {ticket.eventCatchphrase !== "" && (
+              <p className="px-4 pt-0.5 text-sm text-zinc-700">
+                {ticket.eventCatchphrase}
+              </p>
+            )}
             {ticket.eventUrl !== "" && (
               <a
                 href={ticket.eventUrl}

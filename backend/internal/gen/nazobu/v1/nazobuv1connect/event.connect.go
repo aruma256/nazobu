@@ -53,7 +53,7 @@ type EventServiceClient interface {
 	GetEvent(context.Context, *connect.Request[v1.GetEventRequest]) (*connect.Response[v1.GetEventResponse], error)
 	// CreateEvent は新規 event を 1 件登録する。
 	CreateEvent(context.Context, *connect.Request[v1.CreateEventRequest]) (*connect.Response[v1.CreateEventResponse], error)
-	// UpdateEvent は event の title / url / 開場・締切オフセットを更新する。admin のみ実行可能。
+	// UpdateEvent は event の title / url / catchphrase / 開場・締切オフセットを更新する。admin のみ実行可能。
 	UpdateEvent(context.Context, *connect.Request[v1.UpdateEventRequest]) (*connect.Response[v1.UpdateEventResponse], error)
 }
 
@@ -131,7 +131,7 @@ type EventServiceHandler interface {
 	GetEvent(context.Context, *connect.Request[v1.GetEventRequest]) (*connect.Response[v1.GetEventResponse], error)
 	// CreateEvent は新規 event を 1 件登録する。
 	CreateEvent(context.Context, *connect.Request[v1.CreateEventRequest]) (*connect.Response[v1.CreateEventResponse], error)
-	// UpdateEvent は event の title / url / 開場・締切オフセットを更新する。admin のみ実行可能。
+	// UpdateEvent は event の title / url / catchphrase / 開場・締切オフセットを更新する。admin のみ実行可能。
 	UpdateEvent(context.Context, *connect.Request[v1.UpdateEventRequest]) (*connect.Response[v1.UpdateEventResponse], error)
 }
 

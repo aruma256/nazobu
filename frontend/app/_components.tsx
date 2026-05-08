@@ -292,6 +292,11 @@ export function TicketCard({
           <h3 className="pt-1 text-base leading-snug font-semibold">
             {ticket.eventTitle}
           </h3>
+          {ticket.eventCatchphrase !== "" && (
+            <p className="pt-0.5 text-xs text-zinc-700">
+              {ticket.eventCatchphrase}
+            </p>
+          )}
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 pt-3 text-xs text-zinc-900">
             {hasMeeting && (
               <>

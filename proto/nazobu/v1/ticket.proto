@@ -59,6 +59,8 @@ message Ticket {
   string event_image_url = 13;
   // 公演の想定所要時間（分）。カレンダー連携で終了時刻を算出する用途。1 以上。
   int32 event_expected_duration_minutes = 14;
+  // 公演のキャッチコピー（手動入力）。未設定なら空文字。
+  string event_catchphrase = 15;
 }
 
 message GetTicketRequest {

@@ -68,7 +68,7 @@ func (q *Queries) ListMyMonthlyTicketsByUserID(ctx context.Context, arg ListMyMo
 }
 
 const listUnsettledTicketsByUserID = `-- name: ListUnsettledTicketsByUserID :many
-SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.image_url AS event_image_url,
+SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
@@ -94,6 +94,7 @@ type ListUnsettledTicketsByUserIDRow struct {
 	EventID                      string
 	EventTitle                   string
 	EventUrl                     string
+	EventCatchphrase             string
 	EventImageUrl                sql.NullString
 	EventExpectedDurationMinutes int32
 	StartAt                      time.Time
@@ -122,6 +123,7 @@ func (q *Queries) ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnse
 			&i.EventID,
 			&i.EventTitle,
 			&i.EventUrl,
+			&i.EventCatchphrase,
 			&i.EventImageUrl,
 			&i.EventExpectedDurationMinutes,
 			&i.StartAt,
@@ -145,7 +147,7 @@ func (q *Queries) ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnse
 }
 
 const listUpcomingTicketsByUserID = `-- name: ListUpcomingTicketsByUserID :many
-SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.image_url AS event_image_url,
+SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
@@ -169,6 +171,7 @@ type ListUpcomingTicketsByUserIDRow struct {
 	EventID                      string
 	EventTitle                   string
 	EventUrl                     string
+	EventCatchphrase             string
 	EventImageUrl                sql.NullString
 	EventExpectedDurationMinutes int32
 	StartAt                      time.Time
@@ -196,6 +199,7 @@ func (q *Queries) ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcom
 			&i.EventID,
 			&i.EventTitle,
 			&i.EventUrl,
+			&i.EventCatchphrase,
 			&i.EventImageUrl,
 			&i.EventExpectedDurationMinutes,
 			&i.StartAt,

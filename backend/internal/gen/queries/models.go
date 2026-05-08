@@ -13,6 +13,7 @@ type Event struct {
 	ID                         string
 	Title                      string
 	Url                        string
+	Catchphrase                string
 	ImageUrl                   sql.NullString
 	DoorsOpenMinutesBefore     sql.NullInt32
 	EntryDeadlineMinutesBefore sql.NullInt32

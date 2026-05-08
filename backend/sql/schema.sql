@@ -56,6 +56,8 @@ CREATE TABLE events (
   id          VARCHAR(26)  NOT NULL,
   title       VARCHAR(255) NOT NULL,
   url         VARCHAR(512) NOT NULL,
+  -- 公演のキャッチコピー（手動入力）。空文字を「未設定」として許容する。
+  catchphrase VARCHAR(255) NOT NULL DEFAULT '',
   -- 公演 URL から取得した OG 画像の URL。allowlist ドメインのみ取得し、
   -- 取得失敗時は NULL のまま。表示は外部画像 URL を直接埋め込む方針。
   image_url   VARCHAR(2048) NULL,

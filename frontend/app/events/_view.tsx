@@ -128,6 +128,9 @@ function EventCard({
       {event.imageUrl !== "" && <EventCover src={event.imageUrl} alt={event.title} />}
       <div className="px-4 pt-4">
         <h3 className="text-base leading-snug font-semibold">{event.title}</h3>
+        {event.catchphrase !== "" && (
+          <p className="mt-1 text-sm text-zinc-700">{event.catchphrase}</p>
+        )}
         {event.url !== "" && (
           <a
             href={event.url}

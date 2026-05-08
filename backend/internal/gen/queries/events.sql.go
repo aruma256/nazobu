@@ -25,14 +25,15 @@ func (q *Queries) CountEventByID(ctx context.Context, id string) (int64, error) 
 }
 
 const createEvent = `-- name: CreateEvent :exec
-INSERT INTO events (id, title, url, image_url, doors_open_minutes_before, entry_deadline_minutes_before, expected_duration_minutes, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6))
+INSERT INTO events (id, title, url, catchphrase, image_url, doors_open_minutes_before, entry_deadline_minutes_before, expected_duration_minutes, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6))
 `
 
 type CreateEventParams struct {
 	ID                         string
 	Title                      string
 	Url                        string
+	Catchphrase                string
 	ImageUrl                   sql.NullString
 	DoorsOpenMinutesBefore     sql.NullInt32
 	EntryDeadlineMinutesBefore sql.NullInt32
@@ -44,6 +45,7 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) error 
 		arg.ID,
 		arg.Title,
 		arg.Url,
+		arg.Catchphrase,
 		arg.ImageUrl,
 		arg.DoorsOpenMinutesBefore,
 		arg.EntryDeadlineMinutesBefore,
@@ -53,7 +55,7 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) error 
 }
 
 const getEventByID = `-- name: GetEventByID :one
-SELECT id, title, url, image_url, doors_open_minutes_before, entry_deadline_minutes_before, expected_duration_minutes
+SELECT id, title, url, catchphrase, image_url, doors_open_minutes_before, entry_deadline_minutes_before, expected_duration_minutes
 FROM events
 WHERE id = ?
 `
@@ -62,6 +64,7 @@ type GetEventByIDRow struct {
 	ID                         string
 	Title                      string
 	Url                        string
+	Catchphrase                string
 	ImageUrl                   sql.NullString
 	DoorsOpenMinutesBefore     sql.NullInt32
 	EntryDeadlineMinutesBefore sql.NullInt32
@@ -76,6 +79,7 @@ func (q *Queries) GetEventByID(ctx context.Context, id string) (GetEventByIDRow,
 		&i.ID,
 		&i.Title,
 		&i.Url,
+		&i.Catchphrase,
 		&i.ImageUrl,
 		&i.DoorsOpenMinutesBefore,
 		&i.EntryDeadlineMinutesBefore,
@@ -143,7 +147,7 @@ func (q *Queries) ListEventTicketsByEventIDs(ctx context.Context, eventIds []str
 }
 
 const listEvents = `-- name: ListEvents :many
-SELECT id, title, url, image_url, doors_open_minutes_before, entry_deadline_minutes_before, expected_duration_minutes
+SELECT id, title, url, catchphrase, image_url, doors_open_minutes_before, entry_deadline_minutes_before, expected_duration_minutes
 FROM events
 ORDER BY created_at DESC, id DESC
 `
@@ -152,6 +156,7 @@ type ListEventsRow struct {
 	ID                         string
 	Title                      string
 	Url                        string
+	Catchphrase                string
 	ImageUrl                   sql.NullString
 	DoorsOpenMinutesBefore     sql.NullInt32
 	EntryDeadlineMinutesBefore sql.NullInt32
@@ -172,6 +177,7 @@ func (q *Queries) ListEvents(ctx context.Context) ([]ListEventsRow, error) {
 			&i.ID,
 			&i.Title,
 			&i.Url,
+			&i.Catchphrase,
 			&i.ImageUrl,
 			&i.DoorsOpenMinutesBefore,
 			&i.EntryDeadlineMinutesBefore,
@@ -194,6 +200,7 @@ const updateEvent = `-- name: UpdateEvent :exec
 UPDATE events
 SET title = ?,
     url = ?,
+    catchphrase = ?,
     image_url = ?,
     doors_open_minutes_before = ?,
     entry_deadline_minutes_before = ?,
@@ -205,6 +212,7 @@ WHERE id = ?
 type UpdateEventParams struct {
 	Title                      string
 	Url                        string
+	Catchphrase                string
 	ImageUrl                   sql.NullString
 	DoorsOpenMinutesBefore     sql.NullInt32
 	EntryDeadlineMinutesBefore sql.NullInt32
@@ -216,6 +224,7 @@ func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) error 
 	_, err := q.db.ExecContext(ctx, updateEvent,
 		arg.Title,
 		arg.Url,
+		arg.Catchphrase,
 		arg.ImageUrl,
 		arg.DoorsOpenMinutesBefore,
 		arg.EntryDeadlineMinutesBefore,
