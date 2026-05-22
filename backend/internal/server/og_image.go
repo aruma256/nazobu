@@ -26,16 +26,29 @@ const (
 	ogImageURLMaxLen    = 2048
 )
 
-// fetchOGImageURL は eventURL のページから og:image を 1 件取り出して返す。
-// 失敗（allowlist 外 / ネットワーク / パース失敗 / og:image 無し）時は ("", nil)。
-// caller は失敗を区別せず NULL として保存する仕様なので error は返さない。
-func fetchOGImageURL(ctx context.Context, client *http.Client, eventURL string) string {
+// escape.id のトップページ等が返す汎用サイト説明。
+// 個別公演ページではないため、これをキャッチコピーとして採用してはいけない。
+const escapeIDGenericDescription = "閉じ込められたいあなたのための脱出・謎解きポータルサイト"
+
+// ogTags は対象ページから取り出せた og:image / og:description を保持する。
+// 取得できなかった項目は空文字。
+type ogTags struct {
+	// 絶対化済みの https URL。長さオーバーや非 https の場合は空文字。
+	Image string
+	// raw な og:description（前後空白は trim 済み）。
+	Description string
+}
+
+// fetchOGTags は eventURL のページから og:image / og:description を 1 リクエストで取り出す。
+// 失敗（allowlist 外 / ネットワーク / パース失敗 / 該当タグ無し）時は対応フィールドが空文字。
+// caller は失敗を区別せず空のまま保存する仕様なので error は返さない。
+func fetchOGTags(ctx context.Context, client *http.Client, eventURL string) ogTags {
 	parsed, err := url.Parse(eventURL)
 	if err != nil || parsed.Scheme != "https" {
-		return ""
+		return ogTags{}
 	}
 	if !isAllowedOGHost(parsed.Host) {
-		return ""
+		return ogTags{}
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, ogFetchTimeout)
@@ -57,44 +70,57 @@ func fetchOGImageURL(ctx context.Context, client *http.Client, eventURL string) 
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, eventURL, nil)
 	if err != nil {
-		return ""
+		return ogTags{}
 	}
 	req.Header.Set("User-Agent", "nazobu-og-fetcher/1.0")
 	req.Header.Set("Accept", "text/html,application/xhtml+xml")
 
 	resp, err := c.Do(req)
 	if err != nil {
-		return ""
+		return ogTags{}
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		return ""
+		return ogTags{}
 	}
 	ct := resp.Header.Get("Content-Type")
 	if !strings.HasPrefix(strings.ToLower(ct), "text/html") {
-		return ""
+		return ogTags{}
 	}
 
 	limited := io.LimitReader(resp.Body, ogFetchMaxBodyBytes)
-	imgURL := extractOGImage(limited)
-	if imgURL == "" {
-		return ""
-	}
+	tags := extractOGTags(limited)
 
-	// 相対 URL を絶対化し、画像 URL も https のみ許容。
-	abs, err := parsed.Parse(imgURL)
-	if err != nil {
-		return ""
+	if tags.Image != "" {
+		// 相対 URL を絶対化し、画像 URL も https のみ許容。長さオーバーや非 https は弾く。
+		abs, err := parsed.Parse(tags.Image)
+		if err != nil || abs.Scheme != "https" {
+			tags.Image = ""
+		} else if s := abs.String(); len(s) > ogImageURLMaxLen {
+			tags.Image = ""
+		} else {
+			tags.Image = s
+		}
 	}
-	if abs.Scheme != "https" {
-		return ""
+	return tags
+}
+
+// shouldUseOGDescriptionAsCatchphrase は og:description を event のキャッチコピーに採用するかを判定する。
+// 公演単位の固有説明が取れるのは現状 escape.id のみのため、ホストを escape.id に限定する。
+// またトップページ等が返す汎用サイト説明は採用しない。
+func shouldUseOGDescriptionAsCatchphrase(host, description string) bool {
+	if description == "" {
+		return false
 	}
-	s := abs.String()
-	if len(s) > ogImageURLMaxLen {
-		return ""
+	h := strings.ToLower(host)
+	if i := strings.IndexByte(h, ':'); i >= 0 {
+		h = h[:i]
 	}
-	return s
+	if h != "escape.id" {
+		return false
+	}
+	return description != escapeIDGenericDescription
 }
 
 func isAllowedOGHost(host string) bool {
@@ -107,20 +133,22 @@ func isAllowedOGHost(host string) bool {
 	return ok
 }
 
-// extractOGImage は HTML を読み <meta property="og:image" content="..."> を探す。
-// 見つからなければ空文字。<body> に入った時点で打ち切り（OG タグは <head> 内なので）。
-func extractOGImage(r io.Reader) string {
+// extractOGTags は HTML を読み <meta property="og:image" / "og:description" content="..."> を探す。
+// 見つからない項目は空文字のまま。<body> に入った時点で打ち切り（OG タグは <head> 内なので）。
+// og:description の前後空白は trim する。
+func extractOGTags(r io.Reader) ogTags {
+	var tags ogTags
 	z := html.NewTokenizer(r)
 	for {
 		tt := z.Next()
 		switch tt {
 		case html.ErrorToken:
-			return ""
+			return tags
 		case html.StartTagToken, html.SelfClosingTagToken:
 			name, hasAttr := z.TagName()
 			tag := string(name)
 			if tag == "body" {
-				return ""
+				return tags
 			}
 			if tag != "meta" || !hasAttr {
 				continue
@@ -140,8 +168,17 @@ func extractOGImage(r io.Reader) string {
 					break
 				}
 			}
-			if strings.EqualFold(prop, "og:image") && content != "" {
-				return content
+			if content == "" {
+				continue
+			}
+			switch {
+			case strings.EqualFold(prop, "og:image") && tags.Image == "":
+				tags.Image = content
+			case strings.EqualFold(prop, "og:description") && tags.Description == "":
+				tags.Description = strings.TrimSpace(content)
+			}
+			if tags.Image != "" && tags.Description != "" {
+				return tags
 			}
 		}
 	}

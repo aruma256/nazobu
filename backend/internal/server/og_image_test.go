@@ -31,7 +31,7 @@ func TestIsAllowedOGHost(t *testing.T) {
 	}
 }
 
-func TestExtractOGImage(t *testing.T) {
+func TestExtractOGTags_Image(t *testing.T) {
 	cases := []struct {
 		name string
 		html string
@@ -80,21 +80,109 @@ func TestExtractOGImage(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			got := extractOGImage(strings.NewReader(c.html))
+			got := extractOGTags(strings.NewReader(c.html)).Image
 			if got != c.want {
-				t.Errorf("extractOGImage = %q, want %q", got, c.want)
+				t.Errorf("extractOGTags(...).Image = %q, want %q", got, c.want)
 			}
 		})
 	}
 }
 
-// fetchOGImageURL は SSRF 対策として allowlist でホストを絞っているので、
+func TestExtractOGTags_Description(t *testing.T) {
+	cases := []struct {
+		name string
+		html string
+		want string
+	}{
+		{
+			name: "property=og:description を拾う",
+			html: `<html><head><meta property="og:description" content="ある夜の脱出"></head><body></body></html>`,
+			want: "ある夜の脱出",
+		},
+		{
+			name: "前後空白は trim する",
+			html: `<html><head><meta property="og:description" content="  脱出  "></head></html>`,
+			want: "脱出",
+		},
+		{
+			name: "og:description が無ければ空文字",
+			html: `<html><head><meta property="og:title" content="t"></head></html>`,
+			want: "",
+		},
+		{
+			name: "og:image と同居していても両方拾える",
+			html: `<html><head><meta property="og:image" content="https://example.com/a.png"><meta property="og:description" content="さあ脱出だ"></head></html>`,
+			want: "さあ脱出だ",
+		},
+		{
+			name: "<body> に入った時点で打ち切り",
+			html: `<html><head></head><body><meta property="og:description" content="無視されるはず"></body></html>`,
+			want: "",
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := extractOGTags(strings.NewReader(c.html)).Description
+			if got != c.want {
+				t.Errorf("extractOGTags(...).Description = %q, want %q", got, c.want)
+			}
+		})
+	}
+}
+
+func TestShouldUseOGDescriptionAsCatchphrase(t *testing.T) {
+	cases := []struct {
+		name        string
+		host        string
+		description string
+		want        bool
+	}{
+		{"escape.id の個別公演説明は採用", "escape.id", "ある夜の脱出", true},
+		{"escape.id でもポート付きホストは正規化して採用", "escape.id:443", "ある夜の脱出", true},
+		{"escape.id の汎用サイト説明は除外", "escape.id", escapeIDGenericDescription, false},
+		{"description が空なら採用しない", "escape.id", "", false},
+		{"escape.id 以外は採用しない", "realdgame.jp", "ある夜の脱出", false},
+		{"未知ホストは採用しない", "evil.example.com", "ある夜の脱出", false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := shouldUseOGDescriptionAsCatchphrase(c.host, c.description); got != c.want {
+				t.Errorf("shouldUseOGDescriptionAsCatchphrase(%q, %q) = %v, want %v", c.host, c.description, got, c.want)
+			}
+		})
+	}
+}
+
+func TestApplyOGDescriptionFallback(t *testing.T) {
+	cases := []struct {
+		name        string
+		catchphrase string
+		host        string
+		description string
+		want        string
+	}{
+		{"web 入力があれば og:description より優先", "手入力のコピー", "escape.id", "ある夜の脱出", "手入力のコピー"},
+		{"web 入力が空 + 採用条件成立で og:description を採用", "", "escape.id", "ある夜の脱出", "ある夜の脱出"},
+		{"汎用サイト説明は採用しない", "", "escape.id", escapeIDGenericDescription, ""},
+		{"escape.id 以外は採用しない", "", "realdgame.jp", "ある夜の脱出", ""},
+		{"長さオーバーは採用しない", "", "escape.id", strings.Repeat("a", eventCatchphraseMaxLen+1), ""},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := applyOGDescriptionFallback(c.catchphrase, c.host, c.description); got != c.want {
+				t.Errorf("applyOGDescriptionFallback(%q, %q, %q) = %q, want %q", c.catchphrase, c.host, c.description, got, c.want)
+			}
+		})
+	}
+}
+
+// fetchOGTags は SSRF 対策として allowlist でホストを絞っているので、
 // 実際の testserver は allowlist にないホストになる。allowlist を一時的に
 // テストサーバ向けに差し替えて検証する。
-func TestFetchOGImageURL_Success(t *testing.T) {
+func TestFetchOGTags_Success(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = w.Write([]byte(`<html><head><meta property="og:image" content="/img/x.png"></head></html>`))
+		_, _ = w.Write([]byte(`<html><head><meta property="og:image" content="/img/x.png"><meta property="og:description" content="ある夜の脱出"></head></html>`))
 	}))
 	defer srv.Close()
 
@@ -102,45 +190,48 @@ func TestFetchOGImageURL_Success(t *testing.T) {
 	host := stripPort(u.Host)
 	withAllowedHost(t, host)
 
-	got := fetchOGImageURL(context.Background(), srv.Client(), srv.URL+"/event")
-	want := "https://" + u.Host + "/img/x.png"
-	if got != want {
-		t.Errorf("fetchOGImageURL = %q, want %q", got, want)
+	got := fetchOGTags(context.Background(), srv.Client(), srv.URL+"/event")
+	wantImage := "https://" + u.Host + "/img/x.png"
+	if got.Image != wantImage {
+		t.Errorf("fetchOGTags(...).Image = %q, want %q", got.Image, wantImage)
+	}
+	if got.Description != "ある夜の脱出" {
+		t.Errorf("fetchOGTags(...).Description = %q, want %q", got.Description, "ある夜の脱出")
 	}
 }
 
-func TestFetchOGImageURL_RejectsNonHTTPS(t *testing.T) {
-	if got := fetchOGImageURL(context.Background(), http.DefaultClient, "http://realdgame.jp/x"); got != "" {
-		t.Errorf("http スキーマは弾く想定だが %q を返した", got)
+func TestFetchOGTags_RejectsNonHTTPS(t *testing.T) {
+	if got := fetchOGTags(context.Background(), http.DefaultClient, "http://realdgame.jp/x"); got.Image != "" || got.Description != "" {
+		t.Errorf("http スキーマは弾く想定だが %+v を返した", got)
 	}
 }
 
-func TestFetchOGImageURL_RejectsInvalidURL(t *testing.T) {
+func TestFetchOGTags_RejectsInvalidURL(t *testing.T) {
 	// url.Parse がエラーを返す形（制御文字混入）。
-	if got := fetchOGImageURL(context.Background(), http.DefaultClient, "https://example.com/\x7f"); got != "" {
-		t.Errorf("不正 URL は弾く想定だが %q を返した", got)
+	if got := fetchOGTags(context.Background(), http.DefaultClient, "https://example.com/\x7f"); got.Image != "" || got.Description != "" {
+		t.Errorf("不正 URL は弾く想定だが %+v を返した", got)
 	}
 }
 
-func TestFetchOGImageURL_RejectsDisallowedHost(t *testing.T) {
-	if got := fetchOGImageURL(context.Background(), http.DefaultClient, "https://evil.example.com/"); got != "" {
-		t.Errorf("allowlist 外は弾く想定だが %q を返した", got)
+func TestFetchOGTags_RejectsDisallowedHost(t *testing.T) {
+	if got := fetchOGTags(context.Background(), http.DefaultClient, "https://evil.example.com/"); got.Image != "" || got.Description != "" {
+		t.Errorf("allowlist 外は弾く想定だが %+v を返した", got)
 	}
 }
 
-func TestFetchOGImageURL_RejectsNon200(t *testing.T) {
+func TestFetchOGTags_RejectsNon200(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 	}))
 	defer srv.Close()
 	u, _ := url.Parse(srv.URL)
 	withAllowedHost(t, stripPort(u.Host))
-	if got := fetchOGImageURL(context.Background(), srv.Client(), srv.URL); got != "" {
-		t.Errorf("404 は空文字を返す想定だが %q", got)
+	if got := fetchOGTags(context.Background(), srv.Client(), srv.URL); got.Image != "" || got.Description != "" {
+		t.Errorf("404 は空のまま返す想定だが %+v", got)
 	}
 }
 
-func TestFetchOGImageURL_RejectsNonHTML(t *testing.T) {
+func TestFetchOGTags_RejectsNonHTML(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{}`))
@@ -148,12 +239,12 @@ func TestFetchOGImageURL_RejectsNonHTML(t *testing.T) {
 	defer srv.Close()
 	u, _ := url.Parse(srv.URL)
 	withAllowedHost(t, stripPort(u.Host))
-	if got := fetchOGImageURL(context.Background(), srv.Client(), srv.URL); got != "" {
-		t.Errorf("non-HTML は空文字を返す想定だが %q", got)
+	if got := fetchOGTags(context.Background(), srv.Client(), srv.URL); got.Image != "" || got.Description != "" {
+		t.Errorf("non-HTML は空のまま返す想定だが %+v", got)
 	}
 }
 
-func TestFetchOGImageURL_NoOGImage(t *testing.T) {
+func TestFetchOGTags_NoOGTags(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		_, _ = w.Write([]byte(`<html><head></head><body></body></html>`))
@@ -161,12 +252,12 @@ func TestFetchOGImageURL_NoOGImage(t *testing.T) {
 	defer srv.Close()
 	u, _ := url.Parse(srv.URL)
 	withAllowedHost(t, stripPort(u.Host))
-	if got := fetchOGImageURL(context.Background(), srv.Client(), srv.URL); got != "" {
-		t.Errorf("og:image 無しは空文字を返す想定だが %q", got)
+	if got := fetchOGTags(context.Background(), srv.Client(), srv.URL); got.Image != "" || got.Description != "" {
+		t.Errorf("og タグ無しは空のまま返す想定だが %+v", got)
 	}
 }
 
-func TestFetchOGImageURL_RejectsHTTPImageURL(t *testing.T) {
+func TestFetchOGTags_RejectsHTTPImageURL(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		_, _ = w.Write([]byte(`<html><head><meta property="og:image" content="http://example.com/x.png"></head></html>`))
@@ -174,12 +265,12 @@ func TestFetchOGImageURL_RejectsHTTPImageURL(t *testing.T) {
 	defer srv.Close()
 	u, _ := url.Parse(srv.URL)
 	withAllowedHost(t, stripPort(u.Host))
-	if got := fetchOGImageURL(context.Background(), srv.Client(), srv.URL); got != "" {
-		t.Errorf("http の画像 URL は弾く想定だが %q", got)
+	if got := fetchOGTags(context.Background(), srv.Client(), srv.URL); got.Image != "" {
+		t.Errorf("http の画像 URL は弾く想定だが Image=%q", got.Image)
 	}
 }
 
-func TestFetchOGImageURL_RejectsTooLongURL(t *testing.T) {
+func TestFetchOGTags_RejectsTooLongImageURL(t *testing.T) {
 	long := "/img/" + strings.Repeat("a", ogImageURLMaxLen)
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
@@ -188,8 +279,8 @@ func TestFetchOGImageURL_RejectsTooLongURL(t *testing.T) {
 	defer srv.Close()
 	u, _ := url.Parse(srv.URL)
 	withAllowedHost(t, stripPort(u.Host))
-	if got := fetchOGImageURL(context.Background(), srv.Client(), srv.URL); got != "" {
-		t.Errorf("URL 長過大は弾く想定だが %q", got)
+	if got := fetchOGTags(context.Background(), srv.Client(), srv.URL); got.Image != "" {
+		t.Errorf("画像 URL 長過大は弾く想定だが Image=%q", got.Image)
 	}
 }
 

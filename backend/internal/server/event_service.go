@@ -146,7 +146,9 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("url は http(s) スキーマの URL"))
 	}
 
-	imageURL := stringToNullString(fetchOGImageURL(ctx, s.httpClient, rawURL))
+	og := fetchOGTags(ctx, s.httpClient, rawURL)
+	imageURL := stringToNullString(og.Image)
+	catchphrase = applyOGDescriptionFallback(catchphrase, parsed.Host, og.Description)
 
 	id := ulid.Make().String()
 	if err := s.q.CreateEvent(ctx, queries.CreateEventParams{
@@ -232,7 +234,9 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の取得に失敗: %w", err))
 	}
 
-	imageURL := stringToNullString(fetchOGImageURL(ctx, s.httpClient, rawURL))
+	og := fetchOGTags(ctx, s.httpClient, rawURL)
+	imageURL := stringToNullString(og.Image)
+	catchphrase = applyOGDescriptionFallback(catchphrase, parsed.Host, og.Description)
 
 	if err := s.q.UpdateEvent(ctx, queries.UpdateEventParams{
 		ID:                         eventID,
@@ -260,6 +264,21 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 			Tickets:                    []*nazobuv1.EventTicket{},
 		},
 	}), nil
+}
+
+// applyOGDescriptionFallback は web 入力のキャッチコピーが空のとき、og:description を採用するか判定して返す。
+// 採用条件は shouldUseOGDescriptionAsCatchphrase に委ねる。長さオーバー時は採用しない（手入力で補ってもらう）。
+func applyOGDescriptionFallback(catchphrase, host, ogDescription string) string {
+	if catchphrase != "" {
+		return catchphrase
+	}
+	if !shouldUseOGDescriptionAsCatchphrase(host, ogDescription) {
+		return catchphrase
+	}
+	if len(ogDescription) > eventCatchphraseMaxLen {
+		return catchphrase
+	}
+	return ogDescription
 }
 
 // validateMinutesBefore は任意の「開演時刻の何分前か」を受け取る。0 以上のみ許容し、未指定なら NULL。
