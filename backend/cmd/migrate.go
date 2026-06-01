@@ -18,6 +18,10 @@ var migrateCmd = &cobra.Command{
 		// mysqldef は PATH に居る前提（Dockerfile で go install 済み）。
 		// 宣言型マイグレーションでは schema.sql からの差分には削除も含まれるため、
 		// --enable-drop で DROP TABLE / DROP COLUMN / DROP INDEX を許可する。
+		//
+		// --before-apply で FOREIGN_KEY_CHECKS=0 を流すのは、FK に使われている列の
+		// 型変更（例: ID を CHAR(36) に拡張）が MySQL の error 1833 で弾かれるのを
+		// 回避するため。session スコープの設定なので、適用後の通常運用には影響しない。
 		mysqldef := exec.Command(
 			"mysqldef",
 			"--host="+cfg.DB.Host,
@@ -27,6 +31,7 @@ var migrateCmd = &cobra.Command{
 			"--file="+cfg.SchemaPath,
 			"--apply",
 			"--enable-drop",
+			"--before-apply=SET FOREIGN_KEY_CHECKS=0;",
 			cfg.DB.Name,
 		)
 		mysqldef.Stdout = os.Stdout

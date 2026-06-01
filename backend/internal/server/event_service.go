@@ -10,12 +10,12 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
-	"github.com/oklog/ulid/v2"
 
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
 	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
+	"github.com/aruma256/nazobu/backend/internal/id"
 )
 
 type eventService struct {
@@ -150,9 +150,9 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 	imageURL := stringToNullString(og.Image)
 	catchphrase = applyOGDescriptionFallback(catchphrase, parsed.Host, og.Description)
 
-	id := ulid.Make().String()
+	eventID := id.New()
 	if err := s.q.CreateEvent(ctx, queries.CreateEventParams{
-		ID:                         id,
+		ID:                         eventID,
 		Title:                      title,
 		Url:                        rawURL,
 		Catchphrase:                catchphrase,
@@ -166,7 +166,7 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 
 	return connect.NewResponse(&nazobuv1.CreateEventResponse{
 		Event: &nazobuv1.Event{
-			Id:                         id,
+			Id:                         eventID,
 			Title:                      title,
 			Url:                        rawURL,
 			Catchphrase:                catchphrase,

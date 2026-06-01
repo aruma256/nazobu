@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/oklog/ulid/v2"
 
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
 	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
+	"github.com/aruma256/nazobu/backend/internal/id"
 )
 
 type ticketService struct {
@@ -181,7 +181,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 		return nil, err
 	}
 
-	id := ulid.Make().String()
+	ticketID := id.New()
 
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -191,7 +191,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 
 	qtx := s.q.WithTx(tx)
 	if err := qtx.CreateTicket(ctx, queries.CreateTicketParams{
-		ID:              id,
+		ID:              ticketID,
 		EventID:         eventID,
 		StartAt:         startAt,
 		MeetingAt:       meetingAt,
@@ -205,7 +205,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 
 	for _, uid := range participants {
 		if err := qtx.CreateTicketParticipant(ctx, queries.CreateTicketParticipantParams{
-			TicketID: id,
+			TicketID: ticketID,
 			UserID:   uid,
 		}); err != nil {
 			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket_participants の登録に失敗: %w", err))
@@ -216,7 +216,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("トランザクション commit に失敗: %w", err))
 	}
 
-	rows, err := s.q.ListTicketsByIDs(ctx, []string{id})
+	rows, err := s.q.ListTicketsByIDs(ctx, []string{ticketID})
 	if err != nil || len(rows) == 0 {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("登録後の ticket 取得に失敗: %w", err))
 	}
