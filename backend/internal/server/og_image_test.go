@@ -18,6 +18,7 @@ func TestIsAllowedOGHost(t *testing.T) {
 		{"allowlist 内（小文字）", "realdgame.jp", true},
 		{"allowlist 内（大文字混在）は case-insensitive で許可", "RealDGame.jp", true},
 		{"allowlist 内（ポート付き）も許可", "escape.id:443", true},
+		{"allowlist 内（www 付きサブドメイン）", "www.scrapmagazine.com", true},
 		{"allowlist 外", "evil.example.com", false},
 		{"空文字", "", false},
 		{"サブドメインは別ホスト扱いで不許可", "sub.realdgame.jp", false},

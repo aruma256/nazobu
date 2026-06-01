@@ -16,8 +16,9 @@ import (
 // SSRF 対策の本丸。リダイレクト先もこの allowlist で再検査するため、
 // allowlist 外への bounce で内部ホストに到達することはない。
 var ogImageAllowedHosts = map[string]struct{}{
-	"realdgame.jp": {},
-	"escape.id":    {},
+	"realdgame.jp":          {},
+	"escape.id":             {},
+	"www.scrapmagazine.com": {},
 }
 
 const (
