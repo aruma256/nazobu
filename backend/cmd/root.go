@@ -16,4 +16,5 @@ func init() {
 	rootCmd.AddCommand(startCmd)
 	rootCmd.AddCommand(addUserCmd)
 	rootCmd.AddCommand(setRoleCmd)
+	rootCmd.AddCommand(convertUlidCmd)
 }

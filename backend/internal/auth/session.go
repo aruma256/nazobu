@@ -10,9 +10,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/oklog/ulid/v2"
-
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
+	"github.com/aruma256/nazobu/backend/internal/id"
 )
 
 const (
@@ -59,7 +58,7 @@ func UpsertUserFromIdentity(ctx context.Context, db *sql.DB, provider, subject s
 	})
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		newUserID := ulid.Make().String()
+		newUserID := id.New()
 		tx, err := db.BeginTx(ctx, nil)
 		if err != nil {
 			return nil, err
@@ -150,7 +149,7 @@ func CreateSession(ctx context.Context, db *sql.DB, userID string) (string, erro
 		return "", err
 	}
 	if err := queries.New(db).CreateSession(ctx, queries.CreateSessionParams{
-		ID:        ulid.Make().String(),
+		ID:        id.New(),
 		UserID:    userID,
 		TokenHash: hashToken(rawToken),
 		ExpiresAt: time.Now().Add(SessionTTL),

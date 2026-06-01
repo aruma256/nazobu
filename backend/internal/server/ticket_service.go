@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/oklog/ulid/v2"
 
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
 	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
+	idpkg "github.com/aruma256/nazobu/backend/internal/id"
 )
 
 type ticketService struct {
@@ -181,7 +181,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 		return nil, err
 	}
 
-	id := ulid.Make().String()
+	id := idpkg.New()
 
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
