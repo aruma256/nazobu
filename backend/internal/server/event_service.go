@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
-	"github.com/oklog/ulid/v2"
+	"github.com/google/uuid"
 
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
@@ -150,7 +150,7 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 	imageURL := stringToNullString(og.Image)
 	catchphrase = applyOGDescriptionFallback(catchphrase, parsed.Host, og.Description)
 
-	id := ulid.Make().String()
+	id := uuid.Must(uuid.NewV7()).String()
 	if err := s.q.CreateEvent(ctx, queries.CreateEventParams{
 		ID:                         id,
 		Title:                      title,

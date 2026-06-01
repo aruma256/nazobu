@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/oklog/ulid/v2"
+	"github.com/google/uuid"
 
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
@@ -181,7 +181,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 		return nil, err
 	}
 
-	id := ulid.Make().String()
+	id := uuid.Must(uuid.NewV7()).String()
 
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {

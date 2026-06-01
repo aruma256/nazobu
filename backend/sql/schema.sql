@@ -1,6 +1,6 @@
 -- 謎部 DB スキーマ（SSOT）
 -- ここに DDL を記述すると、起動時に sqldef が現状 DB との差分を計算して適用する。
--- 文字コード: utf8mb4 / エンジン: InnoDB / ID 型: VARCHAR(26) ULID
+-- 文字コード: utf8mb4 / エンジン: InnoDB / ID 型: VARCHAR(36) UUIDv7
 
 -- 内部ユーザー。IdP 非依存の anchor。
 -- 表示用プロフィール（display_name / avatar_url）はログイン時に
@@ -8,7 +8,7 @@
 -- display_name は IdP 側で未設定のことがあるので、ログイン時に handle 名等を
 -- フォールバックとして必ず埋めて NOT NULL を保つ。
 CREATE TABLE users (
-  id            VARCHAR(26)  NOT NULL,
+  id            VARCHAR(36)  NOT NULL,
   display_name  VARCHAR(255) NOT NULL,
   avatar_url    VARCHAR(512) NULL,
   notifications_enabled TINYINT(1) NOT NULL DEFAULT 1,
@@ -24,7 +24,7 @@ CREATE TABLE users (
 -- provider は 'discord' / 'google' 等の識別子、subject は IdP 内のユーザー ID
 -- （OIDC の sub 相当）。1 user に複数 IdP を紐付けられる前提の N:1。
 CREATE TABLE user_identities (
-  user_id     VARCHAR(26)  NOT NULL,
+  user_id     VARCHAR(36)  NOT NULL,
   provider    VARCHAR(32)  NOT NULL,
   subject     VARCHAR(255) NOT NULL,
   created_at  DATETIME(6)  NOT NULL,
@@ -38,8 +38,8 @@ CREATE TABLE user_identities (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE sessions (
-  id          VARCHAR(26) NOT NULL,
-  user_id     VARCHAR(26) NOT NULL,
+  id          VARCHAR(36) NOT NULL,
+  user_id     VARCHAR(36) NOT NULL,
   -- token そのものではなく SHA-256 hex (64 chars) を保存する。漏洩時に raw token を復元できないように。
   token_hash  CHAR(64)    NOT NULL,
   expires_at  DATETIME(6) NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE sessions (
 -- 謎解きイベント（公演）。長期開催が一般的なので、開催日は event ではなく
 -- ticket（実際に参加した日）側に持たせる。
 CREATE TABLE events (
-  id          VARCHAR(26)  NOT NULL,
+  id          VARCHAR(36)  NOT NULL,
   title       VARCHAR(255) NOT NULL,
   url         VARCHAR(512) NOT NULL,
   -- 公演のキャッチコピー（手動入力）。空文字を「未設定」として許容する。
@@ -79,8 +79,8 @@ CREATE TABLE events (
 -- 開演日時 / 集合時刻はいずれも JST naive な DATETIME として保持する
 -- （driver は loc=Asia/Tokyo で動かしているため Go の time.Time は JST で出入りする）。
 CREATE TABLE tickets (
-  id                VARCHAR(26)  NOT NULL,
-  event_id          VARCHAR(26)  NOT NULL,
+  id                VARCHAR(36)  NOT NULL,
+  event_id          VARCHAR(36)  NOT NULL,
   -- 公演の開演日時（JST）。日付 / 時刻はここから派生する。
   start_at          DATETIME(6)  NOT NULL,
   -- 集合日時（JST）。集合時刻が決まっていないときは NULL。日跨ぎ集合にも対応できる。
@@ -88,7 +88,7 @@ CREATE TABLE tickets (
   price_per_person  INT          NOT NULL,
   -- このチケット 1 枚で参加できる最大人数（ticket_participants の最大紐づけ数）。
   max_participants  INT          NOT NULL,
-  purchased_by      VARCHAR(26)  NOT NULL,
+  purchased_by      VARCHAR(36)  NOT NULL,
   -- 集合場所。空文字を「未設定」として許容する。
   meeting_place     VARCHAR(255) NOT NULL,
   created_at        DATETIME(6)  NOT NULL,
@@ -105,8 +105,8 @@ CREATE TABLE tickets (
 -- settled_at は立て替え分を購入者へ精算した時刻。NULL = 未精算（デフォルト）、
 -- 非 NULL = 精算済み。タイムスタンプを兼ねることで「いつ精算したか」も保持する。
 CREATE TABLE ticket_participants (
-  ticket_id   VARCHAR(26) NOT NULL,
-  user_id     VARCHAR(26) NOT NULL,
+  ticket_id   VARCHAR(36) NOT NULL,
+  user_id     VARCHAR(36) NOT NULL,
   settled_at  DATETIME(6) NULL DEFAULT NULL,
   created_at  DATETIME(6) NOT NULL,
   PRIMARY KEY (ticket_id, user_id),
