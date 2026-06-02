@@ -44,6 +44,24 @@ func TestGenerateTokenLengthAndUniqueness(t *testing.T) {
 	}
 }
 
+func TestUserCanOrganize(t *testing.T) {
+	cases := []struct {
+		role string
+		want bool
+	}{
+		{RoleAdmin, true},
+		{RoleOrganizer, true},
+		{RoleMember, false},
+		{"", false},
+	}
+	for _, c := range cases {
+		u := &User{Role: c.role}
+		if got := u.CanOrganize(); got != c.want {
+			t.Errorf("role=%q CanOrganize() = %v, want %v", c.role, got, c.want)
+		}
+	}
+}
+
 func TestNullString(t *testing.T) {
 	if ns := nullString(""); ns.Valid {
 		t.Errorf("空文字は Valid=false であるべき")

@@ -14,6 +14,7 @@ import (
 
 func TestCanEditTicket(t *testing.T) {
 	admin := &auth.User{ID: "u-admin", Role: auth.RoleAdmin}
+	organizer := &auth.User{ID: "u-organizer", Role: auth.RoleOrganizer}
 	member := &auth.User{ID: "u-member", Role: auth.RoleMember}
 	other := &auth.User{ID: "u-other", Role: auth.RoleMember}
 
@@ -25,6 +26,12 @@ func TestCanEditTicket(t *testing.T) {
 	}
 	if canEditTicket(other, member.ID) {
 		t.Errorf("admin でもなく立替者でもないユーザは編集不可")
+	}
+	if !canEditTicket(organizer, organizer.ID) {
+		t.Errorf("organizer も立替者本人なら編集可")
+	}
+	if canEditTicket(organizer, member.ID) {
+		t.Errorf("organizer でも他人が立替えた ticket は編集不可")
 	}
 }
 

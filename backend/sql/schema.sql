@@ -12,12 +12,14 @@ CREATE TABLE users (
   display_name  VARCHAR(255) NOT NULL,
   avatar_url    VARCHAR(512) NULL,
   notifications_enabled TINYINT(1) NOT NULL DEFAULT 1,
-  -- 'admin' = 管理者 / 'member' = 一般メンバー。新規ユーザーは member スタート、admin は手動昇格。
+  -- 'admin' = 管理者 / 'organizer' = 公演運営（公演の作成・編集とチケットの作成ができるが、
+  -- 他人のチケットの編集や精算操作はできない）/ 'member' = 一般メンバー。
+  -- 新規ユーザーは member スタート、organizer / admin は手動昇格。
   role          VARCHAR(16)  NOT NULL DEFAULT 'member',
   created_at    DATETIME(6)  NOT NULL,
   updated_at    DATETIME(6)  NOT NULL,
   PRIMARY KEY (id),
-  CONSTRAINT chk_users_role CHECK (role IN ('admin', 'member'))
+  CONSTRAINT chk_users_role CHECK (role IN ('admin', 'organizer', 'member'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- IdP の identity。(provider, subject) でログイン時に user を引く。

@@ -19,12 +19,12 @@ var (
 
 var setRoleCmd = &cobra.Command{
 	Use:   "set-role",
-	Short: "既存ユーザーの role を変更する（admin / member）",
+	Short: "既存ユーザーの role を変更する（admin / organizer / member）",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		switch setRoleRole {
-		case auth.RoleAdmin, auth.RoleMember:
+		case auth.RoleAdmin, auth.RoleOrganizer, auth.RoleMember:
 		default:
-			return fmt.Errorf("--role は %q もしくは %q のみ受け付ける（指定値: %q）", auth.RoleAdmin, auth.RoleMember, setRoleRole)
+			return fmt.Errorf("--role は %q / %q / %q のいずれかのみ受け付ける（指定値: %q）", auth.RoleAdmin, auth.RoleOrganizer, auth.RoleMember, setRoleRole)
 		}
 
 		cfg := config.Load()
@@ -62,7 +62,7 @@ var setRoleCmd = &cobra.Command{
 
 func init() {
 	setRoleCmd.Flags().StringVar(&setRoleDiscordUserID, "discord-user-id", "", "Discord ユーザー ID（Snowflake）")
-	setRoleCmd.Flags().StringVar(&setRoleRole, "role", "", "付与する role（admin もしくは member）")
+	setRoleCmd.Flags().StringVar(&setRoleRole, "role", "", "付与する role（admin / organizer / member）")
 	_ = setRoleCmd.MarkFlagRequired("discord-user-id")
 	_ = setRoleCmd.MarkFlagRequired("role")
 }

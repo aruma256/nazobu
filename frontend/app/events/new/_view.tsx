@@ -119,7 +119,7 @@ export function NewEventView() {
   if (load.kind === "loading") {
     return (
       <>
-        <AppHeader brand="謎部" user="" isAdmin />
+        <AppHeader brand="謎部" user="" canManageEvents />
         <PageShell>
           <p className="pt-8 text-sm text-zinc-500">読み込み中…</p>
         </PageShell>
@@ -130,7 +130,7 @@ export function NewEventView() {
   if (load.kind === "error") {
     return (
       <>
-        <AppHeader brand="謎部" user="" isAdmin />
+        <AppHeader brand="謎部" user="" canManageEvents />
         <PageShell>
           <p className="pt-8 text-sm text-amber-800">
             読み込みに失敗しました: {load.message}
@@ -145,7 +145,7 @@ export function NewEventView() {
 
   return (
     <>
-      <AppHeader brand="謎部" user={displayName} isAdmin />
+      <AppHeader brand="謎部" user={displayName} canManageEvents />
       <PageShell>
         <Section>
           <SectionTitle>公演を登録</SectionTitle>

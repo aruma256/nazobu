@@ -64,7 +64,7 @@ type GetMeResponse struct {
 	DisplayName string `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
 	// avatar URL は未設定なら空文字列。
 	AvatarUrl string `protobuf:"bytes,4,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
-	// 'admin' / 'member'。schema.sql の users.role と同じ値。
+	// 'admin' / 'organizer' / 'member'。schema.sql の users.role と同じ値。
 	Role          string `protobuf:"bytes,5,opt,name=role,proto3" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

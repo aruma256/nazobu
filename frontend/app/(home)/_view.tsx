@@ -25,7 +25,7 @@ import {
   formatMonoDate,
   parseDateTime,
 } from "@/app/_format";
-import { redirectToLogin } from "@/app/lib/auth";
+import { canOrganize, redirectToLogin } from "@/app/lib/auth";
 
 type LoadState =
   | { kind: "loading" }
@@ -113,7 +113,7 @@ export function HomeView() {
 
   const { me, data } = state;
   const displayName = me.displayName;
-  const isAdmin = me.role === "admin";
+  const canManageEvents = canOrganize(me.role);
   const currentYM = { year: data.currentYear, month: data.currentMonth };
 
   const switchMonth = (diff: number) => {
@@ -155,7 +155,7 @@ export function HomeView() {
 
   return (
     <>
-      <AppHeader brand="謎部" user={displayName} isAdmin={isAdmin} />
+      <AppHeader brand="謎部" user={displayName} canManageEvents={canManageEvents} />
       <PageShell>
         {data.unsettled.length > 0 && (
           <Section>

@@ -11,7 +11,6 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/aruma256/nazobu/backend/internal/auth"
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
 	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
@@ -97,7 +96,7 @@ func (s *eventService) GetEvent(ctx context.Context, req *connect.Request[nazobu
 			ExpectedDurationMinutes:    row.ExpectedDurationMinutes,
 			Tickets:                    []*nazobuv1.EventTicket{},
 		},
-		CanEdit: user.Role == auth.RoleAdmin,
+		CanEdit: user.CanOrganize(),
 	}), nil
 }
 
@@ -106,8 +105,8 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 	if err != nil {
 		return nil, err
 	}
-	if user.Role != auth.RoleAdmin {
-		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("event の登録は admin のみ"))
+	if !user.CanOrganize() {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("event の登録は admin もしくは organizer のみ"))
 	}
 
 	title := strings.TrimSpace(req.Msg.GetTitle())
@@ -184,8 +183,8 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 	if err != nil {
 		return nil, err
 	}
-	if user.Role != auth.RoleAdmin {
-		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("event の編集は admin のみ"))
+	if !user.CanOrganize() {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("event の編集は admin もしくは organizer のみ"))
 	}
 
 	msg := req.Msg

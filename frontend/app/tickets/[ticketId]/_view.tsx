@@ -27,7 +27,7 @@ import {
   formatYen,
   parseDateTime,
 } from "@/app/_format";
-import { redirectToLogin } from "@/app/lib/auth";
+import { canOrganize, redirectToLogin } from "@/app/lib/auth";
 
 type LoadState =
   | { kind: "loading" }
@@ -162,7 +162,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
   }
 
   const displayName = me.displayName;
-  const isAdmin = me.role === "admin";
+  const canManageEvents = canOrganize(me.role);
   const startAt = parseDateTime(ticket.startAt);
   const meetingAt =
     ticket.meetingAt !== "" ? parseDateTime(ticket.meetingAt) : null;
@@ -171,7 +171,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
 
   return (
     <>
-      <AppHeader brand="謎部" user={displayName} isAdmin={isAdmin} />
+      <AppHeader brand="謎部" user={displayName} canManageEvents={canManageEvents} />
       <PageShell>
         <Section>
           <SectionTitle>チケット詳細</SectionTitle>

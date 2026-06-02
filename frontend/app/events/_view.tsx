@@ -57,7 +57,7 @@ export function EventsView() {
   if (state.kind === "loading") {
     return (
       <>
-        <AppHeader brand="謎部" user="" isAdmin />
+        <AppHeader brand="謎部" user="" canManageEvents />
         <PageShell>
           <p className="pt-8 text-sm text-zinc-500">読み込み中…</p>
         </PageShell>
@@ -68,7 +68,7 @@ export function EventsView() {
   if (state.kind === "error") {
     return (
       <>
-        <AppHeader brand="謎部" user="" isAdmin />
+        <AppHeader brand="謎部" user="" canManageEvents />
         <PageShell>
           <p className="pt-8 text-sm text-amber-800">
             読み込みに失敗しました: {state.message}
@@ -83,7 +83,7 @@ export function EventsView() {
 
   return (
     <>
-      <AppHeader brand="謎部" user={displayName} isAdmin />
+      <AppHeader brand="謎部" user={displayName} canManageEvents />
       <PageShell>
         <Section>
           <Link

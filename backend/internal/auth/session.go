@@ -19,8 +19,9 @@ const (
 	SessionTTL        = 30 * 24 * time.Hour
 
 	// users.role に保存する値。schema.sql の CHECK 制約と同期させる。
-	RoleAdmin  = "admin"
-	RoleMember = "member"
+	RoleAdmin     = "admin"
+	RoleOrganizer = "organizer"
+	RoleMember    = "member"
 )
 
 var ErrNoSession = errors.New("session が見つからないか期限切れ")
@@ -34,6 +35,13 @@ type User struct {
 	DisplayName string
 	AvatarURL   sql.NullString
 	Role        string
+}
+
+// CanOrganize は公演運営権限（event の作成・編集と ticket の作成）を持つロールか判定する。
+// admin と organizer が該当する。ticket の編集可否は立替者かどうかにも依存するため
+// canEditTicket 側で別途判定する。
+func (u *User) CanOrganize() bool {
+	return u.Role == RoleAdmin || u.Role == RoleOrganizer
 }
 
 // UserProfile は IdP から取得した、user 表示用プロフィールのスナップショット。

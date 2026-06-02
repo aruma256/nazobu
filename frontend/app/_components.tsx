@@ -22,11 +22,11 @@ export function PageShell({ children }: { children: ReactNode }) {
   );
 }
 
-type NavItem = { href: string; label: string; adminOnly?: boolean };
+type NavItem = { href: string; label: string; organizerOnly?: boolean };
 
 const NAV_ITEMS: readonly NavItem[] = [
   { href: "/", label: "マイページ" },
-  { href: "/events", label: "公演", adminOnly: true },
+  { href: "/events", label: "公演", organizerOnly: true },
   { href: "/tickets", label: "全てのチケット" },
 ] as const;
 
@@ -38,14 +38,17 @@ function isNavActive(pathname: string, href: string): boolean {
 export function AppHeader({
   brand,
   user,
-  isAdmin = false,
+  canManageEvents = false,
 }: {
   brand: string;
   user: string;
-  isAdmin?: boolean;
+  // admin / organizer のとき true。公演運営系のナビ（公演）を出すかどうかに使う。
+  canManageEvents?: boolean;
 }) {
   const pathname = usePathname();
-  const navItems = NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin);
+  const navItems = NAV_ITEMS.filter(
+    (item) => !item.organizerOnly || canManageEvents,
+  );
   return (
     <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">

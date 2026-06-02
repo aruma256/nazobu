@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Noto_Sans_JP } from "next/font/google";
 
-import { AdminGuard } from "./_guard";
+import { OrganizerGuard } from "./_guard";
 
 const notoSansJP = Noto_Sans_JP({
   variable: "--font-noto-sans-jp",
@@ -18,7 +18,7 @@ export default function EventsLayout({ children }: { children: ReactNode }) {
           "var(--font-noto-sans-jp), ui-sans-serif, system-ui, sans-serif",
       }}
     >
-      <AdminGuard>{children}</AdminGuard>
+      <OrganizerGuard>{children}</OrganizerGuard>
     </div>
   );
 }

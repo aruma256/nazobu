@@ -15,7 +15,7 @@ import {
   SectionTitle,
   TicketCard,
 } from "@/app/_components";
-import { redirectToLogin } from "@/app/lib/auth";
+import { canOrganize, redirectToLogin } from "@/app/lib/auth";
 
 type LoadState =
   | { kind: "loading" }
@@ -73,11 +73,11 @@ export function TicketsView() {
 
   const { me, tickets } = state;
   const displayName = me.displayName;
-  const isAdmin = me.role === "admin";
+  const canManageEvents = canOrganize(me.role);
 
   return (
     <>
-      <AppHeader brand="謎部" user={displayName} isAdmin={isAdmin} />
+      <AppHeader brand="謎部" user={displayName} canManageEvents={canManageEvents} />
       <PageShell>
         <Section>
           <SectionTitle count={tickets.length}>チケット一覧</SectionTitle>

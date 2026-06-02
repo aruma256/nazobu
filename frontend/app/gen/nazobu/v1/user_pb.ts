@@ -49,7 +49,7 @@ export type GetMeResponse = Message<"nazobu.v1.GetMeResponse"> & {
   avatarUrl: string;
 
   /**
-   * 'admin' / 'member'。schema.sql の users.role と同じ値。
+   * 'admin' / 'organizer' / 'member'。schema.sql の users.role と同じ値。
    *
    * @generated from field: string role = 5;
    */

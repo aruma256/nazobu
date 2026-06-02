@@ -23,7 +23,7 @@ message GetMeResponse {
   string display_name = 3;
   // avatar URL は未設定なら空文字列。
   string avatar_url = 4;
-  // 'admin' / 'member'。schema.sql の users.role と同じ値。
+  // 'admin' / 'organizer' / 'member'。schema.sql の users.role と同じ値。
   string role = 5;
 }
 
