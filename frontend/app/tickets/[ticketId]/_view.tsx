@@ -289,6 +289,11 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
           }
         />
 
+        <GroupShuffleSection
+          participants={detail.participants}
+          myUserId={me.id}
+        />
+
         {error !== null && (
           <Section>
             <p className="text-sm text-amber-800">エラー: {error}</p>
@@ -350,6 +355,119 @@ function jstCompactDateTime(ms: number): string {
     hour12: false,
   });
   return s.replace(/[-:]/g, "").replace(" ", "T");
+}
+
+// 参加者をシャッフルして 1 グループあたり size 人ずつ先頭から詰める。
+// 例: 6 人で size=4 なら A:4 人 / B:2 人、size=3 なら 3/3。永続化はしない。
+function GroupShuffleSection({
+  participants,
+  myUserId,
+}: {
+  participants: TicketParticipant[];
+  myUserId: string;
+}) {
+  const total = participants.length;
+  const [sizeText, setSizeText] = useState("2");
+  const [groups, setGroups] = useState<TicketParticipant[][] | null>(null);
+
+  // 参加者の顔ぶれが変わったら古い分け方は破棄する（古い参加者が残らないように）。
+  const idsKey = useMemo(
+    () =>
+      participants
+        .map((p) => p.userId)
+        .sort()
+        .join(","),
+    [participants],
+  );
+  useEffect(() => {
+    setGroups(null);
+  }, [idsKey]);
+
+  if (total < 2) return null;
+
+  const size = Math.min(Math.max(1, Number.parseInt(sizeText, 10) || 1), total);
+  const groupCount = Math.ceil(total / size);
+
+  const shuffle = () => {
+    const shuffled = [...participants];
+    // Fisher–Yates でその場シャッフル
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    const result: TicketParticipant[][] = [];
+    for (let i = 0; i < shuffled.length; i += size) {
+      result.push(shuffled.slice(i, i + size));
+    }
+    setGroups(result);
+  };
+
+  return (
+    <Section>
+      <SectionTitle>グループ分け</SectionTitle>
+      <div className="mt-3 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-4">
+          <label className="flex items-center gap-2 text-sm text-zinc-700">
+            1 グループ
+            <input
+              type="number"
+              min={1}
+              max={total}
+              inputMode="numeric"
+              value={sizeText}
+              onChange={(e) => setSizeText(e.target.value)}
+              className="h-10 w-16 rounded-lg border border-zinc-200 px-2 text-center font-mono tabular-nums focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
+            />
+            人
+          </label>
+          <span className="text-xs text-zinc-500">
+            {total} 人 → <Mono>{groupCount}</Mono> グループ
+          </span>
+          <button
+            type="button"
+            onClick={shuffle}
+            className="ml-auto inline-flex h-10 items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 active:bg-emerald-900"
+          >
+            {groups === null ? "シャッフル" : "シャッフルし直す"}
+          </button>
+        </div>
+
+        {groups !== null && (
+          <div className="grid grid-cols-1 gap-3 border-t border-zinc-200 p-4 sm:grid-cols-2">
+            {groups.map((group, i) => (
+              <div
+                key={i}
+                className="overflow-hidden rounded-xl border border-zinc-200"
+              >
+                <div className="flex items-baseline justify-between bg-zinc-50 px-3 py-2">
+                  <span className="text-sm font-semibold text-zinc-900">
+                    グループ {String.fromCharCode(65 + i)}
+                  </span>
+                  <span className="text-xs text-zinc-500">
+                    <Mono>{group.length}</Mono> 人
+                  </span>
+                </div>
+                <ul className="divide-y divide-zinc-100">
+                  {group.map((p) => (
+                    <li
+                      key={p.userId}
+                      className={
+                        p.userId === myUserId
+                          ? "px-3 py-2 text-sm font-semibold text-zinc-900"
+                          : "px-3 py-2 text-sm text-zinc-900"
+                      }
+                    >
+                      {p.name}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </Section>
+  );
 }
 
 function ParticipantsSection({
