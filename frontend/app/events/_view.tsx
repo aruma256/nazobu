@@ -207,12 +207,16 @@ function TicketRow({ ticket, myName }: { ticket: EventTicket; myName: string }) 
           <p className="mt-1 text-xs text-zinc-900">
             参加{" "}
             {[...ticket.participantNames]
-              .sort((a, b) => a.localeCompare(b, "ja"))
+              .sort((a, b) => {
+                if (a === myName) return -1;
+                if (b === myName) return 1;
+                return a.localeCompare(b, "ja");
+              })
               .map((name, i) => (
                 <Fragment key={i}>
                   {i > 0 && "・"}
                   {name === myName ? (
-                    <span className="font-semibold text-zinc-900">{name}</span>
+                    <span className="font-semibold text-emerald-700">{name}</span>
                   ) : (
                     name
                   )}

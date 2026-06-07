@@ -453,7 +453,7 @@ function GroupShuffleSection({
                       key={p.userId}
                       className={
                         p.userId === myUserId
-                          ? "px-3 py-2 text-sm font-semibold text-zinc-900"
+                          ? "px-3 py-2 text-sm font-semibold text-emerald-700"
                           : "px-3 py-2 text-sm text-zinc-900"
                       }
                     >
@@ -498,8 +498,12 @@ function ParticipantsSection({
   );
   const sortedParticipants = useMemo(
     () =>
-      [...participants].sort((a, b) => a.name.localeCompare(b.name, "ja")),
-    [participants],
+      [...participants].sort((a, b) => {
+        if (a.userId === myUserId) return -1;
+        if (b.userId === myUserId) return 1;
+        return a.name.localeCompare(b.name, "ja");
+      }),
+    [participants, myUserId],
   );
   const candidates = useMemo(
     () => allUsers.filter((u) => !participantIds.has(u.id)),
@@ -533,7 +537,7 @@ function ParticipantsSection({
               <span
                 className={
                   p.userId === myUserId
-                    ? "text-sm font-semibold text-zinc-900"
+                    ? "text-sm font-semibold text-emerald-700"
                     : "text-sm text-zinc-900"
                 }
               >
