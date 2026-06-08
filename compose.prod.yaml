@@ -41,4 +41,7 @@ services:
     command: tunnel --no-autoupdate run
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    # edge のみに所属（frontend 以外には到達不可。詳細は compose.yaml の networks コメント）。
+    networks:
+      - edge
     restart: unless-stopped

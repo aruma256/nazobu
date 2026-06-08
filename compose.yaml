@@ -11,6 +11,8 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - db
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_ROOT_PASSWORD}"]
       interval: 5s
@@ -47,6 +49,9 @@ services:
       - ./backend:/app
       - go_modules:/go/pkg/mod
       - go_build:/root/.cache/go-build
+    networks:
+      - app
+      - db
 
   frontend:
     image: mirror.gcr.io/node:22-bookworm-slim
@@ -62,6 +67,16 @@ services:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
       - frontend_next_cache:/app/.next
+    networks:
+      - edge
+      - app
+
+# tier ごとに隣接のみ接続する3分割。各 service は隣の tier だけに到達できる。
+networks:
+  edge:  # cloudflared ↔ frontend
+  app:   # frontend ↔ backend（backend の Discord・OG 向け egress もこの net 経由）
+  db:    # backend ↔ mysql。mysql は egress 不要なので internal:true で完全遮断
+    internal: true
 
 volumes:
   mysql_data:
