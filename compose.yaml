@@ -40,6 +40,7 @@ services:
       DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
       DISCORD_REDIRECT_URL: ${DISCORD_REDIRECT_URL:-http://localhost:3000/auth/discord/callback}
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
     ports:
       - "8080:8080"
     depends_on:

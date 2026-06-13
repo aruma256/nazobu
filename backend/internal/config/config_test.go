@@ -25,6 +25,7 @@ func TestLoadDefaults(t *testing.T) {
 		"HTTP_ADDR", "FRONTEND_URL", "SCHEMA_PATH", "COOKIE_SECURE",
 		"DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME",
 		"DISCORD_CLIENT_ID", "DISCORD_CLIENT_SECRET", "DISCORD_REDIRECT_URL",
+		"DISCORD_WEBHOOK_URL",
 	}
 	for _, k := range keys {
 		t.Setenv(k, "")
@@ -67,6 +68,9 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.Discord.RedirectURL != "http://localhost:3000/auth/discord/callback" {
 		t.Errorf("Discord.RedirectURL = %q", cfg.Discord.RedirectURL)
 	}
+	if cfg.Discord.WebhookURL != "" {
+		t.Errorf("Discord.WebhookURL はデフォルト空")
+	}
 }
 
 func TestLoadOverridden(t *testing.T) {
@@ -82,6 +86,7 @@ func TestLoadOverridden(t *testing.T) {
 	t.Setenv("DISCORD_CLIENT_ID", "cid")
 	t.Setenv("DISCORD_CLIENT_SECRET", "csecret")
 	t.Setenv("DISCORD_REDIRECT_URL", "https://example.com/cb")
+	t.Setenv("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123/abc")
 
 	cfg := Load()
 	if cfg.HTTPAddr != ":9000" {
@@ -101,7 +106,8 @@ func TestLoadOverridden(t *testing.T) {
 		t.Errorf("DB = %+v", cfg.DB)
 	}
 	if cfg.Discord.ClientID != "cid" || cfg.Discord.ClientSecret != "csecret" ||
-		cfg.Discord.RedirectURL != "https://example.com/cb" {
+		cfg.Discord.RedirectURL != "https://example.com/cb" ||
+		cfg.Discord.WebhookURL != "https://discord.com/api/webhooks/123/abc" {
 		t.Errorf("Discord = %+v", cfg.Discord)
 	}
 }

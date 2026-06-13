@@ -6,6 +6,7 @@ package queries
 
 import (
 	"context"
+	"time"
 )
 
 type Querier interface {
@@ -42,6 +43,10 @@ type Querier interface {
 	// 立替者本人 or 精算済みなら settled = 1 とみなす。
 	// MySQL に BOOLEAN 型がないため CAST で UNSIGNED に固定し、sqlc に NullBool 推論させずに int64 で受ける。
 	ListMyMonthlyTicketsByUserID(ctx context.Context, arg ListMyMonthlyTicketsByUserIDParams) ([]ListMyMonthlyTicketsByUserIDRow, error)
+	// 指定チケット群の参加者のうち、通知が有効（notifications_enabled = 1）で
+	// Discord 連携済みのユーザーの subject（Discord user id）を返す。メンション用。
+	// 呼び出し側で ticket_id ごとに振り分ける。
+	ListNotifiableDiscordSubjectsByTicketIDs(ctx context.Context, ticketIds []string) ([]ListNotifiableDiscordSubjectsByTicketIDsRow, error)
 	// ticket 一覧 / 公演一覧で、各 ticket の参加者名をまとめて引く（N+1 回避）。
 	// 呼び出し側で ticket_id ごとに in-memory で振り分ける。
 	ListTicketParticipantNamesByTicketIDs(ctx context.Context, ticketIds []string) ([]ListTicketParticipantNamesByTicketIDsRow, error)
@@ -51,6 +56,19 @@ type Querier interface {
 	ListTickets(ctx context.Context) ([]ListTicketsRow, error)
 	// CreateTicket 直後の返却用。1 件のことが多いがインタフェースは ListTickets と揃える。
 	ListTicketsByIDs(ctx context.Context, ids []string) ([]ListTicketsByIDsRow, error)
+	// リマインド通知ワーカー用のクエリ。
+	// 締切（前日 20 時 / 集合 2 時間前）と猶予窓の判定は Go 側で行う。日付や時刻の
+	// 演算は JST 基準で組み立てたいが SQL では tz が絡んで間違えやすいため、ここでは
+	// 「まだ通知しておらず、開演が未来」のチケットを候補として広めに引くに留める。
+	// 引数 ? には Go 側で算出した「現在時刻（JST）」を渡す（driver の loc=Asia/Tokyo に
+	// より JST naive な DATETIME 列と素直に比較できる）。
+	// 前日リマインドの候補。未送信（day_before_notified_at IS NULL）かつ
+	// 開演が未来（start_at > ?）のチケットを start_at 昇順で返す。
+	// 同日まとめ・締切（前日 20 時）・猶予窓の判定は呼び出し側。
+	ListTicketsForDayBeforeNotification(ctx context.Context, startAt time.Time) ([]ListTicketsForDayBeforeNotificationRow, error)
+	// 集合 2 時間前リマインドの候補。未送信かつ集合時刻あり、開演が未来のチケット。
+	// 締切（meeting_at - 2h）・猶予窓の判定は呼び出し側。
+	ListTicketsForMeetingNotification(ctx context.Context, startAt time.Time) ([]ListTicketsForMeetingNotificationRow, error)
 	// 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」かつ「開演が現在以前」を取る。
 	// 立替者本人の自己持ち分は精算対象ではないので除外する。
 	// 未来分は精算対象として扱わない（公演前に表示しない）。
@@ -62,10 +80,15 @@ type Querier interface {
 	ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcomingTicketsByUserIDParams) ([]ListUpcomingTicketsByUserIDRow, error)
 	// 表示用の最低限フィールドだけ返す。avatar_url 等は GetMe 経路（session join）で取る。
 	ListUsers(ctx context.Context) ([]ListUsersRow, error)
+	// 集合 2 時間前リマインド送信済みマーク。未送信のものだけを対象にする。
+	MarkTicketMeetingNotified(ctx context.Context, arg MarkTicketMeetingNotifiedParams) error
 	// 未精算 → 精算済み。settled_at に現在時刻を入れる。
 	MarkTicketParticipantSettled(ctx context.Context, arg MarkTicketParticipantSettledParams) error
 	// 精算済み → 未精算。settled_at を NULL に戻す。
 	MarkTicketParticipantUnsettled(ctx context.Context, arg MarkTicketParticipantUnsettledParams) error
+	// 前日リマインド送信済みマーク。同日まとめ送信した全チケットに送信時刻（JST）を立てる。
+	// 多重送信防止のため未送信のものだけを対象にする。
+	MarkTicketsDayBeforeNotified(ctx context.Context, arg MarkTicketsDayBeforeNotifiedParams) error
 	UpdateEvent(ctx context.Context, arg UpdateEventParams) error
 	// ticket 本体の更新。event_id は変更しない。purchased_by の変更は呼び出し側で
 	// 新しい立替者が ticket_participants に含まれることを保証する。max_participants は

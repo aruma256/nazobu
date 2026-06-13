@@ -15,6 +15,7 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	"github.com/aruma256/nazobu/backend/internal/config"
 	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
+	"github.com/aruma256/nazobu/backend/internal/reminder"
 )
 
 type Server struct {
@@ -69,6 +70,14 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+
+	// リマインド通知ワーカー。webhook URL 未設定（ローカル開発の既定）なら起動しない。
+	if cfg.Discord.WebhookURL != "" {
+		go reminder.NewWorker(dbc, srv.httpClient, cfg.Discord.WebhookURL).Run(ctx)
+		fmt.Println("リマインド通知ワーカーを起動")
+	} else {
+		fmt.Println("DISCORD_WEBHOOK_URL 未設定のためリマインド通知ワーカーは起動しない")
+	}
 
 	errCh := make(chan error, 1)
 	go func() {

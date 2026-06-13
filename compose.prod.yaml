@@ -7,6 +7,7 @@
 # 前提:
 #   - .env に DB_*, DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET,
 #     DISCORD_REDIRECT_URL=https://nazobu.aruma256.dev/auth/discord/callback,
+#     DISCORD_WEBHOOK_URL（リマインド通知の投稿先）,
 #     CLOUDFLARE_TUNNEL_TOKEN を設定済み。
 #   - Cloudflare Zero Trust の Tunnel で
 #     public hostname `nazobu.aruma256.dev` → service `http://frontend:3000` を設定済み。
