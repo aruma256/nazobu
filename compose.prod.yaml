@@ -20,7 +20,7 @@ services:
     # bind mount は維持。起動時に build → 実行に切り替える。
     # signal が届くよう exec で置き換える。
     command: >-
-      sh -c "go install github.com/sqldef/sqldef/v3/cmd/mysqldef@v3.11.1
+      sh -c "go install github.com/sqldef/sqldef/v3/cmd/mysqldef@v3.11.4
       && go run . migrate
       && go build -o /tmp/nazobu .
       && exec /tmp/nazobu start"
