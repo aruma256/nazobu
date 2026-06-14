@@ -115,17 +115,19 @@ func TestFormatDayBefore(t *testing.T) {
 		"t1": {"111", "222"},
 		"t2": {"333"},
 	}
-	content, mentions := formatDayBefore(tickets, subjects)
+	content, mentions := formatDayBefore("https://nazobu.aruma256.dev", tickets, subjects)
 
 	want := "📅 明日の公演をお知らせするよ！\n" +
 		"\n" +
 		"『東京ミステリーサーカス』\n" +
 		"🕖 開演 6/14(日) 14:00\n" +
 		"📍 集合 13:30 ／ 東京駅 銀の鈴前\n" +
+		"🔗 <https://nazobu.aruma256.dev/tickets/t1>\n" +
 		"<@111> <@222>\n" +
 		"\n" +
 		"『ナゾトキ街歩き』\n" +
 		"🕖 開演 6/14(日) 18:00\n" +
+		"🔗 <https://nazobu.aruma256.dev/tickets/t2>\n" +
 		"<@333>"
 	if content != want {
 		t.Errorf("content =\n%q\nwant\n%q", content, want)
@@ -142,7 +144,7 @@ func TestFormatDayBeforeMentionDedup(t *testing.T) {
 		{ID: "t2", StartAt: ts(2026, 6, 14, 18, 0), EventTitle: "B"},
 	}
 	subjects := map[string][]string{"t1": {"111"}, "t2": {"111", "222"}}
-	_, mentions := formatDayBefore(tickets, subjects)
+	_, mentions := formatDayBefore("https://nazobu.aruma256.dev", tickets, subjects)
 	if len(mentions) != 2 || mentions[0] != "111" || mentions[1] != "222" {
 		t.Errorf("mentions = %v, want [111 222]", mentions)
 	}
@@ -153,12 +155,13 @@ func TestFormatMeeting(t *testing.T) {
 		ID: "t1", StartAt: ts(2026, 6, 14, 14, 0), MeetingAt: nt(ts(2026, 6, 14, 13, 30)),
 		MeetingPlace: "東京駅 銀の鈴前", EventTitle: "東京ミステリーサーカス",
 	}
-	got := formatMeeting(row, []string{"111", "222"})
+	got := formatMeeting("https://nazobu.aruma256.dev", row, []string{"111", "222"})
 	want := "⏰ 今日の公演リマインド！みんな起きてる？\n" +
 		"\n" +
 		"『東京ミステリーサーカス』\n" +
 		"📍 集合 13:30 ／ 東京駅 銀の鈴前\n" +
 		"🎭 開演 14:00\n" +
+		"🔗 <https://nazobu.aruma256.dev/tickets/t1>\n" +
 		"<@111> <@222>"
 	if got != want {
 		t.Errorf("formatMeeting =\n%q\nwant\n%q", got, want)

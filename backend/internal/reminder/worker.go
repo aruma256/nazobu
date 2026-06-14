@@ -37,16 +37,20 @@ const (
 type Worker struct {
 	q      *queries.Queries
 	poster poster
+	// frontendURL は nazobu フロントエンドのベース URL。チケット詳細リンクに使う。
+	frontendURL string
 	// now は現在時刻（JST）を返す。テストで固定するため関数で持つ。
 	now func() time.Time
 }
 
 // NewWorker は本番用の Worker を組み立てる。webhookURL の投稿先へ client で POST する。
-func NewWorker(db *sql.DB, client *http.Client, webhookURL string) *Worker {
+// frontendURL はリマインドに載せるチケット詳細リンクのベース URL。
+func NewWorker(db *sql.DB, client *http.Client, webhookURL, frontendURL string) *Worker {
 	return &Worker{
-		q:      queries.New(db),
-		poster: &discordWebhook{url: webhookURL, client: client},
-		now:    func() time.Time { return time.Now().In(jst) },
+		q:           queries.New(db),
+		poster:      &discordWebhook{url: webhookURL, client: client},
+		frontendURL: frontendURL,
+		now:         func() time.Time { return time.Now().In(jst) },
 	}
 }
 
@@ -109,7 +113,7 @@ func (w *Worker) sendDayBeforeGroup(ctx context.Context, now time.Time, group []
 		return
 	}
 
-	content, mentions := formatDayBefore(group, subjectsByTicket)
+	content, mentions := formatDayBefore(w.frontendURL, group, subjectsByTicket)
 	if len(mentions) == 0 {
 		// 通知対象が誰もいない。送信もマークもせず、後から参加者が増えたら拾えるよう NULL のままにする。
 		return
@@ -159,7 +163,7 @@ func (w *Worker) sendMeeting(ctx context.Context, now time.Time, t queries.ListT
 		return
 	}
 
-	if err := w.poster.post(ctx, formatMeeting(t, mentions), mentions); err != nil {
+	if err := w.poster.post(ctx, formatMeeting(w.frontendURL, t, mentions), mentions); err != nil {
 		log.Printf("リマインド: 集合通知の送信に失敗: %v", err)
 		return
 	}

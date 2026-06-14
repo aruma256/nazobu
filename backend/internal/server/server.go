@@ -73,7 +73,7 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 
 	// リマインド通知ワーカー。webhook URL 未設定（ローカル開発の既定）なら起動しない。
 	if cfg.Discord.WebhookURL != "" {
-		go reminder.NewWorker(dbc, srv.httpClient, cfg.Discord.WebhookURL).Run(ctx)
+		go reminder.NewWorker(dbc, srv.httpClient, cfg.Discord.WebhookURL, cfg.FrontendURL).Run(ctx)
 		fmt.Println("リマインド通知ワーカーを起動")
 	} else {
 		fmt.Println("DISCORD_WEBHOOK_URL 未設定のためリマインド通知ワーカーは起動しない")
