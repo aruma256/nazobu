@@ -33,7 +33,10 @@ services:
 
   frontend:
     # next dev → next build & next start。
-    command: sh -c "npm install && npm run build && exec npm run start -- --hostname 0.0.0.0"
+    # npm install ではなく npm ci。依存更新時に永続 volume 上の既存 node_modules を
+    # その場で入れ替えようとすると、退避リネームが NAS の FS 上で ENOTEMPTY になり
+    # 再起動ループに陥る。npm ci は node_modules を作り直すのでこの失敗経路を回避する。
+    command: sh -c "npm ci && npm run build && exec npm run start -- --hostname 0.0.0.0"
     ports: !reset []
     restart: unless-stopped
 
