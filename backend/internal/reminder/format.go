@@ -63,7 +63,7 @@ func formatMeeting(baseURL string, t queries.ListTicketsForMeetingNotificationRo
 		b.WriteString(" ／ " + t.MeetingPlace)
 	}
 	b.WriteString("\n")
-	fmt.Fprintf(&b, "🎭 開演 %s\n", formatTimeOnly(t.StartAt))
+	fmt.Fprintf(&b, "🎪 開演 %s\n", formatTimeOnly(t.StartAt))
 	b.WriteString(urlLine(ticketURL(baseURL, t.ID)))
 	b.WriteString("\n")
 	b.WriteString(mentionLine(subjects))

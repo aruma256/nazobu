@@ -160,7 +160,7 @@ func TestFormatMeeting(t *testing.T) {
 		"\n" +
 		"『東京ミステリーサーカス』\n" +
 		"📍 集合 13:30 ／ 東京駅 銀の鈴前\n" +
-		"🎭 開演 14:00\n" +
+		"🎪 開演 14:00\n" +
 		"🔗 <https://nazobu.aruma256.dev/tickets/t1>\n" +
 		"<@111> <@222>"
 	if got != want {
