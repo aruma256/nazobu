@@ -173,6 +173,22 @@ export function HomeView() {
           </Section>
         )}
 
+        {data.unsettledReceivables.length > 0 && (
+          <Section>
+            <SectionTitle count={data.unsettledReceivables.length}>未回収</SectionTitle>
+            <ul className="mt-3 space-y-3">
+              {data.unsettledReceivables.map((t) => (
+                <TicketCard
+                  key={t.id}
+                  ticket={t}
+                  myName={displayName}
+                  tone="alert"
+                />
+              ))}
+            </ul>
+          </Section>
+        )}
+
         <Section>
           <SectionTitle count={data.upcoming.length}>あなたの今後の予定</SectionTitle>
           {data.upcoming.length === 0 ? (

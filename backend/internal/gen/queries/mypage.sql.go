@@ -67,6 +67,88 @@ func (q *Queries) ListMyMonthlyTicketsByUserID(ctx context.Context, arg ListMyMo
 	return items, nil
 }
 
+const listUnsettledReceivablesByUserID = `-- name: ListUnsettledReceivablesByUserID :many
+SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
+       e.expected_duration_minutes AS event_expected_duration_minutes,
+       t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
+       t.meeting_place,
+       pu.display_name AS purchaser_name
+FROM tickets t
+JOIN events e  ON e.id = t.event_id
+JOIN users  pu ON pu.id = t.purchased_by
+WHERE t.purchased_by = ?
+  AND t.start_at <= ?
+  AND EXISTS (
+    SELECT 1 FROM ticket_participants tp
+    WHERE tp.ticket_id = t.id
+      AND tp.user_id <> t.purchased_by
+      AND tp.settled_at IS NULL
+  )
+ORDER BY t.start_at ASC, t.id ASC
+`
+
+type ListUnsettledReceivablesByUserIDParams struct {
+	UserID string
+	Now    time.Time
+}
+
+type ListUnsettledReceivablesByUserIDRow struct {
+	ID                           string
+	EventID                      string
+	EventTitle                   string
+	EventUrl                     string
+	EventCatchphrase             string
+	EventImageUrl                sql.NullString
+	EventExpectedDurationMinutes int32
+	StartAt                      time.Time
+	MeetingAt                    sql.NullTime
+	PricePerPerson               int32
+	MaxParticipants              int32
+	MeetingPlace                 string
+	PurchaserName                string
+}
+
+// 自分が立て替えたチケットのうち「自分以外の参加者に未精算が 1 人以上残っている」かつ「開演が現在以前」を取る。
+// 受け取り側の貰い忘れ防止用。自分自身の参加分（自己持ち）は精算対象でないため EXISTS の条件から除外する。
+// 未来分は精算対象として扱わない（公演前に表示しない）。
+// 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
+func (q *Queries) ListUnsettledReceivablesByUserID(ctx context.Context, arg ListUnsettledReceivablesByUserIDParams) ([]ListUnsettledReceivablesByUserIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, listUnsettledReceivablesByUserID, arg.UserID, arg.Now)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUnsettledReceivablesByUserIDRow
+	for rows.Next() {
+		var i ListUnsettledReceivablesByUserIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.EventID,
+			&i.EventTitle,
+			&i.EventUrl,
+			&i.EventCatchphrase,
+			&i.EventImageUrl,
+			&i.EventExpectedDurationMinutes,
+			&i.StartAt,
+			&i.MeetingAt,
+			&i.PricePerPerson,
+			&i.MaxParticipants,
+			&i.MeetingPlace,
+			&i.PurchaserName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUnsettledTicketsByUserID = `-- name: ListUnsettledTicketsByUserID :many
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,

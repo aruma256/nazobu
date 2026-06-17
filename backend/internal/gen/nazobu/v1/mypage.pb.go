@@ -73,9 +73,12 @@ type GetMyPageResponse struct {
 	// 当月の月（サーバ基準、JST）。1〜12。月切り替えの上限判定に使う。
 	CurrentMonth int32 `protobuf:"varint,6,opt,name=current_month,json=currentMonth,proto3" json:"current_month,omitempty"`
 	// 当月の年（サーバ基準、JST）。
-	CurrentYear   int32 `protobuf:"varint,7,opt,name=current_year,json=currentYear,proto3" json:"current_year,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	CurrentYear int32 `protobuf:"varint,7,opt,name=current_year,json=currentYear,proto3" json:"current_year,omitempty"`
+	// 自分が立て替えた ticket のうち、他参加者からの精算が未完了で開演済みのもの（start_at 昇順）。
+	// 受け取り忘れ防止用。/tickets と同じ表示で扱うため Ticket 型に揃える。
+	UnsettledReceivables []*Ticket `protobuf:"bytes,8,rep,name=unsettled_receivables,json=unsettledReceivables,proto3" json:"unsettled_receivables,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *GetMyPageResponse) Reset() {
@@ -155,6 +158,13 @@ func (x *GetMyPageResponse) GetCurrentYear() int32 {
 		return x.CurrentYear
 	}
 	return 0
+}
+
+func (x *GetMyPageResponse) GetUnsettledReceivables() []*Ticket {
+	if x != nil {
+		return x.UnsettledReceivables
+	}
+	return nil
 }
 
 type ListMonthlyTicketsRequest struct {
@@ -347,7 +357,7 @@ var File_nazobu_v1_mypage_proto protoreflect.FileDescriptor
 const file_nazobu_v1_mypage_proto_rawDesc = "" +
 	"\n" +
 	"\x16nazobu/v1/mypage.proto\x12\tnazobu.v1\x1a\x16nazobu/v1/ticket.proto\"\x12\n" +
-	"\x10GetMyPageRequest\"\xb7\x02\n" +
+	"\x10GetMyPageRequest\"\xff\x02\n" +
 	"\x11GetMyPageResponse\x12/\n" +
 	"\tunsettled\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\tunsettled\x12-\n" +
 	"\bupcoming\x18\x02 \x03(\v2\x11.nazobu.v1.TicketR\bupcoming\x122\n" +
@@ -355,7 +365,8 @@ const file_nazobu_v1_mypage_proto_rawDesc = "" +
 	"\rmonthly_month\x18\x04 \x01(\x05R\fmonthlyMonth\x12!\n" +
 	"\fmonthly_year\x18\x05 \x01(\x05R\vmonthlyYear\x12#\n" +
 	"\rcurrent_month\x18\x06 \x01(\x05R\fcurrentMonth\x12!\n" +
-	"\fcurrent_year\x18\a \x01(\x05R\vcurrentYear\"E\n" +
+	"\fcurrent_year\x18\a \x01(\x05R\vcurrentYear\x12F\n" +
+	"\x15unsettled_receivables\x18\b \x03(\v2\x11.nazobu.v1.TicketR\x14unsettledReceivables\"E\n" +
 	"\x19ListMonthlyTicketsRequest\x12\x12\n" +
 	"\x04year\x18\x01 \x01(\x05R\x04year\x12\x14\n" +
 	"\x05month\x18\x02 \x01(\x05R\x05month\"z\n" +
@@ -398,16 +409,17 @@ var file_nazobu_v1_mypage_proto_depIdxs = []int32{
 	5, // 0: nazobu.v1.GetMyPageResponse.unsettled:type_name -> nazobu.v1.Ticket
 	5, // 1: nazobu.v1.GetMyPageResponse.upcoming:type_name -> nazobu.v1.Ticket
 	4, // 2: nazobu.v1.GetMyPageResponse.monthly:type_name -> nazobu.v1.MonthlyTicket
-	4, // 3: nazobu.v1.ListMonthlyTicketsResponse.monthly:type_name -> nazobu.v1.MonthlyTicket
-	0, // 4: nazobu.v1.MyPageService.GetMyPage:input_type -> nazobu.v1.GetMyPageRequest
-	2, // 5: nazobu.v1.MyPageService.ListMonthlyTickets:input_type -> nazobu.v1.ListMonthlyTicketsRequest
-	1, // 6: nazobu.v1.MyPageService.GetMyPage:output_type -> nazobu.v1.GetMyPageResponse
-	3, // 7: nazobu.v1.MyPageService.ListMonthlyTickets:output_type -> nazobu.v1.ListMonthlyTicketsResponse
-	6, // [6:8] is the sub-list for method output_type
-	4, // [4:6] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	5, // 3: nazobu.v1.GetMyPageResponse.unsettled_receivables:type_name -> nazobu.v1.Ticket
+	4, // 4: nazobu.v1.ListMonthlyTicketsResponse.monthly:type_name -> nazobu.v1.MonthlyTicket
+	0, // 5: nazobu.v1.MyPageService.GetMyPage:input_type -> nazobu.v1.GetMyPageRequest
+	2, // 6: nazobu.v1.MyPageService.ListMonthlyTickets:input_type -> nazobu.v1.ListMonthlyTicketsRequest
+	1, // 7: nazobu.v1.MyPageService.GetMyPage:output_type -> nazobu.v1.GetMyPageResponse
+	3, // 8: nazobu.v1.MyPageService.ListMonthlyTickets:output_type -> nazobu.v1.ListMonthlyTicketsResponse
+	7, // [7:9] is the sub-list for method output_type
+	5, // [5:7] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_nazobu_v1_mypage_proto_init() }

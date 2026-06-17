@@ -69,6 +69,11 @@ type Querier interface {
 	// 集合 2 時間前リマインドの候補。未送信かつ集合時刻あり、開演が未来のチケット。
 	// 締切（meeting_at - 2h）・猶予窓の判定は呼び出し側。
 	ListTicketsForMeetingNotification(ctx context.Context, startAt time.Time) ([]ListTicketsForMeetingNotificationRow, error)
+	// 自分が立て替えたチケットのうち「自分以外の参加者に未精算が 1 人以上残っている」かつ「開演が現在以前」を取る。
+	// 受け取り側の貰い忘れ防止用。自分自身の参加分（自己持ち）は精算対象でないため EXISTS の条件から除外する。
+	// 未来分は精算対象として扱わない（公演前に表示しない）。
+	// 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
+	ListUnsettledReceivablesByUserID(ctx context.Context, arg ListUnsettledReceivablesByUserIDParams) ([]ListUnsettledReceivablesByUserIDRow, error)
 	// 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」かつ「開演が現在以前」を取る。
 	// 立替者本人の自己持ち分は精算対象ではないので除外する。
 	// 未来分は精算対象として扱わない（公演前に表示しない）。

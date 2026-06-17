@@ -35,6 +35,9 @@ message GetMyPageResponse {
   int32 current_month = 6;
   // 当月の年（サーバ基準、JST）。
   int32 current_year = 7;
+  // 自分が立て替えた ticket のうち、他参加者からの精算が未完了で開演済みのもの（start_at 昇順）。
+  // 受け取り忘れ防止用。/tickets と同じ表示で扱うため Ticket 型に揃える。
+  repeated Ticket unsettled_receivables = 8;
 }
 
 message ListMonthlyTicketsRequest {

@@ -44,15 +44,21 @@ func (s *myPageService) GetMyPage(ctx context.Context, req *connect.Request[nazo
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("未精算の取得に失敗: %w", err))
 	}
 
+	unsettledReceivables, err := s.queryUnsettledReceivables(ctx, user.ID, now)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("未回収の取得に失敗: %w", err))
+	}
+
 	upcoming, err := s.queryUpcoming(ctx, user.ID, todayStart)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("今後の予定の取得に失敗: %w", err))
 	}
 
-	// 未精算は過去 / 今後の予定は当日以降と時間軸が分かれるので重複しない。
+	// 未精算 / 未回収は過去、今後の予定は当日以降と時間軸が分かれるので重複しない。
 	// 1 回の IN クエリにまとめて参加者名を引き、N+1 を避ける。
-	allTickets := make([]*nazobuv1.Ticket, 0, len(unsettled)+len(upcoming))
+	allTickets := make([]*nazobuv1.Ticket, 0, len(unsettled)+len(unsettledReceivables)+len(upcoming))
 	allTickets = append(allTickets, unsettled...)
+	allTickets = append(allTickets, unsettledReceivables...)
 	allTickets = append(allTickets, upcoming...)
 	if err := attachTicketParticipantNames(ctx, s.q, allTickets); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の取得に失敗: %w", err))
@@ -64,13 +70,14 @@ func (s *myPageService) GetMyPage(ctx context.Context, req *connect.Request[nazo
 	}
 
 	return connect.NewResponse(&nazobuv1.GetMyPageResponse{
-		Unsettled:    unsettled,
-		Upcoming:     upcoming,
-		Monthly:      monthly,
-		MonthlyMonth: int32(prevMonthStart.Month()),
-		MonthlyYear:  int32(prevMonthStart.Year()),
-		CurrentMonth: int32(now.Month()),
-		CurrentYear:  int32(now.Year()),
+		Unsettled:            unsettled,
+		UnsettledReceivables: unsettledReceivables,
+		Upcoming:             upcoming,
+		Monthly:              monthly,
+		MonthlyMonth:         int32(prevMonthStart.Month()),
+		MonthlyYear:          int32(prevMonthStart.Year()),
+		CurrentMonth:         int32(now.Month()),
+		CurrentYear:          int32(now.Year()),
 	}), nil
 }
 
@@ -118,6 +125,36 @@ func clipHistoryEnd(nextMonthStart, todayStart time.Time) time.Time {
 
 func (s *myPageService) queryUnsettled(ctx context.Context, userID string, now time.Time) ([]*nazobuv1.Ticket, error) {
 	rows, err := s.q.ListUnsettledTicketsByUserID(ctx, queries.ListUnsettledTicketsByUserIDParams{
+		UserID: userID,
+		Now:    now,
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*nazobuv1.Ticket, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, &nazobuv1.Ticket{
+			Id:                           r.ID,
+			EventId:                      r.EventID,
+			EventTitle:                   r.EventTitle,
+			EventUrl:                     r.EventUrl,
+			EventCatchphrase:             r.EventCatchphrase,
+			EventImageUrl:                nullStringToString(r.EventImageUrl),
+			EventExpectedDurationMinutes: r.EventExpectedDurationMinutes,
+			StartAt:                      formatJSTDateTime(r.StartAt),
+			MeetingAt:                    formatNullableJSTDateTime(r.MeetingAt),
+			PricePerPerson:               r.PricePerPerson,
+			MaxParticipants:              r.MaxParticipants,
+			MeetingPlace:                 r.MeetingPlace,
+			PurchaserName:                r.PurchaserName,
+			ParticipantNames:             []string{},
+		})
+	}
+	return out, nil
+}
+
+func (s *myPageService) queryUnsettledReceivables(ctx context.Context, userID string, now time.Time) ([]*nazobuv1.Ticket, error) {
+	rows, err := s.q.ListUnsettledReceivablesByUserID(ctx, queries.ListUnsettledReceivablesByUserIDParams{
 		UserID: userID,
 		Now:    now,
 	})
