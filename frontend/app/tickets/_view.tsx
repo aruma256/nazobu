@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 import type { Ticket } from "@/app/gen/nazobu/v1/ticket_pb";
 import type { GetMeResponse } from "@/app/gen/nazobu/v1/user_pb";
-import { ticketClient, userClient } from "@/app/lib/rpc";
+import { myPageClient, ticketClient, userClient } from "@/app/lib/rpc";
 
 import {
   AppHeader,
@@ -14,13 +14,20 @@ import {
   Section,
   SectionTitle,
   TicketCard,
+  UnsettledBanner,
 } from "@/app/_components";
 import { redirectToLogin } from "@/app/lib/auth";
 
 type LoadState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
-  | { kind: "ready"; me: GetMeResponse; tickets: Ticket[] };
+  | {
+      kind: "ready";
+      me: GetMeResponse;
+      tickets: Ticket[];
+      unsettledCount: number;
+      receivablesCount: number;
+    };
 
 export function TicketsView() {
   const router = useRouter();
@@ -28,9 +35,21 @@ export function TicketsView() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([userClient.getMe({}), ticketClient.listTickets({})])
-      .then(([me, res]) => {
-        if (!cancelled) setState({ kind: "ready", me, tickets: res.tickets });
+    Promise.all([
+      userClient.getMe({}),
+      ticketClient.listTickets({}),
+      myPageClient.listMyUnsettledTickets({}),
+      myPageClient.listMyUnsettledReceivables({}),
+    ])
+      .then(([me, res, unsettled, receivables]) => {
+        if (!cancelled)
+          setState({
+            kind: "ready",
+            me,
+            tickets: res.tickets,
+            unsettledCount: unsettled.tickets.length,
+            receivablesCount: receivables.tickets.length,
+          });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -71,7 +90,7 @@ export function TicketsView() {
     );
   }
 
-  const { me, tickets } = state;
+  const { me, tickets, unsettledCount, receivablesCount } = state;
   const displayName = me.displayName;
   const isAdmin = me.role === "admin";
 
@@ -79,6 +98,10 @@ export function TicketsView() {
     <>
       <AppHeader brand="謎部" user={displayName} isAdmin={isAdmin} />
       <PageShell>
+        <UnsettledBanner
+          unsettledCount={unsettledCount}
+          receivablesCount={receivablesCount}
+        />
         <Section>
           <SectionTitle count={tickets.length}>チケット一覧</SectionTitle>
           {tickets.length === 0 ? (

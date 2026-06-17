@@ -21,26 +21,26 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type GetMyPageRequest struct {
+type ListMyUnsettledTicketsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetMyPageRequest) Reset() {
-	*x = GetMyPageRequest{}
+func (x *ListMyUnsettledTicketsRequest) Reset() {
+	*x = ListMyUnsettledTicketsRequest{}
 	mi := &file_nazobu_v1_mypage_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetMyPageRequest) String() string {
+func (x *ListMyUnsettledTicketsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetMyPageRequest) ProtoMessage() {}
+func (*ListMyUnsettledTicketsRequest) ProtoMessage() {}
 
-func (x *GetMyPageRequest) ProtoReflect() protoreflect.Message {
+func (x *ListMyUnsettledTicketsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_nazobu_v1_mypage_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -52,49 +52,33 @@ func (x *GetMyPageRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetMyPageRequest.ProtoReflect.Descriptor instead.
-func (*GetMyPageRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListMyUnsettledTicketsRequest.ProtoReflect.Descriptor instead.
+func (*ListMyUnsettledTicketsRequest) Descriptor() ([]byte, []int) {
 	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{0}
 }
 
-type GetMyPageResponse struct {
+type ListMyUnsettledTicketsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 自分の精算が未完了の ticket（start_at 昇順）。自分が立て替えた分は含めない。
 	// /tickets と同じ表示で扱うため Ticket 型に揃える。
-	Unsettled []*Ticket `protobuf:"bytes,1,rep,name=unsettled,proto3" json:"unsettled,omitempty"`
-	// 自分が参加予定で start_at が今日以降の ticket（start_at 昇順）。
-	Upcoming []*Ticket `protobuf:"bytes,2,rep,name=upcoming,proto3" json:"upcoming,omitempty"`
-	// monthly セクションの初期表示月（= 前月）に start_at がある自分の ticket（start_at 昇順）。
-	Monthly []*MonthlyTicket `protobuf:"bytes,3,rep,name=monthly,proto3" json:"monthly,omitempty"`
-	// monthly セクションの初期表示月（サーバ基準、JST）。1〜12。既定は前月。
-	MonthlyMonth int32 `protobuf:"varint,4,opt,name=monthly_month,json=monthlyMonth,proto3" json:"monthly_month,omitempty"`
-	// monthly セクションの初期表示年（サーバ基準、JST）。既定は前月の年。
-	MonthlyYear int32 `protobuf:"varint,5,opt,name=monthly_year,json=monthlyYear,proto3" json:"monthly_year,omitempty"`
-	// 当月の月（サーバ基準、JST）。1〜12。月切り替えの上限判定に使う。
-	CurrentMonth int32 `protobuf:"varint,6,opt,name=current_month,json=currentMonth,proto3" json:"current_month,omitempty"`
-	// 当月の年（サーバ基準、JST）。
-	CurrentYear int32 `protobuf:"varint,7,opt,name=current_year,json=currentYear,proto3" json:"current_year,omitempty"`
-	// 自分が立て替えた ticket のうち、他参加者からの精算が未完了で開演済みのもの（start_at 昇順）。
-	// 受け取り忘れ防止用。/tickets と同じ表示で扱うため Ticket 型に揃える。
-	UnsettledReceivables []*Ticket `protobuf:"bytes,8,rep,name=unsettled_receivables,json=unsettledReceivables,proto3" json:"unsettled_receivables,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	Tickets       []*Ticket `protobuf:"bytes,1,rep,name=tickets,proto3" json:"tickets,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetMyPageResponse) Reset() {
-	*x = GetMyPageResponse{}
+func (x *ListMyUnsettledTicketsResponse) Reset() {
+	*x = ListMyUnsettledTicketsResponse{}
 	mi := &file_nazobu_v1_mypage_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetMyPageResponse) String() string {
+func (x *ListMyUnsettledTicketsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetMyPageResponse) ProtoMessage() {}
+func (*ListMyUnsettledTicketsResponse) ProtoMessage() {}
 
-func (x *GetMyPageResponse) ProtoReflect() protoreflect.Message {
+func (x *ListMyUnsettledTicketsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_nazobu_v1_mypage_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -106,72 +90,183 @@ func (x *GetMyPageResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetMyPageResponse.ProtoReflect.Descriptor instead.
-func (*GetMyPageResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListMyUnsettledTicketsResponse.ProtoReflect.Descriptor instead.
+func (*ListMyUnsettledTicketsResponse) Descriptor() ([]byte, []int) {
 	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *GetMyPageResponse) GetUnsettled() []*Ticket {
+func (x *ListMyUnsettledTicketsResponse) GetTickets() []*Ticket {
 	if x != nil {
-		return x.Unsettled
+		return x.Tickets
 	}
 	return nil
 }
 
-func (x *GetMyPageResponse) GetUpcoming() []*Ticket {
+type ListMyUnsettledReceivablesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMyUnsettledReceivablesRequest) Reset() {
+	*x = ListMyUnsettledReceivablesRequest{}
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMyUnsettledReceivablesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMyUnsettledReceivablesRequest) ProtoMessage() {}
+
+func (x *ListMyUnsettledReceivablesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[2]
 	if x != nil {
-		return x.Upcoming
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMyUnsettledReceivablesRequest.ProtoReflect.Descriptor instead.
+func (*ListMyUnsettledReceivablesRequest) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{2}
+}
+
+type ListMyUnsettledReceivablesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tickets       []*Ticket              `protobuf:"bytes,1,rep,name=tickets,proto3" json:"tickets,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMyUnsettledReceivablesResponse) Reset() {
+	*x = ListMyUnsettledReceivablesResponse{}
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMyUnsettledReceivablesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMyUnsettledReceivablesResponse) ProtoMessage() {}
+
+func (x *ListMyUnsettledReceivablesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMyUnsettledReceivablesResponse.ProtoReflect.Descriptor instead.
+func (*ListMyUnsettledReceivablesResponse) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ListMyUnsettledReceivablesResponse) GetTickets() []*Ticket {
+	if x != nil {
+		return x.Tickets
 	}
 	return nil
 }
 
-func (x *GetMyPageResponse) GetMonthly() []*MonthlyTicket {
-	if x != nil {
-		return x.Monthly
-	}
-	return nil
+type ListMyUpcomingTicketsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetMyPageResponse) GetMonthlyMonth() int32 {
-	if x != nil {
-		return x.MonthlyMonth
-	}
-	return 0
+func (x *ListMyUpcomingTicketsRequest) Reset() {
+	*x = ListMyUpcomingTicketsRequest{}
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetMyPageResponse) GetMonthlyYear() int32 {
-	if x != nil {
-		return x.MonthlyYear
-	}
-	return 0
+func (x *ListMyUpcomingTicketsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
 }
 
-func (x *GetMyPageResponse) GetCurrentMonth() int32 {
+func (*ListMyUpcomingTicketsRequest) ProtoMessage() {}
+
+func (x *ListMyUpcomingTicketsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[4]
 	if x != nil {
-		return x.CurrentMonth
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
 	}
-	return 0
+	return mi.MessageOf(x)
 }
 
-func (x *GetMyPageResponse) GetCurrentYear() int32 {
-	if x != nil {
-		return x.CurrentYear
-	}
-	return 0
+// Deprecated: Use ListMyUpcomingTicketsRequest.ProtoReflect.Descriptor instead.
+func (*ListMyUpcomingTicketsRequest) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *GetMyPageResponse) GetUnsettledReceivables() []*Ticket {
+type ListMyUpcomingTicketsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tickets       []*Ticket              `protobuf:"bytes,1,rep,name=tickets,proto3" json:"tickets,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMyUpcomingTicketsResponse) Reset() {
+	*x = ListMyUpcomingTicketsResponse{}
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMyUpcomingTicketsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMyUpcomingTicketsResponse) ProtoMessage() {}
+
+func (x *ListMyUpcomingTicketsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[5]
 	if x != nil {
-		return x.UnsettledReceivables
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMyUpcomingTicketsResponse.ProtoReflect.Descriptor instead.
+func (*ListMyUpcomingTicketsResponse) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ListMyUpcomingTicketsResponse) GetTickets() []*Ticket {
+	if x != nil {
+		return x.Tickets
 	}
 	return nil
 }
 
 type ListMonthlyTicketsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// JST での年。
+	// JST での年。0 を指定すると month と合わせて「サーバ JST 基準の前月」を返す。
 	Year int32 `protobuf:"varint,1,opt,name=year,proto3" json:"year,omitempty"`
-	// JST での月（1〜12）。
+	// JST での月（1〜12）。0 を指定すると year と合わせて「サーバ JST 基準の前月」を返す。
 	Month         int32 `protobuf:"varint,2,opt,name=month,proto3" json:"month,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -179,7 +274,7 @@ type ListMonthlyTicketsRequest struct {
 
 func (x *ListMonthlyTicketsRequest) Reset() {
 	*x = ListMonthlyTicketsRequest{}
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[2]
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -191,7 +286,7 @@ func (x *ListMonthlyTicketsRequest) String() string {
 func (*ListMonthlyTicketsRequest) ProtoMessage() {}
 
 func (x *ListMonthlyTicketsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[2]
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -204,7 +299,7 @@ func (x *ListMonthlyTicketsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMonthlyTicketsRequest.ProtoReflect.Descriptor instead.
 func (*ListMonthlyTicketsRequest) Descriptor() ([]byte, []int) {
-	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{2}
+	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListMonthlyTicketsRequest) GetYear() int32 {
@@ -223,17 +318,19 @@ func (x *ListMonthlyTicketsRequest) GetMonth() int32 {
 
 type ListMonthlyTicketsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// 指定月に start_at がある自分の ticket（start_at 昇順）。
-	Monthly       []*MonthlyTicket `protobuf:"bytes,1,rep,name=monthly,proto3" json:"monthly,omitempty"`
-	Year          int32            `protobuf:"varint,2,opt,name=year,proto3" json:"year,omitempty"`
-	Month         int32            `protobuf:"varint,3,opt,name=month,proto3" json:"month,omitempty"`
+	// 指定月（または既定の前月）に start_at がある自分の ticket（start_at 昇順）。
+	Monthly []*MonthlyTicket `protobuf:"bytes,1,rep,name=monthly,proto3" json:"monthly,omitempty"`
+	// 実際に返した年（既定値リクエスト時はサーバが決定した前月の年）。
+	Year int32 `protobuf:"varint,2,opt,name=year,proto3" json:"year,omitempty"`
+	// 実際に返した月。
+	Month         int32 `protobuf:"varint,3,opt,name=month,proto3" json:"month,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListMonthlyTicketsResponse) Reset() {
 	*x = ListMonthlyTicketsResponse{}
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[3]
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -245,7 +342,7 @@ func (x *ListMonthlyTicketsResponse) String() string {
 func (*ListMonthlyTicketsResponse) ProtoMessage() {}
 
 func (x *ListMonthlyTicketsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[3]
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -258,7 +355,7 @@ func (x *ListMonthlyTicketsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMonthlyTicketsResponse.ProtoReflect.Descriptor instead.
 func (*ListMonthlyTicketsResponse) Descriptor() ([]byte, []int) {
-	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{3}
+	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ListMonthlyTicketsResponse) GetMonthly() []*MonthlyTicket {
@@ -296,7 +393,7 @@ type MonthlyTicket struct {
 
 func (x *MonthlyTicket) Reset() {
 	*x = MonthlyTicket{}
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[4]
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -308,7 +405,7 @@ func (x *MonthlyTicket) String() string {
 func (*MonthlyTicket) ProtoMessage() {}
 
 func (x *MonthlyTicket) ProtoReflect() protoreflect.Message {
-	mi := &file_nazobu_v1_mypage_proto_msgTypes[4]
+	mi := &file_nazobu_v1_mypage_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -321,7 +418,7 @@ func (x *MonthlyTicket) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MonthlyTicket.ProtoReflect.Descriptor instead.
 func (*MonthlyTicket) Descriptor() ([]byte, []int) {
-	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{4}
+	return file_nazobu_v1_mypage_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *MonthlyTicket) GetTicketId() string {
@@ -356,17 +453,16 @@ var File_nazobu_v1_mypage_proto protoreflect.FileDescriptor
 
 const file_nazobu_v1_mypage_proto_rawDesc = "" +
 	"\n" +
-	"\x16nazobu/v1/mypage.proto\x12\tnazobu.v1\x1a\x16nazobu/v1/ticket.proto\"\x12\n" +
-	"\x10GetMyPageRequest\"\xff\x02\n" +
-	"\x11GetMyPageResponse\x12/\n" +
-	"\tunsettled\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\tunsettled\x12-\n" +
-	"\bupcoming\x18\x02 \x03(\v2\x11.nazobu.v1.TicketR\bupcoming\x122\n" +
-	"\amonthly\x18\x03 \x03(\v2\x18.nazobu.v1.MonthlyTicketR\amonthly\x12#\n" +
-	"\rmonthly_month\x18\x04 \x01(\x05R\fmonthlyMonth\x12!\n" +
-	"\fmonthly_year\x18\x05 \x01(\x05R\vmonthlyYear\x12#\n" +
-	"\rcurrent_month\x18\x06 \x01(\x05R\fcurrentMonth\x12!\n" +
-	"\fcurrent_year\x18\a \x01(\x05R\vcurrentYear\x12F\n" +
-	"\x15unsettled_receivables\x18\b \x03(\v2\x11.nazobu.v1.TicketR\x14unsettledReceivables\"E\n" +
+	"\x16nazobu/v1/mypage.proto\x12\tnazobu.v1\x1a\x16nazobu/v1/ticket.proto\"\x1f\n" +
+	"\x1dListMyUnsettledTicketsRequest\"M\n" +
+	"\x1eListMyUnsettledTicketsResponse\x12+\n" +
+	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"#\n" +
+	"!ListMyUnsettledReceivablesRequest\"Q\n" +
+	"\"ListMyUnsettledReceivablesResponse\x12+\n" +
+	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"\x1e\n" +
+	"\x1cListMyUpcomingTicketsRequest\"L\n" +
+	"\x1dListMyUpcomingTicketsResponse\x12+\n" +
+	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"E\n" +
 	"\x19ListMonthlyTicketsRequest\x12\x12\n" +
 	"\x04year\x18\x01 \x01(\x05R\x04year\x12\x14\n" +
 	"\x05month\x18\x02 \x01(\x05R\x05month\"z\n" +
@@ -379,9 +475,11 @@ const file_nazobu_v1_mypage_proto_rawDesc = "" +
 	"\vevent_title\x18\x02 \x01(\tR\n" +
 	"eventTitle\x12\x19\n" +
 	"\bstart_at\x18\x03 \x01(\tR\astartAt\x12\x18\n" +
-	"\asettled\x18\x04 \x01(\bR\asettled2\xba\x01\n" +
-	"\rMyPageService\x12F\n" +
-	"\tGetMyPage\x12\x1b.nazobu.v1.GetMyPageRequest\x1a\x1c.nazobu.v1.GetMyPageResponse\x12a\n" +
+	"\asettled\x18\x04 \x01(\bR\asettled2\xc8\x03\n" +
+	"\rMyPageService\x12m\n" +
+	"\x16ListMyUnsettledTickets\x12(.nazobu.v1.ListMyUnsettledTicketsRequest\x1a).nazobu.v1.ListMyUnsettledTicketsResponse\x12y\n" +
+	"\x1aListMyUnsettledReceivables\x12,.nazobu.v1.ListMyUnsettledReceivablesRequest\x1a-.nazobu.v1.ListMyUnsettledReceivablesResponse\x12j\n" +
+	"\x15ListMyUpcomingTickets\x12'.nazobu.v1.ListMyUpcomingTicketsRequest\x1a(.nazobu.v1.ListMyUpcomingTicketsResponse\x12a\n" +
 	"\x12ListMonthlyTickets\x12$.nazobu.v1.ListMonthlyTicketsRequest\x1a%.nazobu.v1.ListMonthlyTicketsResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
 
 var (
@@ -396,30 +494,37 @@ func file_nazobu_v1_mypage_proto_rawDescGZIP() []byte {
 	return file_nazobu_v1_mypage_proto_rawDescData
 }
 
-var file_nazobu_v1_mypage_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_nazobu_v1_mypage_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_nazobu_v1_mypage_proto_goTypes = []any{
-	(*GetMyPageRequest)(nil),           // 0: nazobu.v1.GetMyPageRequest
-	(*GetMyPageResponse)(nil),          // 1: nazobu.v1.GetMyPageResponse
-	(*ListMonthlyTicketsRequest)(nil),  // 2: nazobu.v1.ListMonthlyTicketsRequest
-	(*ListMonthlyTicketsResponse)(nil), // 3: nazobu.v1.ListMonthlyTicketsResponse
-	(*MonthlyTicket)(nil),              // 4: nazobu.v1.MonthlyTicket
-	(*Ticket)(nil),                     // 5: nazobu.v1.Ticket
+	(*ListMyUnsettledTicketsRequest)(nil),      // 0: nazobu.v1.ListMyUnsettledTicketsRequest
+	(*ListMyUnsettledTicketsResponse)(nil),     // 1: nazobu.v1.ListMyUnsettledTicketsResponse
+	(*ListMyUnsettledReceivablesRequest)(nil),  // 2: nazobu.v1.ListMyUnsettledReceivablesRequest
+	(*ListMyUnsettledReceivablesResponse)(nil), // 3: nazobu.v1.ListMyUnsettledReceivablesResponse
+	(*ListMyUpcomingTicketsRequest)(nil),       // 4: nazobu.v1.ListMyUpcomingTicketsRequest
+	(*ListMyUpcomingTicketsResponse)(nil),      // 5: nazobu.v1.ListMyUpcomingTicketsResponse
+	(*ListMonthlyTicketsRequest)(nil),          // 6: nazobu.v1.ListMonthlyTicketsRequest
+	(*ListMonthlyTicketsResponse)(nil),         // 7: nazobu.v1.ListMonthlyTicketsResponse
+	(*MonthlyTicket)(nil),                      // 8: nazobu.v1.MonthlyTicket
+	(*Ticket)(nil),                             // 9: nazobu.v1.Ticket
 }
 var file_nazobu_v1_mypage_proto_depIdxs = []int32{
-	5, // 0: nazobu.v1.GetMyPageResponse.unsettled:type_name -> nazobu.v1.Ticket
-	5, // 1: nazobu.v1.GetMyPageResponse.upcoming:type_name -> nazobu.v1.Ticket
-	4, // 2: nazobu.v1.GetMyPageResponse.monthly:type_name -> nazobu.v1.MonthlyTicket
-	5, // 3: nazobu.v1.GetMyPageResponse.unsettled_receivables:type_name -> nazobu.v1.Ticket
-	4, // 4: nazobu.v1.ListMonthlyTicketsResponse.monthly:type_name -> nazobu.v1.MonthlyTicket
-	0, // 5: nazobu.v1.MyPageService.GetMyPage:input_type -> nazobu.v1.GetMyPageRequest
-	2, // 6: nazobu.v1.MyPageService.ListMonthlyTickets:input_type -> nazobu.v1.ListMonthlyTicketsRequest
-	1, // 7: nazobu.v1.MyPageService.GetMyPage:output_type -> nazobu.v1.GetMyPageResponse
-	3, // 8: nazobu.v1.MyPageService.ListMonthlyTickets:output_type -> nazobu.v1.ListMonthlyTicketsResponse
-	7, // [7:9] is the sub-list for method output_type
-	5, // [5:7] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	9, // 0: nazobu.v1.ListMyUnsettledTicketsResponse.tickets:type_name -> nazobu.v1.Ticket
+	9, // 1: nazobu.v1.ListMyUnsettledReceivablesResponse.tickets:type_name -> nazobu.v1.Ticket
+	9, // 2: nazobu.v1.ListMyUpcomingTicketsResponse.tickets:type_name -> nazobu.v1.Ticket
+	8, // 3: nazobu.v1.ListMonthlyTicketsResponse.monthly:type_name -> nazobu.v1.MonthlyTicket
+	0, // 4: nazobu.v1.MyPageService.ListMyUnsettledTickets:input_type -> nazobu.v1.ListMyUnsettledTicketsRequest
+	2, // 5: nazobu.v1.MyPageService.ListMyUnsettledReceivables:input_type -> nazobu.v1.ListMyUnsettledReceivablesRequest
+	4, // 6: nazobu.v1.MyPageService.ListMyUpcomingTickets:input_type -> nazobu.v1.ListMyUpcomingTicketsRequest
+	6, // 7: nazobu.v1.MyPageService.ListMonthlyTickets:input_type -> nazobu.v1.ListMonthlyTicketsRequest
+	1, // 8: nazobu.v1.MyPageService.ListMyUnsettledTickets:output_type -> nazobu.v1.ListMyUnsettledTicketsResponse
+	3, // 9: nazobu.v1.MyPageService.ListMyUnsettledReceivables:output_type -> nazobu.v1.ListMyUnsettledReceivablesResponse
+	5, // 10: nazobu.v1.MyPageService.ListMyUpcomingTickets:output_type -> nazobu.v1.ListMyUpcomingTicketsResponse
+	7, // 11: nazobu.v1.MyPageService.ListMonthlyTickets:output_type -> nazobu.v1.ListMonthlyTicketsResponse
+	8, // [8:12] is the sub-list for method output_type
+	4, // [4:8] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_nazobu_v1_mypage_proto_init() }
@@ -434,7 +539,7 @@ func file_nazobu_v1_mypage_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_nazobu_v1_mypage_proto_rawDesc), len(file_nazobu_v1_mypage_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

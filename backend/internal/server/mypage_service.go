@@ -27,58 +27,53 @@ func newMyPageService(db *sql.DB) nazobuv1connect.MyPageServiceHandler {
 // jst はサーバの想定タイムゾーン。当日 0:00 や月初の境界算出に使う。
 var jst = time.FixedZone("Asia/Tokyo", 9*60*60)
 
-func (s *myPageService) GetMyPage(ctx context.Context, req *connect.Request[nazobuv1.GetMyPageRequest]) (*connect.Response[nazobuv1.GetMyPageResponse], error) {
+func (s *myPageService) ListMyUnsettledTickets(ctx context.Context, req *connect.Request[nazobuv1.ListMyUnsettledTicketsRequest]) (*connect.Response[nazobuv1.ListMyUnsettledTicketsResponse], error) {
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
 	}
-
 	now := s.now().In(jst)
-	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, jst)
-	currentMonthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, jst)
-	// 履歴セクションは前月をデフォルト表示にする。
-	prevMonthStart := currentMonthStart.AddDate(0, -1, 0)
-
-	unsettled, err := s.queryUnsettled(ctx, user.ID, now)
+	tickets, err := s.queryUnsettled(ctx, user.ID, now)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("未精算の取得に失敗: %w", err))
 	}
+	if err := attachTicketParticipantNames(ctx, s.q, tickets); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の取得に失敗: %w", err))
+	}
+	return connect.NewResponse(&nazobuv1.ListMyUnsettledTicketsResponse{Tickets: tickets}), nil
+}
 
-	unsettledReceivables, err := s.queryUnsettledReceivables(ctx, user.ID, now)
+func (s *myPageService) ListMyUnsettledReceivables(ctx context.Context, req *connect.Request[nazobuv1.ListMyUnsettledReceivablesRequest]) (*connect.Response[nazobuv1.ListMyUnsettledReceivablesResponse], error) {
+	user, err := lookupSessionUser(ctx, s.db, req.Header())
+	if err != nil {
+		return nil, err
+	}
+	now := s.now().In(jst)
+	tickets, err := s.queryUnsettledReceivables(ctx, user.ID, now)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("未回収の取得に失敗: %w", err))
 	}
+	if err := attachTicketParticipantNames(ctx, s.q, tickets); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の取得に失敗: %w", err))
+	}
+	return connect.NewResponse(&nazobuv1.ListMyUnsettledReceivablesResponse{Tickets: tickets}), nil
+}
 
-	upcoming, err := s.queryUpcoming(ctx, user.ID, todayStart)
+func (s *myPageService) ListMyUpcomingTickets(ctx context.Context, req *connect.Request[nazobuv1.ListMyUpcomingTicketsRequest]) (*connect.Response[nazobuv1.ListMyUpcomingTicketsResponse], error) {
+	user, err := lookupSessionUser(ctx, s.db, req.Header())
+	if err != nil {
+		return nil, err
+	}
+	now := s.now().In(jst)
+	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, jst)
+	tickets, err := s.queryUpcoming(ctx, user.ID, todayStart)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("今後の予定の取得に失敗: %w", err))
 	}
-
-	// 未精算 / 未回収は過去、今後の予定は当日以降と時間軸が分かれるので重複しない。
-	// 1 回の IN クエリにまとめて参加者名を引き、N+1 を避ける。
-	allTickets := make([]*nazobuv1.Ticket, 0, len(unsettled)+len(unsettledReceivables)+len(upcoming))
-	allTickets = append(allTickets, unsettled...)
-	allTickets = append(allTickets, unsettledReceivables...)
-	allTickets = append(allTickets, upcoming...)
-	if err := attachTicketParticipantNames(ctx, s.q, allTickets); err != nil {
+	if err := attachTicketParticipantNames(ctx, s.q, tickets); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の取得に失敗: %w", err))
 	}
-
-	monthly, err := s.queryMonthly(ctx, user.ID, prevMonthStart, clipHistoryEnd(currentMonthStart, todayStart))
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("前月履歴の取得に失敗: %w", err))
-	}
-
-	return connect.NewResponse(&nazobuv1.GetMyPageResponse{
-		Unsettled:            unsettled,
-		UnsettledReceivables: unsettledReceivables,
-		Upcoming:             upcoming,
-		Monthly:              monthly,
-		MonthlyMonth:         int32(prevMonthStart.Month()),
-		MonthlyYear:          int32(prevMonthStart.Year()),
-		CurrentMonth:         int32(now.Month()),
-		CurrentYear:          int32(now.Year()),
-	}), nil
+	return connect.NewResponse(&nazobuv1.ListMyUpcomingTicketsResponse{Tickets: tickets}), nil
 }
 
 func (s *myPageService) ListMonthlyTickets(ctx context.Context, req *connect.Request[nazobuv1.ListMonthlyTicketsRequest]) (*connect.Response[nazobuv1.ListMonthlyTicketsResponse], error) {
@@ -87,18 +82,24 @@ func (s *myPageService) ListMonthlyTickets(ctx context.Context, req *connect.Req
 		return nil, err
 	}
 
-	year := req.Msg.Year
-	month := req.Msg.Month
-	if month < 1 || month > 12 {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("month は 1〜12 の範囲で指定してください"))
-	}
-	if year < 1 {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("year は正の整数で指定してください"))
-	}
-
 	now := s.now().In(jst)
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, jst)
-	monthStart := time.Date(int(year), time.Month(month), 1, 0, 0, 0, 0, jst)
+
+	year := req.Msg.Year
+	month := req.Msg.Month
+	var monthStart time.Time
+	switch {
+	case year == 0 && month == 0:
+		// 既定（マイページ初期表示）として前月を返す。
+		currentMonthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, jst)
+		monthStart = currentMonthStart.AddDate(0, -1, 0)
+	case month < 1 || month > 12:
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("month は 1〜12 の範囲で指定してください"))
+	case year < 1:
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("year は正の整数で指定してください"))
+	default:
+		monthStart = time.Date(int(year), time.Month(month), 1, 0, 0, 0, 0, jst)
+	}
 	nextMonthStart := monthStart.AddDate(0, 1, 0)
 
 	monthly, err := s.queryMonthly(ctx, user.ID, monthStart, clipHistoryEnd(nextMonthStart, todayStart))
@@ -108,8 +109,8 @@ func (s *myPageService) ListMonthlyTickets(ctx context.Context, req *connect.Req
 
 	return connect.NewResponse(&nazobuv1.ListMonthlyTicketsResponse{
 		Monthly: monthly,
-		Year:    year,
-		Month:   month,
+		Year:    int32(monthStart.Year()),
+		Month:   int32(monthStart.Month()),
 	}), nil
 }
 

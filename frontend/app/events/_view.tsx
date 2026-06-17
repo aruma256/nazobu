@@ -7,7 +7,7 @@ import { Fragment, useEffect, useState } from "react";
 
 import type { Event as NazobuEvent, EventTicket } from "@/app/gen/nazobu/v1/event_pb";
 import type { GetMeResponse } from "@/app/gen/nazobu/v1/user_pb";
-import { eventClient, userClient } from "@/app/lib/rpc";
+import { eventClient, myPageClient, userClient } from "@/app/lib/rpc";
 
 import {
   AppHeader,
@@ -16,6 +16,7 @@ import {
   PageShell,
   Section,
   SectionTitle,
+  UnsettledBanner,
 } from "@/app/_components";
 import {
   formatDateJa,
@@ -27,7 +28,13 @@ import { redirectToLogin } from "@/app/lib/auth";
 type LoadState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
-  | { kind: "ready"; me: GetMeResponse; events: NazobuEvent[] };
+  | {
+      kind: "ready";
+      me: GetMeResponse;
+      events: NazobuEvent[];
+      unsettledCount: number;
+      receivablesCount: number;
+    };
 
 export function EventsView() {
   const router = useRouter();
@@ -35,9 +42,21 @@ export function EventsView() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([userClient.getMe({}), eventClient.listEvents({})])
-      .then(([me, res]) => {
-        if (!cancelled) setState({ kind: "ready", me, events: res.events });
+    Promise.all([
+      userClient.getMe({}),
+      eventClient.listEvents({}),
+      myPageClient.listMyUnsettledTickets({}),
+      myPageClient.listMyUnsettledReceivables({}),
+    ])
+      .then(([me, res, unsettled, receivables]) => {
+        if (!cancelled)
+          setState({
+            kind: "ready",
+            me,
+            events: res.events,
+            unsettledCount: unsettled.tickets.length,
+            receivablesCount: receivables.tickets.length,
+          });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -78,13 +97,17 @@ export function EventsView() {
     );
   }
 
-  const { me, events } = state;
+  const { me, events, unsettledCount, receivablesCount } = state;
   const displayName = me.displayName;
 
   return (
     <>
       <AppHeader brand="謎部" user={displayName} isAdmin />
       <PageShell>
+        <UnsettledBanner
+          unsettledCount={unsettledCount}
+          receivablesCount={receivablesCount}
+        />
         <Section>
           <Link
             href="/events/new"

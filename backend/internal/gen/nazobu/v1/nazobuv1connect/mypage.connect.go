@@ -33,8 +33,15 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// MyPageServiceGetMyPageProcedure is the fully-qualified name of the MyPageService's GetMyPage RPC.
-	MyPageServiceGetMyPageProcedure = "/nazobu.v1.MyPageService/GetMyPage"
+	// MyPageServiceListMyUnsettledTicketsProcedure is the fully-qualified name of the MyPageService's
+	// ListMyUnsettledTickets RPC.
+	MyPageServiceListMyUnsettledTicketsProcedure = "/nazobu.v1.MyPageService/ListMyUnsettledTickets"
+	// MyPageServiceListMyUnsettledReceivablesProcedure is the fully-qualified name of the
+	// MyPageService's ListMyUnsettledReceivables RPC.
+	MyPageServiceListMyUnsettledReceivablesProcedure = "/nazobu.v1.MyPageService/ListMyUnsettledReceivables"
+	// MyPageServiceListMyUpcomingTicketsProcedure is the fully-qualified name of the MyPageService's
+	// ListMyUpcomingTickets RPC.
+	MyPageServiceListMyUpcomingTicketsProcedure = "/nazobu.v1.MyPageService/ListMyUpcomingTickets"
 	// MyPageServiceListMonthlyTicketsProcedure is the fully-qualified name of the MyPageService's
 	// ListMonthlyTickets RPC.
 	MyPageServiceListMonthlyTicketsProcedure = "/nazobu.v1.MyPageService/ListMonthlyTickets"
@@ -42,11 +49,17 @@ const (
 
 // MyPageServiceClient is a client for the nazobu.v1.MyPageService service.
 type MyPageServiceClient interface {
-	// GetMyPage は cookie session の user 向けにマイページの全セクションを返す。
-	// 未ログインなら unauthenticated。
-	GetMyPage(context.Context, *connect.Request[v1.GetMyPageRequest]) (*connect.Response[v1.GetMyPageResponse], error)
+	// 自分が参加しており、立替者が自分以外で、開演済みのうち未精算のチケット一覧。
+	// start_at 昇順。未ログインなら unauthenticated。
+	ListMyUnsettledTickets(context.Context, *connect.Request[v1.ListMyUnsettledTicketsRequest]) (*connect.Response[v1.ListMyUnsettledTicketsResponse], error)
+	// 自分が立て替えたチケットのうち、他参加者の精算が残っており開演済みのもの一覧。
+	// 受け取り忘れ防止用。start_at 昇順。未ログインなら unauthenticated。
+	ListMyUnsettledReceivables(context.Context, *connect.Request[v1.ListMyUnsettledReceivablesRequest]) (*connect.Response[v1.ListMyUnsettledReceivablesResponse], error)
+	// 自分が参加予定で start_at が当日 0:00（JST）以降のチケット一覧。start_at 昇順。未ログインなら unauthenticated。
+	ListMyUpcomingTickets(context.Context, *connect.Request[v1.ListMyUpcomingTicketsRequest]) (*connect.Response[v1.ListMyUpcomingTicketsResponse], error)
 	// ListMonthlyTickets は指定された年月の自分の参加チケット履歴を返す。
-	// 履歴セクションの月切り替え用。未ログインなら unauthenticated。
+	// year/month を共に 0 で渡すと「サーバ JST 基準の前月」を既定として返す（マイページ初期表示用）。
+	// 未ログインなら unauthenticated。
 	ListMonthlyTickets(context.Context, *connect.Request[v1.ListMonthlyTicketsRequest]) (*connect.Response[v1.ListMonthlyTicketsResponse], error)
 }
 
@@ -61,10 +74,22 @@ func NewMyPageServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 	baseURL = strings.TrimRight(baseURL, "/")
 	myPageServiceMethods := v1.File_nazobu_v1_mypage_proto.Services().ByName("MyPageService").Methods()
 	return &myPageServiceClient{
-		getMyPage: connect.NewClient[v1.GetMyPageRequest, v1.GetMyPageResponse](
+		listMyUnsettledTickets: connect.NewClient[v1.ListMyUnsettledTicketsRequest, v1.ListMyUnsettledTicketsResponse](
 			httpClient,
-			baseURL+MyPageServiceGetMyPageProcedure,
-			connect.WithSchema(myPageServiceMethods.ByName("GetMyPage")),
+			baseURL+MyPageServiceListMyUnsettledTicketsProcedure,
+			connect.WithSchema(myPageServiceMethods.ByName("ListMyUnsettledTickets")),
+			connect.WithClientOptions(opts...),
+		),
+		listMyUnsettledReceivables: connect.NewClient[v1.ListMyUnsettledReceivablesRequest, v1.ListMyUnsettledReceivablesResponse](
+			httpClient,
+			baseURL+MyPageServiceListMyUnsettledReceivablesProcedure,
+			connect.WithSchema(myPageServiceMethods.ByName("ListMyUnsettledReceivables")),
+			connect.WithClientOptions(opts...),
+		),
+		listMyUpcomingTickets: connect.NewClient[v1.ListMyUpcomingTicketsRequest, v1.ListMyUpcomingTicketsResponse](
+			httpClient,
+			baseURL+MyPageServiceListMyUpcomingTicketsProcedure,
+			connect.WithSchema(myPageServiceMethods.ByName("ListMyUpcomingTickets")),
 			connect.WithClientOptions(opts...),
 		),
 		listMonthlyTickets: connect.NewClient[v1.ListMonthlyTicketsRequest, v1.ListMonthlyTicketsResponse](
@@ -78,13 +103,25 @@ func NewMyPageServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 
 // myPageServiceClient implements MyPageServiceClient.
 type myPageServiceClient struct {
-	getMyPage          *connect.Client[v1.GetMyPageRequest, v1.GetMyPageResponse]
-	listMonthlyTickets *connect.Client[v1.ListMonthlyTicketsRequest, v1.ListMonthlyTicketsResponse]
+	listMyUnsettledTickets     *connect.Client[v1.ListMyUnsettledTicketsRequest, v1.ListMyUnsettledTicketsResponse]
+	listMyUnsettledReceivables *connect.Client[v1.ListMyUnsettledReceivablesRequest, v1.ListMyUnsettledReceivablesResponse]
+	listMyUpcomingTickets      *connect.Client[v1.ListMyUpcomingTicketsRequest, v1.ListMyUpcomingTicketsResponse]
+	listMonthlyTickets         *connect.Client[v1.ListMonthlyTicketsRequest, v1.ListMonthlyTicketsResponse]
 }
 
-// GetMyPage calls nazobu.v1.MyPageService.GetMyPage.
-func (c *myPageServiceClient) GetMyPage(ctx context.Context, req *connect.Request[v1.GetMyPageRequest]) (*connect.Response[v1.GetMyPageResponse], error) {
-	return c.getMyPage.CallUnary(ctx, req)
+// ListMyUnsettledTickets calls nazobu.v1.MyPageService.ListMyUnsettledTickets.
+func (c *myPageServiceClient) ListMyUnsettledTickets(ctx context.Context, req *connect.Request[v1.ListMyUnsettledTicketsRequest]) (*connect.Response[v1.ListMyUnsettledTicketsResponse], error) {
+	return c.listMyUnsettledTickets.CallUnary(ctx, req)
+}
+
+// ListMyUnsettledReceivables calls nazobu.v1.MyPageService.ListMyUnsettledReceivables.
+func (c *myPageServiceClient) ListMyUnsettledReceivables(ctx context.Context, req *connect.Request[v1.ListMyUnsettledReceivablesRequest]) (*connect.Response[v1.ListMyUnsettledReceivablesResponse], error) {
+	return c.listMyUnsettledReceivables.CallUnary(ctx, req)
+}
+
+// ListMyUpcomingTickets calls nazobu.v1.MyPageService.ListMyUpcomingTickets.
+func (c *myPageServiceClient) ListMyUpcomingTickets(ctx context.Context, req *connect.Request[v1.ListMyUpcomingTicketsRequest]) (*connect.Response[v1.ListMyUpcomingTicketsResponse], error) {
+	return c.listMyUpcomingTickets.CallUnary(ctx, req)
 }
 
 // ListMonthlyTickets calls nazobu.v1.MyPageService.ListMonthlyTickets.
@@ -94,11 +131,17 @@ func (c *myPageServiceClient) ListMonthlyTickets(ctx context.Context, req *conne
 
 // MyPageServiceHandler is an implementation of the nazobu.v1.MyPageService service.
 type MyPageServiceHandler interface {
-	// GetMyPage は cookie session の user 向けにマイページの全セクションを返す。
-	// 未ログインなら unauthenticated。
-	GetMyPage(context.Context, *connect.Request[v1.GetMyPageRequest]) (*connect.Response[v1.GetMyPageResponse], error)
+	// 自分が参加しており、立替者が自分以外で、開演済みのうち未精算のチケット一覧。
+	// start_at 昇順。未ログインなら unauthenticated。
+	ListMyUnsettledTickets(context.Context, *connect.Request[v1.ListMyUnsettledTicketsRequest]) (*connect.Response[v1.ListMyUnsettledTicketsResponse], error)
+	// 自分が立て替えたチケットのうち、他参加者の精算が残っており開演済みのもの一覧。
+	// 受け取り忘れ防止用。start_at 昇順。未ログインなら unauthenticated。
+	ListMyUnsettledReceivables(context.Context, *connect.Request[v1.ListMyUnsettledReceivablesRequest]) (*connect.Response[v1.ListMyUnsettledReceivablesResponse], error)
+	// 自分が参加予定で start_at が当日 0:00（JST）以降のチケット一覧。start_at 昇順。未ログインなら unauthenticated。
+	ListMyUpcomingTickets(context.Context, *connect.Request[v1.ListMyUpcomingTicketsRequest]) (*connect.Response[v1.ListMyUpcomingTicketsResponse], error)
 	// ListMonthlyTickets は指定された年月の自分の参加チケット履歴を返す。
-	// 履歴セクションの月切り替え用。未ログインなら unauthenticated。
+	// year/month を共に 0 で渡すと「サーバ JST 基準の前月」を既定として返す（マイページ初期表示用）。
+	// 未ログインなら unauthenticated。
 	ListMonthlyTickets(context.Context, *connect.Request[v1.ListMonthlyTicketsRequest]) (*connect.Response[v1.ListMonthlyTicketsResponse], error)
 }
 
@@ -109,10 +152,22 @@ type MyPageServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewMyPageServiceHandler(svc MyPageServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	myPageServiceMethods := v1.File_nazobu_v1_mypage_proto.Services().ByName("MyPageService").Methods()
-	myPageServiceGetMyPageHandler := connect.NewUnaryHandler(
-		MyPageServiceGetMyPageProcedure,
-		svc.GetMyPage,
-		connect.WithSchema(myPageServiceMethods.ByName("GetMyPage")),
+	myPageServiceListMyUnsettledTicketsHandler := connect.NewUnaryHandler(
+		MyPageServiceListMyUnsettledTicketsProcedure,
+		svc.ListMyUnsettledTickets,
+		connect.WithSchema(myPageServiceMethods.ByName("ListMyUnsettledTickets")),
+		connect.WithHandlerOptions(opts...),
+	)
+	myPageServiceListMyUnsettledReceivablesHandler := connect.NewUnaryHandler(
+		MyPageServiceListMyUnsettledReceivablesProcedure,
+		svc.ListMyUnsettledReceivables,
+		connect.WithSchema(myPageServiceMethods.ByName("ListMyUnsettledReceivables")),
+		connect.WithHandlerOptions(opts...),
+	)
+	myPageServiceListMyUpcomingTicketsHandler := connect.NewUnaryHandler(
+		MyPageServiceListMyUpcomingTicketsProcedure,
+		svc.ListMyUpcomingTickets,
+		connect.WithSchema(myPageServiceMethods.ByName("ListMyUpcomingTickets")),
 		connect.WithHandlerOptions(opts...),
 	)
 	myPageServiceListMonthlyTicketsHandler := connect.NewUnaryHandler(
@@ -123,8 +178,12 @@ func NewMyPageServiceHandler(svc MyPageServiceHandler, opts ...connect.HandlerOp
 	)
 	return "/nazobu.v1.MyPageService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case MyPageServiceGetMyPageProcedure:
-			myPageServiceGetMyPageHandler.ServeHTTP(w, r)
+		case MyPageServiceListMyUnsettledTicketsProcedure:
+			myPageServiceListMyUnsettledTicketsHandler.ServeHTTP(w, r)
+		case MyPageServiceListMyUnsettledReceivablesProcedure:
+			myPageServiceListMyUnsettledReceivablesHandler.ServeHTTP(w, r)
+		case MyPageServiceListMyUpcomingTicketsProcedure:
+			myPageServiceListMyUpcomingTicketsHandler.ServeHTTP(w, r)
 		case MyPageServiceListMonthlyTicketsProcedure:
 			myPageServiceListMonthlyTicketsHandler.ServeHTTP(w, r)
 		default:
@@ -136,8 +195,16 @@ func NewMyPageServiceHandler(svc MyPageServiceHandler, opts ...connect.HandlerOp
 // UnimplementedMyPageServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedMyPageServiceHandler struct{}
 
-func (UnimplementedMyPageServiceHandler) GetMyPage(context.Context, *connect.Request[v1.GetMyPageRequest]) (*connect.Response[v1.GetMyPageResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.MyPageService.GetMyPage is not implemented"))
+func (UnimplementedMyPageServiceHandler) ListMyUnsettledTickets(context.Context, *connect.Request[v1.ListMyUnsettledTicketsRequest]) (*connect.Response[v1.ListMyUnsettledTicketsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.MyPageService.ListMyUnsettledTickets is not implemented"))
+}
+
+func (UnimplementedMyPageServiceHandler) ListMyUnsettledReceivables(context.Context, *connect.Request[v1.ListMyUnsettledReceivablesRequest]) (*connect.Response[v1.ListMyUnsettledReceivablesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.MyPageService.ListMyUnsettledReceivables is not implemented"))
+}
+
+func (UnimplementedMyPageServiceHandler) ListMyUpcomingTickets(context.Context, *connect.Request[v1.ListMyUpcomingTicketsRequest]) (*connect.Response[v1.ListMyUpcomingTicketsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.MyPageService.ListMyUpcomingTickets is not implemented"))
 }
 
 func (UnimplementedMyPageServiceHandler) ListMonthlyTickets(context.Context, *connect.Request[v1.ListMonthlyTicketsRequest]) (*connect.Response[v1.ListMonthlyTicketsResponse], error) {

@@ -12,104 +12,113 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file nazobu/v1/mypage.proto.
  */
 export const file_nazobu_v1_mypage: GenFile = /*@__PURE__*/
-  fileDesc("ChZuYXpvYnUvdjEvbXlwYWdlLnByb3RvEgluYXpvYnUudjEiEgoQR2V0TXlQYWdlUmVxdWVzdCKVAgoRR2V0TXlQYWdlUmVzcG9uc2USJAoJdW5zZXR0bGVkGAEgAygLMhEubmF6b2J1LnYxLlRpY2tldBIjCgh1cGNvbWluZxgCIAMoCzIRLm5hem9idS52MS5UaWNrZXQSKQoHbW9udGhseRgDIAMoCzIYLm5hem9idS52MS5Nb250aGx5VGlja2V0EhUKDW1vbnRobHlfbW9udGgYBCABKAUSFAoMbW9udGhseV95ZWFyGAUgASgFEhUKDWN1cnJlbnRfbW9udGgYBiABKAUSFAoMY3VycmVudF95ZWFyGAcgASgFEjAKFXVuc2V0dGxlZF9yZWNlaXZhYmxlcxgIIAMoCzIRLm5hem9idS52MS5UaWNrZXQiOAoZTGlzdE1vbnRobHlUaWNrZXRzUmVxdWVzdBIMCgR5ZWFyGAEgASgFEg0KBW1vbnRoGAIgASgFImQKGkxpc3RNb250aGx5VGlja2V0c1Jlc3BvbnNlEikKB21vbnRobHkYASADKAsyGC5uYXpvYnUudjEuTW9udGhseVRpY2tldBIMCgR5ZWFyGAIgASgFEg0KBW1vbnRoGAMgASgFIloKDU1vbnRobHlUaWNrZXQSEQoJdGlja2V0X2lkGAEgASgJEhMKC2V2ZW50X3RpdGxlGAIgASgJEhAKCHN0YXJ0X2F0GAMgASgJEg8KB3NldHRsZWQYBCABKAgyugEKDU15UGFnZVNlcnZpY2USRgoJR2V0TXlQYWdlEhsubmF6b2J1LnYxLkdldE15UGFnZVJlcXVlc3QaHC5uYXpvYnUudjEuR2V0TXlQYWdlUmVzcG9uc2USYQoSTGlzdE1vbnRobHlUaWNrZXRzEiQubmF6b2J1LnYxLkxpc3RNb250aGx5VGlja2V0c1JlcXVlc3QaJS5uYXpvYnUudjEuTGlzdE1vbnRobHlUaWNrZXRzUmVzcG9uc2VCRFpCZ2l0aHViLmNvbS9hcnVtYTI1Ni9uYXpvYnUvYmFja2VuZC9pbnRlcm5hbC9nZW4vbmF6b2J1L3YxO25hem9idXYxYgZwcm90bzM", [file_nazobu_v1_ticket]);
+  fileDesc("ChZuYXpvYnUvdjEvbXlwYWdlLnByb3RvEgluYXpvYnUudjEiHwodTGlzdE15VW5zZXR0bGVkVGlja2V0c1JlcXVlc3QiRAoeTGlzdE15VW5zZXR0bGVkVGlja2V0c1Jlc3BvbnNlEiIKB3RpY2tldHMYASADKAsyES5uYXpvYnUudjEuVGlja2V0IiMKIUxpc3RNeVVuc2V0dGxlZFJlY2VpdmFibGVzUmVxdWVzdCJICiJMaXN0TXlVbnNldHRsZWRSZWNlaXZhYmxlc1Jlc3BvbnNlEiIKB3RpY2tldHMYASADKAsyES5uYXpvYnUudjEuVGlja2V0Ih4KHExpc3RNeVVwY29taW5nVGlja2V0c1JlcXVlc3QiQwodTGlzdE15VXBjb21pbmdUaWNrZXRzUmVzcG9uc2USIgoHdGlja2V0cxgBIAMoCzIRLm5hem9idS52MS5UaWNrZXQiOAoZTGlzdE1vbnRobHlUaWNrZXRzUmVxdWVzdBIMCgR5ZWFyGAEgASgFEg0KBW1vbnRoGAIgASgFImQKGkxpc3RNb250aGx5VGlja2V0c1Jlc3BvbnNlEikKB21vbnRobHkYASADKAsyGC5uYXpvYnUudjEuTW9udGhseVRpY2tldBIMCgR5ZWFyGAIgASgFEg0KBW1vbnRoGAMgASgFIloKDU1vbnRobHlUaWNrZXQSEQoJdGlja2V0X2lkGAEgASgJEhMKC2V2ZW50X3RpdGxlGAIgASgJEhAKCHN0YXJ0X2F0GAMgASgJEg8KB3NldHRsZWQYBCABKAgyyAMKDU15UGFnZVNlcnZpY2USbQoWTGlzdE15VW5zZXR0bGVkVGlja2V0cxIoLm5hem9idS52MS5MaXN0TXlVbnNldHRsZWRUaWNrZXRzUmVxdWVzdBopLm5hem9idS52MS5MaXN0TXlVbnNldHRsZWRUaWNrZXRzUmVzcG9uc2USeQoaTGlzdE15VW5zZXR0bGVkUmVjZWl2YWJsZXMSLC5uYXpvYnUudjEuTGlzdE15VW5zZXR0bGVkUmVjZWl2YWJsZXNSZXF1ZXN0Gi0ubmF6b2J1LnYxLkxpc3RNeVVuc2V0dGxlZFJlY2VpdmFibGVzUmVzcG9uc2USagoVTGlzdE15VXBjb21pbmdUaWNrZXRzEicubmF6b2J1LnYxLkxpc3RNeVVwY29taW5nVGlja2V0c1JlcXVlc3QaKC5uYXpvYnUudjEuTGlzdE15VXBjb21pbmdUaWNrZXRzUmVzcG9uc2USYQoSTGlzdE1vbnRobHlUaWNrZXRzEiQubmF6b2J1LnYxLkxpc3RNb250aGx5VGlja2V0c1JlcXVlc3QaJS5uYXpvYnUudjEuTGlzdE1vbnRobHlUaWNrZXRzUmVzcG9uc2VCRFpCZ2l0aHViLmNvbS9hcnVtYTI1Ni9uYXpvYnUvYmFja2VuZC9pbnRlcm5hbC9nZW4vbmF6b2J1L3YxO25hem9idXYxYgZwcm90bzM", [file_nazobu_v1_ticket]);
 
 /**
- * @generated from message nazobu.v1.GetMyPageRequest
+ * @generated from message nazobu.v1.ListMyUnsettledTicketsRequest
  */
-export type GetMyPageRequest = Message<"nazobu.v1.GetMyPageRequest"> & {
+export type ListMyUnsettledTicketsRequest = Message<"nazobu.v1.ListMyUnsettledTicketsRequest"> & {
 };
 
 /**
- * Describes the message nazobu.v1.GetMyPageRequest.
- * Use `create(GetMyPageRequestSchema)` to create a new message.
+ * Describes the message nazobu.v1.ListMyUnsettledTicketsRequest.
+ * Use `create(ListMyUnsettledTicketsRequestSchema)` to create a new message.
  */
-export const GetMyPageRequestSchema: GenMessage<GetMyPageRequest> = /*@__PURE__*/
+export const ListMyUnsettledTicketsRequestSchema: GenMessage<ListMyUnsettledTicketsRequest> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_mypage, 0);
 
 /**
- * @generated from message nazobu.v1.GetMyPageResponse
+ * @generated from message nazobu.v1.ListMyUnsettledTicketsResponse
  */
-export type GetMyPageResponse = Message<"nazobu.v1.GetMyPageResponse"> & {
+export type ListMyUnsettledTicketsResponse = Message<"nazobu.v1.ListMyUnsettledTicketsResponse"> & {
   /**
-   * 自分の精算が未完了の ticket（start_at 昇順）。自分が立て替えた分は含めない。
    * /tickets と同じ表示で扱うため Ticket 型に揃える。
    *
-   * @generated from field: repeated nazobu.v1.Ticket unsettled = 1;
+   * @generated from field: repeated nazobu.v1.Ticket tickets = 1;
    */
-  unsettled: Ticket[];
-
-  /**
-   * 自分が参加予定で start_at が今日以降の ticket（start_at 昇順）。
-   *
-   * @generated from field: repeated nazobu.v1.Ticket upcoming = 2;
-   */
-  upcoming: Ticket[];
-
-  /**
-   * monthly セクションの初期表示月（= 前月）に start_at がある自分の ticket（start_at 昇順）。
-   *
-   * @generated from field: repeated nazobu.v1.MonthlyTicket monthly = 3;
-   */
-  monthly: MonthlyTicket[];
-
-  /**
-   * monthly セクションの初期表示月（サーバ基準、JST）。1〜12。既定は前月。
-   *
-   * @generated from field: int32 monthly_month = 4;
-   */
-  monthlyMonth: number;
-
-  /**
-   * monthly セクションの初期表示年（サーバ基準、JST）。既定は前月の年。
-   *
-   * @generated from field: int32 monthly_year = 5;
-   */
-  monthlyYear: number;
-
-  /**
-   * 当月の月（サーバ基準、JST）。1〜12。月切り替えの上限判定に使う。
-   *
-   * @generated from field: int32 current_month = 6;
-   */
-  currentMonth: number;
-
-  /**
-   * 当月の年（サーバ基準、JST）。
-   *
-   * @generated from field: int32 current_year = 7;
-   */
-  currentYear: number;
-
-  /**
-   * 自分が立て替えた ticket のうち、他参加者からの精算が未完了で開演済みのもの（start_at 昇順）。
-   * 受け取り忘れ防止用。/tickets と同じ表示で扱うため Ticket 型に揃える。
-   *
-   * @generated from field: repeated nazobu.v1.Ticket unsettled_receivables = 8;
-   */
-  unsettledReceivables: Ticket[];
+  tickets: Ticket[];
 };
 
 /**
- * Describes the message nazobu.v1.GetMyPageResponse.
- * Use `create(GetMyPageResponseSchema)` to create a new message.
+ * Describes the message nazobu.v1.ListMyUnsettledTicketsResponse.
+ * Use `create(ListMyUnsettledTicketsResponseSchema)` to create a new message.
  */
-export const GetMyPageResponseSchema: GenMessage<GetMyPageResponse> = /*@__PURE__*/
+export const ListMyUnsettledTicketsResponseSchema: GenMessage<ListMyUnsettledTicketsResponse> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_mypage, 1);
+
+/**
+ * @generated from message nazobu.v1.ListMyUnsettledReceivablesRequest
+ */
+export type ListMyUnsettledReceivablesRequest = Message<"nazobu.v1.ListMyUnsettledReceivablesRequest"> & {
+};
+
+/**
+ * Describes the message nazobu.v1.ListMyUnsettledReceivablesRequest.
+ * Use `create(ListMyUnsettledReceivablesRequestSchema)` to create a new message.
+ */
+export const ListMyUnsettledReceivablesRequestSchema: GenMessage<ListMyUnsettledReceivablesRequest> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_mypage, 2);
+
+/**
+ * @generated from message nazobu.v1.ListMyUnsettledReceivablesResponse
+ */
+export type ListMyUnsettledReceivablesResponse = Message<"nazobu.v1.ListMyUnsettledReceivablesResponse"> & {
+  /**
+   * @generated from field: repeated nazobu.v1.Ticket tickets = 1;
+   */
+  tickets: Ticket[];
+};
+
+/**
+ * Describes the message nazobu.v1.ListMyUnsettledReceivablesResponse.
+ * Use `create(ListMyUnsettledReceivablesResponseSchema)` to create a new message.
+ */
+export const ListMyUnsettledReceivablesResponseSchema: GenMessage<ListMyUnsettledReceivablesResponse> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_mypage, 3);
+
+/**
+ * @generated from message nazobu.v1.ListMyUpcomingTicketsRequest
+ */
+export type ListMyUpcomingTicketsRequest = Message<"nazobu.v1.ListMyUpcomingTicketsRequest"> & {
+};
+
+/**
+ * Describes the message nazobu.v1.ListMyUpcomingTicketsRequest.
+ * Use `create(ListMyUpcomingTicketsRequestSchema)` to create a new message.
+ */
+export const ListMyUpcomingTicketsRequestSchema: GenMessage<ListMyUpcomingTicketsRequest> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_mypage, 4);
+
+/**
+ * @generated from message nazobu.v1.ListMyUpcomingTicketsResponse
+ */
+export type ListMyUpcomingTicketsResponse = Message<"nazobu.v1.ListMyUpcomingTicketsResponse"> & {
+  /**
+   * @generated from field: repeated nazobu.v1.Ticket tickets = 1;
+   */
+  tickets: Ticket[];
+};
+
+/**
+ * Describes the message nazobu.v1.ListMyUpcomingTicketsResponse.
+ * Use `create(ListMyUpcomingTicketsResponseSchema)` to create a new message.
+ */
+export const ListMyUpcomingTicketsResponseSchema: GenMessage<ListMyUpcomingTicketsResponse> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_mypage, 5);
 
 /**
  * @generated from message nazobu.v1.ListMonthlyTicketsRequest
  */
 export type ListMonthlyTicketsRequest = Message<"nazobu.v1.ListMonthlyTicketsRequest"> & {
   /**
-   * JST での年。
+   * JST での年。0 を指定すると month と合わせて「サーバ JST 基準の前月」を返す。
    *
    * @generated from field: int32 year = 1;
    */
   year: number;
 
   /**
-   * JST での月（1〜12）。
+   * JST での月（1〜12）。0 を指定すると year と合わせて「サーバ JST 基準の前月」を返す。
    *
    * @generated from field: int32 month = 2;
    */
@@ -121,25 +130,29 @@ export type ListMonthlyTicketsRequest = Message<"nazobu.v1.ListMonthlyTicketsReq
  * Use `create(ListMonthlyTicketsRequestSchema)` to create a new message.
  */
 export const ListMonthlyTicketsRequestSchema: GenMessage<ListMonthlyTicketsRequest> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_mypage, 2);
+  messageDesc(file_nazobu_v1_mypage, 6);
 
 /**
  * @generated from message nazobu.v1.ListMonthlyTicketsResponse
  */
 export type ListMonthlyTicketsResponse = Message<"nazobu.v1.ListMonthlyTicketsResponse"> & {
   /**
-   * 指定月に start_at がある自分の ticket（start_at 昇順）。
+   * 指定月（または既定の前月）に start_at がある自分の ticket（start_at 昇順）。
    *
    * @generated from field: repeated nazobu.v1.MonthlyTicket monthly = 1;
    */
   monthly: MonthlyTicket[];
 
   /**
+   * 実際に返した年（既定値リクエスト時はサーバが決定した前月の年）。
+   *
    * @generated from field: int32 year = 2;
    */
   year: number;
 
   /**
+   * 実際に返した月。
+   *
    * @generated from field: int32 month = 3;
    */
   month: number;
@@ -150,7 +163,7 @@ export type ListMonthlyTicketsResponse = Message<"nazobu.v1.ListMonthlyTicketsRe
  * Use `create(ListMonthlyTicketsResponseSchema)` to create a new message.
  */
 export const ListMonthlyTicketsResponseSchema: GenMessage<ListMonthlyTicketsResponse> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_mypage, 3);
+  messageDesc(file_nazobu_v1_mypage, 7);
 
 /**
  * @generated from message nazobu.v1.MonthlyTicket
@@ -186,29 +199,52 @@ export type MonthlyTicket = Message<"nazobu.v1.MonthlyTicket"> & {
  * Use `create(MonthlyTicketSchema)` to create a new message.
  */
 export const MonthlyTicketSchema: GenMessage<MonthlyTicket> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_mypage, 4);
+  messageDesc(file_nazobu_v1_mypage, 8);
 
 /**
  * MyPageService はマイページ表示に必要な集約データを返す。
- * 表示は 1 画面分のスナップショットなので、未精算 / 今後の予定 / 当月履歴を 1 RPC で束ねる。
+ * 表示要素ごとに RPC を分けてあり、マイページ以外（/tickets, /events の通知バナー等）
+ * からも必要な要素だけを叩けるようにしてある。
  *
  * @generated from service nazobu.v1.MyPageService
  */
 export const MyPageService: GenService<{
   /**
-   * GetMyPage は cookie session の user 向けにマイページの全セクションを返す。
-   * 未ログインなら unauthenticated。
+   * 自分が参加しており、立替者が自分以外で、開演済みのうち未精算のチケット一覧。
+   * start_at 昇順。未ログインなら unauthenticated。
    *
-   * @generated from rpc nazobu.v1.MyPageService.GetMyPage
+   * @generated from rpc nazobu.v1.MyPageService.ListMyUnsettledTickets
    */
-  getMyPage: {
+  listMyUnsettledTickets: {
     methodKind: "unary";
-    input: typeof GetMyPageRequestSchema;
-    output: typeof GetMyPageResponseSchema;
+    input: typeof ListMyUnsettledTicketsRequestSchema;
+    output: typeof ListMyUnsettledTicketsResponseSchema;
+  },
+  /**
+   * 自分が立て替えたチケットのうち、他参加者の精算が残っており開演済みのもの一覧。
+   * 受け取り忘れ防止用。start_at 昇順。未ログインなら unauthenticated。
+   *
+   * @generated from rpc nazobu.v1.MyPageService.ListMyUnsettledReceivables
+   */
+  listMyUnsettledReceivables: {
+    methodKind: "unary";
+    input: typeof ListMyUnsettledReceivablesRequestSchema;
+    output: typeof ListMyUnsettledReceivablesResponseSchema;
+  },
+  /**
+   * 自分が参加予定で start_at が当日 0:00（JST）以降のチケット一覧。start_at 昇順。未ログインなら unauthenticated。
+   *
+   * @generated from rpc nazobu.v1.MyPageService.ListMyUpcomingTickets
+   */
+  listMyUpcomingTickets: {
+    methodKind: "unary";
+    input: typeof ListMyUpcomingTicketsRequestSchema;
+    output: typeof ListMyUpcomingTicketsResponseSchema;
   },
   /**
    * ListMonthlyTickets は指定された年月の自分の参加チケット履歴を返す。
-   * 履歴セクションの月切り替え用。未ログインなら unauthenticated。
+   * year/month を共に 0 で渡すと「サーバ JST 基準の前月」を既定として返す（マイページ初期表示用）。
+   * 未ログインなら unauthenticated。
    *
    * @generated from rpc nazobu.v1.MyPageService.ListMonthlyTickets
    */

@@ -6,10 +6,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import type { GetMeResponse } from "@/app/gen/nazobu/v1/user_pb";
-import type {
-  GetMyPageResponse,
-  MonthlyTicket,
-} from "@/app/gen/nazobu/v1/mypage_pb";
+import type { MonthlyTicket } from "@/app/gen/nazobu/v1/mypage_pb";
+import type { Ticket } from "@/app/gen/nazobu/v1/ticket_pb";
 import { myPageClient, userClient } from "@/app/lib/rpc";
 
 import {
@@ -23,14 +21,22 @@ import {
 } from "@/app/_components";
 import {
   formatMonoDate,
+  jstCurrentYearMonth,
   parseDateTime,
 } from "@/app/_format";
 import { redirectToLogin } from "@/app/lib/auth";
 
+type Ready = {
+  me: GetMeResponse;
+  unsettled: Ticket[];
+  unsettledReceivables: Ticket[];
+  upcoming: Ticket[];
+};
+
 type LoadState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
-  | { kind: "ready"; me: GetMeResponse; data: GetMyPageResponse };
+  | { kind: "ready"; data: Ready };
 
 type MonthView = {
   year: number;
@@ -39,7 +45,7 @@ type MonthView = {
   loading: boolean;
 };
 
-// 当月（サーバ基準の現在年月）から相対的に diff ヶ月ぶんずらした年月を返す。
+// 基準となる年月から相対的に diff ヶ月ぶんずらした年月を返す。
 function shiftMonth(
   base: { year: number; month: number },
   diff: number,
@@ -55,17 +61,34 @@ export function HomeView() {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [monthView, setMonthView] = useState<MonthView | null>(null);
   const [copyState, setCopyState] = useState<CopyState>("idle");
+  // 現在年月（JST）は月切り替えの上限判定にしか使わないので、クライアント側で算出。
+  const currentYM = jstCurrentYearMonth();
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([userClient.getMe({}), myPageClient.getMyPage({})])
-      .then(([me, data]) => {
+    Promise.all([
+      userClient.getMe({}),
+      myPageClient.listMyUnsettledTickets({}),
+      myPageClient.listMyUnsettledReceivables({}),
+      myPageClient.listMyUpcomingTickets({}),
+      // year/month=0 で既定（前月）。
+      myPageClient.listMonthlyTickets({ year: 0, month: 0 }),
+    ])
+      .then(([me, unsettled, receivables, upcoming, monthly]) => {
         if (cancelled) return;
-        setState({ kind: "ready", me, data });
+        setState({
+          kind: "ready",
+          data: {
+            me,
+            unsettled: unsettled.tickets,
+            unsettledReceivables: receivables.tickets,
+            upcoming: upcoming.tickets,
+          },
+        });
         setMonthView({
-          year: data.monthlyYear,
-          month: data.monthlyMonth,
-          monthly: data.monthly,
+          year: monthly.year,
+          month: monthly.month,
+          monthly: monthly.monthly,
           loading: false,
         });
       })
@@ -111,10 +134,9 @@ export function HomeView() {
     );
   }
 
-  const { me, data } = state;
+  const { me, unsettled, unsettledReceivables, upcoming } = state.data;
   const displayName = me.displayName;
   const isAdmin = me.role === "admin";
-  const currentYM = { year: data.currentYear, month: data.currentMonth };
 
   const switchMonth = (diff: number) => {
     if (!monthView || monthView.loading) return;
@@ -157,11 +179,11 @@ export function HomeView() {
     <>
       <AppHeader brand="謎部" user={displayName} isAdmin={isAdmin} />
       <PageShell>
-        {data.unsettled.length > 0 && (
+        {unsettled.length > 0 && (
           <Section>
-            <SectionTitle count={data.unsettled.length}>未精算</SectionTitle>
+            <SectionTitle count={unsettled.length}>未精算</SectionTitle>
             <ul className="mt-3 space-y-3">
-              {data.unsettled.map((t) => (
+              {unsettled.map((t) => (
                 <TicketCard
                   key={t.id}
                   ticket={t}
@@ -173,11 +195,11 @@ export function HomeView() {
           </Section>
         )}
 
-        {data.unsettledReceivables.length > 0 && (
+        {unsettledReceivables.length > 0 && (
           <Section>
-            <SectionTitle count={data.unsettledReceivables.length}>未回収</SectionTitle>
+            <SectionTitle count={unsettledReceivables.length}>未回収</SectionTitle>
             <ul className="mt-3 space-y-3">
-              {data.unsettledReceivables.map((t) => (
+              {unsettledReceivables.map((t) => (
                 <TicketCard
                   key={t.id}
                   ticket={t}
@@ -190,14 +212,14 @@ export function HomeView() {
         )}
 
         <Section>
-          <SectionTitle count={data.upcoming.length}>あなたの今後の予定</SectionTitle>
-          {data.upcoming.length === 0 ? (
+          <SectionTitle count={upcoming.length}>あなたの今後の予定</SectionTitle>
+          {upcoming.length === 0 ? (
             <p className="mt-3 text-sm text-zinc-500">
               参加予定の公演はありません。
             </p>
           ) : (
             <ul className="mt-3 space-y-3">
-              {data.upcoming.map((t) => (
+              {upcoming.map((t) => (
                 <TicketCard key={t.id} ticket={t} myName={displayName} />
               ))}
             </ul>

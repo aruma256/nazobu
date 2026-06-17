@@ -7,50 +7,55 @@ import "nazobu/v1/ticket.proto";
 option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1";
 
 // MyPageService はマイページ表示に必要な集約データを返す。
-// 表示は 1 画面分のスナップショットなので、未精算 / 今後の予定 / 当月履歴を 1 RPC で束ねる。
+// 表示要素ごとに RPC を分けてあり、マイページ以外（/tickets, /events の通知バナー等）
+// からも必要な要素だけを叩けるようにしてある。
 service MyPageService {
-  // GetMyPage は cookie session の user 向けにマイページの全セクションを返す。
-  // 未ログインなら unauthenticated。
-  rpc GetMyPage(GetMyPageRequest) returns (GetMyPageResponse);
+  // 自分が参加しており、立替者が自分以外で、開演済みのうち未精算のチケット一覧。
+  // start_at 昇順。未ログインなら unauthenticated。
+  rpc ListMyUnsettledTickets(ListMyUnsettledTicketsRequest) returns (ListMyUnsettledTicketsResponse);
+  // 自分が立て替えたチケットのうち、他参加者の精算が残っており開演済みのもの一覧。
+  // 受け取り忘れ防止用。start_at 昇順。未ログインなら unauthenticated。
+  rpc ListMyUnsettledReceivables(ListMyUnsettledReceivablesRequest) returns (ListMyUnsettledReceivablesResponse);
+  // 自分が参加予定で start_at が当日 0:00（JST）以降のチケット一覧。start_at 昇順。未ログインなら unauthenticated。
+  rpc ListMyUpcomingTickets(ListMyUpcomingTicketsRequest) returns (ListMyUpcomingTicketsResponse);
   // ListMonthlyTickets は指定された年月の自分の参加チケット履歴を返す。
-  // 履歴セクションの月切り替え用。未ログインなら unauthenticated。
+  // year/month を共に 0 で渡すと「サーバ JST 基準の前月」を既定として返す（マイページ初期表示用）。
+  // 未ログインなら unauthenticated。
   rpc ListMonthlyTickets(ListMonthlyTicketsRequest) returns (ListMonthlyTicketsResponse);
 }
 
-message GetMyPageRequest {}
+message ListMyUnsettledTicketsRequest {}
 
-message GetMyPageResponse {
-  // 自分の精算が未完了の ticket（start_at 昇順）。自分が立て替えた分は含めない。
+message ListMyUnsettledTicketsResponse {
   // /tickets と同じ表示で扱うため Ticket 型に揃える。
-  repeated Ticket unsettled = 1;
-  // 自分が参加予定で start_at が今日以降の ticket（start_at 昇順）。
-  repeated Ticket upcoming = 2;
-  // monthly セクションの初期表示月（= 前月）に start_at がある自分の ticket（start_at 昇順）。
-  repeated MonthlyTicket monthly = 3;
-  // monthly セクションの初期表示月（サーバ基準、JST）。1〜12。既定は前月。
-  int32 monthly_month = 4;
-  // monthly セクションの初期表示年（サーバ基準、JST）。既定は前月の年。
-  int32 monthly_year = 5;
-  // 当月の月（サーバ基準、JST）。1〜12。月切り替えの上限判定に使う。
-  int32 current_month = 6;
-  // 当月の年（サーバ基準、JST）。
-  int32 current_year = 7;
-  // 自分が立て替えた ticket のうち、他参加者からの精算が未完了で開演済みのもの（start_at 昇順）。
-  // 受け取り忘れ防止用。/tickets と同じ表示で扱うため Ticket 型に揃える。
-  repeated Ticket unsettled_receivables = 8;
+  repeated Ticket tickets = 1;
+}
+
+message ListMyUnsettledReceivablesRequest {}
+
+message ListMyUnsettledReceivablesResponse {
+  repeated Ticket tickets = 1;
+}
+
+message ListMyUpcomingTicketsRequest {}
+
+message ListMyUpcomingTicketsResponse {
+  repeated Ticket tickets = 1;
 }
 
 message ListMonthlyTicketsRequest {
-  // JST での年。
+  // JST での年。0 を指定すると month と合わせて「サーバ JST 基準の前月」を返す。
   int32 year = 1;
-  // JST での月（1〜12）。
+  // JST での月（1〜12）。0 を指定すると year と合わせて「サーバ JST 基準の前月」を返す。
   int32 month = 2;
 }
 
 message ListMonthlyTicketsResponse {
-  // 指定月に start_at がある自分の ticket（start_at 昇順）。
+  // 指定月（または既定の前月）に start_at がある自分の ticket（start_at 昇順）。
   repeated MonthlyTicket monthly = 1;
+  // 実際に返した年（既定値リクエスト時はサーバが決定した前月の年）。
   int32 year = 2;
+  // 実際に返した月。
   int32 month = 3;
 }
 

@@ -361,6 +361,31 @@ export function TicketCard({
   );
 }
 
+// 未精算 / 未回収のチケットがある場合に上部に出す 1 行リンクバナー。
+// /tickets, /events 等、マイページ以外のページからユーザーをマイページへ誘導する。
+export function UnsettledBanner({
+  unsettledCount,
+  receivablesCount,
+}: {
+  unsettledCount: number;
+  receivablesCount: number;
+}) {
+  if (unsettledCount === 0 && receivablesCount === 0) return null;
+  const parts: string[] = [];
+  if (unsettledCount > 0) parts.push(`未精算 ${unsettledCount} 件`);
+  if (receivablesCount > 0) parts.push(`未回収 ${receivablesCount} 件`);
+  return (
+    <Link
+      href="/"
+      className="mt-4 flex h-11 items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 text-sm font-semibold text-amber-900 hover:bg-amber-100"
+    >
+      <WarnIcon />
+      <span className="flex-1 truncate">{parts.join("・")}があります</span>
+      <span aria-hidden className="text-amber-700">›</span>
+    </Link>
+  );
+}
+
 function WarnIcon() {
   return (
     <svg
