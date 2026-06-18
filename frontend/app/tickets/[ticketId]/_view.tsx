@@ -164,6 +164,9 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
   const displayName = me.displayName;
   const isAdmin = me.role === "admin";
   const startAt = parseDateTime(ticket.startAt);
+  const endAt = new Date(
+    startAt.getTime() + ticket.eventExpectedDurationMinutes * 60 * 1000,
+  );
   const meetingAt =
     ticket.meetingAt !== "" ? parseDateTime(ticket.meetingAt) : null;
   const hasMeeting = meetingAt !== null || ticket.meetingPlace !== "";
@@ -219,6 +222,9 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
               <dt>開演</dt>
               <dd>
                 <Mono>{formatTimeHM(startAt)}</Mono>
+                <span className="ml-1 text-zinc-500">
+                  （〜<Mono>{formatTimeHM(endAt)}</Mono>）
+                </span>
               </dd>
               <dt>立替</dt>
               <dd>{ticket.purchaserName}</dd>

@@ -258,6 +258,9 @@ export function TicketCard({
   tone?: TicketCardTone;
 }) {
   const startAt = parseDateTime(ticket.startAt);
+  const endAt = new Date(
+    startAt.getTime() + ticket.eventExpectedDurationMinutes * 60 * 1000,
+  );
   const meetingAt =
     ticket.meetingAt !== "" ? parseDateTime(ticket.meetingAt) : null;
   const hasMeeting = meetingAt !== null || ticket.meetingPlace !== "";
@@ -313,6 +316,9 @@ export function TicketCard({
             <dt>開演</dt>
             <dd>
               <Mono>{formatTimeHM(startAt)}</Mono>
+              <span className="ml-1 text-zinc-500">
+                （〜<Mono>{formatTimeHM(endAt)}</Mono>）
+              </span>
             </dd>
             <dt>定員</dt>
             <dd>
