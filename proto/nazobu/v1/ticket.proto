@@ -61,6 +61,8 @@ message Ticket {
   int32 event_expected_duration_minutes = 14;
   // 公演のキャッチコピー（手動入力）。未設定なら空文字。
   string event_catchphrase = 15;
+  // 開場時間が開演時刻（start_at）の何分前か。0 以上。未設定なら未指定。
+  optional int32 event_doors_open_minutes_before = 16;
 }
 
 message GetTicketRequest {

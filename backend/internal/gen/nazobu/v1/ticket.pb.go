@@ -129,8 +129,10 @@ type Ticket struct {
 	EventExpectedDurationMinutes int32 `protobuf:"varint,14,opt,name=event_expected_duration_minutes,json=eventExpectedDurationMinutes,proto3" json:"event_expected_duration_minutes,omitempty"`
 	// 公演のキャッチコピー（手動入力）。未設定なら空文字。
 	EventCatchphrase string `protobuf:"bytes,15,opt,name=event_catchphrase,json=eventCatchphrase,proto3" json:"event_catchphrase,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// 開場時間が開演時刻（start_at）の何分前か。0 以上。未設定なら未指定。
+	EventDoorsOpenMinutesBefore *int32 `protobuf:"varint,16,opt,name=event_doors_open_minutes_before,json=eventDoorsOpenMinutesBefore,proto3,oneof" json:"event_doors_open_minutes_before,omitempty"`
+	unknownFields               protoimpl.UnknownFields
+	sizeCache                   protoimpl.SizeCache
 }
 
 func (x *Ticket) Reset() {
@@ -259,6 +261,13 @@ func (x *Ticket) GetEventCatchphrase() string {
 		return x.EventCatchphrase
 	}
 	return ""
+}
+
+func (x *Ticket) GetEventDoorsOpenMinutesBefore() int32 {
+	if x != nil && x.EventDoorsOpenMinutesBefore != nil {
+		return *x.EventDoorsOpenMinutesBefore
+	}
+	return 0
 }
 
 type GetTicketRequest struct {
@@ -1005,7 +1014,7 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\x16nazobu/v1/ticket.proto\x12\tnazobu.v1\"\x14\n" +
 	"\x12ListTicketsRequest\"B\n" +
 	"\x13ListTicketsResponse\x12+\n" +
-	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"\x9b\x04\n" +
+	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"\x8a\x05\n" +
 	"\x06Ticket\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\bevent_id\x18\x02 \x01(\tR\aeventId\x12\x1f\n" +
@@ -1023,7 +1032,9 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\x10max_participants\x18\f \x01(\x05R\x0fmaxParticipants\x12&\n" +
 	"\x0fevent_image_url\x18\r \x01(\tR\reventImageUrl\x12E\n" +
 	"\x1fevent_expected_duration_minutes\x18\x0e \x01(\x05R\x1ceventExpectedDurationMinutes\x12+\n" +
-	"\x11event_catchphrase\x18\x0f \x01(\tR\x10eventCatchphraseJ\x04\b\x04\x10\x05\"/\n" +
+	"\x11event_catchphrase\x18\x0f \x01(\tR\x10eventCatchphrase\x12I\n" +
+	"\x1fevent_doors_open_minutes_before\x18\x10 \x01(\x05H\x00R\x1beventDoorsOpenMinutesBefore\x88\x01\x01B\"\n" +
+	" _event_doors_open_minutes_beforeJ\x04\b\x04\x10\x05\"/\n" +
 	"\x10GetTicketRequest\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\"\x9b\x01\n" +
 	"\x11GetTicketResponse\x12)\n" +
@@ -1142,6 +1153,7 @@ func file_nazobu_v1_ticket_proto_init() {
 	if File_nazobu_v1_ticket_proto != nil {
 		return
 	}
+	file_nazobu_v1_ticket_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

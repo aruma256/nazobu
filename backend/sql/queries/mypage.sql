@@ -5,6 +5,7 @@
 -- 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
+       e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        pu.display_name AS purchaser_name
@@ -25,6 +26,7 @@ ORDER BY t.start_at ASC, t.id ASC;
 -- 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
+       e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        pu.display_name AS purchaser_name
@@ -47,6 +49,7 @@ ORDER BY t.start_at ASC, t.id ASC;
 -- 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
+       e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        pu.display_name AS purchaser_name

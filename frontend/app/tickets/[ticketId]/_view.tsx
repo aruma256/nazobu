@@ -167,6 +167,12 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
   const endAt = new Date(
     startAt.getTime() + ticket.eventExpectedDurationMinutes * 60 * 1000,
   );
+  const doorsOpenAt =
+    ticket.eventDoorsOpenMinutesBefore !== undefined
+      ? new Date(
+          startAt.getTime() - ticket.eventDoorsOpenMinutesBefore * 60 * 1000,
+        )
+      : null;
   const meetingAt =
     ticket.meetingAt !== "" ? parseDateTime(ticket.meetingAt) : null;
   const hasMeeting = meetingAt !== null || ticket.meetingPlace !== "";
@@ -216,6 +222,14 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
                     )}
                     {meetingAt !== null && ticket.meetingPlace !== "" && " "}
                     {ticket.meetingPlace !== "" && ticket.meetingPlace}
+                  </dd>
+                </>
+              )}
+              {doorsOpenAt !== null && (
+                <>
+                  <dt>開場</dt>
+                  <dd>
+                    <Mono>{formatTimeHM(doorsOpenAt)}</Mono>
                   </dd>
                 </>
               )}

@@ -2,6 +2,7 @@
 -- ticket 一覧画面用。event 名と立替者名を join して返す。
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
+       e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        pu.display_name AS purchaser_name
@@ -14,6 +15,7 @@ ORDER BY t.start_at DESC, t.id ASC;
 -- CreateTicket 直後の返却用。1 件のことが多いがインタフェースは ListTickets と揃える。
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
+       e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        pu.display_name AS purchaser_name
@@ -45,6 +47,7 @@ ORDER BY tp.ticket_id, tp.created_at ASC;
 -- ticket 詳細表示用。立替者の id と表示名も返す（権限判定 / UI 表示で使う）。
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
+       e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        t.purchased_by,

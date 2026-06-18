@@ -70,6 +70,7 @@ func (q *Queries) ListMyMonthlyTicketsByUserID(ctx context.Context, arg ListMyMo
 const listUnsettledReceivablesByUserID = `-- name: ListUnsettledReceivablesByUserID :many
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
+       e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        pu.display_name AS purchaser_name
@@ -100,6 +101,7 @@ type ListUnsettledReceivablesByUserIDRow struct {
 	EventCatchphrase             string
 	EventImageUrl                sql.NullString
 	EventExpectedDurationMinutes int32
+	EventDoorsOpenMinutesBefore  sql.NullInt32
 	StartAt                      time.Time
 	MeetingAt                    sql.NullTime
 	PricePerPerson               int32
@@ -129,6 +131,7 @@ func (q *Queries) ListUnsettledReceivablesByUserID(ctx context.Context, arg List
 			&i.EventCatchphrase,
 			&i.EventImageUrl,
 			&i.EventExpectedDurationMinutes,
+			&i.EventDoorsOpenMinutesBefore,
 			&i.StartAt,
 			&i.MeetingAt,
 			&i.PricePerPerson,
@@ -152,6 +155,7 @@ func (q *Queries) ListUnsettledReceivablesByUserID(ctx context.Context, arg List
 const listUnsettledTicketsByUserID = `-- name: ListUnsettledTicketsByUserID :many
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
+       e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        pu.display_name AS purchaser_name
@@ -179,6 +183,7 @@ type ListUnsettledTicketsByUserIDRow struct {
 	EventCatchphrase             string
 	EventImageUrl                sql.NullString
 	EventExpectedDurationMinutes int32
+	EventDoorsOpenMinutesBefore  sql.NullInt32
 	StartAt                      time.Time
 	MeetingAt                    sql.NullTime
 	PricePerPerson               int32
@@ -208,6 +213,7 @@ func (q *Queries) ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnse
 			&i.EventCatchphrase,
 			&i.EventImageUrl,
 			&i.EventExpectedDurationMinutes,
+			&i.EventDoorsOpenMinutesBefore,
 			&i.StartAt,
 			&i.MeetingAt,
 			&i.PricePerPerson,
@@ -231,6 +237,7 @@ func (q *Queries) ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnse
 const listUpcomingTicketsByUserID = `-- name: ListUpcomingTicketsByUserID :many
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
+       e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        pu.display_name AS purchaser_name
@@ -256,6 +263,7 @@ type ListUpcomingTicketsByUserIDRow struct {
 	EventCatchphrase             string
 	EventImageUrl                sql.NullString
 	EventExpectedDurationMinutes int32
+	EventDoorsOpenMinutesBefore  sql.NullInt32
 	StartAt                      time.Time
 	MeetingAt                    sql.NullTime
 	PricePerPerson               int32
@@ -284,6 +292,7 @@ func (q *Queries) ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcom
 			&i.EventCatchphrase,
 			&i.EventImageUrl,
 			&i.EventExpectedDurationMinutes,
+			&i.EventDoorsOpenMinutesBefore,
 			&i.StartAt,
 			&i.MeetingAt,
 			&i.PricePerPerson,

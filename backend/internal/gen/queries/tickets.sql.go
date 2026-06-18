@@ -103,6 +103,7 @@ func (q *Queries) DeleteTicketParticipant(ctx context.Context, arg DeleteTicketP
 const getTicketByID = `-- name: GetTicketByID :one
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
+       e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        t.purchased_by,
@@ -121,6 +122,7 @@ type GetTicketByIDRow struct {
 	EventCatchphrase             string
 	EventImageUrl                sql.NullString
 	EventExpectedDurationMinutes int32
+	EventDoorsOpenMinutesBefore  sql.NullInt32
 	StartAt                      time.Time
 	MeetingAt                    sql.NullTime
 	PricePerPerson               int32
@@ -142,6 +144,7 @@ func (q *Queries) GetTicketByID(ctx context.Context, id string) (GetTicketByIDRo
 		&i.EventCatchphrase,
 		&i.EventImageUrl,
 		&i.EventExpectedDurationMinutes,
+		&i.EventDoorsOpenMinutesBefore,
 		&i.StartAt,
 		&i.MeetingAt,
 		&i.PricePerPerson,
@@ -245,6 +248,7 @@ func (q *Queries) ListTicketParticipantsByTicketID(ctx context.Context, ticketID
 const listTickets = `-- name: ListTickets :many
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
+       e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        pu.display_name AS purchaser_name
@@ -262,6 +266,7 @@ type ListTicketsRow struct {
 	EventCatchphrase             string
 	EventImageUrl                sql.NullString
 	EventExpectedDurationMinutes int32
+	EventDoorsOpenMinutesBefore  sql.NullInt32
 	StartAt                      time.Time
 	MeetingAt                    sql.NullTime
 	PricePerPerson               int32
@@ -288,6 +293,7 @@ func (q *Queries) ListTickets(ctx context.Context) ([]ListTicketsRow, error) {
 			&i.EventCatchphrase,
 			&i.EventImageUrl,
 			&i.EventExpectedDurationMinutes,
+			&i.EventDoorsOpenMinutesBefore,
 			&i.StartAt,
 			&i.MeetingAt,
 			&i.PricePerPerson,
@@ -311,6 +317,7 @@ func (q *Queries) ListTickets(ctx context.Context) ([]ListTicketsRow, error) {
 const listTicketsByIDs = `-- name: ListTicketsByIDs :many
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
+       e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.meeting_place,
        pu.display_name AS purchaser_name
@@ -329,6 +336,7 @@ type ListTicketsByIDsRow struct {
 	EventCatchphrase             string
 	EventImageUrl                sql.NullString
 	EventExpectedDurationMinutes int32
+	EventDoorsOpenMinutesBefore  sql.NullInt32
 	StartAt                      time.Time
 	MeetingAt                    sql.NullTime
 	PricePerPerson               int32
@@ -365,6 +373,7 @@ func (q *Queries) ListTicketsByIDs(ctx context.Context, ids []string) ([]ListTic
 			&i.EventCatchphrase,
 			&i.EventImageUrl,
 			&i.EventExpectedDurationMinutes,
+			&i.EventDoorsOpenMinutesBefore,
 			&i.StartAt,
 			&i.MeetingAt,
 			&i.PricePerPerson,
