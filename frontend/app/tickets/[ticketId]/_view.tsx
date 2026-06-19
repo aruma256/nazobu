@@ -373,7 +373,7 @@ function GroupShuffleSection({
   myUserId: string;
 }) {
   const total = participants.length;
-  const [sizeText, setSizeText] = useState("2");
+  const [sizeText, setSizeText] = useState("4");
   const [groups, setGroups] = useState<TicketParticipant[][] | null>(null);
 
   // 参加者の顔ぶれが変わったら古い分け方は破棄する（古い参加者が残らないように）。
