@@ -110,56 +110,27 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("event の登録は admin のみ"))
 	}
 
-	title := strings.TrimSpace(req.Msg.GetTitle())
-	rawURL := strings.TrimSpace(req.Msg.GetUrl())
-	catchphrase := strings.TrimSpace(req.Msg.GetCatchphrase())
-	doorsOpen, err := validateMinutesBefore(req.Msg.DoorsOpenMinutesBefore, "doors_open_minutes_before")
+	msg := req.Msg
+	prepared, err := prepareEventFields(
+		ctx, s.httpClient,
+		msg.GetTitle(), msg.GetUrl(), msg.GetCatchphrase(),
+		msg.DoorsOpenMinutesBefore, msg.EntryDeadlineMinutesBefore,
+		msg.GetExpectedDurationMinutes(),
+	)
 	if err != nil {
 		return nil, err
 	}
-	entryDeadline, err := validateMinutesBefore(req.Msg.EntryDeadlineMinutesBefore, "entry_deadline_minutes_before")
-	if err != nil {
-		return nil, err
-	}
-	expectedDuration, err := validateExpectedDurationMinutes(req.Msg.GetExpectedDurationMinutes())
-	if err != nil {
-		return nil, err
-	}
-
-	if title == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("title は必須"))
-	}
-	if rawURL == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("url は必須"))
-	}
-	if len(title) > eventTitleMaxLen {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("title は %d 文字以内", eventTitleMaxLen))
-	}
-	if len(rawURL) > eventURLMaxLen {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("url は %d 文字以内", eventURLMaxLen))
-	}
-	if len(catchphrase) > eventCatchphraseMaxLen {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("catchphrase は %d 文字以内", eventCatchphraseMaxLen))
-	}
-	parsed, err := url.Parse(rawURL)
-	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("url は http(s) スキーマの URL"))
-	}
-
-	og := fetchOGTags(ctx, s.httpClient, rawURL)
-	imageURL := stringToNullString(og.Image)
-	catchphrase = applyOGDescriptionFallback(catchphrase, parsed.Host, og.Description)
 
 	eventID := id.New()
 	if err := s.q.CreateEvent(ctx, queries.CreateEventParams{
 		ID:                         eventID,
-		Title:                      title,
-		Url:                        rawURL,
-		Catchphrase:                catchphrase,
-		ImageUrl:                   imageURL,
-		DoorsOpenMinutesBefore:     doorsOpen,
-		EntryDeadlineMinutesBefore: entryDeadline,
-		ExpectedDurationMinutes:    expectedDuration,
+		Title:                      prepared.title,
+		Url:                        prepared.url,
+		Catchphrase:                prepared.catchphrase,
+		ImageUrl:                   prepared.imageURL,
+		DoorsOpenMinutesBefore:     prepared.doorsOpen,
+		EntryDeadlineMinutesBefore: prepared.entryDeadline,
+		ExpectedDurationMinutes:    prepared.expectedDuration,
 	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の登録に失敗: %w", err))
 	}
@@ -167,13 +138,13 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 	return connect.NewResponse(&nazobuv1.CreateEventResponse{
 		Event: &nazobuv1.Event{
 			Id:                         eventID,
-			Title:                      title,
-			Url:                        rawURL,
-			Catchphrase:                catchphrase,
-			ImageUrl:                   nullStringToString(imageURL),
-			DoorsOpenMinutesBefore:     nullInt32ToPtr(doorsOpen),
-			EntryDeadlineMinutesBefore: nullInt32ToPtr(entryDeadline),
-			ExpectedDurationMinutes:    expectedDuration,
+			Title:                      prepared.title,
+			Url:                        prepared.url,
+			Catchphrase:                prepared.catchphrase,
+			ImageUrl:                   nullStringToString(prepared.imageURL),
+			DoorsOpenMinutesBefore:     nullInt32ToPtr(prepared.doorsOpen),
+			EntryDeadlineMinutesBefore: nullInt32ToPtr(prepared.entryDeadline),
+			ExpectedDurationMinutes:    prepared.expectedDuration,
 			Tickets:                    []*nazobuv1.EventTicket{},
 		},
 	}), nil
@@ -193,39 +164,14 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 	if eventID == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("event_id は必須"))
 	}
-	title := strings.TrimSpace(msg.GetTitle())
-	rawURL := strings.TrimSpace(msg.GetUrl())
-	catchphrase := strings.TrimSpace(msg.GetCatchphrase())
-	doorsOpen, err := validateMinutesBefore(msg.DoorsOpenMinutesBefore, "doors_open_minutes_before")
+	prepared, err := prepareEventFields(
+		ctx, s.httpClient,
+		msg.GetTitle(), msg.GetUrl(), msg.GetCatchphrase(),
+		msg.DoorsOpenMinutesBefore, msg.EntryDeadlineMinutesBefore,
+		msg.GetExpectedDurationMinutes(),
+	)
 	if err != nil {
 		return nil, err
-	}
-	entryDeadline, err := validateMinutesBefore(msg.EntryDeadlineMinutesBefore, "entry_deadline_minutes_before")
-	if err != nil {
-		return nil, err
-	}
-	expectedDuration, err := validateExpectedDurationMinutes(msg.GetExpectedDurationMinutes())
-	if err != nil {
-		return nil, err
-	}
-	if title == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("title は必須"))
-	}
-	if rawURL == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("url は必須"))
-	}
-	if len(title) > eventTitleMaxLen {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("title は %d 文字以内", eventTitleMaxLen))
-	}
-	if len(rawURL) > eventURLMaxLen {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("url は %d 文字以内", eventURLMaxLen))
-	}
-	if len(catchphrase) > eventCatchphraseMaxLen {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("catchphrase は %d 文字以内", eventCatchphraseMaxLen))
-	}
-	parsed, err := url.Parse(rawURL)
-	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("url は http(s) スキーマの URL"))
 	}
 
 	if _, err := s.q.GetEventByID(ctx, eventID); errors.Is(err, sql.ErrNoRows) {
@@ -234,19 +180,15 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の取得に失敗: %w", err))
 	}
 
-	og := fetchOGTags(ctx, s.httpClient, rawURL)
-	imageURL := stringToNullString(og.Image)
-	catchphrase = applyOGDescriptionFallback(catchphrase, parsed.Host, og.Description)
-
 	if err := s.q.UpdateEvent(ctx, queries.UpdateEventParams{
 		ID:                         eventID,
-		Title:                      title,
-		Url:                        rawURL,
-		Catchphrase:                catchphrase,
-		ImageUrl:                   imageURL,
-		DoorsOpenMinutesBefore:     doorsOpen,
-		EntryDeadlineMinutesBefore: entryDeadline,
-		ExpectedDurationMinutes:    expectedDuration,
+		Title:                      prepared.title,
+		Url:                        prepared.url,
+		Catchphrase:                prepared.catchphrase,
+		ImageUrl:                   prepared.imageURL,
+		DoorsOpenMinutesBefore:     prepared.doorsOpen,
+		EntryDeadlineMinutesBefore: prepared.entryDeadline,
+		ExpectedDurationMinutes:    prepared.expectedDuration,
 	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の更新に失敗: %w", err))
 	}
@@ -254,16 +196,87 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 	return connect.NewResponse(&nazobuv1.UpdateEventResponse{
 		Event: &nazobuv1.Event{
 			Id:                         eventID,
-			Title:                      title,
-			Url:                        rawURL,
-			Catchphrase:                catchphrase,
-			ImageUrl:                   nullStringToString(imageURL),
-			DoorsOpenMinutesBefore:     nullInt32ToPtr(doorsOpen),
-			EntryDeadlineMinutesBefore: nullInt32ToPtr(entryDeadline),
-			ExpectedDurationMinutes:    expectedDuration,
+			Title:                      prepared.title,
+			Url:                        prepared.url,
+			Catchphrase:                prepared.catchphrase,
+			ImageUrl:                   nullStringToString(prepared.imageURL),
+			DoorsOpenMinutesBefore:     nullInt32ToPtr(prepared.doorsOpen),
+			EntryDeadlineMinutesBefore: nullInt32ToPtr(prepared.entryDeadline),
+			ExpectedDurationMinutes:    prepared.expectedDuration,
 			Tickets:                    []*nazobuv1.EventTicket{},
 		},
 	}), nil
+}
+
+// preparedEventFields は event の入力検証 + OG タグ取得 + catchphrase 補完まで済ませた値を保持する。
+// CreateEvent / UpdateEvent / CreateTicketWithEvent / UpdateTicketWithEvent から共通で使う。
+type preparedEventFields struct {
+	title            string
+	url              string
+	catchphrase      string
+	imageURL         sql.NullString
+	doorsOpen        sql.NullInt32
+	entryDeadline    sql.NullInt32
+	expectedDuration int32
+}
+
+// prepareEventFields は event 部の入力を検証し、OG タグ取得と catchphrase 補完まで一括で行う。
+func prepareEventFields(
+	ctx context.Context,
+	client *http.Client,
+	titleIn, rawURLIn, catchphraseIn string,
+	doorsOpenIn, entryDeadlineIn *int32,
+	expectedDurationIn int32,
+) (preparedEventFields, error) {
+	title := strings.TrimSpace(titleIn)
+	rawURL := strings.TrimSpace(rawURLIn)
+	catchphrase := strings.TrimSpace(catchphraseIn)
+
+	doorsOpen, err := validateMinutesBefore(doorsOpenIn, "doors_open_minutes_before")
+	if err != nil {
+		return preparedEventFields{}, err
+	}
+	entryDeadline, err := validateMinutesBefore(entryDeadlineIn, "entry_deadline_minutes_before")
+	if err != nil {
+		return preparedEventFields{}, err
+	}
+	expectedDuration, err := validateExpectedDurationMinutes(expectedDurationIn)
+	if err != nil {
+		return preparedEventFields{}, err
+	}
+	if title == "" {
+		return preparedEventFields{}, connect.NewError(connect.CodeInvalidArgument, errors.New("title は必須"))
+	}
+	if rawURL == "" {
+		return preparedEventFields{}, connect.NewError(connect.CodeInvalidArgument, errors.New("url は必須"))
+	}
+	if len(title) > eventTitleMaxLen {
+		return preparedEventFields{}, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("title は %d 文字以内", eventTitleMaxLen))
+	}
+	if len(rawURL) > eventURLMaxLen {
+		return preparedEventFields{}, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("url は %d 文字以内", eventURLMaxLen))
+	}
+	if len(catchphrase) > eventCatchphraseMaxLen {
+		return preparedEventFields{}, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("catchphrase は %d 文字以内", eventCatchphraseMaxLen))
+	}
+	parsed, err := url.Parse(rawURL)
+	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" {
+		return preparedEventFields{}, connect.NewError(connect.CodeInvalidArgument, errors.New("url は http(s) スキーマの URL"))
+	}
+
+	og := fetchOGTags(ctx, client, rawURL)
+	imageURL := stringToNullString(og.Image)
+	catchphrase = applyOGDescriptionFallback(catchphrase, parsed.Host, og.Description)
+
+	return preparedEventFields{
+		title:            title,
+		url:              rawURL,
+		catchphrase:      catchphrase,
+		imageURL:         imageURL,
+		doorsOpen:        doorsOpen,
+		entryDeadline:    entryDeadline,
+		expectedDuration: expectedDuration,
+	}, nil
 }
 
 // applyOGDescriptionFallback は web 入力のキャッチコピーが空のとき、og:description を採用するか判定して返す。

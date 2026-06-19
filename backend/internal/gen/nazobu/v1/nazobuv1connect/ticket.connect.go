@@ -41,9 +41,15 @@ const (
 	// TicketServiceCreateTicketProcedure is the fully-qualified name of the TicketService's
 	// CreateTicket RPC.
 	TicketServiceCreateTicketProcedure = "/nazobu.v1.TicketService/CreateTicket"
+	// TicketServiceCreateTicketWithEventProcedure is the fully-qualified name of the TicketService's
+	// CreateTicketWithEvent RPC.
+	TicketServiceCreateTicketWithEventProcedure = "/nazobu.v1.TicketService/CreateTicketWithEvent"
 	// TicketServiceUpdateTicketProcedure is the fully-qualified name of the TicketService's
 	// UpdateTicket RPC.
 	TicketServiceUpdateTicketProcedure = "/nazobu.v1.TicketService/UpdateTicket"
+	// TicketServiceUpdateTicketWithEventProcedure is the fully-qualified name of the TicketService's
+	// UpdateTicketWithEvent RPC.
+	TicketServiceUpdateTicketWithEventProcedure = "/nazobu.v1.TicketService/UpdateTicketWithEvent"
 	// TicketServiceAddTicketParticipantsProcedure is the fully-qualified name of the TicketService's
 	// AddTicketParticipants RPC.
 	TicketServiceAddTicketParticipantsProcedure = "/nazobu.v1.TicketService/AddTicketParticipants"
@@ -63,9 +69,16 @@ type TicketServiceClient interface {
 	GetTicket(context.Context, *connect.Request[v1.GetTicketRequest]) (*connect.Response[v1.GetTicketResponse], error)
 	// CreateTicket は新規 ticket を 1 件登録する。参加者（割り勘元）も同時に登録する。
 	CreateTicket(context.Context, *connect.Request[v1.CreateTicketRequest]) (*connect.Response[v1.CreateTicketResponse], error)
+	// CreateTicketWithEvent は event と ticket を 1 トランザクションで同時登録する。
+	// 1 公演 1 チケットが主流のため、新規作成はこの統合 RPC を主動線にする。admin のみ実行可能。
+	CreateTicketWithEvent(context.Context, *connect.Request[v1.CreateTicketWithEventRequest]) (*connect.Response[v1.CreateTicketWithEventResponse], error)
 	// UpdateTicket は ticket 本体（start_at / meeting_at / price_per_person / max_participants / meeting_place / purchased_by_user_id）を更新する。
 	// admin もしくは立替者のみ実行可能。新しい立替者は ticket の参加者の中から選ぶ。
 	UpdateTicket(context.Context, *connect.Request[v1.UpdateTicketRequest]) (*connect.Response[v1.UpdateTicketResponse], error)
+	// UpdateTicketWithEvent は ticket と紐づく event を 1 トランザクションで同時更新する。
+	// admin もしくは立替者のみ実行可能（event 編集権限は立替者にも開放）。
+	// 同 event に他の ticket がある場合、event の更新内容はそれら全てに波及する。
+	UpdateTicketWithEvent(context.Context, *connect.Request[v1.UpdateTicketWithEventRequest]) (*connect.Response[v1.UpdateTicketWithEventResponse], error)
 	// AddTicketParticipants は ticket の参加者を 1 人以上追加する。
 	// admin もしくは立替者のみ実行可能。既に存在する user_id は無視する。
 	// 追加によって max_participants を超える場合は失敗する。
@@ -107,10 +120,22 @@ func NewTicketServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(ticketServiceMethods.ByName("CreateTicket")),
 			connect.WithClientOptions(opts...),
 		),
+		createTicketWithEvent: connect.NewClient[v1.CreateTicketWithEventRequest, v1.CreateTicketWithEventResponse](
+			httpClient,
+			baseURL+TicketServiceCreateTicketWithEventProcedure,
+			connect.WithSchema(ticketServiceMethods.ByName("CreateTicketWithEvent")),
+			connect.WithClientOptions(opts...),
+		),
 		updateTicket: connect.NewClient[v1.UpdateTicketRequest, v1.UpdateTicketResponse](
 			httpClient,
 			baseURL+TicketServiceUpdateTicketProcedure,
 			connect.WithSchema(ticketServiceMethods.ByName("UpdateTicket")),
+			connect.WithClientOptions(opts...),
+		),
+		updateTicketWithEvent: connect.NewClient[v1.UpdateTicketWithEventRequest, v1.UpdateTicketWithEventResponse](
+			httpClient,
+			baseURL+TicketServiceUpdateTicketWithEventProcedure,
+			connect.WithSchema(ticketServiceMethods.ByName("UpdateTicketWithEvent")),
 			connect.WithClientOptions(opts...),
 		),
 		addTicketParticipants: connect.NewClient[v1.AddTicketParticipantsRequest, v1.AddTicketParticipantsResponse](
@@ -139,7 +164,9 @@ type ticketServiceClient struct {
 	listTickets                       *connect.Client[v1.ListTicketsRequest, v1.ListTicketsResponse]
 	getTicket                         *connect.Client[v1.GetTicketRequest, v1.GetTicketResponse]
 	createTicket                      *connect.Client[v1.CreateTicketRequest, v1.CreateTicketResponse]
+	createTicketWithEvent             *connect.Client[v1.CreateTicketWithEventRequest, v1.CreateTicketWithEventResponse]
 	updateTicket                      *connect.Client[v1.UpdateTicketRequest, v1.UpdateTicketResponse]
+	updateTicketWithEvent             *connect.Client[v1.UpdateTicketWithEventRequest, v1.UpdateTicketWithEventResponse]
 	addTicketParticipants             *connect.Client[v1.AddTicketParticipantsRequest, v1.AddTicketParticipantsResponse]
 	removeTicketParticipant           *connect.Client[v1.RemoveTicketParticipantRequest, v1.RemoveTicketParticipantResponse]
 	updateTicketParticipantSettlement *connect.Client[v1.UpdateTicketParticipantSettlementRequest, v1.UpdateTicketParticipantSettlementResponse]
@@ -160,9 +187,19 @@ func (c *ticketServiceClient) CreateTicket(ctx context.Context, req *connect.Req
 	return c.createTicket.CallUnary(ctx, req)
 }
 
+// CreateTicketWithEvent calls nazobu.v1.TicketService.CreateTicketWithEvent.
+func (c *ticketServiceClient) CreateTicketWithEvent(ctx context.Context, req *connect.Request[v1.CreateTicketWithEventRequest]) (*connect.Response[v1.CreateTicketWithEventResponse], error) {
+	return c.createTicketWithEvent.CallUnary(ctx, req)
+}
+
 // UpdateTicket calls nazobu.v1.TicketService.UpdateTicket.
 func (c *ticketServiceClient) UpdateTicket(ctx context.Context, req *connect.Request[v1.UpdateTicketRequest]) (*connect.Response[v1.UpdateTicketResponse], error) {
 	return c.updateTicket.CallUnary(ctx, req)
+}
+
+// UpdateTicketWithEvent calls nazobu.v1.TicketService.UpdateTicketWithEvent.
+func (c *ticketServiceClient) UpdateTicketWithEvent(ctx context.Context, req *connect.Request[v1.UpdateTicketWithEventRequest]) (*connect.Response[v1.UpdateTicketWithEventResponse], error) {
+	return c.updateTicketWithEvent.CallUnary(ctx, req)
 }
 
 // AddTicketParticipants calls nazobu.v1.TicketService.AddTicketParticipants.
@@ -189,9 +226,16 @@ type TicketServiceHandler interface {
 	GetTicket(context.Context, *connect.Request[v1.GetTicketRequest]) (*connect.Response[v1.GetTicketResponse], error)
 	// CreateTicket は新規 ticket を 1 件登録する。参加者（割り勘元）も同時に登録する。
 	CreateTicket(context.Context, *connect.Request[v1.CreateTicketRequest]) (*connect.Response[v1.CreateTicketResponse], error)
+	// CreateTicketWithEvent は event と ticket を 1 トランザクションで同時登録する。
+	// 1 公演 1 チケットが主流のため、新規作成はこの統合 RPC を主動線にする。admin のみ実行可能。
+	CreateTicketWithEvent(context.Context, *connect.Request[v1.CreateTicketWithEventRequest]) (*connect.Response[v1.CreateTicketWithEventResponse], error)
 	// UpdateTicket は ticket 本体（start_at / meeting_at / price_per_person / max_participants / meeting_place / purchased_by_user_id）を更新する。
 	// admin もしくは立替者のみ実行可能。新しい立替者は ticket の参加者の中から選ぶ。
 	UpdateTicket(context.Context, *connect.Request[v1.UpdateTicketRequest]) (*connect.Response[v1.UpdateTicketResponse], error)
+	// UpdateTicketWithEvent は ticket と紐づく event を 1 トランザクションで同時更新する。
+	// admin もしくは立替者のみ実行可能（event 編集権限は立替者にも開放）。
+	// 同 event に他の ticket がある場合、event の更新内容はそれら全てに波及する。
+	UpdateTicketWithEvent(context.Context, *connect.Request[v1.UpdateTicketWithEventRequest]) (*connect.Response[v1.UpdateTicketWithEventResponse], error)
 	// AddTicketParticipants は ticket の参加者を 1 人以上追加する。
 	// admin もしくは立替者のみ実行可能。既に存在する user_id は無視する。
 	// 追加によって max_participants を超える場合は失敗する。
@@ -229,10 +273,22 @@ func NewTicketServiceHandler(svc TicketServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(ticketServiceMethods.ByName("CreateTicket")),
 		connect.WithHandlerOptions(opts...),
 	)
+	ticketServiceCreateTicketWithEventHandler := connect.NewUnaryHandler(
+		TicketServiceCreateTicketWithEventProcedure,
+		svc.CreateTicketWithEvent,
+		connect.WithSchema(ticketServiceMethods.ByName("CreateTicketWithEvent")),
+		connect.WithHandlerOptions(opts...),
+	)
 	ticketServiceUpdateTicketHandler := connect.NewUnaryHandler(
 		TicketServiceUpdateTicketProcedure,
 		svc.UpdateTicket,
 		connect.WithSchema(ticketServiceMethods.ByName("UpdateTicket")),
+		connect.WithHandlerOptions(opts...),
+	)
+	ticketServiceUpdateTicketWithEventHandler := connect.NewUnaryHandler(
+		TicketServiceUpdateTicketWithEventProcedure,
+		svc.UpdateTicketWithEvent,
+		connect.WithSchema(ticketServiceMethods.ByName("UpdateTicketWithEvent")),
 		connect.WithHandlerOptions(opts...),
 	)
 	ticketServiceAddTicketParticipantsHandler := connect.NewUnaryHandler(
@@ -261,8 +317,12 @@ func NewTicketServiceHandler(svc TicketServiceHandler, opts ...connect.HandlerOp
 			ticketServiceGetTicketHandler.ServeHTTP(w, r)
 		case TicketServiceCreateTicketProcedure:
 			ticketServiceCreateTicketHandler.ServeHTTP(w, r)
+		case TicketServiceCreateTicketWithEventProcedure:
+			ticketServiceCreateTicketWithEventHandler.ServeHTTP(w, r)
 		case TicketServiceUpdateTicketProcedure:
 			ticketServiceUpdateTicketHandler.ServeHTTP(w, r)
+		case TicketServiceUpdateTicketWithEventProcedure:
+			ticketServiceUpdateTicketWithEventHandler.ServeHTTP(w, r)
 		case TicketServiceAddTicketParticipantsProcedure:
 			ticketServiceAddTicketParticipantsHandler.ServeHTTP(w, r)
 		case TicketServiceRemoveTicketParticipantProcedure:
@@ -290,8 +350,16 @@ func (UnimplementedTicketServiceHandler) CreateTicket(context.Context, *connect.
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.TicketService.CreateTicket is not implemented"))
 }
 
+func (UnimplementedTicketServiceHandler) CreateTicketWithEvent(context.Context, *connect.Request[v1.CreateTicketWithEventRequest]) (*connect.Response[v1.CreateTicketWithEventResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.TicketService.CreateTicketWithEvent is not implemented"))
+}
+
 func (UnimplementedTicketServiceHandler) UpdateTicket(context.Context, *connect.Request[v1.UpdateTicketRequest]) (*connect.Response[v1.UpdateTicketResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.TicketService.UpdateTicket is not implemented"))
+}
+
+func (UnimplementedTicketServiceHandler) UpdateTicketWithEvent(context.Context, *connect.Request[v1.UpdateTicketWithEventRequest]) (*connect.Response[v1.UpdateTicketWithEventResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.TicketService.UpdateTicketWithEvent is not implemented"))
 }
 
 func (UnimplementedTicketServiceHandler) AddTicketParticipants(context.Context, *connect.Request[v1.AddTicketParticipantsRequest]) (*connect.Response[v1.AddTicketParticipantsResponse], error) {

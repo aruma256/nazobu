@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -18,12 +19,13 @@ import (
 )
 
 type ticketService struct {
-	db *sql.DB
-	q  *queries.Queries
+	db         *sql.DB
+	q          *queries.Queries
+	httpClient *http.Client
 }
 
 func newTicketService(db *sql.DB) nazobuv1connect.TicketServiceHandler {
-	return &ticketService{db: db, q: queries.New(db)}
+	return &ticketService{db: db, q: queries.New(db), httpClient: http.DefaultClient}
 }
 
 const meetingPlaceMaxLen = 255
@@ -352,6 +354,265 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の取得に失敗: %w", err))
 	}
 	return connect.NewResponse(&nazobuv1.UpdateTicketResponse{Ticket: ticket}), nil
+}
+
+func (s *ticketService) CreateTicketWithEvent(ctx context.Context, req *connect.Request[nazobuv1.CreateTicketWithEventRequest]) (*connect.Response[nazobuv1.CreateTicketWithEventResponse], error) {
+	user, err := lookupSessionUser(ctx, s.db, req.Header())
+	if err != nil {
+		return nil, err
+	}
+	if user.Role != auth.RoleAdmin {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("公演と ticket の登録は admin のみ"))
+	}
+	purchasedBy := user.ID
+
+	msg := req.Msg
+	event, err := prepareEventFields(
+		ctx, s.httpClient,
+		msg.GetEventTitle(), msg.GetEventUrl(), msg.GetEventCatchphrase(),
+		msg.EventDoorsOpenMinutesBefore, msg.EventEntryDeadlineMinutesBefore,
+		msg.GetEventExpectedDurationMinutes(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	meetingPlace := strings.TrimSpace(msg.GetMeetingPlace())
+	price := msg.GetPricePerPerson()
+	maxParticipants := msg.GetMaxParticipants()
+	participants := dedupeStrings(msg.GetParticipantUserIds())
+
+	startAt, err := parseRequiredJSTDateTime(msg.GetStartAt(), "start_at")
+	if err != nil {
+		return nil, err
+	}
+	meetingAt, err := parseNullableJSTDateTime(msg.GetMeetingAt(), "meeting_at")
+	if err != nil {
+		return nil, err
+	}
+	if len(meetingPlace) > meetingPlaceMaxLen {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("meeting_place は %d 文字以内", meetingPlaceMaxLen))
+	}
+	if price < 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("price_per_person は 0 以上"))
+	}
+	if maxParticipants < 1 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("max_participants は 1 以上"))
+	}
+	if len(participants) == 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("participant_user_ids は 1 件以上"))
+	}
+	if int32(len(participants)) > maxParticipants {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("participant_user_ids の件数が max_participants を超えている"))
+	}
+
+	if err := s.assertUsersExist(ctx, participants); err != nil {
+		return nil, err
+	}
+
+	eventID := id.New()
+	ticketID := id.New()
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("トランザクション開始に失敗: %w", err))
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	qtx := s.q.WithTx(tx)
+	if err := qtx.CreateEvent(ctx, queries.CreateEventParams{
+		ID:                         eventID,
+		Title:                      event.title,
+		Url:                        event.url,
+		Catchphrase:                event.catchphrase,
+		ImageUrl:                   event.imageURL,
+		DoorsOpenMinutesBefore:     event.doorsOpen,
+		EntryDeadlineMinutesBefore: event.entryDeadline,
+		ExpectedDurationMinutes:    event.expectedDuration,
+	}); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の登録に失敗: %w", err))
+	}
+	if err := qtx.CreateTicket(ctx, queries.CreateTicketParams{
+		ID:              ticketID,
+		EventID:         eventID,
+		StartAt:         startAt,
+		MeetingAt:       meetingAt,
+		PricePerPerson:  price,
+		MaxParticipants: maxParticipants,
+		PurchasedBy:     purchasedBy,
+		MeetingPlace:    meetingPlace,
+	}); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket の登録に失敗: %w", err))
+	}
+	for _, uid := range participants {
+		if err := qtx.CreateTicketParticipant(ctx, queries.CreateTicketParticipantParams{
+			TicketID: ticketID,
+			UserID:   uid,
+		}); err != nil {
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket_participants の登録に失敗: %w", err))
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("トランザクション commit に失敗: %w", err))
+	}
+
+	ticket, err := s.buildTicketResponse(ctx, ticketID)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&nazobuv1.CreateTicketWithEventResponse{Ticket: ticket}), nil
+}
+
+func (s *ticketService) UpdateTicketWithEvent(ctx context.Context, req *connect.Request[nazobuv1.UpdateTicketWithEventRequest]) (*connect.Response[nazobuv1.UpdateTicketWithEventResponse], error) {
+	user, err := lookupSessionUser(ctx, s.db, req.Header())
+	if err != nil {
+		return nil, err
+	}
+
+	msg := req.Msg
+	ticketID := strings.TrimSpace(msg.GetTicketId())
+	if ticketID == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("ticket_id は必須"))
+	}
+
+	existing, err := s.q.GetTicketByID(ctx, ticketID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("指定された ticket は存在しない"))
+	}
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket の取得に失敗: %w", err))
+	}
+	if !canEditTicket(user, existing.PurchasedBy) {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("ticket と公演の編集は admin もしくは立替者のみ"))
+	}
+
+	event, err := prepareEventFields(
+		ctx, s.httpClient,
+		msg.GetEventTitle(), msg.GetEventUrl(), msg.GetEventCatchphrase(),
+		msg.EventDoorsOpenMinutesBefore, msg.EventEntryDeadlineMinutesBefore,
+		msg.GetEventExpectedDurationMinutes(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	meetingPlace := strings.TrimSpace(msg.GetMeetingPlace())
+	purchasedBy := strings.TrimSpace(msg.GetPurchasedByUserId())
+	price := msg.GetPricePerPerson()
+	maxParticipants := msg.GetMaxParticipants()
+
+	startAt, err := parseRequiredJSTDateTime(msg.GetStartAt(), "start_at")
+	if err != nil {
+		return nil, err
+	}
+	meetingAt, err := parseNullableJSTDateTime(msg.GetMeetingAt(), "meeting_at")
+	if err != nil {
+		return nil, err
+	}
+	if len(meetingPlace) > meetingPlaceMaxLen {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("meeting_place は %d 文字以内", meetingPlaceMaxLen))
+	}
+	if price < 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("price_per_person は 0 以上"))
+	}
+	if maxParticipants < 1 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("max_participants は 1 以上"))
+	}
+	if purchasedBy == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("purchased_by_user_id は必須"))
+	}
+	if purchasedBy != existing.PurchasedBy {
+		count, err := s.q.CountTicketParticipant(ctx, queries.CountTicketParticipantParams{
+			TicketID: ticketID,
+			UserID:   purchasedBy,
+		})
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の存在確認に失敗: %w", err))
+		}
+		if count == 0 {
+			return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("立替者は ticket の参加者の中から選ぶ"))
+		}
+	}
+	participantCount, err := s.q.CountTicketParticipantsByTicketID(ctx, ticketID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者数の取得に失敗: %w", err))
+	}
+	if int64(maxParticipants) < participantCount {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("max_participants は現在の参加者数以上"))
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("トランザクション開始に失敗: %w", err))
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	qtx := s.q.WithTx(tx)
+	if err := qtx.UpdateEvent(ctx, queries.UpdateEventParams{
+		ID:                         existing.EventID,
+		Title:                      event.title,
+		Url:                        event.url,
+		Catchphrase:                event.catchphrase,
+		ImageUrl:                   event.imageURL,
+		DoorsOpenMinutesBefore:     event.doorsOpen,
+		EntryDeadlineMinutesBefore: event.entryDeadline,
+		ExpectedDurationMinutes:    event.expectedDuration,
+	}); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の更新に失敗: %w", err))
+	}
+	if err := qtx.UpdateTicket(ctx, queries.UpdateTicketParams{
+		ID:              ticketID,
+		StartAt:         startAt,
+		MeetingAt:       meetingAt,
+		PricePerPerson:  price,
+		MaxParticipants: maxParticipants,
+		MeetingPlace:    meetingPlace,
+		PurchasedBy:     purchasedBy,
+	}); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket の更新に失敗: %w", err))
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("トランザクション commit に失敗: %w", err))
+	}
+
+	ticket, err := s.buildTicketResponse(ctx, ticketID)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&nazobuv1.UpdateTicketWithEventResponse{Ticket: ticket}), nil
+}
+
+// buildTicketResponse は ticket_id から表示用の Ticket メッセージを組み立てる。
+// Create/Update 系で末尾の「最新の状態を返す」処理を共有する用途。
+func (s *ticketService) buildTicketResponse(ctx context.Context, ticketID string) (*nazobuv1.Ticket, error) {
+	rows, err := s.q.ListTicketsByIDs(ctx, []string{ticketID})
+	if err != nil || len(rows) == 0 {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket の取得に失敗: %w", err))
+	}
+	r := rows[0]
+	ticket := &nazobuv1.Ticket{
+		Id:                           r.ID,
+		EventId:                      r.EventID,
+		EventTitle:                   r.EventTitle,
+		EventUrl:                     r.EventUrl,
+		EventCatchphrase:             r.EventCatchphrase,
+		EventImageUrl:                nullStringToString(r.EventImageUrl),
+		EventExpectedDurationMinutes: r.EventExpectedDurationMinutes,
+		EventDoorsOpenMinutesBefore:  nullInt32ToPtr(r.EventDoorsOpenMinutesBefore),
+		StartAt:                      formatJSTDateTime(r.StartAt),
+		MeetingAt:                    formatNullableJSTDateTime(r.MeetingAt),
+		PricePerPerson:               r.PricePerPerson,
+		MaxParticipants:              r.MaxParticipants,
+		MeetingPlace:                 r.MeetingPlace,
+		PurchaserName:                r.PurchaserName,
+		ParticipantNames:             []string{},
+	}
+	if err := attachTicketParticipantNames(ctx, s.q, []*nazobuv1.Ticket{ticket}); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の取得に失敗: %w", err))
+	}
+	return ticket, nil
 }
 
 func (s *ticketService) AddTicketParticipants(ctx context.Context, req *connect.Request[nazobuv1.AddTicketParticipantsRequest]) (*connect.Response[nazobuv1.AddTicketParticipantsResponse], error) {

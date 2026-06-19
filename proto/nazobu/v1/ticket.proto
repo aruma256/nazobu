@@ -12,9 +12,16 @@ service TicketService {
   rpc GetTicket(GetTicketRequest) returns (GetTicketResponse);
   // CreateTicket は新規 ticket を 1 件登録する。参加者（割り勘元）も同時に登録する。
   rpc CreateTicket(CreateTicketRequest) returns (CreateTicketResponse);
+  // CreateTicketWithEvent は event と ticket を 1 トランザクションで同時登録する。
+  // 1 公演 1 チケットが主流のため、新規作成はこの統合 RPC を主動線にする。admin のみ実行可能。
+  rpc CreateTicketWithEvent(CreateTicketWithEventRequest) returns (CreateTicketWithEventResponse);
   // UpdateTicket は ticket 本体（start_at / meeting_at / price_per_person / max_participants / meeting_place / purchased_by_user_id）を更新する。
   // admin もしくは立替者のみ実行可能。新しい立替者は ticket の参加者の中から選ぶ。
   rpc UpdateTicket(UpdateTicketRequest) returns (UpdateTicketResponse);
+  // UpdateTicketWithEvent は ticket と紐づく event を 1 トランザクションで同時更新する。
+  // admin もしくは立替者のみ実行可能（event 編集権限は立替者にも開放）。
+  // 同 event に他の ticket がある場合、event の更新内容はそれら全てに波及する。
+  rpc UpdateTicketWithEvent(UpdateTicketWithEventRequest) returns (UpdateTicketWithEventResponse);
   // AddTicketParticipants は ticket の参加者を 1 人以上追加する。
   // admin もしくは立替者のみ実行可能。既に存在する user_id は無視する。
   // 追加によって max_participants を超える場合は失敗する。
@@ -128,6 +135,64 @@ message UpdateTicketRequest {
 }
 
 message UpdateTicketResponse {
+  Ticket ticket = 1;
+}
+
+message CreateTicketWithEventRequest {
+  // ---- event 部 ----
+  string event_title = 1;
+  string event_url = 2;
+  // 公演のキャッチコピー（任意）。
+  string event_catchphrase = 3;
+  // 開場時間が開演時刻の何分前か。任意。
+  optional int32 event_doors_open_minutes_before = 4;
+  // 入場締切が開演時刻の何分前か。任意。
+  optional int32 event_entry_deadline_minutes_before = 5;
+  // 想定所要時間（分）。1 以上。
+  int32 event_expected_duration_minutes = 6;
+
+  // ---- ticket 部 ----
+  // 一人あたりの精算額（円、0 以上）。
+  int32 price_per_person = 7;
+  // 開演日時（RFC3339, JST）。
+  string start_at = 8;
+  // 集合日時（RFC3339, JST。空文字なら未設定）。
+  string meeting_at = 9;
+  // 集合場所（空文字なら未設定）。
+  string meeting_place = 10;
+  // 参加者（割り勘元）の user id。1 件以上。
+  repeated string participant_user_ids = 11;
+  // このチケット 1 枚で参加できる最大人数。1 以上、participant_user_ids の件数以上。
+  int32 max_participants = 12;
+}
+
+message CreateTicketWithEventResponse {
+  Ticket ticket = 1;
+}
+
+message UpdateTicketWithEventRequest {
+  string ticket_id = 1;
+
+  // ---- event 部 ----
+  string event_title = 2;
+  string event_url = 3;
+  string event_catchphrase = 4;
+  optional int32 event_doors_open_minutes_before = 5;
+  optional int32 event_entry_deadline_minutes_before = 6;
+  int32 event_expected_duration_minutes = 7;
+
+  // ---- ticket 部 ----
+  int32 price_per_person = 8;
+  string meeting_at = 9;
+  string meeting_place = 10;
+  string start_at = 11;
+  // 立替者の user id。ticket の参加者のいずれかを指定する。
+  string purchased_by_user_id = 12;
+  // 1 以上、現在の参加者数以上である必要がある。
+  int32 max_participants = 13;
+}
+
+message UpdateTicketWithEventResponse {
   Ticket ticket = 1;
 }
 

@@ -6,12 +6,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 
-import type { Event as NazobuEvent } from "@/app/gen/nazobu/v1/event_pb";
-import type {
-  Ticket,
-  TicketParticipant,
-} from "@/app/gen/nazobu/v1/ticket_pb";
-import { eventClient, ticketClient } from "@/app/lib/rpc";
+import type { User } from "@/app/gen/nazobu/v1/user_pb";
+import { ticketClient, userClient } from "@/app/lib/rpc";
 
 import {
   AppHeader,
@@ -20,128 +16,52 @@ import {
   Section,
   SectionTitle,
 } from "@/app/_components";
-import {
-  joinJSTDateTime,
-  parseDateTime,
-  toDateInputValue,
-  toTimeInputValue,
-} from "@/app/_format";
+import { joinJSTDateTime } from "@/app/_format";
 import { redirectToLogin } from "@/app/lib/auth";
 
 type LoadState =
   | { kind: "loading" }
-  | { kind: "not_found" }
-  | { kind: "forbidden" }
   | { kind: "error"; message: string }
-  | {
-      kind: "ready";
-      ticket: Ticket;
-      participants: TicketParticipant[];
-      event: NazobuEvent;
-      siblingTicketCount: number;
-    };
+  | { kind: "ready"; users: User[] };
 
 type SubmitState =
   | { kind: "idle" }
   | { kind: "submitting" }
   | { kind: "error"; message: string };
 
-export function TicketEditView({ ticketId }: { ticketId: string }) {
+export function NewTicketView() {
   const router = useRouter();
   const [load, setLoad] = useState<LoadState>({ kind: "loading" });
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      try {
-        const ticketRes = await ticketClient.getTicket({ ticketId });
+    userClient
+      .listUsers({})
+      .then((res) => {
         if (cancelled) return;
-        if (!ticketRes.canEdit) {
-          setLoad({ kind: "forbidden" });
-          return;
-        }
-        if (!ticketRes.ticket) {
-          setLoad({ kind: "not_found" });
-          return;
-        }
-        const eventRes = await eventClient.getEvent({
-          eventId: ticketRes.ticket.eventId,
-        });
-        if (cancelled) return;
-        if (!eventRes.event) {
-          setLoad({ kind: "not_found" });
-          return;
-        }
-        const siblingTicketCount = eventRes.event.tickets.length;
-        setLoad({
-          kind: "ready",
-          ticket: ticketRes.ticket,
-          participants: ticketRes.participants,
-          event: eventRes.event,
-          siblingTicketCount,
-        });
-      } catch (err: unknown) {
+        setLoad({ kind: "ready", users: res.users });
+      })
+      .catch((err: unknown) => {
         if (cancelled) return;
         if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
-          redirectToLogin(router, `/tickets/${ticketId}/edit`);
-          return;
-        }
-        if (err instanceof ConnectError && err.code === Code.NotFound) {
-          setLoad({ kind: "not_found" });
+          redirectToLogin(router, "/tickets/new");
           return;
         }
         const message =
           err instanceof Error ? err.message : "データの取得に失敗しました";
         setLoad({ kind: "error", message });
-      }
-    })();
+      });
     return () => {
       cancelled = true;
     };
-  }, [ticketId, router]);
+  }, [router]);
 
   if (load.kind === "loading") {
     return (
       <>
-        <AppHeader brand="謎部" user="" />
+        <AppHeader brand="謎部" user="" isAdmin />
         <PageShell>
           <p className="pt-8 text-sm text-zinc-500">読み込み中…</p>
-        </PageShell>
-      </>
-    );
-  }
-  if (load.kind === "not_found") {
-    return (
-      <>
-        <AppHeader brand="謎部" user="" />
-        <PageShell>
-          <div className="space-y-4 pt-8 text-sm text-zinc-700">
-            <p>指定されたチケットが見つかりませんでした。</p>
-            <Link
-              href="/tickets"
-              className="inline-flex h-11 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
-            >
-              チケット一覧に戻る
-            </Link>
-          </div>
-        </PageShell>
-      </>
-    );
-  }
-  if (load.kind === "forbidden") {
-    return (
-      <>
-        <AppHeader brand="謎部" user="" />
-        <PageShell>
-          <div className="space-y-4 pt-8 text-sm text-zinc-700">
-            <p>このチケットを編集する権限がありません。</p>
-            <Link
-              href={`/tickets/${ticketId}`}
-              className="inline-flex h-11 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
-            >
-              詳細に戻る
-            </Link>
-          </div>
         </PageShell>
       </>
     );
@@ -149,7 +69,7 @@ export function TicketEditView({ ticketId }: { ticketId: string }) {
   if (load.kind === "error") {
     return (
       <>
-        <AppHeader brand="謎部" user="" />
+        <AppHeader brand="謎部" user="" isAdmin />
         <PageShell>
           <p className="pt-8 text-sm text-amber-800">
             読み込みに失敗しました: {load.message}
@@ -159,74 +79,41 @@ export function TicketEditView({ ticketId }: { ticketId: string }) {
     );
   }
 
-  return (
-    <Form
-      router={router}
-      ticket={load.ticket}
-      participants={load.participants}
-      event={load.event}
-      siblingTicketCount={load.siblingTicketCount}
-    />
-  );
+  return <Form router={router} users={load.users} />;
 }
 
 function Form({
   router,
-  ticket,
-  participants,
-  event,
-  siblingTicketCount,
+  users,
 }: {
   router: ReturnType<typeof useRouter>;
-  ticket: Ticket;
-  participants: TicketParticipant[];
-  event: NazobuEvent;
-  siblingTicketCount: number;
+  users: User[];
 }) {
   // 公演（event）
-  const [title, setTitle] = useState(event.title);
-  const [url, setUrl] = useState(event.url);
-  const [catchphrase, setCatchphrase] = useState(event.catchphrase);
-  const [doorsOpen, setDoorsOpen] = useState(
-    event.doorsOpenMinutesBefore !== undefined
-      ? String(event.doorsOpenMinutesBefore)
-      : "",
-  );
-  const [entryDeadline, setEntryDeadline] = useState(
-    event.entryDeadlineMinutesBefore !== undefined
-      ? String(event.entryDeadlineMinutesBefore)
-      : "",
-  );
-  const [expectedDuration, setExpectedDuration] = useState(
-    String(event.expectedDurationMinutes),
-  );
+  const [title, setTitle] = useState("");
+  const [url, setUrl] = useState("");
+  const [catchphrase, setCatchphrase] = useState("");
+  const [doorsOpen, setDoorsOpen] = useState("");
+  const [entryDeadline, setEntryDeadline] = useState("");
+  const [expectedDuration, setExpectedDuration] = useState("120");
 
   // チケット
-  const startAtDate = parseDateTime(ticket.startAt);
-  const meetingAtDate =
-    ticket.meetingAt !== "" ? parseDateTime(ticket.meetingAt) : null;
-  const currentPurchaserId =
-    participants.find((p) => p.isPurchaser)?.userId ?? "";
-  const [startDate, setStartDate] = useState(toDateInputValue(startAtDate));
-  const [startTime, setStartTime] = useState(toTimeInputValue(startAtDate));
-  const [meetingTime, setMeetingTime] = useState(
-    meetingAtDate !== null ? toTimeInputValue(meetingAtDate) : "",
-  );
-  const [meetingPlace, setMeetingPlace] = useState(ticket.meetingPlace);
-  const [pricePerPerson, setPricePerPerson] = useState(
-    String(ticket.pricePerPerson),
-  );
-  const [maxParticipants, setMaxParticipants] = useState(
-    String(ticket.maxParticipants),
-  );
-  const [purchasedByUserId, setPurchasedByUserId] =
-    useState(currentPurchaserId);
+  const [startDate, setStartDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [meetingTime, setMeetingTime] = useState("");
+  const [meetingPlace, setMeetingPlace] = useState("");
+  const [pricePerPerson, setPricePerPerson] = useState("");
+  const [maxParticipants, setMaxParticipants] = useState("");
+  const [participantIds, setParticipantIds] = useState<string[]>([]);
 
-  const [state, setState] = useState<SubmitState>({ kind: "idle" });
+  const [submit, setSubmit] = useState<SubmitState>({ kind: "idle" });
+  const submitting = submit.kind === "submitting";
 
-  const participantCount = participants.length;
-  const submitting = state.kind === "submitting";
-  const hasSiblings = siblingTicketCount > 1;
+  const toggleParticipant = (id: string) => {
+    setParticipantIds((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
+    );
+  };
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -237,26 +124,26 @@ function Form({
     const trimmedUrl = url.trim();
     const trimmedCatchphrase = catchphrase.trim();
     if (trimmedTitle === "" || trimmedUrl === "") {
-      setState({ kind: "error", message: "公演のタイトルと URL を入力してください" });
+      setSubmit({ kind: "error", message: "公演のタイトルと URL を入力してください" });
       return;
     }
     if (trimmedCatchphrase.length > 255) {
-      setState({ kind: "error", message: "キャッチコピーは 255 文字以内で入力してください" });
+      setSubmit({ kind: "error", message: "キャッチコピーは 255 文字以内で入力してください" });
       return;
     }
     const parsedDoorsOpen = parseOptionalNonNegativeInt(doorsOpen);
     if (parsedDoorsOpen === "invalid") {
-      setState({ kind: "error", message: "開場は 0 以上の整数で入力してください" });
+      setSubmit({ kind: "error", message: "開場は 0 以上の整数で入力してください" });
       return;
     }
     const parsedEntryDeadline = parseOptionalNonNegativeInt(entryDeadline);
     if (parsedEntryDeadline === "invalid") {
-      setState({ kind: "error", message: "入場締切は 0 以上の整数で入力してください" });
+      setSubmit({ kind: "error", message: "入場締切は 0 以上の整数で入力してください" });
       return;
     }
     const parsedExpectedDuration = parsePositiveInt(expectedDuration);
     if (parsedExpectedDuration === "invalid") {
-      setState({ kind: "error", message: "想定所要時間は 1 以上の整数で入力してください" });
+      setSubmit({ kind: "error", message: "想定所要時間は 1 以上の整数で入力してください" });
       return;
     }
 
@@ -268,39 +155,38 @@ function Form({
       startDate === "" ||
       startTime === "" ||
       pricePerPerson === "" ||
-      maxParticipants === "" ||
-      purchasedByUserId === ""
+      maxParticipants === ""
     ) {
-      setState({ kind: "error", message: "未入力の項目があります" });
+      setSubmit({ kind: "error", message: "チケットに未入力の項目があります" });
       return;
     }
     if (!Number.isFinite(priceNum) || priceNum < 0 || !Number.isInteger(priceNum)) {
-      setState({ kind: "error", message: "金額は 0 以上の整数で入力してください" });
+      setSubmit({ kind: "error", message: "金額は 0 以上の整数で入力してください" });
       return;
     }
     if (!Number.isFinite(maxNum) || maxNum < 1 || !Number.isInteger(maxNum)) {
-      setState({ kind: "error", message: "定員は 1 以上の整数で入力してください" });
+      setSubmit({ kind: "error", message: "定員は 1 以上の整数で入力してください" });
       return;
     }
-    if (maxNum < participantCount) {
-      setState({
-        kind: "error",
-        message: `定員は現在の参加者数（${participantCount} 人）以上で入力してください`,
-      });
+    if (participantIds.length === 0) {
+      setSubmit({ kind: "error", message: "参加者を 1 人以上選択してください" });
+      return;
+    }
+    if (participantIds.length > maxNum) {
+      setSubmit({ kind: "error", message: "選択した参加者の人数が定員を超えています" });
       return;
     }
 
     const startAt = joinJSTDateTime(startDate, startTime);
     const meetingAt = joinJSTDateTime(startDate, meetingTime) ?? "";
     if (startAt === null) {
-      setState({ kind: "error", message: "未入力の項目があります" });
+      setSubmit({ kind: "error", message: "チケットに未入力の項目があります" });
       return;
     }
 
-    setState({ kind: "submitting" });
+    setSubmit({ kind: "submitting" });
     try {
-      await ticketClient.updateTicketWithEvent({
-        ticketId: ticket.id,
+      const res = await ticketClient.createTicketWithEvent({
         eventTitle: trimmedTitle,
         eventUrl: trimmedUrl,
         eventCatchphrase: trimmedCatchphrase,
@@ -312,33 +198,27 @@ function Form({
         meetingPlace: trimmedPlace,
         pricePerPerson: priceNum,
         maxParticipants: maxNum,
-        purchasedByUserId,
+        participantUserIds: participantIds,
       });
-      router.push(`/tickets/${ticket.id}`);
+      const newTicketId = res.ticket?.id ?? "";
+      router.push(newTicketId !== "" ? `/tickets/${newTicketId}` : "/tickets");
     } catch (err) {
       if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
-        redirectToLogin(router, `/tickets/${ticket.id}/edit`);
+        redirectToLogin(router, "/tickets/new");
         return;
       }
       const message =
-        err instanceof Error ? err.message : "更新に失敗しました";
-      setState({ kind: "error", message });
+        err instanceof Error ? err.message : "登録に失敗しました";
+      setSubmit({ kind: "error", message });
     }
   };
 
   return (
     <>
-      <AppHeader brand="謎部" user="" />
+      <AppHeader brand="謎部" user="" isAdmin />
       <PageShell>
         <Section>
-          <SectionTitle>公演と参加チケットを編集</SectionTitle>
-
-          {hasSiblings && (
-            <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              この公演には他に {siblingTicketCount - 1} 件のチケットがあります。公演情報の変更は全チケットに反映されます。
-            </p>
-          )}
-
+          <SectionTitle>公演と参加チケットを登録</SectionTitle>
           <form onSubmit={onSubmit} className="mt-3 space-y-6">
             <fieldset className="space-y-4">
               <legend className="text-xs font-semibold tracking-wider text-zinc-500 uppercase">
@@ -355,6 +235,7 @@ function Form({
                   onChange={(e) => setTitle(e.target.value)}
                   disabled={submitting}
                   className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+                  placeholder="例: 〇〇からの脱出"
                 />
               </Field>
 
@@ -368,6 +249,7 @@ function Form({
                   onChange={(e) => setUrl(e.target.value)}
                   disabled={submitting}
                   className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+                  placeholder="https://..."
                 />
                 <p className="mt-1 text-xs text-zinc-500">
                   <code className="font-mono">realdgame.jp</code> /{" "}
@@ -384,6 +266,7 @@ function Form({
                   onChange={(e) => setCatchphrase(e.target.value)}
                   disabled={submitting}
                   className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+                  placeholder="例: 限られた時間で謎を解け！"
                 />
                 <p className="mt-1 text-xs text-zinc-500">
                   空欄のときは <code className="font-mono">escape.id</code> の og:description から自動取得します。
@@ -402,6 +285,7 @@ function Form({
                     onChange={(e) => setDoorsOpen(e.target.value)}
                     disabled={submitting}
                     className="block h-11 w-32 rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+                    placeholder="例: 15"
                   />
                   <span className="text-sm text-zinc-600">分前</span>
                 </div>
@@ -419,6 +303,7 @@ function Form({
                     onChange={(e) => setEntryDeadline(e.target.value)}
                     disabled={submitting}
                     className="block h-11 w-32 rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+                    placeholder="例: 2"
                   />
                   <span className="text-sm text-zinc-600">分前</span>
                 </div>
@@ -514,6 +399,7 @@ function Form({
                   onChange={(e) => setPricePerPerson(e.target.value)}
                   disabled={submitting}
                   className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+                  placeholder="例: 4000"
                 />
               </Field>
 
@@ -522,53 +408,56 @@ function Form({
                   id="ticket-max-participants"
                   type="number"
                   required
-                  min={Math.max(1, participantCount)}
+                  min={1}
                   step={1}
                   inputMode="numeric"
                   value={maxParticipants}
                   onChange={(e) => setMaxParticipants(e.target.value)}
                   disabled={submitting}
                   className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+                  placeholder="例: 4"
                 />
-                <p className="mt-1 text-xs text-zinc-500">
-                  現在の参加者数: {participantCount} 人
-                </p>
               </Field>
 
-              <Field label="立替者" htmlFor="ticket-purchaser">
-                <select
-                  id="ticket-purchaser"
-                  required
-                  value={purchasedByUserId}
-                  onChange={(e) => setPurchasedByUserId(e.target.value)}
-                  disabled={submitting || participants.length === 0}
-                  className="block h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
-                >
-                  {participants.length === 0 && (
-                    <option value="">参加者がいません</option>
-                  )}
-                  {participants.map((p) => (
-                    <option key={p.userId} value={p.userId}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1 text-xs text-zinc-500">
-                  立替者は参加者の中から選びます。
+              <fieldset className="space-y-2">
+                <legend className="block text-sm font-medium text-zinc-700">
+                  参加者
+                </legend>
+                <p className="text-xs text-zinc-500">
+                  立替者（あなた）を含めても構いません。1 人以上選択してください。
                 </p>
-              </Field>
+                <ul className="divide-y divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 bg-white">
+                  {users.map((u) => {
+                    const checked = participantIds.includes(u.id);
+                    return (
+                      <li key={u.id}>
+                        <label className="flex h-11 cursor-pointer items-center gap-3 px-3 text-base text-zinc-900 hover:bg-zinc-50">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleParticipant(u.id)}
+                            disabled={submitting}
+                            className="size-4 rounded border-zinc-300 text-emerald-700 focus:ring-emerald-600"
+                          />
+                          <span>{u.displayName}</span>
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </fieldset>
             </fieldset>
 
-            {state.kind === "error" && (
-              <p className="text-sm text-amber-800">{state.message}</p>
+            {submit.kind === "error" && (
+              <p className="text-sm text-amber-800">{submit.message}</p>
             )}
 
             <div className="space-y-3 pt-2">
               <PrimaryButton type="submit" disabled={submitting}>
-                {submitting ? "更新中…" : "更新する"}
+                {submitting ? "登録中…" : "登録する"}
               </PrimaryButton>
               <Link
-                href={`/tickets/${ticket.id}`}
+                href="/tickets"
                 className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
               >
                 キャンセル

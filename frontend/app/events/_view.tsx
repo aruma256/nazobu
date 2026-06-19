@@ -110,10 +110,10 @@ export function EventsView() {
         />
         <Section>
           <Link
-            href="/events/new"
+            href="/tickets/new"
             className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 active:bg-emerald-900"
           >
-            公演を登録
+            公演と参加チケットを登録
           </Link>
         </Section>
 
@@ -197,13 +197,7 @@ function EventCard({
           href={`/events/${event.id}/tickets/new`}
           className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-emerald-700 hover:bg-zinc-50"
         >
-          この公演のチケットを登録
-        </Link>
-        <Link
-          href={`/events/${event.id}/edit`}
-          className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
-        >
-          公演情報を編集
+          この公演にチケットを追加
         </Link>
       </div>
     </li>
