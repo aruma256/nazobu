@@ -66,7 +66,7 @@ func (s *myPageService) ListMyUpcomingTickets(ctx context.Context, req *connect.
 	}
 	now := s.now().In(jst)
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, jst)
-	tickets, err := s.queryUpcoming(ctx, user.ID, todayStart)
+	tickets, err := s.queryUpcoming(ctx, user.ID, todayStart, now)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("今後の予定の取得に失敗: %w", err))
 	}
@@ -186,10 +186,11 @@ func (s *myPageService) queryUnsettledReceivables(ctx context.Context, userID st
 	return out, nil
 }
 
-func (s *myPageService) queryUpcoming(ctx context.Context, userID string, todayStart time.Time) ([]*nazobuv1.Ticket, error) {
+func (s *myPageService) queryUpcoming(ctx context.Context, userID string, todayStart, now time.Time) ([]*nazobuv1.Ticket, error) {
 	rows, err := s.q.ListUpcomingTicketsByUserID(ctx, queries.ListUpcomingTicketsByUserIDParams{
 		UserID:     userID,
 		TodayStart: todayStart,
+		Now:        now,
 	})
 	if err != nil {
 		return nil, err

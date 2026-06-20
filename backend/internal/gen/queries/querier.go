@@ -79,8 +79,10 @@ type Querier interface {
 	// 未来分は精算対象として扱わない（公演前に表示しない）。
 	// 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
 	ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnsettledTicketsByUserIDParams) ([]ListUnsettledTicketsByUserIDRow, error)
-	// 当日 0:00（JST）以降に start_at を持つ自分の参加チケット。
-	// 当日中は時刻が過ぎていても表示し続ける（今日の予定として残す）。
+	// 当日 0:00（JST）以降に start_at を持ち、かつ終了予定時刻がまだ過ぎていない自分の参加チケット。
+	// 終了予定時刻は start_at + expected_duration_minutes（どちらも NOT NULL）で算出し、
+	// これを過ぎた公演は「今後の予定」から除外する。
+	// today_start による下限は対象を当日以降に絞り idx_tickets_start_at を効かせるため。
 	// 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
 	ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcomingTicketsByUserIDParams) ([]ListUpcomingTicketsByUserIDRow, error)
 	// 表示用の最低限フィールドだけ返す。avatar_url 等は GetMe 経路（session join）で取る。

@@ -247,12 +247,14 @@ JOIN events  e ON e.id = t.event_id
 JOIN users   pu ON pu.id = t.purchased_by
 WHERE tp.user_id  = ?
   AND t.start_at >= ?
+  AND DATE_ADD(t.start_at, INTERVAL e.expected_duration_minutes MINUTE) >= ?
 ORDER BY t.start_at ASC, t.id ASC
 `
 
 type ListUpcomingTicketsByUserIDParams struct {
 	UserID     string
 	TodayStart time.Time
+	Now        time.Time
 }
 
 type ListUpcomingTicketsByUserIDRow struct {
@@ -272,11 +274,13 @@ type ListUpcomingTicketsByUserIDRow struct {
 	PurchaserName                string
 }
 
-// 当日 0:00（JST）以降に start_at を持つ自分の参加チケット。
-// 当日中は時刻が過ぎていても表示し続ける（今日の予定として残す）。
+// 当日 0:00（JST）以降に start_at を持ち、かつ終了予定時刻がまだ過ぎていない自分の参加チケット。
+// 終了予定時刻は start_at + expected_duration_minutes（どちらも NOT NULL）で算出し、
+// これを過ぎた公演は「今後の予定」から除外する。
+// today_start による下限は対象を当日以降に絞り idx_tickets_start_at を効かせるため。
 // 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
 func (q *Queries) ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcomingTicketsByUserIDParams) ([]ListUpcomingTicketsByUserIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, listUpcomingTicketsByUserID, arg.UserID, arg.TodayStart)
+	rows, err := q.db.QueryContext(ctx, listUpcomingTicketsByUserID, arg.UserID, arg.TodayStart, arg.Now)
 	if err != nil {
 		return nil, err
 	}
