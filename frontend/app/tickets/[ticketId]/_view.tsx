@@ -310,6 +310,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
         />
 
         <GroupShuffleSection
+          ticketId={ticket.id}
           participants={detail.participants}
           myUserId={me.id}
         />
@@ -377,18 +378,59 @@ function jstCompactDateTime(ms: number): string {
   return s.replace(/[-:]/g, "").replace(" ", "T");
 }
 
+// 文字列を 32bit 整数へ畳み込む（FNV-1a）。PRNG のシード生成用。
+function hashSeed(s: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+// mulberry32: 32bit シードから決定的な擬似乱数（0 以上 1 未満）を返す関数を作る。
+// JS の Math.random はシードを指定できないため、再現可能なシャッフル用に自前で用意する。
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// seed から決定的に Fisher–Yates シャッフルした新しい配列を返す。
+function seededShuffle<T>(items: T[], seed: number): T[] {
+  const rand = mulberry32(seed);
+  const a = [...items];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 // 参加者をシャッフルして 1 グループあたり size 人ずつ先頭から詰める。
 // 例: 6 人で size=4 なら A:4 人 / B:2 人、size=3 なら 3/3。永続化はしない。
+//
+// 乱数はチケット UUID + シャッフル回数をシードにした擬似乱数を使う。
+// これにより「1 回目はこの並び、2 回目はこの並び…」が固定され、
+// ページを開き直しても・別の人が見ても同じ結果になる（端末や閲覧者に依存しない）。
 function GroupShuffleSection({
+  ticketId,
   participants,
   myUserId,
 }: {
+  ticketId: string;
   participants: TicketParticipant[];
   myUserId: string;
 }) {
   const total = participants.length;
   const [sizeText, setSizeText] = useState("4");
-  const [groups, setGroups] = useState<TicketParticipant[][] | null>(null);
+  // round=0 は未シャッフル。ボタンを押すたびに 1, 2, ... と増え、これがシードに乗る。
+  const [round, setRound] = useState(0);
+  const [order, setOrder] = useState<TicketParticipant[] | null>(null);
 
   // 参加者の顔ぶれが変わったら古い分け方は破棄する（古い参加者が残らないように）。
   const idsKey = useMemo(
@@ -400,26 +442,37 @@ function GroupShuffleSection({
     [participants],
   );
   useEffect(() => {
-    setGroups(null);
+    setRound(0);
+    setOrder(null);
   }, [idsKey]);
+
+  // サーバの返却順や閲覧者に依存しないよう、userId で正規化した順を入力にする。
+  const canonical = useMemo(
+    () => [...participants].sort((a, b) => a.userId.localeCompare(b.userId)),
+    [participants],
+  );
 
   if (total < 2) return null;
 
   const size = Math.min(Math.max(1, Number.parseInt(sizeText, 10) || 1), total);
   const groupCount = Math.ceil(total / size);
 
+  // 順列（order）は size に依存しないので、人数を変えたら切り直すだけで済む。
+  const groups: TicketParticipant[][] | null =
+    order === null
+      ? null
+      : (() => {
+          const result: TicketParticipant[][] = [];
+          for (let i = 0; i < order.length; i += size) {
+            result.push(order.slice(i, i + size));
+          }
+          return result;
+        })();
+
   const shuffle = () => {
-    const shuffled = [...participants];
-    // Fisher–Yates でその場シャッフル
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    const result: TicketParticipant[][] = [];
-    for (let i = 0; i < shuffled.length; i += size) {
-      result.push(shuffled.slice(i, i + size));
-    }
-    setGroups(result);
+    const next = round + 1;
+    setOrder(seededShuffle(canonical, hashSeed(`${ticketId}:${next}`)));
+    setRound(next);
   };
 
   return (
