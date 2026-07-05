@@ -23,6 +23,8 @@ func TestDayBeforeDeadline(t *testing.T) {
 		{"開演前日の20時", ts(2026, 6, 14, 14, 0), ts(2026, 6, 13, 20, 0)},
 		{"開演当日が月初なら前月末の20時へ繰り下がる", ts(2026, 7, 1, 10, 0), ts(2026, 6, 30, 20, 0)},
 		{"開演時刻に関わらず締切は前日20時固定", ts(2026, 6, 14, 0, 30), ts(2026, 6, 13, 20, 0)},
+		// UTC 6/13 16:00 は JST 6/14 1:00。UTC のまま日付を取ると前日が 6/12 になってしまう。
+		{"UTC 入力でも JST に変換してから前日を計算する", time.Date(2026, 6, 13, 16, 0, 0, 0, time.UTC), ts(2026, 6, 13, 20, 0)},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -69,11 +71,50 @@ func TestFormatDateTimeFull(t *testing.T) {
 	if got := formatDateTimeFull(ts(2026, 6, 14, 14, 0)); got != "6/14(日) 14:00" {
 		t.Errorf("formatDateTimeFull = %q", got)
 	}
+	// UTC 入力は JST に変換して表示する（6/14 5:00 UTC = 6/14 14:00 JST）。
+	if got := formatDateTimeFull(time.Date(2026, 6, 14, 5, 0, 0, 0, time.UTC)); got != "6/14(日) 14:00" {
+		t.Errorf("formatDateTimeFull(UTC) = %q", got)
+	}
 }
 
 func TestFormatTimeOnly(t *testing.T) {
 	if got := formatTimeOnly(ts(2026, 6, 14, 9, 5)); got != "09:05" {
 		t.Errorf("formatTimeOnly = %q", got)
+	}
+	// UTC 入力は JST に変換して表示する。
+	if got := formatTimeOnly(time.Date(2026, 6, 14, 0, 5, 0, 0, time.UTC)); got != "09:05" {
+		t.Errorf("formatTimeOnly(UTC) = %q", got)
+	}
+}
+
+func TestSameDate(t *testing.T) {
+	cases := []struct {
+		name string
+		a, b time.Time
+		want bool
+	}{
+		{"JST 同日", ts(2026, 6, 14, 0, 0), ts(2026, 6, 14, 23, 59), true},
+		{"JST 別日", ts(2026, 6, 13, 23, 59), ts(2026, 6, 14, 0, 0), false},
+		// UTC 6/13 15:00 は JST 6/14 0:00。UTC のまま比較すると別日になってしまう。
+		{"UTC 入力は JST に変換して比較する", time.Date(2026, 6, 13, 15, 0, 0, 0, time.UTC), ts(2026, 6, 14, 23, 0), true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := sameDate(c.a, c.b); got != c.want {
+				t.Errorf("sameDate(%v, %v) = %v, want %v", c.a, c.b, got, c.want)
+			}
+		})
+	}
+}
+
+func TestTicketURL(t *testing.T) {
+	want := "https://nazobu.aruma256.dev/tickets/t1"
+	if got := ticketURL("https://nazobu.aruma256.dev", "t1"); got != want {
+		t.Errorf("ticketURL = %q, want %q", got, want)
+	}
+	// baseURL 末尾の "/" は重複させない。
+	if got := ticketURL("https://nazobu.aruma256.dev/", "t1"); got != want {
+		t.Errorf("ticketURL(末尾スラッシュ) = %q, want %q", got, want)
 	}
 }
 
@@ -137,6 +178,25 @@ func TestFormatDayBefore(t *testing.T) {
 	}
 }
 
+func TestFormatDayBeforeWithoutSubjects(t *testing.T) {
+	// メンション対象がいないチケットはメンション行を出さない（通知連携していないメンバーのみ等）。
+	tickets := []queries.ListTicketsForDayBeforeNotificationRow{
+		{ID: "t1", StartAt: ts(2026, 6, 14, 14, 0), EventTitle: "A"},
+	}
+	content, mentions := formatDayBefore("https://nazobu.aruma256.dev", tickets, map[string][]string{})
+	want := "📅 明日の公演をお知らせするよ！\n" +
+		"\n" +
+		"『A』\n" +
+		"🕖 開演 6/14(日) 14:00\n" +
+		"🔗 <https://nazobu.aruma256.dev/tickets/t1>"
+	if content != want {
+		t.Errorf("content =\n%q\nwant\n%q", content, want)
+	}
+	if len(mentions) != 0 {
+		t.Errorf("mentions = %v, want 空", mentions)
+	}
+}
+
 func TestFormatDayBeforeMentionDedup(t *testing.T) {
 	// 同じ人が同日の 2 公演に参加 → メンション行は各公演に出るが、allowed_mentions は重複排除。
 	tickets := []queries.ListTicketsForDayBeforeNotificationRow{
@@ -163,6 +223,24 @@ func TestFormatMeeting(t *testing.T) {
 		"🎪 開演 14:00\n" +
 		"🔗 <https://nazobu.aruma256.dev/tickets/t1>\n" +
 		"<@111> <@222>"
+	if got != want {
+		t.Errorf("formatMeeting =\n%q\nwant\n%q", got, want)
+	}
+}
+
+func TestFormatMeetingWithoutPlace(t *testing.T) {
+	row := queries.ListTicketsForMeetingNotificationRow{
+		ID: "t1", StartAt: ts(2026, 6, 14, 14, 0), MeetingAt: nt(ts(2026, 6, 14, 13, 30)),
+		EventTitle: "東京ミステリーサーカス",
+	}
+	got := formatMeeting("https://nazobu.aruma256.dev", row, []string{"111"})
+	want := "⏰ 今日の公演リマインド！みんな起きてる？\n" +
+		"\n" +
+		"『東京ミステリーサーカス』\n" +
+		"📍 集合 13:30\n" +
+		"🎪 開演 14:00\n" +
+		"🔗 <https://nazobu.aruma256.dev/tickets/t1>\n" +
+		"<@111>"
 	if got != want {
 		t.Errorf("formatMeeting =\n%q\nwant\n%q", got, want)
 	}
