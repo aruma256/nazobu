@@ -86,7 +86,7 @@ func recreateDatabase(cfg config.DBConfig) error {
 	if err != nil {
 		return fmt.Errorf("sql.Open: %w", err)
 	}
-	defer admin.Close()
+	defer func() { _ = admin.Close() }()
 
 	stmts := fmt.Sprintf(
 		"DROP DATABASE IF EXISTS `%[1]s`; CREATE DATABASE `%[1]s` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci; USE `%[1]s`;",
@@ -119,7 +119,7 @@ func truncateAll(conn *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var tables []string
 	for rows.Next() {
 		var name string
@@ -138,7 +138,7 @@ func truncateAll(conn *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 	if _, err := c.ExecContext(ctx, "SET FOREIGN_KEY_CHECKS = 0"); err != nil {
 		return err
 	}
