@@ -7,6 +7,12 @@
 // スキーマはテストプロセス初回に DROP DATABASE → CREATE DATABASE →
 // schema.sql 全適用で作り直す。テスト用 DB は毎回まっさらな前提なので
 // sqldef の差分適用は使わず、SSOT の schema.sql をそのまま流す。
+//
+// go test ./... はパッケージごとのテストバイナリを並列プロセスで走らせるため、
+// DB 名は TEST_DB_NAME にパッケージ由来の suffix を付けてプロセス間で分離する
+// （共有すると他パッケージの DROP DATABASE / TRUNCATE が直撃する）。
+// このため TEST_DB_USER には CREATE DATABASE できるユーザー（テスト専用
+// MySQL の root）を渡す。
 package testdb
 
 import (
@@ -16,6 +22,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"testing"
 
@@ -69,8 +76,20 @@ func configFromEnv() config.DBConfig {
 		Port:     port,
 		User:     os.Getenv("TEST_DB_USER"),
 		Password: os.Getenv("TEST_DB_PASSWORD"),
-		Name:     os.Getenv("TEST_DB_NAME"),
+		Name:     os.Getenv("TEST_DB_NAME") + "_" + packageSuffix(),
 	}
+}
+
+// packageSuffix はテストバイナリ名（= テスト対象パッケージ名）から DB 名用の
+// suffix を作る。MySQL の識別子として安全なように英数字以外は _ に潰す。
+func packageSuffix() string {
+	name := strings.TrimSuffix(filepath.Base(os.Args[0]), ".test")
+	return strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+			return r
+		}
+		return '_'
+	}, name)
 }
 
 // recreateDatabase は DB を作り直して schema.sql を適用する。

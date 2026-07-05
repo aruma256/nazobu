@@ -220,3 +220,98 @@ func TestIntegrationUpdateTicketMaxParticipantsLowerBound(t *testing.T) {
 		t.Errorf("code = %v, want %v", got, connect.CodeFailedPrecondition)
 	}
 }
+
+func TestIntegrationTicketParticipantManagement(t *testing.T) {
+	db := testdb.Open(t)
+	ctx := context.Background()
+	svc := newTicketService(db)
+
+	adminID := createTestUser(t, db, "admin-user", auth.RoleAdmin)
+	memberID := createTestUser(t, db, "member-user", auth.RoleMember)
+	otherID := createTestUser(t, db, "other-user", auth.RoleMember)
+	eventID := createTestEvent(t, db, "テスト公演")
+
+	// max 2 のチケットを admin だけで作る（空きは 1）
+	createReq := connect.NewRequest(&nazobuv1.CreateTicketRequest{
+		EventId:            eventID,
+		StartAt:            "2026-08-01T14:00:00+09:00",
+		PricePerPerson:     2000,
+		MaxParticipants:    2,
+		ParticipantUserIds: []string{adminID},
+	})
+	setSessionCookie(t, db, createReq, adminID)
+	createRes, err := svc.CreateTicket(ctx, createReq)
+	if err != nil {
+		t.Fatalf("CreateTicket に失敗: %v", err)
+	}
+	ticketID := createRes.Msg.Ticket.Id
+
+	addParticipants := func(t *testing.T, userIDs ...string) error {
+		t.Helper()
+		req := connect.NewRequest(&nazobuv1.AddTicketParticipantsRequest{
+			TicketId: ticketID,
+			UserIds:  userIDs,
+		})
+		setSessionCookie(t, db, req, adminID)
+		_, err := svc.AddTicketParticipants(ctx, req)
+		return err
+	}
+	participantCount := func(t *testing.T) int {
+		t.Helper()
+		req := connect.NewRequest(&nazobuv1.GetTicketRequest{TicketId: ticketID})
+		setSessionCookie(t, db, req, adminID)
+		res, err := svc.GetTicket(ctx, req)
+		if err != nil {
+			t.Fatalf("GetTicket に失敗: %v", err)
+		}
+		return len(res.Msg.Participants)
+	}
+
+	// 空きがあるうちは追加できる
+	if err := addParticipants(t, memberID); err != nil {
+		t.Fatalf("参加者追加に失敗: %v", err)
+	}
+	if got := participantCount(t); got != 2 {
+		t.Fatalf("参加者数 = %d, want 2", got)
+	}
+
+	// 満席での追加は DB の現在数を数えた上で弾かれる
+	if err := addParticipants(t, otherID); connectCode(t, err) != connect.CodeFailedPrecondition {
+		t.Errorf("満席時の追加 code = %v, want %v", connectCode(t, err), connect.CodeFailedPrecondition)
+	}
+
+	// 参加済みユーザの再追加は冪等（満席でもエラーにならず、数も増えない）
+	if err := addParticipants(t, memberID); err != nil {
+		t.Fatalf("参加済みユーザの再追加がエラー: %v", err)
+	}
+	if got := participantCount(t); got != 2 {
+		t.Errorf("再追加後の参加者数 = %d, want 2", got)
+	}
+
+	// 立替者本人は削除できない
+	removeReq := connect.NewRequest(&nazobuv1.RemoveTicketParticipantRequest{
+		TicketId: ticketID,
+		UserId:   adminID,
+	})
+	setSessionCookie(t, db, removeReq, adminID)
+	_, err = svc.RemoveTicketParticipant(ctx, removeReq)
+	if got := connectCode(t, err); got != connect.CodeFailedPrecondition {
+		t.Errorf("立替者削除 code = %v, want %v", got, connect.CodeFailedPrecondition)
+	}
+
+	// 立替者以外は削除でき、空いた枠に改めて追加できる
+	removeReq = connect.NewRequest(&nazobuv1.RemoveTicketParticipantRequest{
+		TicketId: ticketID,
+		UserId:   memberID,
+	})
+	setSessionCookie(t, db, removeReq, adminID)
+	if _, err := svc.RemoveTicketParticipant(ctx, removeReq); err != nil {
+		t.Fatalf("参加者削除に失敗: %v", err)
+	}
+	if err := addParticipants(t, otherID); err != nil {
+		t.Fatalf("削除後の追加に失敗: %v", err)
+	}
+	if got := participantCount(t); got != 2 {
+		t.Errorf("入れ替え後の参加者数 = %d, want 2", got)
+	}
+}
