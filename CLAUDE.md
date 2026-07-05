@@ -22,6 +22,7 @@
 - 認証: DB 保存セッション（Cookie + token hash）+ OIDC
 - ローカル開発: docker compose（backend は起動時に sqldef で自動マイグレーション）
 - RPC: proto は `proto/nazobu/v1/*.proto` が SSOT。`buf generate` で `backend/internal/gen/` と `frontend/app/gen/` を生成し、生成物もコミットする（compose では codegen を回さない）
+- 統合テスト: 実 MySQL を使う（ローカルは compose の `mysql-test`、CI は workflow の service container）。接続先は `TEST_DB_*` 環境変数で渡し、未設定なら skip してユニットテストのみ走る。ヘルパーは `backend/internal/testdb`（初回に `schema.sql` を全適用、テストごとに全テーブル TRUNCATE）
 
 ## ポリシー
 

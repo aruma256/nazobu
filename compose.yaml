@@ -20,6 +20,32 @@ services:
       retries: 30
       start_period: 30s
 
+  # 統合テスト専用の MySQL。volume を持たない tmpfs 起動で、コンテナを落とせばデータごと消える。
+  # 通常の `docker compose up` では起動しない（--profile test 指定時のみ）。
+  # クレデンシャルはテスト専用の固定値で、開発 DB (mysql) とはコンテナも認証情報も別。
+  mysql-test:
+    image: mirror.gcr.io/mysql:8
+    profiles:
+      - test
+    command: >-
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_0900_ai_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: test
+      MYSQL_DATABASE: nazobu_test
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+    tmpfs:
+      - /var/lib/mysql
+    networks:
+      - db
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-ptest"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
   backend:
     image: mirror.gcr.io/golang:1.26
     working_dir: /app
@@ -41,6 +67,12 @@ services:
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
       DISCORD_REDIRECT_URL: ${DISCORD_REDIRECT_URL:-http://localhost:3000/auth/discord/callback}
       DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
+      # 統合テスト用 (mysql-test)。TEST_DB_HOST が空だと統合テストは skip される
+      TEST_DB_HOST: mysql-test
+      TEST_DB_PORT: "3306"
+      TEST_DB_USER: test
+      TEST_DB_PASSWORD: test
+      TEST_DB_NAME: nazobu_test
     ports:
       - "8080:8080"
     depends_on:

@@ -12,6 +12,31 @@ jobs:
   go-checks:
     name: build / vet / test
     runs-on: ubuntu-latest
+    # 統合テスト用の MySQL。ジョブ終了とともに破棄される使い捨て。
+    # MySQL 8 の既定 charset は utf8mb4 / utf8mb4_0900_ai_ci なので compose のような
+    # command 上書きは不要（service container では command を指定できない）。
+    services:
+      mysql-test:
+        image: mirror.gcr.io/mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: test
+          MYSQL_DATABASE: nazobu_test
+          MYSQL_USER: test
+          MYSQL_PASSWORD: test
+        ports:
+          - "3306:3306"
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost -uroot -ptest"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 30
+    env:
+      # testdb パッケージが参照する接続先。compose の mysql-test と同じ固定クレデンシャル。
+      TEST_DB_HOST: 127.0.0.1
+      TEST_DB_PORT: "3306"
+      TEST_DB_USER: test
+      TEST_DB_PASSWORD: test
+      TEST_DB_NAME: nazobu_test
     defaults:
       run:
         working-directory: backend
