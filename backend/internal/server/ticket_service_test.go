@@ -28,6 +28,64 @@ func TestCanEditTicket(t *testing.T) {
 	}
 }
 
+func TestValidateTicketCapacityInput(t *testing.T) {
+	cases := []struct {
+		name              string
+		maxParticipants   int32
+		unregisteredCount int32
+		wantCode          connect.Code // 0 ならエラーなし
+	}{
+		{"最小の有効値", 1, 0, 0},
+		{"未登録の同行者ありも有効", 4, 3, 0},
+		{"max_participants が 0", 0, 0, connect.CodeInvalidArgument},
+		{"max_participants が負", -1, 0, connect.CodeInvalidArgument},
+		{"未登録の同行者が負", 2, -1, connect.CodeInvalidArgument},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := validateTicketCapacityInput(c.maxParticipants, c.unregisteredCount)
+			if c.wantCode == 0 {
+				if err != nil {
+					t.Errorf("err = %v, want nil", err)
+				}
+				return
+			}
+			var cerr *connect.Error
+			if !errors.As(err, &cerr) {
+				t.Fatalf("connect.Error を期待したが %v (%T)", err, err)
+			}
+			if cerr.Code() != c.wantCode {
+				t.Errorf("code = %v, want %v", cerr.Code(), c.wantCode)
+			}
+		})
+	}
+}
+
+func TestTicketCapacityExceeded(t *testing.T) {
+	cases := []struct {
+		name              string
+		registeredCount   int64
+		unregisteredCount int32
+		maxParticipants   int32
+		want              bool
+	}{
+		{"定員ちょうどは超過でない", 2, 2, 4, false},
+		{"1 人でも超えたら超過", 3, 2, 4, true},
+		{"未登録の同行者が枠を消費する", 1, 4, 4, true},
+		{"未登録 0 人なら登録ユーザーだけで判定", 4, 0, 4, false},
+		{"空きあり", 1, 1, 4, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := ticketCapacityExceeded(c.registeredCount, c.unregisteredCount, c.maxParticipants)
+			if got != c.want {
+				t.Errorf("ticketCapacityExceeded(%d, %d, %d) = %v, want %v",
+					c.registeredCount, c.unregisteredCount, c.maxParticipants, got, c.want)
+			}
+		})
+	}
+}
+
 func TestFormatJSTDateTime(t *testing.T) {
 	// UTC 2026-05-04T00:00:00Z は JST 2026-05-04T09:00:00+09:00
 	in := time.Date(2026, 5, 4, 0, 0, 0, 0, time.UTC)

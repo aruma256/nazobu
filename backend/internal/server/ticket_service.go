@@ -169,16 +169,13 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 	if price < 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("price_per_person は 0 以上"))
 	}
-	if maxParticipants < 1 {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("max_participants は 1 以上"))
-	}
-	if unregisteredCount < 0 {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("unregistered_participants_count は 0 以上"))
+	if err := validateTicketCapacityInput(maxParticipants, unregisteredCount); err != nil {
+		return nil, err
 	}
 	if len(participants) == 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("participant_user_ids は 1 件以上"))
 	}
-	if int32(len(participants))+unregisteredCount > maxParticipants {
+	if ticketCapacityExceeded(int64(len(participants)), unregisteredCount, maxParticipants) {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("参加者数（未登録の同行者を含む）が max_participants を超えている"))
 	}
 
@@ -298,11 +295,8 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 	if price < 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("price_per_person は 0 以上"))
 	}
-	if maxParticipants < 1 {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("max_participants は 1 以上"))
-	}
-	if unregisteredCount < 0 {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("unregistered_participants_count は 0 以上"))
+	if err := validateTicketCapacityInput(maxParticipants, unregisteredCount); err != nil {
+		return nil, err
 	}
 	if purchasedBy == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("purchased_by_user_id は必須"))
@@ -325,7 +319,7 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者数の取得に失敗: %w", err))
 	}
-	if int64(maxParticipants) < participantCount+int64(unregisteredCount) {
+	if ticketCapacityExceeded(participantCount, unregisteredCount, maxParticipants) {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("max_participants は現在の参加者数（未登録の同行者を含む）以上"))
 	}
 
@@ -411,16 +405,13 @@ func (s *ticketService) CreateTicketWithEvent(ctx context.Context, req *connect.
 	if price < 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("price_per_person は 0 以上"))
 	}
-	if maxParticipants < 1 {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("max_participants は 1 以上"))
-	}
-	if unregisteredCount < 0 {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("unregistered_participants_count は 0 以上"))
+	if err := validateTicketCapacityInput(maxParticipants, unregisteredCount); err != nil {
+		return nil, err
 	}
 	if len(participants) == 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("participant_user_ids は 1 件以上"))
 	}
-	if int32(len(participants))+unregisteredCount > maxParticipants {
+	if ticketCapacityExceeded(int64(len(participants)), unregisteredCount, maxParticipants) {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("参加者数（未登録の同行者を含む）が max_participants を超えている"))
 	}
 
@@ -536,11 +527,8 @@ func (s *ticketService) UpdateTicketWithEvent(ctx context.Context, req *connect.
 	if price < 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("price_per_person は 0 以上"))
 	}
-	if maxParticipants < 1 {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("max_participants は 1 以上"))
-	}
-	if unregisteredCount < 0 {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("unregistered_participants_count は 0 以上"))
+	if err := validateTicketCapacityInput(maxParticipants, unregisteredCount); err != nil {
+		return nil, err
 	}
 	if purchasedBy == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("purchased_by_user_id は必須"))
@@ -561,7 +549,7 @@ func (s *ticketService) UpdateTicketWithEvent(ctx context.Context, req *connect.
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者数の取得に失敗: %w", err))
 	}
-	if int64(maxParticipants) < participantCount+int64(unregisteredCount) {
+	if ticketCapacityExceeded(participantCount, unregisteredCount, maxParticipants) {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("max_participants は現在の参加者数（未登録の同行者を含む）以上"))
 	}
 
@@ -695,7 +683,7 @@ func (s *ticketService) AddTicketParticipants(ctx context.Context, req *connect.
 			// 既に参加済み。冪等に扱う。
 			continue
 		}
-		if currentCount+int64(existing.UnregisteredParticipantsCount) >= int64(existing.MaxParticipants) {
+		if ticketCapacityExceeded(currentCount+1, existing.UnregisteredParticipantsCount, existing.MaxParticipants) {
 			return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("max_participants を超えるため追加できない"))
 		}
 		if err := qtx.CreateTicketParticipant(ctx, queries.CreateTicketParticipantParams{
@@ -813,6 +801,25 @@ func (s *ticketService) UpdateTicketParticipantSettlement(ctx context.Context, r
 // canEditTicket は admin もしくは立替者本人なら編集可とする。
 func canEditTicket(user *auth.User, purchasedBy string) bool {
 	return user.Role == auth.RoleAdmin || user.ID == purchasedBy
+}
+
+// validateTicketCapacityInput は定員関連のリクエスト値そのものの下限を検証する。
+// ticket の作成・更新の全 RPC で共通。
+func validateTicketCapacityInput(maxParticipants, unregisteredCount int32) error {
+	if maxParticipants < 1 {
+		return connect.NewError(connect.CodeInvalidArgument, errors.New("max_participants は 1 以上"))
+	}
+	if unregisteredCount < 0 {
+		return connect.NewError(connect.CodeInvalidArgument, errors.New("unregistered_participants_count は 0 以上"))
+	}
+	return nil
+}
+
+// ticketCapacityExceeded は登録ユーザーの参加者数と未登録の同行者の合計が
+// max_participants を超えるかどうかを判定する。未登録の同行者も定員の枠を消費する。
+// registeredCount は DB の COUNT(int64) をそのまま受けられるよう int64 で取る。
+func ticketCapacityExceeded(registeredCount int64, unregisteredCount, maxParticipants int32) bool {
+	return registeredCount+int64(unregisteredCount) > int64(maxParticipants)
 }
 
 // formatJSTDateTime は DATETIME カラムの time.Time を JST RFC3339 文字列に整形する。
