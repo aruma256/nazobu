@@ -245,11 +245,19 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
               <dt>定員</dt>
               <dd>
                 <Mono>
-                  {detail.participants.length}
+                  {detail.participants.length +
+                    ticket.unregisteredParticipantsCount}
                   <span className="text-zinc-500"> / </span>
                   {ticket.maxParticipants}
                 </Mono>
                 <span className="text-zinc-500"> 人</span>
+                {ticket.unregisteredParticipantsCount > 0 && (
+                  <span className="ml-1 text-zinc-500">
+                    （未登録{" "}
+                    <Mono>{ticket.unregisteredParticipantsCount}</Mono>{" "}
+                    人を含む）
+                  </span>
+                )}
               </dd>
             </dl>
 
@@ -278,6 +286,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
           ticketId={ticket.id}
           participants={detail.participants}
           maxParticipants={ticket.maxParticipants}
+          unregisteredCount={ticket.unregisteredParticipantsCount}
           allUsers={users}
           myUserId={me.id}
           canEdit={canEdit}
@@ -493,6 +502,7 @@ function GroupShuffleSection({
 function ParticipantsSection({
   participants,
   maxParticipants,
+  unregisteredCount,
   allUsers,
   myUserId,
   canEdit,
@@ -504,6 +514,7 @@ function ParticipantsSection({
   ticketId: string;
   participants: TicketParticipant[];
   maxParticipants: number;
+  unregisteredCount: number;
   allUsers: User[];
   myUserId: string;
   canEdit: boolean;
@@ -544,11 +555,14 @@ function ParticipantsSection({
     await onAdd(ids);
   };
 
+  // 未登録の同行者も定員の枠を消費する。
+  const occupiedCount = participants.length + unregisteredCount;
+
   return (
     <Section>
-      <SectionTitle count={participants.length}>参加者</SectionTitle>
+      <SectionTitle count={occupiedCount}>参加者</SectionTitle>
 
-      {participants.length === 0 ? (
+      {occupiedCount === 0 ? (
         <p className="mt-3 text-sm text-zinc-500">参加者がいません。</p>
       ) : (
         <ul className="mt-3 divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
@@ -593,6 +607,14 @@ function ParticipantsSection({
               )}
             </li>
           ))}
+          {unregisteredCount > 0 && (
+            <li className="flex items-center gap-3 px-4 py-3">
+              <span className="text-sm text-zinc-500">
+                未登録の同行者 <Mono>{unregisteredCount}</Mono> 人
+              </span>
+              <Badge tone="muted">精算対象外</Badge>
+            </li>
+          )}
         </ul>
       )}
 
@@ -601,14 +623,14 @@ function ParticipantsSection({
           <div className="flex items-baseline gap-3 px-4 pt-4 pb-2">
             <span className="text-sm font-medium text-zinc-700">参加者を追加</span>
             <span className="text-xs text-zinc-500">
-              残り {Math.max(0, maxParticipants - participants.length)} 人
+              残り {Math.max(0, maxParticipants - occupiedCount)} 人
             </span>
           </div>
           {candidates.length === 0 ? (
             <p className="px-4 pb-4 text-xs text-zinc-500">
               追加できるユーザーがいません。
             </p>
-          ) : participants.length >= maxParticipants ? (
+          ) : occupiedCount >= maxParticipants ? (
             <p className="px-4 pb-4 text-xs text-amber-800">
               定員に達しているため追加できません。
             </p>
@@ -635,8 +657,7 @@ function ParticipantsSection({
                 })}
               </ul>
               <div className="px-4 py-3">
-                {participants.length + selectedToAdd.length >
-                  maxParticipants && (
+                {occupiedCount + selectedToAdd.length > maxParticipants && (
                   <p className="mb-2 text-xs text-amber-800">
                     選択中の人数が定員を超えています。
                   </p>
@@ -647,8 +668,7 @@ function ParticipantsSection({
                   disabled={
                     mutating ||
                     selectedToAdd.length === 0 ||
-                    participants.length + selectedToAdd.length >
-                      maxParticipants
+                    occupiedCount + selectedToAdd.length > maxParticipants
                   }
                   className="inline-flex h-10 items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 active:bg-emerald-900 disabled:opacity-50"
                 >

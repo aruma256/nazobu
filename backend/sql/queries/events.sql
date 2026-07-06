@@ -34,6 +34,7 @@ SELECT COUNT(*) FROM events WHERE id = ?;
 -- 公演一覧画面で各 event に紐づく ticket をまとめて引く。
 -- 呼び出し側で event_id ごとに in-memory で振り分ける（N+1 回避）。
 SELECT t.id, t.event_id, t.start_at, t.price_per_person,
+       t.unregistered_participants_count,
        pu.display_name AS purchaser_name
 FROM tickets t
 JOIN users pu ON pu.id = t.purchased_by

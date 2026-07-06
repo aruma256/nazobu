@@ -355,11 +355,12 @@ func (s *eventService) attachTickets(ctx context.Context, events []*nazobuv1.Eve
 	ticketIDs := make([]string, 0, len(ticketRows))
 	for _, r := range ticketRows {
 		t := &nazobuv1.EventTicket{
-			Id:               r.ID,
-			StartAt:          formatJSTDateTime(r.StartAt),
-			PricePerPerson:   r.PricePerPerson,
-			PurchaserName:    r.PurchaserName,
-			ParticipantNames: []string{},
+			Id:                            r.ID,
+			StartAt:                       formatJSTDateTime(r.StartAt),
+			PricePerPerson:                r.PricePerPerson,
+			PurchaserName:                 r.PurchaserName,
+			UnregisteredParticipantsCount: r.UnregisteredParticipantsCount,
+			ParticipantNames:              []string{},
 		}
 		if ev, ok := indexByEvent[r.EventID]; ok {
 			ev.Tickets = append(ev.Tickets, t)

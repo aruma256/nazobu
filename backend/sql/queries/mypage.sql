@@ -7,6 +7,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        e.expected_duration_minutes AS event_expected_duration_minutes,
        e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
+       t.unregistered_participants_count,
        t.meeting_place,
        pu.display_name AS purchaser_name
 FROM ticket_participants tp
@@ -28,6 +29,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        e.expected_duration_minutes AS event_expected_duration_minutes,
        e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
+       t.unregistered_participants_count,
        t.meeting_place,
        pu.display_name AS purchaser_name
 FROM tickets t
@@ -53,6 +55,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        e.expected_duration_minutes AS event_expected_duration_minutes,
        e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
+       t.unregistered_participants_count,
        t.meeting_place,
        pu.display_name AS purchaser_name
 FROM ticket_participants tp

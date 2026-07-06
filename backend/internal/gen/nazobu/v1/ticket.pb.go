@@ -131,8 +131,11 @@ type Ticket struct {
 	EventCatchphrase string `protobuf:"bytes,15,opt,name=event_catchphrase,json=eventCatchphrase,proto3" json:"event_catchphrase,omitempty"`
 	// 開場時間が開演時刻（start_at）の何分前か。0 以上。未設定なら未指定。
 	EventDoorsOpenMinutesBefore *int32 `protobuf:"varint,16,opt,name=event_doors_open_minutes_before,json=eventDoorsOpenMinutesBefore,proto3,oneof" json:"event_doors_open_minutes_before,omitempty"`
-	unknownFields               protoimpl.UnknownFields
-	sizeCache                   protoimpl.SizeCache
+	// 本サービスに未登録の同行者の人数。0 以上。
+	// 登録ユーザーの参加者数と合わせて max_participants の枠を消費する。
+	UnregisteredParticipantsCount int32 `protobuf:"varint,17,opt,name=unregistered_participants_count,json=unregisteredParticipantsCount,proto3" json:"unregistered_participants_count,omitempty"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *Ticket) Reset() {
@@ -266,6 +269,13 @@ func (x *Ticket) GetEventCatchphrase() string {
 func (x *Ticket) GetEventDoorsOpenMinutesBefore() int32 {
 	if x != nil && x.EventDoorsOpenMinutesBefore != nil {
 		return *x.EventDoorsOpenMinutesBefore
+	}
+	return 0
+}
+
+func (x *Ticket) GetUnregisteredParticipantsCount() int32 {
+	if x != nil {
+		return x.UnregisteredParticipantsCount
 	}
 	return 0
 }
@@ -462,10 +472,12 @@ type CreateTicketRequest struct {
 	// 開演日時（RFC3339, JST）。
 	StartAt string `protobuf:"bytes,7,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
 	// このチケット 1 枚で参加できる最大人数。新規登録では必須・1 以上。
-	// participant_user_ids の件数以上である必要がある。
+	// participant_user_ids の件数 + unregistered_participants_count 以上である必要がある。
 	MaxParticipants int32 `protobuf:"varint,8,opt,name=max_participants,json=maxParticipants,proto3" json:"max_participants,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// 本サービスに未登録の同行者の人数。0 以上（省略時 0）。
+	UnregisteredParticipantsCount int32 `protobuf:"varint,9,opt,name=unregistered_participants_count,json=unregisteredParticipantsCount,proto3" json:"unregistered_participants_count,omitempty"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *CreateTicketRequest) Reset() {
@@ -547,6 +559,13 @@ func (x *CreateTicketRequest) GetMaxParticipants() int32 {
 	return 0
 }
 
+func (x *CreateTicketRequest) GetUnregisteredParticipantsCount() int32 {
+	if x != nil {
+		return x.UnregisteredParticipantsCount
+	}
+	return 0
+}
+
 type CreateTicketResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ticket        *Ticket                `protobuf:"bytes,1,opt,name=ticket,proto3" json:"ticket,omitempty"`
@@ -604,10 +623,13 @@ type UpdateTicketRequest struct {
 	StartAt string `protobuf:"bytes,6,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
 	// 立替者の user id。ticket の参加者のいずれかを指定する。
 	PurchasedByUserId string `protobuf:"bytes,7,opt,name=purchased_by_user_id,json=purchasedByUserId,proto3" json:"purchased_by_user_id,omitempty"`
-	// このチケット 1 枚で参加できる最大人数。1 以上、現在の参加者数以上である必要がある。
+	// このチケット 1 枚で参加できる最大人数。1 以上、
+	// 現在の参加者数 + unregistered_participants_count 以上である必要がある。
 	MaxParticipants int32 `protobuf:"varint,8,opt,name=max_participants,json=maxParticipants,proto3" json:"max_participants,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// 本サービスに未登録の同行者の人数。0 以上（省略時 0）。
+	UnregisteredParticipantsCount int32 `protobuf:"varint,9,opt,name=unregistered_participants_count,json=unregisteredParticipantsCount,proto3" json:"unregistered_participants_count,omitempty"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *UpdateTicketRequest) Reset() {
@@ -689,6 +711,13 @@ func (x *UpdateTicketRequest) GetMaxParticipants() int32 {
 	return 0
 }
 
+func (x *UpdateTicketRequest) GetUnregisteredParticipantsCount() int32 {
+	if x != nil {
+		return x.UnregisteredParticipantsCount
+	}
+	return 0
+}
+
 type UpdateTicketResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ticket        *Ticket                `protobuf:"bytes,1,opt,name=ticket,proto3" json:"ticket,omitempty"`
@@ -757,10 +786,13 @@ type CreateTicketWithEventRequest struct {
 	MeetingPlace string `protobuf:"bytes,10,opt,name=meeting_place,json=meetingPlace,proto3" json:"meeting_place,omitempty"`
 	// 参加者（割り勘元）の user id。1 件以上。
 	ParticipantUserIds []string `protobuf:"bytes,11,rep,name=participant_user_ids,json=participantUserIds,proto3" json:"participant_user_ids,omitempty"`
-	// このチケット 1 枚で参加できる最大人数。1 以上、participant_user_ids の件数以上。
+	// このチケット 1 枚で参加できる最大人数。1 以上、
+	// participant_user_ids の件数 + unregistered_participants_count 以上。
 	MaxParticipants int32 `protobuf:"varint,12,opt,name=max_participants,json=maxParticipants,proto3" json:"max_participants,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// 本サービスに未登録の同行者の人数。0 以上（省略時 0）。
+	UnregisteredParticipantsCount int32 `protobuf:"varint,13,opt,name=unregistered_participants_count,json=unregisteredParticipantsCount,proto3" json:"unregistered_participants_count,omitempty"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *CreateTicketWithEventRequest) Reset() {
@@ -877,6 +909,13 @@ func (x *CreateTicketWithEventRequest) GetMaxParticipants() int32 {
 	return 0
 }
 
+func (x *CreateTicketWithEventRequest) GetUnregisteredParticipantsCount() int32 {
+	if x != nil {
+		return x.UnregisteredParticipantsCount
+	}
+	return 0
+}
+
 type CreateTicketWithEventResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ticket        *Ticket                `protobuf:"bytes,1,opt,name=ticket,proto3" json:"ticket,omitempty"`
@@ -938,10 +977,12 @@ type UpdateTicketWithEventRequest struct {
 	StartAt        string `protobuf:"bytes,11,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
 	// 立替者の user id。ticket の参加者のいずれかを指定する。
 	PurchasedByUserId string `protobuf:"bytes,12,opt,name=purchased_by_user_id,json=purchasedByUserId,proto3" json:"purchased_by_user_id,omitempty"`
-	// 1 以上、現在の参加者数以上である必要がある。
+	// 1 以上、現在の参加者数 + unregistered_participants_count 以上である必要がある。
 	MaxParticipants int32 `protobuf:"varint,13,opt,name=max_participants,json=maxParticipants,proto3" json:"max_participants,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// 本サービスに未登録の同行者の人数。0 以上（省略時 0）。
+	UnregisteredParticipantsCount int32 `protobuf:"varint,14,opt,name=unregistered_participants_count,json=unregisteredParticipantsCount,proto3" json:"unregistered_participants_count,omitempty"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *UpdateTicketWithEventRequest) Reset() {
@@ -1061,6 +1102,13 @@ func (x *UpdateTicketWithEventRequest) GetPurchasedByUserId() string {
 func (x *UpdateTicketWithEventRequest) GetMaxParticipants() int32 {
 	if x != nil {
 		return x.MaxParticipants
+	}
+	return 0
+}
+
+func (x *UpdateTicketWithEventRequest) GetUnregisteredParticipantsCount() int32 {
+	if x != nil {
+		return x.UnregisteredParticipantsCount
 	}
 	return 0
 }
@@ -1390,7 +1438,7 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\x16nazobu/v1/ticket.proto\x12\tnazobu.v1\"\x14\n" +
 	"\x12ListTicketsRequest\"B\n" +
 	"\x13ListTicketsResponse\x12+\n" +
-	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"\x8a\x05\n" +
+	"\atickets\x18\x01 \x03(\v2\x11.nazobu.v1.TicketR\atickets\"\xd2\x05\n" +
 	"\x06Ticket\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\bevent_id\x18\x02 \x01(\tR\aeventId\x12\x1f\n" +
@@ -1409,7 +1457,8 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\x0fevent_image_url\x18\r \x01(\tR\reventImageUrl\x12E\n" +
 	"\x1fevent_expected_duration_minutes\x18\x0e \x01(\x05R\x1ceventExpectedDurationMinutes\x12+\n" +
 	"\x11event_catchphrase\x18\x0f \x01(\tR\x10eventCatchphrase\x12I\n" +
-	"\x1fevent_doors_open_minutes_before\x18\x10 \x01(\x05H\x00R\x1beventDoorsOpenMinutesBefore\x88\x01\x01B\"\n" +
+	"\x1fevent_doors_open_minutes_before\x18\x10 \x01(\x05H\x00R\x1beventDoorsOpenMinutesBefore\x88\x01\x01\x12F\n" +
+	"\x1funregistered_participants_count\x18\x11 \x01(\x05R\x1dunregisteredParticipantsCountB\"\n" +
 	" _event_doors_open_minutes_beforeJ\x04\b\x04\x10\x05\"/\n" +
 	"\x10GetTicketRequest\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\"\x9b\x01\n" +
@@ -1421,7 +1470,7 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
 	"\asettled\x18\x03 \x01(\bR\asettled\x12!\n" +
-	"\fis_purchaser\x18\x04 \x01(\bR\visPurchaser\"\x9c\x02\n" +
+	"\fis_purchaser\x18\x04 \x01(\bR\visPurchaser\"\xe4\x02\n" +
 	"\x13CreateTicketRequest\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12(\n" +
 	"\x10price_per_person\x18\x03 \x01(\x05R\x0epricePerPerson\x12\x1d\n" +
@@ -1430,9 +1479,10 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\rmeeting_place\x18\x05 \x01(\tR\fmeetingPlace\x120\n" +
 	"\x14participant_user_ids\x18\x06 \x03(\tR\x12participantUserIds\x12\x19\n" +
 	"\bstart_at\x18\a \x01(\tR\astartAt\x12)\n" +
-	"\x10max_participants\x18\b \x01(\x05R\x0fmaxParticipantsJ\x04\b\x02\x10\x03\"A\n" +
+	"\x10max_participants\x18\b \x01(\x05R\x0fmaxParticipants\x12F\n" +
+	"\x1funregistered_participants_count\x18\t \x01(\x05R\x1dunregisteredParticipantsCountJ\x04\b\x02\x10\x03\"A\n" +
 	"\x14CreateTicketResponse\x12)\n" +
-	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket\"\x9d\x02\n" +
+	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket\"\xe5\x02\n" +
 	"\x13UpdateTicketRequest\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12(\n" +
 	"\x10price_per_person\x18\x03 \x01(\x05R\x0epricePerPerson\x12\x1d\n" +
@@ -1441,9 +1491,10 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\rmeeting_place\x18\x05 \x01(\tR\fmeetingPlace\x12\x19\n" +
 	"\bstart_at\x18\x06 \x01(\tR\astartAt\x12/\n" +
 	"\x14purchased_by_user_id\x18\a \x01(\tR\x11purchasedByUserId\x12)\n" +
-	"\x10max_participants\x18\b \x01(\x05R\x0fmaxParticipantsJ\x04\b\x02\x10\x03\"A\n" +
+	"\x10max_participants\x18\b \x01(\x05R\x0fmaxParticipants\x12F\n" +
+	"\x1funregistered_participants_count\x18\t \x01(\x05R\x1dunregisteredParticipantsCountJ\x04\b\x02\x10\x03\"A\n" +
 	"\x14UpdateTicketResponse\x12)\n" +
-	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket\"\xa0\x05\n" +
+	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket\"\xe8\x05\n" +
 	"\x1cCreateTicketWithEventRequest\x12\x1f\n" +
 	"\vevent_title\x18\x01 \x01(\tR\n" +
 	"eventTitle\x12\x1b\n" +
@@ -1459,11 +1510,12 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\rmeeting_place\x18\n" +
 	" \x01(\tR\fmeetingPlace\x120\n" +
 	"\x14participant_user_ids\x18\v \x03(\tR\x12participantUserIds\x12)\n" +
-	"\x10max_participants\x18\f \x01(\x05R\x0fmaxParticipantsB\"\n" +
+	"\x10max_participants\x18\f \x01(\x05R\x0fmaxParticipants\x12F\n" +
+	"\x1funregistered_participants_count\x18\r \x01(\x05R\x1dunregisteredParticipantsCountB\"\n" +
 	" _event_doors_open_minutes_beforeB&\n" +
 	"$_event_entry_deadline_minutes_before\"J\n" +
 	"\x1dCreateTicketWithEventResponse\x12)\n" +
-	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket\"\xbc\x05\n" +
+	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket\"\x84\x06\n" +
 	"\x1cUpdateTicketWithEventRequest\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x1f\n" +
 	"\vevent_title\x18\x02 \x01(\tR\n" +
@@ -1480,7 +1532,8 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	" \x01(\tR\fmeetingPlace\x12\x19\n" +
 	"\bstart_at\x18\v \x01(\tR\astartAt\x12/\n" +
 	"\x14purchased_by_user_id\x18\f \x01(\tR\x11purchasedByUserId\x12)\n" +
-	"\x10max_participants\x18\r \x01(\x05R\x0fmaxParticipantsB\"\n" +
+	"\x10max_participants\x18\r \x01(\x05R\x0fmaxParticipants\x12F\n" +
+	"\x1funregistered_participants_count\x18\x0e \x01(\x05R\x1dunregisteredParticipantsCountB\"\n" +
 	" _event_doors_open_minutes_beforeB&\n" +
 	"$_event_entry_deadline_minutes_before\"J\n" +
 	"\x1dUpdateTicketWithEventResponse\x12)\n" +

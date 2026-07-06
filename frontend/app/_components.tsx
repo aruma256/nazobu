@@ -270,6 +270,9 @@ export function TicketCard({
   const meetingAt =
     ticket.meetingAt !== "" ? parseDateTime(ticket.meetingAt) : null;
   const hasMeeting = meetingAt !== null || ticket.meetingPlace !== "";
+  // 未登録の同行者も定員の枠を消費するため、占有数に含める。
+  const occupiedCount =
+    ticket.participantNames.length + ticket.unregisteredParticipantsCount;
   const wrapperClass =
     tone === "alert"
       ? "overflow-hidden rounded-2xl border border-amber-300 bg-amber-50 transition-colors hover:bg-amber-100"
@@ -337,19 +340,19 @@ export function TicketCard({
             <dt>定員</dt>
             <dd>
               <Mono>
-                {ticket.participantNames.length}/{ticket.maxParticipants}
+                {occupiedCount}/{ticket.maxParticipants}
               </Mono>
-              {ticket.participantNames.length < ticket.maxParticipants && (
+              {occupiedCount < ticket.maxParticipants && (
                 <span className="ml-2 text-amber-800">
                   （残り
                   <Mono className="font-semibold">
-                    {ticket.maxParticipants - ticket.participantNames.length}
+                    {ticket.maxParticipants - occupiedCount}
                   </Mono>
                   ）
                 </span>
               )}
             </dd>
-            {ticket.participantNames.length > 0 && (
+            {occupiedCount > 0 && (
               <>
                 <dt>参加</dt>
                 <dd>
@@ -371,6 +374,13 @@ export function TicketCard({
                         )}
                       </Fragment>
                     ))}
+                  {ticket.unregisteredParticipantsCount > 0 && (
+                    <span className="text-zinc-500">
+                      {ticket.participantNames.length > 0 && "・"}
+                      未登録{" "}
+                      <Mono>{ticket.unregisteredParticipantsCount}</Mono> 人
+                    </span>
+                  )}
                 </dd>
               </>
             )}

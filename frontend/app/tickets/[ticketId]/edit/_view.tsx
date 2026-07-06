@@ -219,6 +219,11 @@ function Form({
   const [maxParticipants, setMaxParticipants] = useState(
     String(ticket.maxParticipants),
   );
+  const [unregisteredCount, setUnregisteredCount] = useState(
+    ticket.unregisteredParticipantsCount > 0
+      ? String(ticket.unregisteredParticipantsCount)
+      : "",
+  );
   const [purchasedByUserId, setPurchasedByUserId] =
     useState(currentPurchaserId);
 
@@ -282,10 +287,16 @@ function Form({
       setState({ kind: "error", message: "定員は 1 以上の整数で入力してください" });
       return;
     }
-    if (maxNum < participantCount) {
+    const parsedUnregistered = parseOptionalNonNegativeInt(unregisteredCount);
+    if (parsedUnregistered === "invalid") {
+      setState({ kind: "error", message: "未登録の同行者は 0 以上の整数で入力してください" });
+      return;
+    }
+    const unregisteredNum = parsedUnregistered ?? 0;
+    if (maxNum < participantCount + unregisteredNum) {
       setState({
         kind: "error",
-        message: `定員は現在の参加者数（${participantCount} 人）以上で入力してください`,
+        message: `定員は参加者と未登録の同行者の合計人数（${participantCount + unregisteredNum} 人）以上で入力してください`,
       });
       return;
     }
@@ -313,6 +324,7 @@ function Form({
         pricePerPerson: priceNum,
         maxParticipants: maxNum,
         purchasedByUserId,
+        unregisteredParticipantsCount: unregisteredNum,
       });
       router.push(`/tickets/${ticket.id}`);
     } catch (err) {
@@ -532,6 +544,27 @@ function Form({
                 />
                 <p className="mt-1 text-xs text-zinc-500">
                   現在の参加者数: {participantCount} 人
+                </p>
+              </Field>
+
+              <Field label="未登録の同行者（任意・人数）" htmlFor="ticket-unregistered-count">
+                <div className="flex items-center gap-2">
+                  <input
+                    id="ticket-unregistered-count"
+                    type="number"
+                    min={0}
+                    step={1}
+                    inputMode="numeric"
+                    value={unregisteredCount}
+                    onChange={(e) => setUnregisteredCount(e.target.value)}
+                    disabled={submitting}
+                    className="block h-11 w-32 rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+                    placeholder="例: 1"
+                  />
+                  <span className="text-sm text-zinc-600">人</span>
+                </div>
+                <p className="mt-1 text-xs text-zinc-500">
+                  謎部に未登録の人が一緒に参加する場合の人数。参加者と合わせて定員の枠を使います。
                 </p>
               </Field>
 

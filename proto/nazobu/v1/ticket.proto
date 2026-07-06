@@ -70,6 +70,9 @@ message Ticket {
   string event_catchphrase = 15;
   // 開場時間が開演時刻（start_at）の何分前か。0 以上。未設定なら未指定。
   optional int32 event_doors_open_minutes_before = 16;
+  // 本サービスに未登録の同行者の人数。0 以上。
+  // 登録ユーザーの参加者数と合わせて max_participants の枠を消費する。
+  int32 unregistered_participants_count = 17;
 }
 
 message GetTicketRequest {
@@ -109,8 +112,10 @@ message CreateTicketRequest {
   // 開演日時（RFC3339, JST）。
   string start_at = 7;
   // このチケット 1 枚で参加できる最大人数。新規登録では必須・1 以上。
-  // participant_user_ids の件数以上である必要がある。
+  // participant_user_ids の件数 + unregistered_participants_count 以上である必要がある。
   int32 max_participants = 8;
+  // 本サービスに未登録の同行者の人数。0 以上（省略時 0）。
+  int32 unregistered_participants_count = 9;
 }
 
 message CreateTicketResponse {
@@ -130,8 +135,11 @@ message UpdateTicketRequest {
   string start_at = 6;
   // 立替者の user id。ticket の参加者のいずれかを指定する。
   string purchased_by_user_id = 7;
-  // このチケット 1 枚で参加できる最大人数。1 以上、現在の参加者数以上である必要がある。
+  // このチケット 1 枚で参加できる最大人数。1 以上、
+  // 現在の参加者数 + unregistered_participants_count 以上である必要がある。
   int32 max_participants = 8;
+  // 本サービスに未登録の同行者の人数。0 以上（省略時 0）。
+  int32 unregistered_participants_count = 9;
 }
 
 message UpdateTicketResponse {
@@ -162,8 +170,11 @@ message CreateTicketWithEventRequest {
   string meeting_place = 10;
   // 参加者（割り勘元）の user id。1 件以上。
   repeated string participant_user_ids = 11;
-  // このチケット 1 枚で参加できる最大人数。1 以上、participant_user_ids の件数以上。
+  // このチケット 1 枚で参加できる最大人数。1 以上、
+  // participant_user_ids の件数 + unregistered_participants_count 以上。
   int32 max_participants = 12;
+  // 本サービスに未登録の同行者の人数。0 以上（省略時 0）。
+  int32 unregistered_participants_count = 13;
 }
 
 message CreateTicketWithEventResponse {
@@ -188,8 +199,10 @@ message UpdateTicketWithEventRequest {
   string start_at = 11;
   // 立替者の user id。ticket の参加者のいずれかを指定する。
   string purchased_by_user_id = 12;
-  // 1 以上、現在の参加者数以上である必要がある。
+  // 1 以上、現在の参加者数 + unregistered_participants_count 以上である必要がある。
   int32 max_participants = 13;
+  // 本サービスに未登録の同行者の人数。0 以上（省略時 0）。
+  int32 unregistered_participants_count = 14;
 }
 
 message UpdateTicketWithEventResponse {

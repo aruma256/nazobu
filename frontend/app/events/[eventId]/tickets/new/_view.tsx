@@ -121,6 +121,7 @@ function Form({
   const [meetingPlace, setMeetingPlace] = useState("");
   const [pricePerPerson, setPricePerPerson] = useState("");
   const [maxParticipants, setMaxParticipants] = useState("");
+  const [unregisteredCount, setUnregisteredCount] = useState("");
   const [participantIds, setParticipantIds] = useState<string[]>([]);
   const [state, setState] = useState<SubmitState>({ kind: "idle" });
 
@@ -156,12 +157,18 @@ function Form({
       setState({ kind: "error", message: "定員は 1 以上の整数で入力してください" });
       return;
     }
+    const parsedUnregistered = parseOptionalNonNegativeInt(unregisteredCount);
+    if (parsedUnregistered === "invalid") {
+      setState({ kind: "error", message: "未登録の同行者は 0 以上の整数で入力してください" });
+      return;
+    }
+    const unregisteredNum = parsedUnregistered ?? 0;
     if (participantIds.length === 0) {
       setState({ kind: "error", message: "参加者を 1 人以上選択してください" });
       return;
     }
-    if (participantIds.length > maxNum) {
-      setState({ kind: "error", message: "選択した参加者の人数が定員を超えています" });
+    if (participantIds.length + unregisteredNum > maxNum) {
+      setState({ kind: "error", message: "参加者と未登録の同行者の合計人数が定員を超えています" });
       return;
     }
 
@@ -182,6 +189,7 @@ function Form({
         pricePerPerson: priceNum,
         maxParticipants: maxNum,
         participantUserIds: participantIds,
+        unregisteredParticipantsCount: unregisteredNum,
       });
       router.push("/tickets");
     } catch (err) {
@@ -291,6 +299,27 @@ function Form({
               />
             </Field>
 
+            <Field label="未登録の同行者（任意・人数）" htmlFor="ticket-unregistered-count">
+              <div className="flex items-center gap-2">
+                <input
+                  id="ticket-unregistered-count"
+                  type="number"
+                  min={0}
+                  step={1}
+                  inputMode="numeric"
+                  value={unregisteredCount}
+                  onChange={(e) => setUnregisteredCount(e.target.value)}
+                  disabled={submitting}
+                  className="block h-11 w-32 rounded-lg border border-zinc-300 bg-white px-3 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+                  placeholder="例: 1"
+                />
+                <span className="text-sm text-zinc-600">人</span>
+              </div>
+              <p className="mt-1 text-xs text-zinc-500">
+                謎部に未登録の人が一緒に参加する場合の人数。参加者と合わせて定員の枠を使います。
+              </p>
+            </Field>
+
             <fieldset className="space-y-2">
               <legend className="block text-sm font-medium text-zinc-700">
                 参加者
@@ -359,4 +388,12 @@ function Field({
       <div className="mt-1">{children}</div>
     </div>
   );
+}
+
+function parseOptionalNonNegativeInt(raw: string): number | undefined | "invalid" {
+  const trimmed = raw.trim();
+  if (trimmed === "") return undefined;
+  const n = Number(trimmed);
+  if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0) return "invalid";
+  return n;
 }

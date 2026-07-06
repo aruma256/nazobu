@@ -220,7 +220,8 @@ function TicketRow({ ticket, myName }: { ticket: EventTicket; myName: string }) 
         <p className="mt-1 text-xs text-zinc-900">
           立替 {ticket.purchaserName}
         </p>
-        {ticket.participantNames.length > 0 && (
+        {(ticket.participantNames.length > 0 ||
+          ticket.unregisteredParticipantsCount > 0) && (
           <p className="mt-1 text-xs text-zinc-900">
             参加{" "}
             {[...ticket.participantNames]
@@ -239,6 +240,12 @@ function TicketRow({ ticket, myName }: { ticket: EventTicket; myName: string }) 
                   )}
                 </Fragment>
               ))}
+            {ticket.unregisteredParticipantsCount > 0 && (
+              <span className="text-zinc-500">
+                {ticket.participantNames.length > 0 && "・"}
+                未登録 {ticket.unregisteredParticipantsCount} 人
+              </span>
+            )}
           </p>
         )}
       </Link>

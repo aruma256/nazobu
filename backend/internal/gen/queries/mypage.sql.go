@@ -72,6 +72,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        e.expected_duration_minutes AS event_expected_duration_minutes,
        e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
+       t.unregistered_participants_count,
        t.meeting_place,
        pu.display_name AS purchaser_name
 FROM tickets t
@@ -94,20 +95,21 @@ type ListUnsettledReceivablesByUserIDParams struct {
 }
 
 type ListUnsettledReceivablesByUserIDRow struct {
-	ID                           string
-	EventID                      string
-	EventTitle                   string
-	EventUrl                     string
-	EventCatchphrase             string
-	EventImageUrl                sql.NullString
-	EventExpectedDurationMinutes int32
-	EventDoorsOpenMinutesBefore  sql.NullInt32
-	StartAt                      time.Time
-	MeetingAt                    sql.NullTime
-	PricePerPerson               int32
-	MaxParticipants              int32
-	MeetingPlace                 string
-	PurchaserName                string
+	ID                            string
+	EventID                       string
+	EventTitle                    string
+	EventUrl                      string
+	EventCatchphrase              string
+	EventImageUrl                 sql.NullString
+	EventExpectedDurationMinutes  int32
+	EventDoorsOpenMinutesBefore   sql.NullInt32
+	StartAt                       time.Time
+	MeetingAt                     sql.NullTime
+	PricePerPerson                int32
+	MaxParticipants               int32
+	UnregisteredParticipantsCount int32
+	MeetingPlace                  string
+	PurchaserName                 string
 }
 
 // 自分が立て替えたチケットのうち「自分以外の参加者に未精算が 1 人以上残っている」かつ「開演が現在以前」を取る。
@@ -136,6 +138,7 @@ func (q *Queries) ListUnsettledReceivablesByUserID(ctx context.Context, arg List
 			&i.MeetingAt,
 			&i.PricePerPerson,
 			&i.MaxParticipants,
+			&i.UnregisteredParticipantsCount,
 			&i.MeetingPlace,
 			&i.PurchaserName,
 		); err != nil {
@@ -157,6 +160,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        e.expected_duration_minutes AS event_expected_duration_minutes,
        e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
+       t.unregistered_participants_count,
        t.meeting_place,
        pu.display_name AS purchaser_name
 FROM ticket_participants tp
@@ -176,20 +180,21 @@ type ListUnsettledTicketsByUserIDParams struct {
 }
 
 type ListUnsettledTicketsByUserIDRow struct {
-	ID                           string
-	EventID                      string
-	EventTitle                   string
-	EventUrl                     string
-	EventCatchphrase             string
-	EventImageUrl                sql.NullString
-	EventExpectedDurationMinutes int32
-	EventDoorsOpenMinutesBefore  sql.NullInt32
-	StartAt                      time.Time
-	MeetingAt                    sql.NullTime
-	PricePerPerson               int32
-	MaxParticipants              int32
-	MeetingPlace                 string
-	PurchaserName                string
+	ID                            string
+	EventID                       string
+	EventTitle                    string
+	EventUrl                      string
+	EventCatchphrase              string
+	EventImageUrl                 sql.NullString
+	EventExpectedDurationMinutes  int32
+	EventDoorsOpenMinutesBefore   sql.NullInt32
+	StartAt                       time.Time
+	MeetingAt                     sql.NullTime
+	PricePerPerson                int32
+	MaxParticipants               int32
+	UnregisteredParticipantsCount int32
+	MeetingPlace                  string
+	PurchaserName                 string
 }
 
 // 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」かつ「開演が現在以前」を取る。
@@ -218,6 +223,7 @@ func (q *Queries) ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnse
 			&i.MeetingAt,
 			&i.PricePerPerson,
 			&i.MaxParticipants,
+			&i.UnregisteredParticipantsCount,
 			&i.MeetingPlace,
 			&i.PurchaserName,
 		); err != nil {
@@ -239,6 +245,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        e.expected_duration_minutes AS event_expected_duration_minutes,
        e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
+       t.unregistered_participants_count,
        t.meeting_place,
        pu.display_name AS purchaser_name
 FROM ticket_participants tp
@@ -258,20 +265,21 @@ type ListUpcomingTicketsByUserIDParams struct {
 }
 
 type ListUpcomingTicketsByUserIDRow struct {
-	ID                           string
-	EventID                      string
-	EventTitle                   string
-	EventUrl                     string
-	EventCatchphrase             string
-	EventImageUrl                sql.NullString
-	EventExpectedDurationMinutes int32
-	EventDoorsOpenMinutesBefore  sql.NullInt32
-	StartAt                      time.Time
-	MeetingAt                    sql.NullTime
-	PricePerPerson               int32
-	MaxParticipants              int32
-	MeetingPlace                 string
-	PurchaserName                string
+	ID                            string
+	EventID                       string
+	EventTitle                    string
+	EventUrl                      string
+	EventCatchphrase              string
+	EventImageUrl                 sql.NullString
+	EventExpectedDurationMinutes  int32
+	EventDoorsOpenMinutesBefore   sql.NullInt32
+	StartAt                       time.Time
+	MeetingAt                     sql.NullTime
+	PricePerPerson                int32
+	MaxParticipants               int32
+	UnregisteredParticipantsCount int32
+	MeetingPlace                  string
+	PurchaserName                 string
 }
 
 // 当日 0:00（JST）以降に start_at を持ち、かつ終了予定時刻がまだ過ぎていない自分の参加チケット。
@@ -301,6 +309,7 @@ func (q *Queries) ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcom
 			&i.MeetingAt,
 			&i.PricePerPerson,
 			&i.MaxParticipants,
+			&i.UnregisteredParticipantsCount,
 			&i.MeetingPlace,
 			&i.PurchaserName,
 		); err != nil {

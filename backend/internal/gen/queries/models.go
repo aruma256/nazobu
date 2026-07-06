@@ -31,18 +31,19 @@ type Session struct {
 }
 
 type Ticket struct {
-	ID                  string
-	EventID             string
-	StartAt             time.Time
-	MeetingAt           sql.NullTime
-	PricePerPerson      int32
-	MaxParticipants     int32
-	PurchasedBy         string
-	MeetingPlace        string
-	DayBeforeNotifiedAt sql.NullTime
-	MeetingNotifiedAt   sql.NullTime
-	CreatedAt           time.Time
-	UpdatedAt           time.Time
+	ID                            string
+	EventID                       string
+	StartAt                       time.Time
+	MeetingAt                     sql.NullTime
+	PricePerPerson                int32
+	MaxParticipants               int32
+	UnregisteredParticipantsCount int32
+	PurchasedBy                   string
+	MeetingPlace                  string
+	DayBeforeNotifiedAt           sql.NullTime
+	MeetingNotifiedAt             sql.NullTime
+	CreatedAt                     time.Time
+	UpdatedAt                     time.Time
 }
 
 type TicketParticipant struct {

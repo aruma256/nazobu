@@ -90,6 +90,7 @@ func (q *Queries) GetEventByID(ctx context.Context, id string) (GetEventByIDRow,
 
 const listEventTicketsByEventIDs = `-- name: ListEventTicketsByEventIDs :many
 SELECT t.id, t.event_id, t.start_at, t.price_per_person,
+       t.unregistered_participants_count,
        pu.display_name AS purchaser_name
 FROM tickets t
 JOIN users pu ON pu.id = t.purchased_by
@@ -98,11 +99,12 @@ ORDER BY t.start_at DESC, t.id ASC
 `
 
 type ListEventTicketsByEventIDsRow struct {
-	ID             string
-	EventID        string
-	StartAt        time.Time
-	PricePerPerson int32
-	PurchaserName  string
+	ID                            string
+	EventID                       string
+	StartAt                       time.Time
+	PricePerPerson                int32
+	UnregisteredParticipantsCount int32
+	PurchaserName                 string
 }
 
 // 公演一覧画面で各 event に紐づく ticket をまとめて引く。
@@ -131,6 +133,7 @@ func (q *Queries) ListEventTicketsByEventIDs(ctx context.Context, eventIds []str
 			&i.EventID,
 			&i.StartAt,
 			&i.PricePerPerson,
+			&i.UnregisteredParticipantsCount,
 			&i.PurchaserName,
 		); err != nil {
 			return nil, err

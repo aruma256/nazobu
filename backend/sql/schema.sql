@@ -86,8 +86,12 @@ CREATE TABLE tickets (
   -- 集合日時（JST）。集合時刻が決まっていないときは NULL。日跨ぎ集合にも対応できる。
   meeting_at        DATETIME(6)  NULL,
   price_per_person  INT          NOT NULL,
-  -- このチケット 1 枚で参加できる最大人数（ticket_participants の最大紐づけ数）。
+  -- このチケット 1 枚で参加できる最大人数。ticket_participants の紐づけ数と
+  -- unregistered_participants_count の合計がこの値以下になるようアプリ層で担保する。
   max_participants  INT          NOT NULL,
+  -- 本サービスに未登録の同行者の人数。0 以上。登録ユーザーと同様に max_participants の枠を消費する。
+  -- 未登録者は個人を特定できないため、精算管理の対象外（人数の記録・表示のみ）。
+  unregistered_participants_count INT NOT NULL DEFAULT 0,
   purchased_by      CHAR(36)  NOT NULL,
   -- 集合場所。空文字を「未設定」として許容する。
   meeting_place     VARCHAR(255) NOT NULL,

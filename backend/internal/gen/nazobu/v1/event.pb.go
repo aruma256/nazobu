@@ -227,8 +227,10 @@ type EventTicket struct {
 	PurchaserName string `protobuf:"bytes,4,opt,name=purchaser_name,json=purchaserName,proto3" json:"purchaser_name,omitempty"`
 	// 参加者の表示名（created_at 昇順）。立て替えた人も参加者として含めて構わない。
 	ParticipantNames []string `protobuf:"bytes,5,rep,name=participant_names,json=participantNames,proto3" json:"participant_names,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// 本サービスに未登録の同行者の人数。0 以上。
+	UnregisteredParticipantsCount int32 `protobuf:"varint,6,opt,name=unregistered_participants_count,json=unregisteredParticipantsCount,proto3" json:"unregistered_participants_count,omitempty"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *EventTicket) Reset() {
@@ -294,6 +296,13 @@ func (x *EventTicket) GetParticipantNames() []string {
 		return x.ParticipantNames
 	}
 	return nil
+}
+
+func (x *EventTicket) GetUnregisteredParticipantsCount() int32 {
+	if x != nil {
+		return x.UnregisteredParticipantsCount
+	}
+	return 0
 }
 
 type CreateEventRequest struct {
@@ -684,13 +693,14 @@ const file_nazobu_v1_event_proto_rawDesc = "" +
 	"\x19expected_duration_minutes\x18\b \x01(\x05R\x17expectedDurationMinutes\x12 \n" +
 	"\vcatchphrase\x18\t \x01(\tR\vcatchphraseB\x1c\n" +
 	"\x1a_doors_open_minutes_beforeB \n" +
-	"\x1e_entry_deadline_minutes_before\"\xb6\x01\n" +
+	"\x1e_entry_deadline_minutes_before\"\xfe\x01\n" +
 	"\vEventTicket\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\bstart_at\x18\x02 \x01(\tR\astartAt\x12(\n" +
 	"\x10price_per_person\x18\x03 \x01(\x05R\x0epricePerPerson\x12%\n" +
 	"\x0epurchaser_name\x18\x04 \x01(\tR\rpurchaserName\x12+\n" +
-	"\x11participant_names\x18\x05 \x03(\tR\x10participantNames\"\xe2\x02\n" +
+	"\x11participant_names\x18\x05 \x03(\tR\x10participantNames\x12F\n" +
+	"\x1funregistered_participants_count\x18\x06 \x01(\x05R\x1dunregisteredParticipantsCount\"\xe2\x02\n" +
 	"\x12CreateEventRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12>\n" +

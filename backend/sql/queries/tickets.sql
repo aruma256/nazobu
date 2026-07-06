@@ -4,6 +4,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        e.expected_duration_minutes AS event_expected_duration_minutes,
        e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
+       t.unregistered_participants_count,
        t.meeting_place,
        pu.display_name AS purchaser_name
 FROM tickets t
@@ -17,6 +18,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        e.expected_duration_minutes AS event_expected_duration_minutes,
        e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
+       t.unregistered_participants_count,
        t.meeting_place,
        pu.display_name AS purchaser_name
 FROM tickets t
@@ -26,8 +28,8 @@ WHERE t.id IN (sqlc.slice('ids'))
 ORDER BY t.start_at DESC, t.id ASC;
 
 -- name: CreateTicket :exec
-INSERT INTO tickets (id, event_id, start_at, meeting_at, price_per_person, max_participants, purchased_by, meeting_place, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6));
+INSERT INTO tickets (id, event_id, start_at, meeting_at, price_per_person, max_participants, unregistered_participants_count, purchased_by, meeting_place, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6));
 
 -- name: CreateTicketParticipant :exec
 INSERT INTO ticket_participants (ticket_id, user_id, created_at)
@@ -49,6 +51,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        e.expected_duration_minutes AS event_expected_duration_minutes,
        e.doors_open_minutes_before AS event_doors_open_minutes_before,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
+       t.unregistered_participants_count,
        t.meeting_place,
        t.purchased_by,
        pu.display_name AS purchaser_name
@@ -76,6 +79,7 @@ SET start_at         = ?,
     meeting_at       = ?,
     price_per_person = ?,
     max_participants = ?,
+    unregistered_participants_count = ?,
     meeting_place    = ?,
     purchased_by     = ?,
     updated_at       = NOW(6)

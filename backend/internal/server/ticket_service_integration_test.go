@@ -221,6 +221,142 @@ func TestIntegrationUpdateTicketMaxParticipantsLowerBound(t *testing.T) {
 	}
 }
 
+func TestIntegrationUnregisteredParticipants(t *testing.T) {
+	db := testdb.Open(t)
+	ctx := context.Background()
+	svc := newTicketService(db)
+
+	adminID := createTestUser(t, db, "admin-user", auth.RoleAdmin)
+	memberID := createTestUser(t, db, "member-user", auth.RoleMember)
+	eventID := createTestEvent(t, db, "テスト公演")
+
+	// 未登録の同行者 2 名込みで登録でき、人数が DB 往復で保たれること
+	createReq := connect.NewRequest(&nazobuv1.CreateTicketRequest{
+		EventId:                       eventID,
+		StartAt:                       "2026-08-01T14:00:00+09:00",
+		PricePerPerson:                3000,
+		MaxParticipants:               4,
+		ParticipantUserIds:            []string{adminID, memberID},
+		UnregisteredParticipantsCount: 2,
+	})
+	setSessionCookie(t, db, createReq, adminID)
+	createRes, err := svc.CreateTicket(ctx, createReq)
+	if err != nil {
+		t.Fatalf("CreateTicket に失敗: %v", err)
+	}
+	ticketID := createRes.Msg.Ticket.Id
+	if got := createRes.Msg.Ticket.UnregisteredParticipantsCount; got != 2 {
+		t.Errorf("作成直後の UnregisteredParticipantsCount = %d, want 2", got)
+	}
+
+	getReq := connect.NewRequest(&nazobuv1.GetTicketRequest{TicketId: ticketID})
+	setSessionCookie(t, db, getReq, memberID)
+	getRes, err := svc.GetTicket(ctx, getReq)
+	if err != nil {
+		t.Fatalf("GetTicket に失敗: %v", err)
+	}
+	if got := getRes.Msg.Ticket.UnregisteredParticipantsCount; got != 2 {
+		t.Errorf("UnregisteredParticipantsCount = %d, want 2", got)
+	}
+
+	// 登録ユーザー 2 名 + 未登録 2 名で満席（max 4）なので、参加者追加は弾かれること
+	otherID := createTestUser(t, db, "other-user", auth.RoleMember)
+	addReq := connect.NewRequest(&nazobuv1.AddTicketParticipantsRequest{
+		TicketId: ticketID,
+		UserIds:  []string{otherID},
+	})
+	setSessionCookie(t, db, addReq, adminID)
+	_, err = svc.AddTicketParticipants(ctx, addReq)
+	if got := connectCode(t, err); got != connect.CodeFailedPrecondition {
+		t.Errorf("満席時の追加 code = %v, want %v", got, connect.CodeFailedPrecondition)
+	}
+
+	// max_participants を参加者数 + 未登録人数より小さくする更新は弾かれること
+	updateReq := connect.NewRequest(&nazobuv1.UpdateTicketRequest{
+		TicketId:                      ticketID,
+		StartAt:                       "2026-08-01T14:00:00+09:00",
+		PricePerPerson:                3000,
+		MaxParticipants:               3,
+		PurchasedByUserId:             adminID,
+		UnregisteredParticipantsCount: 2,
+	})
+	setSessionCookie(t, db, updateReq, adminID)
+	_, err = svc.UpdateTicket(ctx, updateReq)
+	if got := connectCode(t, err); got != connect.CodeFailedPrecondition {
+		t.Errorf("max 減少 code = %v, want %v", got, connect.CodeFailedPrecondition)
+	}
+
+	// 未登録人数を減らす更新は通り、値が保存されること
+	updateReq = connect.NewRequest(&nazobuv1.UpdateTicketRequest{
+		TicketId:                      ticketID,
+		StartAt:                       "2026-08-01T14:00:00+09:00",
+		PricePerPerson:                3000,
+		MaxParticipants:               4,
+		PurchasedByUserId:             adminID,
+		UnregisteredParticipantsCount: 1,
+	})
+	setSessionCookie(t, db, updateReq, adminID)
+	updateRes, err := svc.UpdateTicket(ctx, updateReq)
+	if err != nil {
+		t.Fatalf("UpdateTicket に失敗: %v", err)
+	}
+	if got := updateRes.Msg.Ticket.UnregisteredParticipantsCount; got != 1 {
+		t.Errorf("更新後の UnregisteredParticipantsCount = %d, want 1", got)
+	}
+
+	// 未登録 1 名に減ったので空き 1 枠に追加できること
+	addReq = connect.NewRequest(&nazobuv1.AddTicketParticipantsRequest{
+		TicketId: ticketID,
+		UserIds:  []string{otherID},
+	})
+	setSessionCookie(t, db, addReq, adminID)
+	if _, err := svc.AddTicketParticipants(ctx, addReq); err != nil {
+		t.Fatalf("空きありでの追加に失敗: %v", err)
+	}
+}
+
+func TestIntegrationCreateTicketUnregisteredValidation(t *testing.T) {
+	db := testdb.Open(t)
+	ctx := context.Background()
+	svc := newTicketService(db)
+
+	adminID := createTestUser(t, db, "admin-user", auth.RoleAdmin)
+	eventID := createTestEvent(t, db, "テスト公演")
+
+	newCreateReq := func(maxParticipants, unregistered int32) *connect.Request[nazobuv1.CreateTicketRequest] {
+		req := connect.NewRequest(&nazobuv1.CreateTicketRequest{
+			EventId:                       eventID,
+			StartAt:                       "2026-08-01T14:00:00+09:00",
+			PricePerPerson:                1000,
+			MaxParticipants:               maxParticipants,
+			ParticipantUserIds:            []string{adminID},
+			UnregisteredParticipantsCount: unregistered,
+		})
+		setSessionCookie(t, db, req, adminID)
+		return req
+	}
+
+	t.Run("負の未登録人数は InvalidArgument", func(t *testing.T) {
+		_, err := svc.CreateTicket(ctx, newCreateReq(2, -1))
+		if got := connectCode(t, err); got != connect.CodeInvalidArgument {
+			t.Errorf("code = %v, want %v", got, connect.CodeInvalidArgument)
+		}
+	})
+
+	t.Run("登録ユーザー + 未登録人数が定員超過なら InvalidArgument", func(t *testing.T) {
+		_, err := svc.CreateTicket(ctx, newCreateReq(2, 2))
+		if got := connectCode(t, err); got != connect.CodeInvalidArgument {
+			t.Errorf("code = %v, want %v", got, connect.CodeInvalidArgument)
+		}
+	})
+
+	t.Run("定員ちょうどなら登録できる", func(t *testing.T) {
+		if _, err := svc.CreateTicket(ctx, newCreateReq(2, 1)); err != nil {
+			t.Errorf("CreateTicket に失敗: %v", err)
+		}
+	})
+}
+
 func TestIntegrationTicketParticipantManagement(t *testing.T) {
 	db := testdb.Open(t)
 	ctx := context.Background()

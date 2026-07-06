@@ -51,6 +51,8 @@ message EventTicket {
   string purchaser_name = 4;
   // 参加者の表示名（created_at 昇順）。立て替えた人も参加者として含めて構わない。
   repeated string participant_names = 5;
+  // 本サービスに未登録の同行者の人数。0 以上。
+  int32 unregistered_participants_count = 6;
 }
 
 message CreateEventRequest {
