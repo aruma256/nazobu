@@ -25,7 +25,12 @@ func sessionTokenFromHeader(h http.Header) string {
 
 // lookupSessionUser は Request header の cookie から user を引く。
 // 未ログイン / 期限切れは connect.CodeUnauthenticated を返す。
+// MCP 経由の呼び出しでは Bearer 認証済みの user が context に注入されるので、
+// cookie より先にそちらを採用する（RPC 実装を認証経路に依存させないため）。
 func lookupSessionUser(ctx context.Context, db *sql.DB, h http.Header) (*auth.User, error) {
+	if user := auth.UserFromContext(ctx); user != nil {
+		return user, nil
+	}
 	rawToken := sessionTokenFromHeader(h)
 	if rawToken == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("session cookie が無い"))

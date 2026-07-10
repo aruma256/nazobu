@@ -15,6 +15,7 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	"github.com/aruma256/nazobu/backend/internal/config"
 	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
+	"github.com/aruma256/nazobu/backend/internal/oauth"
 	"github.com/aruma256/nazobu/backend/internal/reminder"
 )
 
@@ -55,12 +56,25 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	// Connect RPC
 	userPath, userHandler := nazobuv1connect.NewUserServiceHandler(newUserService(dbc))
 	mux.Handle(userPath, userHandler)
-	myPagePath, myPageHandler := nazobuv1connect.NewMyPageServiceHandler(newMyPageService(dbc))
+	myPageService := newMyPageService(dbc)
+	myPagePath, myPageHandler := nazobuv1connect.NewMyPageServiceHandler(myPageService)
 	mux.Handle(myPagePath, myPageHandler)
 	eventPath, eventHandler := nazobuv1connect.NewEventServiceHandler(newEventService(dbc))
 	mux.Handle(eventPath, eventHandler)
 	ticketPath, ticketHandler := nazobuv1connect.NewTicketServiceHandler(newTicketService(dbc))
 	mux.Handle(ticketPath, ticketHandler)
+
+	// Claude connector（remote MCP）向けの OAuth 2.1 認可サーバと MCP エンドポイント。
+	// 公開 origin は frontend と同一（rewrites 経由）なので issuer には FRONTEND_URL を流用する。
+	oauthSrv := oauth.NewServer(dbc, srv.httpClient, cfg.FrontendURL, cfg.CookieSecure)
+	mux.HandleFunc("GET /.well-known/oauth-authorization-server", oauthSrv.HandleAuthorizationServerMetadata)
+	mux.HandleFunc("GET /.well-known/oauth-protected-resource", oauthSrv.HandleProtectedResourceMetadata)
+	// MCP パス付きの variant（RFC 9728 のパスサフィックス探索に対応）。
+	mux.HandleFunc("GET /.well-known/oauth-protected-resource/mcp", oauthSrv.HandleProtectedResourceMetadata)
+	mux.HandleFunc("GET /oauth/authorize", oauthSrv.HandleAuthorizeGet)
+	mux.HandleFunc("POST /oauth/authorize", oauthSrv.HandleAuthorizePost)
+	mux.HandleFunc("POST /oauth/token", oauthSrv.HandleToken)
+	mux.Handle("/mcp", oauthSrv.Middleware(newMCPHandler(myPageService)))
 
 	httpSrv := &http.Server{
 		Addr:              cfg.HTTPAddr,

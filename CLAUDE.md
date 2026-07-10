@@ -22,6 +22,7 @@
 - 認証: DB 保存セッション（Cookie + token hash）+ OIDC
 - ローカル開発: docker compose（backend は起動時に sqldef で自動マイグレーション）
 - RPC: proto は `proto/nazobu/v1/*.proto` が SSOT。`buf generate` で `backend/internal/gen/` と `frontend/app/gen/` を生成し、生成物もコミットする（compose では codegen を回さない）
+- MCP 連携: Claude connector 向けに backend が `/mcp`（Streamable HTTP、公式 go-sdk）と OAuth 2.1 認可サーバ（CIMD 方式、`backend/internal/oauth`）を提供。`/mcp` `/oauth/*` `/.well-known/*` は frontend の rewrites で backend に proxy。MCP ツールは Connect RPC ハンドラを in-process 再利用する（Bearer 認証済み user を context 注入）
 - 統合テスト: 実 MySQL を使う（ローカルは compose の `mysql-test`、CI は workflow の service container）。接続先は `TEST_DB_*` 環境変数で渡し、未設定なら skip してユニットテストのみ走る。ヘルパーは `backend/internal/testdb`（初回に `schema.sql` を全適用、テストごとに全テーブル TRUNCATE）
 
 ## ポリシー

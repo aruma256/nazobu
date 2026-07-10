@@ -5,7 +5,9 @@ import type { NextRequest } from "next/server";
 const SESSION_COOKIE = "nazobu_session";
 
 // ログイン不要パス。matcher で除外しているのと別に、念のため関数内でも除外する。
-const PUBLIC_PATHS = ["/login"];
+// /oauth・/mcp・/.well-known は MCP 連携（Claude connector）用で、backend 側が
+// 認証（OAuth の Bearer / 認可画面のログインリダイレクト）を担うためここでは素通しする。
+const PUBLIC_PATHS = ["/login", "/oauth", "/mcp", "/.well-known"];
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
@@ -26,6 +28,6 @@ export function proxy(request: NextRequest) {
 // session cookie の有無だけ見るので RPC, 認証エンドポイント, Next 内部, 静的ファイルは除外する。
 export const config = {
   matcher: [
-    "/((?!login|auth|nazobu\\.v1|_next/static|_next/image|favicon\\.ico).*)",
+    "/((?!login|auth|oauth|mcp|\\.well-known|nazobu\\.v1|_next/static|_next/image|favicon\\.ico).*)",
   ],
 };
