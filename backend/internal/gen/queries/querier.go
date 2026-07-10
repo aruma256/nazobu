@@ -19,15 +19,29 @@ type Querier interface {
 	// 参照整合性のフレンドリーなプリチェック用。FK でも担保されるが UX のために事前に数を確認する。
 	CountUsersByIDs(ctx context.Context, ids []string) (int64, error)
 	CreateEvent(ctx context.Context, arg CreateEventParams) error
+	CreateOAuthAuthorizationCode(ctx context.Context, arg CreateOAuthAuthorizationCodeParams) error
+	CreateOAuthToken(ctx context.Context, arg CreateOAuthTokenParams) error
 	CreateSession(ctx context.Context, arg CreateSessionParams) error
 	CreateTicket(ctx context.Context, arg CreateTicketParams) error
 	CreateTicketParticipant(ctx context.Context, arg CreateTicketParticipantParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	CreateUserIdentity(ctx context.Context, arg CreateUserIdentityParams) error
+	// 期限切れの認可コードを掃除する（呼び出しは任意のタイミングで冪等）。
+	DeleteExpiredOAuthRecords(ctx context.Context, expiresAt time.Time) error
+	// refresh 期限も切れたトークンを掃除する。
+	DeleteExpiredOAuthTokens(ctx context.Context, refreshTokenExpiresAt time.Time) error
+	// 認可コードは単回使用。token 交換の成否に関わらず消費した時点で削除する。
+	// 影響行数を返すことで、並行リクエストによる二重使用を検知できるようにする。
+	DeleteOAuthAuthorizationCode(ctx context.Context, id string) (int64, error)
+	DeleteOAuthTokenByID(ctx context.Context, id string) error
 	DeleteSessionByTokenHash(ctx context.Context, tokenHash string) error
 	DeleteTicketParticipant(ctx context.Context, arg DeleteTicketParticipantParams) error
 	// 1 件の event を取得する。詳細・編集画面用。
 	GetEventByID(ctx context.Context, id string) (GetEventByIDRow, error)
+	GetOAuthAuthorizationCodeByHash(ctx context.Context, codeHash string) (GetOAuthAuthorizationCodeByHashRow, error)
+	GetOAuthTokenByRefreshTokenHash(ctx context.Context, refreshTokenHash string) (GetOAuthTokenByRefreshTokenHashRow, error)
+	// Bearer トークン検証用。紐づく user も一発で引く。期限判定は呼び出し側で行う。
+	GetOAuthTokenUserByAccessTokenHash(ctx context.Context, accessTokenHash string) (GetOAuthTokenUserByAccessTokenHashRow, error)
 	// session 引きで紐づく user と expires_at を一発で取得する。
 	// 期限切れ判定は呼び出し側で行う。
 	GetSessionUserByTokenHash(ctx context.Context, tokenHash string) (GetSessionUserByTokenHashRow, error)
@@ -96,6 +110,8 @@ type Querier interface {
 	// 前日リマインド送信済みマーク。同日まとめ送信した全チケットに送信時刻（JST）を立てる。
 	// 多重送信防止のため未送信のものだけを対象にする。
 	MarkTicketsDayBeforeNotified(ctx context.Context, arg MarkTicketsDayBeforeNotifiedParams) error
+	// refresh grant 時にアクセストークンとリフレッシュトークンを同時にローテーションする。
+	RotateOAuthToken(ctx context.Context, arg RotateOAuthTokenParams) error
 	UpdateEvent(ctx context.Context, arg UpdateEventParams) error
 	// ticket 本体の更新。event_id は変更しない。purchased_by の変更は呼び出し側で
 	// 新しい立替者が ticket_participants に含まれることを保証する。max_participants は

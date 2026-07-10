@@ -22,6 +22,31 @@ type Event struct {
 	UpdatedAt                  time.Time
 }
 
+type OauthAuthorizationCode struct {
+	ID            string
+	CodeHash      string
+	UserID        string
+	ClientID      string
+	RedirectUri   string
+	Scope         string
+	CodeChallenge string
+	ExpiresAt     time.Time
+	CreatedAt     time.Time
+}
+
+type OauthToken struct {
+	ID                    string
+	UserID                string
+	ClientID              string
+	Scope                 string
+	AccessTokenHash       string
+	AccessTokenExpiresAt  time.Time
+	RefreshTokenHash      string
+	RefreshTokenExpiresAt time.Time
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+}
+
 type Session struct {
 	ID        string
 	UserID    string

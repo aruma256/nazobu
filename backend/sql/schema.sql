@@ -50,6 +50,47 @@ CREATE TABLE sessions (
   CONSTRAINT fk_sessions_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- MCP 連携（Claude connector）用 OAuth 2.1 の認可コード。
+-- client_id は CIMD（Client ID Metadata Document）方式のため、事前登録した ID ではなく
+-- クライアントがホストする HTTPS URL をそのまま保存する。
+-- コードは単回使用（token 交換時に削除）なので used フラグは持たない。
+CREATE TABLE oauth_authorization_codes (
+  id              CHAR(36)     NOT NULL,
+  -- 認可コードの SHA-256 hex。sessions.token_hash と同じく raw 値は保存しない。
+  code_hash       CHAR(64)     NOT NULL,
+  user_id         CHAR(36)     NOT NULL,
+  client_id       VARCHAR(512) NOT NULL,
+  redirect_uri    VARCHAR(512) NOT NULL,
+  scope           VARCHAR(255) NOT NULL,
+  -- PKCE の code_challenge。method は S256 のみ受け付けるためカラムでは持たない。
+  code_challenge  VARCHAR(128) NOT NULL,
+  expires_at      DATETIME(6)  NOT NULL,
+  created_at      DATETIME(6)  NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_oauth_authorization_codes_code_hash (code_hash),
+  CONSTRAINT fk_oauth_authorization_codes_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- MCP 連携用のアクセストークン / リフレッシュトークンのペア。
+-- refresh 時はこの行を UPDATE してローテーションする（OAuth 2.1 の public client 要件）。
+CREATE TABLE oauth_tokens (
+  id                        CHAR(36)     NOT NULL,
+  user_id                   CHAR(36)     NOT NULL,
+  client_id                 VARCHAR(512) NOT NULL,
+  scope                     VARCHAR(255) NOT NULL,
+  access_token_hash         CHAR(64)     NOT NULL,
+  access_token_expires_at   DATETIME(6)  NOT NULL,
+  refresh_token_hash        CHAR(64)     NOT NULL,
+  refresh_token_expires_at  DATETIME(6)  NOT NULL,
+  created_at                DATETIME(6)  NOT NULL,
+  updated_at                DATETIME(6)  NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_oauth_tokens_access_token_hash (access_token_hash),
+  UNIQUE KEY uq_oauth_tokens_refresh_token_hash (refresh_token_hash),
+  KEY idx_oauth_tokens_user_id (user_id),
+  CONSTRAINT fk_oauth_tokens_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 -- 謎解きイベント（公演）。長期開催が一般的なので、開催日は event ではなく
 -- ticket（実際に参加した日）側に持たせる。
 CREATE TABLE events (
