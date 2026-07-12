@@ -25,7 +25,7 @@
 
 - MCP エンドポイント: `/mcp`（公式 [go-sdk](https://github.com/modelcontextprotocol/go-sdk) の Streamable HTTP、stateless + JSON 応答）
 - 認可: backend 自身が OAuth 2.1 認可サーバを兼ねる（`backend/internal/oauth`）。クライアント登録は **CIMD**（Client ID Metadata Document）方式のみ対応で、client_id は Claude がホストする HTTPS URL。事前登録（DCR）は無い
-- ツール実装は既存の Connect RPC ハンドラを in-process 呼び出しで再利用する。Bearer 認証済みの user を `auth.WithUser` で context に注入し、`lookupSessionUser` が cookie より context を優先する
+- ツール実装は既存の Connect RPC ハンドラを in-process 呼び出しで再利用する。Bearer 認証済みの user を `auth.WithUser` で context に注入し、`lookupSessionUser` が cookie より context を優先する。role による権限チェックも RPC ハンドラ側で行われるため、web と MCP で常に同一になる
 
 ### エンドポイント一覧
 
@@ -54,6 +54,5 @@
 
 ## 未対応・今後
 
-- 権限モデルの見直し（web / MCP とも role ベースで同等に。member への登録権限開放は web 側の admin-only 制限とセットで検討）
 - write 系ツールの拡充（チケット更新・参加者管理・精算状態の更新など）
 - 期限切れ OAuth レコードの定期掃除（`DeleteExpiredOAuthRecords` / `DeleteExpiredOAuthTokens` クエリは用意済みで未配線）
