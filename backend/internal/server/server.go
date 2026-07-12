@@ -54,14 +54,16 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	mux.HandleFunc("POST /auth/logout", srv.handleLogout)
 
 	// Connect RPC
-	userPath, userHandler := nazobuv1connect.NewUserServiceHandler(newUserService(dbc))
+	userService := newUserService(dbc)
+	userPath, userHandler := nazobuv1connect.NewUserServiceHandler(userService)
 	mux.Handle(userPath, userHandler)
 	myPageService := newMyPageService(dbc)
 	myPagePath, myPageHandler := nazobuv1connect.NewMyPageServiceHandler(myPageService)
 	mux.Handle(myPagePath, myPageHandler)
 	eventPath, eventHandler := nazobuv1connect.NewEventServiceHandler(newEventService(dbc))
 	mux.Handle(eventPath, eventHandler)
-	ticketPath, ticketHandler := nazobuv1connect.NewTicketServiceHandler(newTicketService(dbc))
+	ticketService := newTicketService(dbc)
+	ticketPath, ticketHandler := nazobuv1connect.NewTicketServiceHandler(ticketService)
 	mux.Handle(ticketPath, ticketHandler)
 
 	// Claude connector（remote MCP）向けの OAuth 2.1 認可サーバと MCP エンドポイント。
@@ -74,7 +76,7 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	mux.HandleFunc("GET /oauth/authorize", oauthSrv.HandleAuthorizeGet)
 	mux.HandleFunc("POST /oauth/authorize", oauthSrv.HandleAuthorizePost)
 	mux.HandleFunc("POST /oauth/token", oauthSrv.HandleToken)
-	mux.Handle("/mcp", oauthSrv.Middleware(newMCPHandler(myPageService)))
+	mux.Handle("/mcp", oauthSrv.Middleware(newMCPHandler(myPageService, ticketService, userService)))
 
 	httpSrv := &http.Server{
 		Addr:              cfg.HTTPAddr,

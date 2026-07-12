@@ -72,11 +72,21 @@ func TestParseAuthorizeParams(t *testing.T) {
 		if aerr != nil {
 			t.Fatalf("エラー: %+v", aerr)
 		}
-		if p.scope != scopeRead {
-			t.Errorf("scope の既定値が %q（read になるべき）", p.scope)
+		if p.scope != ScopeRead+" "+ScopeWrite {
+			t.Errorf("scope の既定値が %q（read write になるべき）", p.scope)
 		}
 		if p.state != "xyz" {
 			t.Errorf("state = %q", p.state)
+		}
+	})
+
+	t.Run("read のみの明示指定は維持される", func(t *testing.T) {
+		p, aerr := parseAuthorizeParams(clone(map[string]string{"scope": ScopeRead}), resourceURL)
+		if aerr != nil {
+			t.Fatalf("エラー: %+v", aerr)
+		}
+		if p.scope != ScopeRead {
+			t.Errorf("scope = %q, want %q", p.scope, ScopeRead)
 		}
 	})
 
@@ -95,7 +105,7 @@ func TestParseAuthorizeParams(t *testing.T) {
 		"code_challenge が短すぎる":          {map[string]string{"code_challenge": "abc"}, "invalid_request"},
 		"code_challenge_method が plain": {map[string]string{"code_challenge_method": "plain"}, "invalid_request"},
 		"code_challenge_method 無し":      {map[string]string{"code_challenge_method": ""}, "invalid_request"},
-		"未知の scope":                     {map[string]string{"scope": "read write"}, "invalid_scope"},
+		"未知の scope":                     {map[string]string{"scope": "read admin"}, "invalid_scope"},
 		"resource 不一致":                  {map[string]string{"resource": "https://evil.example.com/mcp"}, "invalid_target"},
 	}
 	for name, tc := range errCases {

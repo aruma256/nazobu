@@ -24,13 +24,29 @@ func (s *Server) Middleware(next http.Handler) http.Handler {
 			s.writeUnauthorized(w, "")
 			return
 		}
-		user, err := s.lookupAccessToken(r.Context(), raw)
+		user, scope, err := s.lookupAccessToken(r.Context(), raw)
 		if err != nil {
 			s.writeUnauthorized(w, "invalid_token")
 			return
 		}
-		next.ServeHTTP(w, r.WithContext(auth.WithUser(r.Context(), user)))
+		ctx := auth.WithUser(r.Context(), user)
+		ctx = withGrantedScope(ctx, scope)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+type grantedScopeContextKey struct{}
+
+// withGrantedScope はアクセストークンに紐づく scope（空白区切り）を context に載せる。
+func withGrantedScope(ctx context.Context, scope string) context.Context {
+	return context.WithValue(ctx, grantedScopeContextKey{}, scope)
+}
+
+// HasScope は Bearer 認証済み context の granted scope に scope が含まれるかを返す。
+// MCP の書き込みツールが ScopeWrite の有無を確認するのに使う。
+func HasScope(ctx context.Context, scope string) bool {
+	granted, _ := ctx.Value(grantedScopeContextKey{}).(string)
+	return scopeContains(granted, scope)
 }
 
 func bearerToken(r *http.Request) (string, bool) {
@@ -43,23 +59,23 @@ func bearerToken(r *http.Request) (string, bool) {
 	return token, token != ""
 }
 
-func (s *Server) lookupAccessToken(ctx context.Context, raw string) (*auth.User, error) {
+func (s *Server) lookupAccessToken(ctx context.Context, raw string) (*auth.User, string, error) {
 	row, err := s.q.GetOAuthTokenUserByAccessTokenHash(ctx, hashToken(raw))
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, errInvalidAccessToken
+		return nil, "", errInvalidAccessToken
 	}
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	if s.now().After(row.AccessTokenExpiresAt) {
-		return nil, errInvalidAccessToken
+		return nil, "", errInvalidAccessToken
 	}
 	return &auth.User{
 		ID:          row.ID,
 		DisplayName: row.DisplayName,
 		AvatarURL:   row.AvatarUrl,
 		Role:        row.Role,
-	}, nil
+	}, row.Scope, nil
 }
 
 func (s *Server) writeUnauthorized(w http.ResponseWriter, errorCode string) {

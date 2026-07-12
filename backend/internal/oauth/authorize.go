@@ -55,12 +55,13 @@ func parseAuthorizeParams(v url.Values, resourceURL string) (authorizeParams, *a
 	if m := v.Get("code_challenge_method"); m != "S256" {
 		return p, &authorizeError{"invalid_request", "code_challenge_method は S256 のみ"}
 	}
-	// scope: 未指定なら read を既定にする。未知の scope は拒否する。
+	// scope: 未指定なら全 scope を既定にする（scope を送らないクライアントでも
+	// 書き込みツールまで使えるように。付与内容は同意画面に明示する）。未知の scope は拒否する。
 	if p.scope == "" {
-		p.scope = scopeRead
+		p.scope = ScopeRead + " " + ScopeWrite
 	}
 	for _, sc := range strings.Fields(p.scope) {
-		if sc != scopeRead {
+		if sc != ScopeRead && sc != ScopeWrite {
 			return p, &authorizeError{"invalid_scope", fmt.Sprintf("未対応の scope: %s", sc)}
 		}
 	}
@@ -131,6 +132,7 @@ func (s *Server) HandleAuthorizeGet(w http.ResponseWriter, r *http.Request) {
 		RedirectURI:      redirectURI,
 		LoopbackRedirect: isLoopbackRedirectURI(redirectURI),
 		Scope:            params.scope,
+		ScopeWrite:       scopeContains(params.scope, ScopeWrite),
 		State:            params.state,
 		CodeChallenge:    params.codeChallenge,
 		CSRFToken:        csrf,
@@ -272,7 +274,9 @@ type consentView struct {
 	RedirectURI      string
 	LoopbackRedirect bool
 	Scope            string
-	State            string
+	// ScopeWrite は write scope を含むか（同意画面の「許可される操作」の出し分け用）。
+	ScopeWrite bool
+	State      string
 	CodeChallenge    string
 	CSRFToken        string
 }
@@ -300,7 +304,8 @@ var consentTemplate = template.Must(template.New("consent").Parse(`<!DOCTYPE htm
   <p><span class="client">{{.ClientName}}</span> が、<strong>{{.UserName}}</strong> さんの謎部アカウントへのアクセスを求めています。</p>
   <p>許可される操作:</p>
   <ul>
-    <li>自分の参加予定チケットなどの読み取り</li>
+    <li>自分の参加予定チケットやメンバー一覧などの読み取り</li>
+    {{if .ScopeWrite}}<li>公演・チケットの新規登録などの書き込み</li>{{end}}
   </ul>
   <p class="meta">クライアント識別子: {{.ClientID}}<br>リダイレクト先: {{.RedirectURI}}</p>
   {{if .LoopbackRedirect}}<p class="warn">リダイレクト先がローカルアドレス（このパソコン上のアプリ）です。自分で開始した接続（Claude Code など）でない場合は拒否してください。</p>{{end}}

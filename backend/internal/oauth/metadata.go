@@ -38,7 +38,7 @@ func (s *Server) HandleAuthorizationServerMetadata(w http.ResponseWriter, r *htt
 		GrantTypesSupported:               []string{"authorization_code", "refresh_token"},
 		CodeChallengeMethodsSupported:     []string{"S256"},
 		TokenEndpointAuthMethodsSupported: []string{"none"},
-		ScopesSupported:                   []string{scopeRead},
+		ScopesSupported:                   []string{ScopeRead, ScopeWrite},
 		ClientIDMetadataDocumentSupported: true,
 	})
 }
@@ -47,7 +47,7 @@ func (s *Server) HandleProtectedResourceMetadata(w http.ResponseWriter, r *http.
 	writeJSON(w, http.StatusOK, protectedResourceMetadata{
 		Resource:               s.ResourceURL(),
 		AuthorizationServers:   []string{s.baseURL},
-		ScopesSupported:        []string{scopeRead},
+		ScopesSupported:        []string{ScopeRead, ScopeWrite},
 		BearerMethodsSupported: []string{"header"},
 	})
 }

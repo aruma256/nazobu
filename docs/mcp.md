@@ -1,6 +1,6 @@
 # MCP 連携（Claude connector）
 
-謎部を Claude のカスタムコネクタ（remote MCP server）として接続し、Claude から自分の参加予定などを参照できるようにする仕組み。
+謎部を Claude のカスタムコネクタ（remote MCP server）として接続し、Claude から自分の参加予定の参照や公演・チケットの登録をできるようにする仕組み。
 
 ## 接続方法（ユーザー向け）
 
@@ -10,11 +10,16 @@
 
 ## 提供ツール
 
-| ツール | 内容 |
-|---|---|
-| `list_my_upcoming_tickets` | 自分の今後参加予定のチケット一覧（開演日時・集合時刻・場所・同行者・参加費） |
+| ツール | 必要 scope | 内容 |
+|---|---|---|
+| `list_my_upcoming_tickets` | - | 自分の今後参加予定のチケット一覧（開演日時・集合時刻・場所・同行者・参加費） |
+| `list_users` | - | 登録メンバー一覧（`user_id` と表示名）。参加者指定の前に ID を引く用途 |
+| `create_ticket_with_event` | `write` | 公演とチケットの同時登録（web の新規登録と同じ `CreateTicketWithEvent` RPC を再利用）。立替者は自分になる。admin ロールが必要 |
 
-書き込み系（公演・チケット登録）は今後追加予定。
+### scope
+
+- `read` / `write` の 2 つ。認可リクエストで scope 未指定の場合は両方を既定で付与する（付与内容は同意画面に明示される）
+- write ツールはトークンの `write` scope をツール側で確認する。**write scope 追加前に接続したコネクタのトークンは `read` のみ**なので、書き込みを使うにはコネクタを一度削除して接続し直す必要がある
 
 ## アーキテクチャ
 
@@ -44,11 +49,11 @@
 
 ## テスト
 
-- ユニット: CIMD 検証 / redirect_uri 照合 / PKCE / authorize パラメータ / メタデータ形状（`internal/oauth`）
-- 統合（実 MySQL）: 認可コードフロー一式（承認・拒否・PKCE 失敗・コード再利用・ローテーション・期限切れ）と、go-sdk クライアントによる `/mcp` 経由のツール呼び出し（`internal/oauth` / `internal/server/mcp_integration_test.go`）
+- ユニット: CIMD 検証 / redirect_uri 照合 / PKCE / authorize パラメータ（scope 既定値・未知 scope 拒否を含む）/ メタデータ形状（`internal/oauth`）
+- 統合（実 MySQL）: 認可コードフロー一式（承認・拒否・PKCE 失敗・コード再利用・ローテーション・期限切れ）と、go-sdk クライアントによる `/mcp` 経由のツール呼び出し（read 系 + `create_ticket_with_event` の正常系 / write scope 不足 / member ロール拒否）（`internal/oauth` / `internal/server/mcp_integration_test.go`）
 
 ## 未対応・今後
 
-- write 系ツール（公演・チケット登録）。権限モデルの見直し（web / MCP とも role ベースで同等に）とセットで行う
+- 権限モデルの見直し（web / MCP とも role ベースで同等に。member への登録権限開放は web 側の admin-only 制限とセットで検討）
+- write 系ツールの拡充（チケット更新・参加者管理・精算状態の更新など）
 - 期限切れ OAuth レコードの定期掃除（`DeleteExpiredOAuthRecords` / `DeleteExpiredOAuthTokens` クエリは用意済みで未配線）
-- scope は現状 `read` のみ。write ツール追加時に拡張する

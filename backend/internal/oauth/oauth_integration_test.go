@@ -127,7 +127,7 @@ func (e *flowEnv) obtainCode(t *testing.T, state string) string {
 	form := url.Values{
 		"client_id":      {testClientID},
 		"redirect_uri":   {testRedirectURI},
-		"scope":          {scopeRead},
+		"scope":          {ScopeRead},
 		"state":          {state},
 		"code_challenge": {testChallenge(integVerifier)},
 		"csrf_token":     {csrf},
@@ -235,7 +235,7 @@ func TestIntegrationOAuthAuthorizationCodeFlow(t *testing.T) {
 	if tok["token_type"] != "Bearer" {
 		t.Errorf("token_type = %v", tok["token_type"])
 	}
-	if tok["scope"] != scopeRead {
+	if tok["scope"] != ScopeRead {
 		t.Errorf("scope = %v", tok["scope"])
 	}
 
@@ -349,7 +349,7 @@ func TestIntegrationOAuthDenyAndPKCEFailure(t *testing.T) {
 	form := url.Values{
 		"client_id":      {testClientID},
 		"redirect_uri":   {testRedirectURI},
-		"scope":          {scopeRead},
+		"scope":          {ScopeRead},
 		"state":          {"state-deny"},
 		"code_challenge": {testChallenge(integVerifier)},
 		"csrf_token":     {csrf},
@@ -389,7 +389,7 @@ func TestIntegrationOAuthExpiredTokens(t *testing.T) {
 		ID:                    id.New(),
 		UserID:                userID,
 		ClientID:              testClientID,
-		Scope:                 scopeRead,
+		Scope:                 ScopeRead,
 		AccessTokenHash:       hashToken(expiredAccess),
 		AccessTokenExpiresAt:  time.Now().Add(-time.Minute),
 		RefreshTokenHash:      hashToken(validRefresh),
@@ -398,7 +398,7 @@ func TestIntegrationOAuthExpiredTokens(t *testing.T) {
 		t.Fatalf("token 作成に失敗: %v", err)
 	}
 
-	if _, err := srv.lookupAccessToken(ctx, expiredAccess); !errors.Is(err, errInvalidAccessToken) {
+	if _, _, err := srv.lookupAccessToken(ctx, expiredAccess); !errors.Is(err, errInvalidAccessToken) {
 		t.Errorf("期限切れアクセストークンの err = %v, want errInvalidAccessToken", err)
 	}
 
@@ -409,7 +409,7 @@ func TestIntegrationOAuthExpiredTokens(t *testing.T) {
 		ID:                    tokenID,
 		UserID:                userID,
 		ClientID:              testClientID,
-		Scope:                 scopeRead,
+		Scope:                 ScopeRead,
 		AccessTokenHash:       hashToken(expiredAccess + "2"),
 		AccessTokenExpiresAt:  time.Now().Add(-time.Minute),
 		RefreshTokenHash:      hashToken(expiredRefresh),

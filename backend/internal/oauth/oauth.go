@@ -18,6 +18,8 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"net/http"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
@@ -31,9 +33,10 @@ const (
 	// リフレッシュトークンの有効期限。refresh のたびにローテーション + 期限延長する。
 	refreshTokenTTL = 30 * 24 * time.Hour
 
-	// 現時点で提供する scope。read 系 MCP ツールのみなので read だけ。
-	// 書き込みツールを追加するときに write を増やす。
-	scopeRead = "read"
+	// 提供する scope。read は参照系 MCP ツール、write は登録系 MCP ツールに対応する。
+	// MCP ツール側が HasScope で write の有無を確認する。
+	ScopeRead  = "read"
+	ScopeWrite = "write"
 
 	// MCP エンドポイントの公開パス。protected resource metadata の resource と一致させる。
 	mcpPath = "/mcp"
@@ -93,4 +96,9 @@ func generateToken() (string, error) {
 func hashToken(raw string) string {
 	sum := sha256.Sum256([]byte(raw))
 	return hex.EncodeToString(sum[:])
+}
+
+// scopeContains は空白区切りの scope 文字列に target が含まれるかを返す。
+func scopeContains(scope, target string) bool {
+	return slices.Contains(strings.Fields(scope), target)
 }
