@@ -35,6 +35,19 @@ func newMCPHandler(
 	}, listMyUpcomingTicketsTool(mypage))
 
 	mcp.AddTool(srv, &mcp.Tool{
+		Name: "list_tickets",
+		Description: "謎部に登録済みの全チケット一覧を取得する（過去の公演も含む、開演日時の降順）。" +
+			"自分の予定だけ見たい場合は list_my_upcoming_tickets を使う。日時は JST の RFC3339 形式。",
+	}, listTicketsTool(tickets))
+
+	mcp.AddTool(srv, &mcp.Tool{
+		Name: "get_ticket",
+		Description: "チケット 1 件の詳細を取得する。公演情報・定員に加え、" +
+			"参加者ごとの精算状況（立替者への支払いが済んでいるか）を含む。" +
+			"ticket_id は list_tickets や list_my_upcoming_tickets で確認する。",
+	}, getTicketTool(tickets))
+
+	mcp.AddTool(srv, &mcp.Tool{
 		Name: "list_users",
 		Description: "謎部の登録メンバー一覧（user_id と表示名）を取得する。" +
 			"create_ticket_with_event の participant_user_ids を指定する前に、このツールで ID を確認する。",
@@ -98,6 +111,70 @@ func listMyUpcomingTicketsTool(mypage nazobuv1connect.MyPageServiceHandler) mcp.
 		out.Tickets = make([]mcpTicket, 0, len(res.Msg.GetTickets()))
 		for _, t := range res.Msg.GetTickets() {
 			out.Tickets = append(out.Tickets, toMCPTicket(t))
+		}
+		return nil, out, nil
+	}
+}
+
+type listTicketsOutput struct {
+	Tickets []mcpTicket `json:"tickets" jsonschema:"登録済みチケット一覧（開演日時の降順）"`
+}
+
+func listTicketsTool(tickets nazobuv1connect.TicketServiceHandler) mcp.ToolHandlerFor[struct{}, listTicketsOutput] {
+	return func(ctx context.Context, _ *mcp.CallToolRequest, _ struct{}) (*mcp.CallToolResult, listTicketsOutput, error) {
+		var out listTicketsOutput
+		res, err := tickets.ListTickets(ctx, connect.NewRequest(&nazobuv1.ListTicketsRequest{}))
+		if err != nil {
+			return nil, out, err
+		}
+		out.Tickets = make([]mcpTicket, 0, len(res.Msg.GetTickets()))
+		for _, t := range res.Msg.GetTickets() {
+			out.Tickets = append(out.Tickets, toMCPTicket(t))
+		}
+		return nil, out, nil
+	}
+}
+
+type getTicketInput struct {
+	TicketID string `json:"ticket_id" jsonschema:"チケット ID（必須）"`
+}
+
+// mcpTicketParticipant はチケット詳細に含める参加者 1 人分の情報。
+type mcpTicketParticipant struct {
+	UserID      string `json:"user_id" jsonschema:"参加者の user ID"`
+	Name        string `json:"name" jsonschema:"表示名"`
+	Settled     bool   `json:"settled" jsonschema:"立替者への精算が完了しているか。立替者本人は常に true"`
+	IsPurchaser bool   `json:"is_purchaser" jsonschema:"チケットを立て替え購入した本人かどうか"`
+}
+
+type getTicketOutput struct {
+	Ticket                        mcpTicket              `json:"ticket" jsonschema:"チケット詳細"`
+	MaxParticipants               int32                  `json:"max_participants" jsonschema:"このチケット 1 枚で参加できる最大人数"`
+	UnregisteredParticipantsCount int32                  `json:"unregistered_participants_count" jsonschema:"謎部に未登録の同行者の人数"`
+	Participants                  []mcpTicketParticipant `json:"participants" jsonschema:"参加者一覧（精算状況つき）"`
+}
+
+func getTicketTool(tickets nazobuv1connect.TicketServiceHandler) mcp.ToolHandlerFor[getTicketInput, getTicketOutput] {
+	return func(ctx context.Context, _ *mcp.CallToolRequest, in getTicketInput) (*mcp.CallToolResult, getTicketOutput, error) {
+		var out getTicketOutput
+		res, err := tickets.GetTicket(ctx, connect.NewRequest(&nazobuv1.GetTicketRequest{
+			TicketId: in.TicketID,
+		}))
+		if err != nil {
+			return nil, out, err
+		}
+		t := res.Msg.GetTicket()
+		out.Ticket = toMCPTicket(t)
+		out.MaxParticipants = t.GetMaxParticipants()
+		out.UnregisteredParticipantsCount = t.GetUnregisteredParticipantsCount()
+		out.Participants = make([]mcpTicketParticipant, 0, len(res.Msg.GetParticipants()))
+		for _, p := range res.Msg.GetParticipants() {
+			out.Participants = append(out.Participants, mcpTicketParticipant{
+				UserID:      p.GetUserId(),
+				Name:        p.GetName(),
+				Settled:     p.GetSettled(),
+				IsPurchaser: p.GetIsPurchaser(),
+			})
 		}
 		return nil, out, nil
 	}

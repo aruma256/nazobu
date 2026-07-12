@@ -13,6 +13,8 @@
 | ツール | 必要 scope | 内容 |
 |---|---|---|
 | `list_my_upcoming_tickets` | - | 自分の今後参加予定のチケット一覧（開演日時・集合時刻・場所・同行者・参加費） |
+| `list_tickets` | - | 登録済みの全チケット一覧（過去の公演も含む、開演日時の降順） |
+| `get_ticket` | - | チケット 1 件の詳細。参加者ごとの精算状況（精算済みか・立替者か）を含む |
 | `list_users` | - | 登録メンバー一覧（`user_id` と表示名）。参加者指定の前に ID を引く用途 |
 | `create_ticket_with_event` | `write` | 公演とチケットの同時登録（web の新規登録と同じ `CreateTicketWithEvent` RPC を再利用）。立替者は自分になる。admin ロールが必要 |
 

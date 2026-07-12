@@ -42,7 +42,7 @@ func sha256Hex(s string) string {
 }
 
 // setupMCPTestData は user / event / ticket / 参加者と有効なアクセストークンを仕込む。
-func setupMCPTestData(t *testing.T, db *sql.DB) (userID, accessToken string) {
+func setupMCPTestData(t *testing.T, db *sql.DB) (userID, ticketID, accessToken string) {
 	t.Helper()
 	ctx := context.Background()
 	q := queries.New(db)
@@ -61,7 +61,7 @@ func setupMCPTestData(t *testing.T, db *sql.DB) (userID, accessToken string) {
 	}); err != nil {
 		t.Fatalf("event 作成に失敗: %v", err)
 	}
-	ticketID := id.New()
+	ticketID = id.New()
 	if err := q.CreateTicket(ctx, queries.CreateTicketParams{
 		ID:              ticketID,
 		EventID:         eventID,
@@ -81,7 +81,7 @@ func setupMCPTestData(t *testing.T, db *sql.DB) (userID, accessToken string) {
 	}
 
 	accessToken = issueMCPAccessToken(t, db, userID, "read")
-	return userID, accessToken
+	return userID, ticketID, accessToken
 }
 
 // issueMCPAccessToken は指定 scope のアクセストークンを DB に直接発行して raw 値を返す
@@ -147,7 +147,7 @@ func unmarshalStructuredContent(t *testing.T, res *mcp.CallToolResult, out any) 
 
 func TestIntegrationMCPListMyUpcomingTickets(t *testing.T) {
 	db := testdb.Open(t)
-	_, accessToken := setupMCPTestData(t, db)
+	_, _, accessToken := setupMCPTestData(t, db)
 	ts := newMCPTestServer(t, db)
 	ctx := context.Background()
 	session := newMCPTestSession(t, ts.URL, accessToken)
@@ -161,7 +161,7 @@ func TestIntegrationMCPListMyUpcomingTickets(t *testing.T) {
 	for _, tool := range tools.Tools {
 		published[tool.Name] = true
 	}
-	for _, name := range []string{"list_my_upcoming_tickets", "list_users", "create_ticket_with_event"} {
+	for _, name := range []string{"list_my_upcoming_tickets", "list_tickets", "get_ticket", "list_users", "create_ticket_with_event"} {
 		if !published[name] {
 			t.Fatalf("%s が公開されていない: %v", name, tools.Tools)
 		}
@@ -209,9 +209,130 @@ func TestIntegrationMCPListMyUpcomingTickets(t *testing.T) {
 	}
 }
 
+func TestIntegrationMCPListTickets(t *testing.T) {
+	db := testdb.Open(t)
+	_, ticketID, accessToken := setupMCPTestData(t, db)
+	ts := newMCPTestServer(t, db)
+
+	session := newMCPTestSession(t, ts.URL, accessToken)
+	res, err := session.CallTool(context.Background(), &mcp.CallToolParams{
+		Name:      "list_tickets",
+		Arguments: map[string]any{},
+	})
+	if err != nil {
+		t.Fatalf("CallTool に失敗: %v", err)
+	}
+	if res.IsError {
+		t.Fatalf("ツールがエラーを返した: %+v", res.Content)
+	}
+
+	var out struct {
+		Tickets []struct {
+			TicketID         string   `json:"ticket_id"`
+			EventTitle       string   `json:"event_title"`
+			PricePerPerson   int32    `json:"price_per_person"`
+			PurchaserName    string   `json:"purchaser_name"`
+			ParticipantNames []string `json:"participant_names"`
+		} `json:"tickets"`
+	}
+	unmarshalStructuredContent(t, res, &out)
+	if len(out.Tickets) != 1 {
+		t.Fatalf("tickets = %d 件, want 1 件: %+v", len(out.Tickets), out.Tickets)
+	}
+	got := out.Tickets[0]
+	if got.TicketID != ticketID {
+		t.Errorf("ticket_id = %q, want %q", got.TicketID, ticketID)
+	}
+	if got.EventTitle != "テスト脱出公演" {
+		t.Errorf("event_title = %q", got.EventTitle)
+	}
+	if got.PricePerPerson != 4500 {
+		t.Errorf("price_per_person = %d", got.PricePerPerson)
+	}
+	if got.PurchaserName != "mcp-test-user" {
+		t.Errorf("purchaser_name = %q", got.PurchaserName)
+	}
+	if len(got.ParticipantNames) != 1 || got.ParticipantNames[0] != "mcp-test-user" {
+		t.Errorf("participant_names = %v", got.ParticipantNames)
+	}
+}
+
+func TestIntegrationMCPGetTicket(t *testing.T) {
+	db := testdb.Open(t)
+	userID, ticketID, accessToken := setupMCPTestData(t, db)
+	ts := newMCPTestServer(t, db)
+	ctx := context.Background()
+	session := newMCPTestSession(t, ts.URL, accessToken)
+
+	t.Run("参加者の精算状況を含む詳細が取得できる", func(t *testing.T) {
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "get_ticket",
+			Arguments: map[string]any{"ticket_id": ticketID},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if res.IsError {
+			t.Fatalf("ツールがエラーを返した: %+v", res.Content)
+		}
+
+		var out struct {
+			Ticket struct {
+				TicketID     string `json:"ticket_id"`
+				EventTitle   string `json:"event_title"`
+				MeetingPlace string `json:"meeting_place"`
+			} `json:"ticket"`
+			MaxParticipants int32 `json:"max_participants"`
+			Participants    []struct {
+				UserID      string `json:"user_id"`
+				Name        string `json:"name"`
+				Settled     bool   `json:"settled"`
+				IsPurchaser bool   `json:"is_purchaser"`
+			} `json:"participants"`
+		}
+		unmarshalStructuredContent(t, res, &out)
+		if out.Ticket.TicketID != ticketID {
+			t.Errorf("ticket_id = %q, want %q", out.Ticket.TicketID, ticketID)
+		}
+		if out.Ticket.EventTitle != "テスト脱出公演" {
+			t.Errorf("event_title = %q", out.Ticket.EventTitle)
+		}
+		if out.Ticket.MeetingPlace != "渋谷駅ハチ公前" {
+			t.Errorf("meeting_place = %q", out.Ticket.MeetingPlace)
+		}
+		if out.MaxParticipants != 4 {
+			t.Errorf("max_participants = %d", out.MaxParticipants)
+		}
+		if len(out.Participants) != 1 {
+			t.Fatalf("participants = %d 件, want 1 件: %+v", len(out.Participants), out.Participants)
+		}
+		p := out.Participants[0]
+		if p.UserID != userID || p.Name != "mcp-test-user" {
+			t.Errorf("participants[0] = %+v", p)
+		}
+		// 立替者本人は常に精算済み扱い
+		if !p.IsPurchaser || !p.Settled {
+			t.Errorf("is_purchaser = %v, settled = %v, want どちらも true", p.IsPurchaser, p.Settled)
+		}
+	})
+
+	t.Run("存在しない ticket_id はエラー", func(t *testing.T) {
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "get_ticket",
+			Arguments: map[string]any{"ticket_id": id.New()},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if !res.IsError {
+			t.Fatal("存在しない ticket_id で成功してしまった")
+		}
+	})
+}
+
 func TestIntegrationMCPListUsers(t *testing.T) {
 	db := testdb.Open(t)
-	userID, accessToken := setupMCPTestData(t, db)
+	userID, _, accessToken := setupMCPTestData(t, db)
 	ts := newMCPTestServer(t, db)
 
 	session := newMCPTestSession(t, ts.URL, accessToken)
