@@ -17,6 +17,15 @@
 | `get_ticket` | - | チケット 1 件の詳細。参加者ごとの精算状況（精算済みか・立替者か）を含む |
 | `list_users` | - | 登録メンバー一覧（`user_id` と表示名）。参加者指定の前に ID を引く用途 |
 | `create_ticket_with_event` | `write` | 公演とチケットの同時登録（web の新規登録と同じ `CreateTicketWithEvent` RPC を再利用）。立替者は自分になる。admin ロールが必要 |
+| `update_ticket_with_event` | `write` | チケットと紐づく公演の部分更新。admin もしくは立替者のみ |
+
+### update_ticket_with_event の部分更新
+
+`UpdateTicketWithEvent` RPC は全置換だが、MCP ツール側で「現在値を取得（`GetTicket` + `GetEvent`）→ 指定フィールドだけ上書き → 全フィールド送信」するラッパーにしている。web の編集 form が現在値をロードしてから全送信するのと同じクライアント責務で、置換セマンティクス・バリデーション・権限は RPC 側に集約されたまま。
+
+- 省略（null）したフィールドは現在値を維持
+- `meeting_at` / `meeting_place` / `event_catchphrase` は空文字で未設定に戻す
+- `event_doors_open_minutes_before` / `event_entry_deadline_minutes_before` は `-1` で未設定に戻す
 
 ### scope
 
@@ -52,9 +61,9 @@
 ## テスト
 
 - ユニット: CIMD 検証 / redirect_uri 照合 / PKCE / authorize パラメータ（scope 既定値・未知 scope 拒否を含む）/ メタデータ形状（`internal/oauth`）
-- 統合（実 MySQL）: 認可コードフロー一式（承認・拒否・PKCE 失敗・コード再利用・ローテーション・期限切れ）と、go-sdk クライアントによる `/mcp` 経由のツール呼び出し（read 系 + `create_ticket_with_event` の正常系 / write scope 不足 / member ロール拒否）（`internal/oauth` / `internal/server/mcp_integration_test.go`）
+- 統合（実 MySQL）: 認可コードフロー一式（承認・拒否・PKCE 失敗・コード再利用・ローテーション・期限切れ）と、go-sdk クライアントによる `/mcp` 経由のツール呼び出し（read 系 + write 系の正常系 / 部分更新の維持・クリア / write scope 不足 / ロール・立替者権限の拒否）（`internal/oauth` / `internal/server/mcp_integration_test.go`）
 
 ## 未対応・今後
 
-- write 系ツールの拡充（チケット更新・参加者管理・精算状態の更新など）
+- write 系ツールの拡充（参加者管理・精算状態の更新など）
 - 期限切れ OAuth レコードの定期掃除（`DeleteExpiredOAuthRecords` / `DeleteExpiredOAuthTokens` クエリは用意済みで未配線）

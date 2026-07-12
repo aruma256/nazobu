@@ -53,11 +53,13 @@ func setupMCPTestData(t *testing.T, db *sql.DB) (userID, ticketID, accessToken s
 	}
 	eventID := id.New()
 	if err := q.CreateEvent(ctx, queries.CreateEventParams{
-		ID:                      eventID,
-		Title:                   "テスト脱出公演",
-		Url:                     "https://example.com/event",
-		Catchphrase:             "きみは謎を解けるか",
-		ExpectedDurationMinutes: 120,
+		ID:                         eventID,
+		Title:                      "テスト脱出公演",
+		Url:                        "https://example.com/event",
+		Catchphrase:                "きみは謎を解けるか",
+		ExpectedDurationMinutes:    120,
+		DoorsOpenMinutesBefore:     sql.NullInt32{Int32: 15, Valid: true},
+		EntryDeadlineMinutesBefore: sql.NullInt32{Int32: 5, Valid: true},
 	}); err != nil {
 		t.Fatalf("event 作成に失敗: %v", err)
 	}
@@ -107,7 +109,7 @@ func issueMCPAccessToken(t *testing.T, db *sql.DB, userID, scope string) string 
 func newMCPTestServer(t *testing.T, db *sql.DB) *httptest.Server {
 	t.Helper()
 	oauthSrv := oauth.NewServer(db, http.DefaultClient, "https://nazobu.example.com", false)
-	handler := newMCPHandler(newMyPageService(db), newTicketService(db), newUserService(db))
+	handler := newMCPHandler(newMyPageService(db), newTicketService(db), newEventService(db), newUserService(db))
 	ts := httptest.NewServer(oauthSrv.Middleware(handler))
 	t.Cleanup(ts.Close)
 	return ts
@@ -161,7 +163,7 @@ func TestIntegrationMCPListMyUpcomingTickets(t *testing.T) {
 	for _, tool := range tools.Tools {
 		published[tool.Name] = true
 	}
-	for _, name := range []string{"list_my_upcoming_tickets", "list_tickets", "get_ticket", "list_users", "create_ticket_with_event"} {
+	for _, name := range []string{"list_my_upcoming_tickets", "list_tickets", "get_ticket", "list_users", "create_ticket_with_event", "update_ticket_with_event"} {
 		if !published[name] {
 			t.Fatalf("%s が公開されていない: %v", name, tools.Tools)
 		}
@@ -470,6 +472,143 @@ func TestIntegrationMCPCreateTicketWithEvent(t *testing.T) {
 		}
 		if !res.IsError {
 			t.Fatal("member ロールで成功してしまった")
+		}
+	})
+}
+
+func TestIntegrationMCPUpdateTicketWithEvent(t *testing.T) {
+	db := testdb.Open(t)
+	userID, ticketID, readOnlyToken := setupMCPTestData(t, db)
+	ts := newMCPTestServer(t, db)
+	ctx := context.Background()
+	q := queries.New(db)
+
+	eventRow, err := q.GetTicketByID(ctx, ticketID)
+	if err != nil {
+		t.Fatalf("ticket の取得に失敗: %v", err)
+	}
+	eventID := eventRow.EventID
+
+	session := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, userID, "read write"))
+
+	t.Run("指定したフィールドだけ更新され、省略したフィールドは維持される", func(t *testing.T) {
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name: "update_ticket_with_event",
+			Arguments: map[string]any{
+				"ticket_id":        ticketID,
+				"meeting_place":    "池袋駅東口",
+				"price_per_person": 5000,
+			},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if res.IsError {
+			t.Fatalf("ツールがエラーを返した: %+v", res.Content)
+		}
+
+		var out struct {
+			Ticket struct {
+				EventTitle     string `json:"event_title"`
+				MeetingPlace   string `json:"meeting_place"`
+				PricePerPerson int32  `json:"price_per_person"`
+				PurchaserName  string `json:"purchaser_name"`
+			} `json:"ticket"`
+			MaxParticipants int32 `json:"max_participants"`
+		}
+		unmarshalStructuredContent(t, res, &out)
+		if out.Ticket.MeetingPlace != "池袋駅東口" {
+			t.Errorf("meeting_place = %q", out.Ticket.MeetingPlace)
+		}
+		if out.Ticket.PricePerPerson != 5000 {
+			t.Errorf("price_per_person = %d", out.Ticket.PricePerPerson)
+		}
+		// 省略したフィールドが維持されていること
+		if out.Ticket.EventTitle != "テスト脱出公演" {
+			t.Errorf("event_title が変わってしまった: %q", out.Ticket.EventTitle)
+		}
+		if out.Ticket.PurchaserName != "mcp-test-user" {
+			t.Errorf("purchaser_name が変わってしまった: %q", out.Ticket.PurchaserName)
+		}
+		if out.MaxParticipants != 4 {
+			t.Errorf("max_participants が変わってしまった: %d", out.MaxParticipants)
+		}
+		// Ticket メッセージに乗らない event フィールドも維持されていること（DB で確認）
+		ev, err := q.GetEventByID(ctx, eventID)
+		if err != nil {
+			t.Fatalf("event の取得に失敗: %v", err)
+		}
+		if ev.Catchphrase != "きみは謎を解けるか" {
+			t.Errorf("catchphrase が変わってしまった: %q", ev.Catchphrase)
+		}
+		if !ev.DoorsOpenMinutesBefore.Valid || ev.DoorsOpenMinutesBefore.Int32 != 15 {
+			t.Errorf("doors_open_minutes_before が変わってしまった: %+v", ev.DoorsOpenMinutesBefore)
+		}
+		if !ev.EntryDeadlineMinutesBefore.Valid || ev.EntryDeadlineMinutesBefore.Int32 != 5 {
+			t.Errorf("entry_deadline_minutes_before が変わってしまった: %+v", ev.EntryDeadlineMinutesBefore)
+		}
+	})
+
+	t.Run("空文字と -1 で未設定に戻せる", func(t *testing.T) {
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name: "update_ticket_with_event",
+			Arguments: map[string]any{
+				"ticket_id":                           ticketID,
+				"meeting_place":                       "",
+				"event_entry_deadline_minutes_before": -1,
+			},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if res.IsError {
+			t.Fatalf("ツールがエラーを返した: %+v", res.Content)
+		}
+
+		var out struct {
+			Ticket struct {
+				MeetingPlace string `json:"meeting_place"`
+			} `json:"ticket"`
+		}
+		unmarshalStructuredContent(t, res, &out)
+		if out.Ticket.MeetingPlace != "" {
+			t.Errorf("meeting_place = %q, want 空", out.Ticket.MeetingPlace)
+		}
+		ev, err := q.GetEventByID(ctx, eventID)
+		if err != nil {
+			t.Fatalf("event の取得に失敗: %v", err)
+		}
+		if ev.EntryDeadlineMinutesBefore.Valid {
+			t.Errorf("entry_deadline_minutes_before が未設定に戻っていない: %+v", ev.EntryDeadlineMinutesBefore)
+		}
+	})
+
+	t.Run("read のみのトークンでは write スコープ不足でエラー", func(t *testing.T) {
+		readSession := newMCPTestSession(t, ts.URL, readOnlyToken)
+		res, err := readSession.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "update_ticket_with_event",
+			Arguments: map[string]any{"ticket_id": ticketID, "meeting_place": "新宿"},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if !res.IsError {
+			t.Fatal("write スコープ無しで成功してしまった")
+		}
+	})
+
+	t.Run("立替者でも admin でもない member はエラー", func(t *testing.T) {
+		otherID := createTestUser(t, db, "mcp-other", auth.RoleMember)
+		otherSession := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, otherID, "read write"))
+		res, err := otherSession.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "update_ticket_with_event",
+			Arguments: map[string]any{"ticket_id": ticketID, "meeting_place": "新宿"},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if !res.IsError {
+			t.Fatal("編集権限の無い member で成功してしまった")
 		}
 	})
 }

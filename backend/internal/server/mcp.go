@@ -20,6 +20,7 @@ import (
 func newMCPHandler(
 	mypage nazobuv1connect.MyPageServiceHandler,
 	tickets nazobuv1connect.TicketServiceHandler,
+	events nazobuv1connect.EventServiceHandler,
 	users nazobuv1connect.UserServiceHandler,
 ) http.Handler {
 	srv := mcp.NewServer(&mcp.Implementation{
@@ -59,6 +60,15 @@ func newMCPHandler(
 			"チケットの立替者（購入者）はログイン中のユーザー自身になる。admin ロールと write スコープが必要。" +
 			"日時は JST の RFC3339 形式（例 2026-08-01T14:00:00+09:00）で指定する。",
 	}, createTicketWithEventTool(tickets))
+
+	mcp.AddTool(srv, &mcp.Tool{
+		Name: "update_ticket_with_event",
+		Description: "既存のチケットと紐づく公演を部分更新する。変更したいフィールドだけ指定すればよく、" +
+			"省略したフィールドはツール内部で現在値を取得して維持する。" +
+			"admin ロールもしくはチケットの立替者と write スコープが必要。" +
+			"日時は JST の RFC3339 形式（例 2026-08-01T14:00:00+09:00）で指定する。" +
+			"同じ公演に他のチケットがある場合、公演部分の変更はそれら全てに波及する。",
+	}, updateTicketWithEventTool(tickets, events))
 
 	// Stateless + JSONResponse: セッション管理を持たず、SSE ではなく素の JSON で応答する。
 	// Cloudflare Tunnel + Next.js rewrites 越しでもバッファリングの影響を受けない構成に寄せる。
@@ -263,6 +273,118 @@ func createTicketWithEventTool(tickets nazobuv1connect.TicketServiceHandler) mcp
 		out.Ticket = toMCPTicket(t)
 		out.MaxParticipants = t.GetMaxParticipants()
 		out.UnregisteredParticipantsCount = t.GetUnregisteredParticipantsCount()
+		return nil, out, nil
+	}
+}
+
+// updateTicketWithEventInput は部分更新の入力。ticket_id 以外は全て任意で、
+// 省略（null）したフィールドは現在値を維持する。
+type updateTicketWithEventInput struct {
+	TicketID                        string  `json:"ticket_id" jsonschema:"更新するチケットの ID（必須）"`
+	EventTitle                      *string `json:"event_title,omitempty" jsonschema:"公演タイトル。省略時は変更しない"`
+	EventURL                        *string `json:"event_url,omitempty" jsonschema:"公演の公式ページ URL（http(s)）。省略時は変更しない"`
+	EventCatchphrase                *string `json:"event_catchphrase,omitempty" jsonschema:"公演のキャッチコピー。省略時は変更しない。空文字で未設定に戻す"`
+	EventDoorsOpenMinutesBefore     *int32  `json:"event_doors_open_minutes_before,omitempty" jsonschema:"開場が開演の何分前か（0 以上）。省略時は変更しない。-1 で未設定に戻す"`
+	EventEntryDeadlineMinutesBefore *int32  `json:"event_entry_deadline_minutes_before,omitempty" jsonschema:"入場締切が開演の何分前か（0 以上）。省略時は変更しない。-1 で未設定に戻す"`
+	EventExpectedDurationMinutes    *int32  `json:"event_expected_duration_minutes,omitempty" jsonschema:"想定所要時間（分、1 以上）。省略時は変更しない"`
+	StartAt                         *string `json:"start_at,omitempty" jsonschema:"開演日時（JST, RFC3339）。省略時は変更しない"`
+	MeetingAt                       *string `json:"meeting_at,omitempty" jsonschema:"集合日時（JST, RFC3339）。省略時は変更しない。空文字で未設定に戻す"`
+	MeetingPlace                    *string `json:"meeting_place,omitempty" jsonschema:"集合場所。省略時は変更しない。空文字で未設定に戻す"`
+	PricePerPerson                  *int32  `json:"price_per_person,omitempty" jsonschema:"一人あたりの参加費（税込・円、0 以上）。省略時は変更しない"`
+	MaxParticipants                 *int32  `json:"max_participants,omitempty" jsonschema:"このチケット 1 枚で参加できる最大人数（1 以上）。省略時は変更しない"`
+	UnregisteredParticipantsCount   *int32  `json:"unregistered_participants_count,omitempty" jsonschema:"謎部に未登録の同行者の人数（0 以上）。省略時は変更しない"`
+	PurchasedByUserID               *string `json:"purchased_by_user_id,omitempty" jsonschema:"立替者の user_id。チケットの参加者の中から選ぶ。省略時は変更しない"`
+}
+
+type updateTicketWithEventOutput struct {
+	Ticket                        mcpTicket `json:"ticket" jsonschema:"更新後のチケット"`
+	MaxParticipants               int32     `json:"max_participants" jsonschema:"チケットの最大参加人数"`
+	UnregisteredParticipantsCount int32     `json:"unregistered_participants_count" jsonschema:"未登録の同行者の人数"`
+}
+
+// pickString / pickInt32 は指定があればその値、無ければ現在値を返す。
+func pickString(cur string, in *string) string {
+	if in != nil {
+		return *in
+	}
+	return cur
+}
+
+func pickInt32(cur int32, in *int32) int32 {
+	if in != nil {
+		return *in
+	}
+	return cur
+}
+
+// pickOptionalMinutes は「開演の何分前か」系の optional フィールド用。
+// 省略なら現在値を維持、-1 なら未設定（nil）に戻す。
+func pickOptionalMinutes(cur, in *int32) *int32 {
+	if in == nil {
+		return cur
+	}
+	if *in < 0 {
+		return nil
+	}
+	return in
+}
+
+// updateTicketWithEventTool は全置換の UpdateTicketWithEvent RPC を
+// 「現在値を取得 → 指定フィールドだけ上書き → 全フィールド送信」でラップし、
+// LLM からは部分更新として扱えるようにする（web の編集 form と同じクライアント責務）。
+// 現在値は GetTicket に加え、Ticket メッセージに含まれない
+// entry_deadline のために GetEvent も参照する。
+func updateTicketWithEventTool(tickets nazobuv1connect.TicketServiceHandler, events nazobuv1connect.EventServiceHandler) mcp.ToolHandlerFor[updateTicketWithEventInput, updateTicketWithEventOutput] {
+	return func(ctx context.Context, _ *mcp.CallToolRequest, in updateTicketWithEventInput) (*mcp.CallToolResult, updateTicketWithEventOutput, error) {
+		var out updateTicketWithEventOutput
+		if !oauth.HasScope(ctx, oauth.ScopeWrite) {
+			return nil, out, errors.New("このアクセストークンには write スコープが無い。Claude のコネクタを一度削除して接続し直し、書き込みを許可してほしい")
+		}
+
+		cur, err := tickets.GetTicket(ctx, connect.NewRequest(&nazobuv1.GetTicketRequest{
+			TicketId: in.TicketID,
+		}))
+		if err != nil {
+			return nil, out, err
+		}
+		t := cur.Msg.GetTicket()
+		ev, err := events.GetEvent(ctx, connect.NewRequest(&nazobuv1.GetEventRequest{
+			EventId: t.GetEventId(),
+		}))
+		if err != nil {
+			return nil, out, err
+		}
+
+		curPurchasedBy := ""
+		for _, p := range cur.Msg.GetParticipants() {
+			if p.GetIsPurchaser() {
+				curPurchasedBy = p.GetUserId()
+			}
+		}
+
+		res, err := tickets.UpdateTicketWithEvent(ctx, connect.NewRequest(&nazobuv1.UpdateTicketWithEventRequest{
+			TicketId:                        in.TicketID,
+			EventTitle:                      pickString(t.GetEventTitle(), in.EventTitle),
+			EventUrl:                        pickString(t.GetEventUrl(), in.EventURL),
+			EventCatchphrase:                pickString(t.GetEventCatchphrase(), in.EventCatchphrase),
+			EventDoorsOpenMinutesBefore:     pickOptionalMinutes(t.EventDoorsOpenMinutesBefore, in.EventDoorsOpenMinutesBefore),
+			EventEntryDeadlineMinutesBefore: pickOptionalMinutes(ev.Msg.GetEvent().EntryDeadlineMinutesBefore, in.EventEntryDeadlineMinutesBefore),
+			EventExpectedDurationMinutes:    pickInt32(t.GetEventExpectedDurationMinutes(), in.EventExpectedDurationMinutes),
+			PricePerPerson:                  pickInt32(t.GetPricePerPerson(), in.PricePerPerson),
+			MeetingAt:                       pickString(t.GetMeetingAt(), in.MeetingAt),
+			MeetingPlace:                    pickString(t.GetMeetingPlace(), in.MeetingPlace),
+			StartAt:                         pickString(t.GetStartAt(), in.StartAt),
+			PurchasedByUserId:               pickString(curPurchasedBy, in.PurchasedByUserID),
+			MaxParticipants:                 pickInt32(t.GetMaxParticipants(), in.MaxParticipants),
+			UnregisteredParticipantsCount:   pickInt32(t.GetUnregisteredParticipantsCount(), in.UnregisteredParticipantsCount),
+		}))
+		if err != nil {
+			return nil, out, err
+		}
+		updated := res.Msg.GetTicket()
+		out.Ticket = toMCPTicket(updated)
+		out.MaxParticipants = updated.GetMaxParticipants()
+		out.UnregisteredParticipantsCount = updated.GetUnregisteredParticipantsCount()
 		return nil, out, nil
 	}
 }

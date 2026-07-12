@@ -60,7 +60,8 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	myPageService := newMyPageService(dbc)
 	myPagePath, myPageHandler := nazobuv1connect.NewMyPageServiceHandler(myPageService)
 	mux.Handle(myPagePath, myPageHandler)
-	eventPath, eventHandler := nazobuv1connect.NewEventServiceHandler(newEventService(dbc))
+	eventService := newEventService(dbc)
+	eventPath, eventHandler := nazobuv1connect.NewEventServiceHandler(eventService)
 	mux.Handle(eventPath, eventHandler)
 	ticketService := newTicketService(dbc)
 	ticketPath, ticketHandler := nazobuv1connect.NewTicketServiceHandler(ticketService)
@@ -76,7 +77,7 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	mux.HandleFunc("GET /oauth/authorize", oauthSrv.HandleAuthorizeGet)
 	mux.HandleFunc("POST /oauth/authorize", oauthSrv.HandleAuthorizePost)
 	mux.HandleFunc("POST /oauth/token", oauthSrv.HandleToken)
-	mux.Handle("/mcp", oauthSrv.Middleware(newMCPHandler(myPageService, ticketService, userService)))
+	mux.Handle("/mcp", oauthSrv.Middleware(newMCPHandler(myPageService, ticketService, eventService, userService)))
 
 	httpSrv := &http.Server{
 		Addr:              cfg.HTTPAddr,
