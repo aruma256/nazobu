@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   GetTicketResponse,
   Ticket,
+  TicketCharge,
   TicketParticipant,
 } from "@/app/gen/nazobu/v1/ticket_pb";
 import type { GetMeResponse, User } from "@/app/gen/nazobu/v1/user_pb";
@@ -311,6 +312,44 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
             handleMutation(() =>
               ticketClient.updateTicketParticipantSettlement({
                 ticketId: ticket.id,
+                userId,
+                settled,
+              }),
+            )
+          }
+        />
+
+        <ChargesSection
+          charges={detail.charges}
+          ticketParticipants={detail.participants}
+          myUserId={me.id}
+          canAddCharge={detail.canAddCharge}
+          mutating={mutating}
+          onCreate={(title, participants) =>
+            handleMutation(() =>
+              ticketClient.createTicketCharge({
+                ticketId: ticket.id,
+                title,
+                participants,
+              }),
+            )
+          }
+          onUpdate={(chargeId, title, participants) =>
+            handleMutation(() =>
+              ticketClient.updateTicketCharge({
+                chargeId,
+                title,
+                participants,
+              }),
+            )
+          }
+          onDelete={(chargeId) =>
+            handleMutation(() => ticketClient.deleteTicketCharge({ chargeId }))
+          }
+          onToggleSettlement={(chargeId, userId, settled) =>
+            handleMutation(() =>
+              ticketClient.updateTicketChargeSettlement({
+                chargeId,
                 userId,
                 settled,
               }),
@@ -680,5 +719,410 @@ function ParticipantsSection({
         </div>
       )}
     </Section>
+  );
+}
+
+// 追加精算（打ち上げ飲み会など）の登録・更新で使う対象者 1 人分の入力。
+type ChargeParticipantDraft = { userId: string; amount: number };
+
+// チケットにぶら下がる追加精算のセクション。
+// 費目ごとに対象者と負担額（人によって変えられる）・精算状況を表示し、
+// 立替者（と admin）は編集・削除・精算トグルができる。
+function ChargesSection({
+  charges,
+  ticketParticipants,
+  myUserId,
+  canAddCharge,
+  mutating,
+  onCreate,
+  onUpdate,
+  onDelete,
+  onToggleSettlement,
+}: {
+  charges: TicketCharge[];
+  ticketParticipants: TicketParticipant[];
+  myUserId: string;
+  canAddCharge: boolean;
+  mutating: boolean;
+  onCreate: (title: string, participants: ChargeParticipantDraft[]) => Promise<void>;
+  onUpdate: (
+    chargeId: string,
+    title: string,
+    participants: ChargeParticipantDraft[],
+  ) => Promise<void>;
+  onDelete: (chargeId: string) => Promise<void>;
+  onToggleSettlement: (
+    chargeId: string,
+    userId: string,
+    settled: boolean,
+  ) => Promise<void>;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [editingChargeId, setEditingChargeId] = useState<string | null>(null);
+
+  if (charges.length === 0 && !canAddCharge) return null;
+
+  return (
+    <Section>
+      <SectionTitle count={charges.length > 0 ? charges.length : undefined}>
+        追加精算
+      </SectionTitle>
+      <p className="mt-1 text-xs text-zinc-500">
+        打ち上げ飲み会など、公演のあとに発生した費用の精算。負担額は人ごとに変えられます。
+      </p>
+
+      {charges.map((charge) =>
+        editingChargeId === charge.id ? (
+          <div
+            key={charge.id}
+            className="mt-3 overflow-hidden rounded-2xl border border-zinc-200 bg-white"
+          >
+            <ChargeForm
+              heading={`「${charge.title}」を編集`}
+              ticketParticipants={ticketParticipants}
+              initial={charge}
+              mutating={mutating}
+              submitLabel="保存"
+              onSubmit={async (title, participants) => {
+                await onUpdate(charge.id, title, participants);
+                setEditingChargeId(null);
+              }}
+              onCancel={() => setEditingChargeId(null)}
+            />
+          </div>
+        ) : (
+          <ChargeCard
+            key={charge.id}
+            charge={charge}
+            myUserId={myUserId}
+            mutating={mutating}
+            onEdit={() => {
+              setAdding(false);
+              setEditingChargeId(charge.id);
+            }}
+            onDelete={() => onDelete(charge.id)}
+            onToggleSettlement={(userId, settled) =>
+              onToggleSettlement(charge.id, userId, settled)
+            }
+          />
+        ),
+      )}
+
+      {canAddCharge &&
+        (adding ? (
+          <div className="mt-4 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+            <ChargeForm
+              heading="追加精算を登録"
+              ticketParticipants={ticketParticipants}
+              mutating={mutating}
+              submitLabel="登録（立替者は自分になります）"
+              onSubmit={async (title, participants) => {
+                await onCreate(title, participants);
+                setAdding(false);
+              }}
+              onCancel={() => setAdding(false)}
+            />
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setEditingChargeId(null);
+              setAdding(true);
+            }}
+            disabled={mutating}
+            className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-emerald-700 hover:bg-zinc-50 disabled:opacity-50"
+          >
+            追加精算を登録
+          </button>
+        ))}
+    </Section>
+  );
+}
+
+// 追加精算 1 件分の表示カード。
+function ChargeCard({
+  charge,
+  myUserId,
+  mutating,
+  onEdit,
+  onDelete,
+  onToggleSettlement,
+}: {
+  charge: TicketCharge;
+  myUserId: string;
+  mutating: boolean;
+  onEdit: () => void;
+  onDelete: () => Promise<void>;
+  onToggleSettlement: (userId: string, settled: boolean) => Promise<void>;
+}) {
+  const total = charge.participants.reduce((sum, p) => sum + p.amount, 0);
+  return (
+    <div className="mt-3 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+      <div className="flex items-baseline gap-3 px-4 pt-4">
+        <h3 className="text-sm leading-snug font-semibold">{charge.title}</h3>
+        <Mono className="ml-auto text-sm font-semibold tracking-tight">
+          {formatYen(total)}
+        </Mono>
+      </div>
+      <p className="px-4 pt-0.5 pb-3 text-xs text-zinc-500">
+        立替 {charge.payerName}
+      </p>
+      <ul className="divide-y divide-zinc-100 border-t border-zinc-200">
+        {charge.participants.map((p) => (
+          <li key={p.userId} className="flex items-center gap-3 px-4 py-3">
+            <span
+              className={
+                p.userId === myUserId
+                  ? "text-sm font-semibold text-emerald-700"
+                  : "text-sm text-zinc-900"
+              }
+            >
+              {p.name}
+            </span>
+            <Mono className="text-sm text-zinc-900">{formatYen(p.amount)}</Mono>
+            {p.isPayer ? (
+              <Badge tone="muted">立替</Badge>
+            ) : p.settled ? (
+              <Badge tone="settled">精算済</Badge>
+            ) : (
+              <Badge tone="unsettled">未精算</Badge>
+            )}
+            {charge.canEdit && !p.isPayer && (
+              <button
+                type="button"
+                onClick={() => onToggleSettlement(p.userId, !p.settled)}
+                disabled={mutating}
+                className="ml-auto inline-flex h-9 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+              >
+                {p.settled ? "未精算に戻す" : "精算済にする"}
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+      {charge.canEdit && (
+        <div className="flex flex-wrap gap-2 border-t border-zinc-200 px-4 py-3">
+          <button
+            type="button"
+            onClick={onEdit}
+            disabled={mutating}
+            className="inline-flex h-9 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-xs font-semibold text-emerald-700 hover:bg-zinc-50 disabled:opacity-50"
+          >
+            編集
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={mutating}
+            className="inline-flex h-9 items-center justify-center rounded-lg border border-amber-200 bg-white px-3 text-xs font-semibold text-amber-800 hover:bg-amber-50 disabled:opacity-50"
+          >
+            削除
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// 追加精算の登録・編集フォーム。対象者はチケット参加者から選び、
+// 「一人あたり」で均等額を一括入力したうえで、人ごとに金額を調整できる。
+function ChargeForm({
+  heading,
+  ticketParticipants,
+  initial,
+  mutating,
+  submitLabel,
+  onSubmit,
+  onCancel,
+}: {
+  heading: string;
+  ticketParticipants: TicketParticipant[];
+  initial?: TicketCharge;
+  mutating: boolean;
+  submitLabel: string;
+  onSubmit: (title: string, participants: ChargeParticipantDraft[]) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [title, setTitle] = useState(initial?.title ?? "");
+  const [amounts, setAmounts] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {};
+    for (const p of initial?.participants ?? []) {
+      init[p.userId] = String(p.amount);
+    }
+    return init;
+  });
+  // 新規登録では「全員参加」が最頻ケースなのでチケット参加者全員をプリチェックする。
+  const [checked, setChecked] = useState<Set<string>>(() =>
+    initial
+      ? new Set(initial.participants.map((p) => p.userId))
+      : new Set(ticketParticipants.map((p) => p.userId)),
+  );
+  const [perPersonText, setPerPersonText] = useState("");
+
+  // 編集時、対象者がチケット参加者から外れていても行を残す（金額・精算記録を保持するため）。
+  const rows = useMemo(() => {
+    const seen = new Set<string>();
+    const list: { userId: string; name: string }[] = [];
+    for (const p of ticketParticipants) {
+      seen.add(p.userId);
+      list.push({ userId: p.userId, name: p.name });
+    }
+    for (const p of initial?.participants ?? []) {
+      if (!seen.has(p.userId)) list.push({ userId: p.userId, name: p.name });
+    }
+    return list;
+  }, [ticketParticipants, initial]);
+
+  const toggleChecked = (userId: string) => {
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  };
+
+  const applyPerPerson = () => {
+    const perPerson = Number.parseInt(perPersonText, 10);
+    if (Number.isNaN(perPerson) || perPerson < 0) return;
+    setAmounts((prev) => {
+      const next = { ...prev };
+      for (const userId of checked) {
+        next[userId] = String(perPerson);
+      }
+      return next;
+    });
+  };
+
+  const drafts: ChargeParticipantDraft[] = [];
+  let amountInvalid = false;
+  for (const userId of checked) {
+    const amount = Number.parseInt(amounts[userId] ?? "", 10);
+    if (Number.isNaN(amount) || amount < 0) {
+      amountInvalid = true;
+      continue;
+    }
+    drafts.push({ userId, amount });
+  }
+  const canSubmit =
+    !mutating && title.trim() !== "" && checked.size > 0 && !amountInvalid;
+
+  return (
+    <div className="px-4 py-4">
+      <p className="text-sm font-medium text-zinc-700">{heading}</p>
+
+      <label className="mt-3 block text-xs text-zinc-700">
+        費目名
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="例: 打ち上げ飲み会"
+          maxLength={255}
+          className="mt-1 block h-11 w-full rounded-lg border border-zinc-200 px-3 text-base text-zinc-900 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
+        />
+      </label>
+
+      <div className="mt-3 flex flex-wrap items-end gap-2">
+        <label className="block text-xs text-zinc-700">
+          一人あたり（円）
+          <input
+            type="number"
+            min={0}
+            inputMode="numeric"
+            value={perPersonText}
+            onChange={(e) => setPerPersonText(e.target.value)}
+            className="mt-1 block h-11 w-28 rounded-lg border border-zinc-200 px-3 text-right font-mono text-base tabular-nums focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
+          />
+        </label>
+        <button
+          type="button"
+          onClick={applyPerPerson}
+          disabled={mutating || checked.size === 0}
+          className="inline-flex h-11 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-xs font-semibold text-emerald-700 hover:bg-zinc-50 disabled:opacity-50"
+        >
+          選択中の {checked.size} 人に適用
+        </button>
+      </div>
+
+      <ul className="mt-3 divide-y divide-zinc-200 overflow-hidden rounded-xl border border-zinc-200">
+        {rows.map((row) => {
+          const isChecked = checked.has(row.userId);
+          return (
+            <li
+              key={row.userId}
+              className="flex items-center gap-3 px-3 py-2"
+            >
+              <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-sm text-zinc-900">
+                <input
+                  type="checkbox"
+                  checked={isChecked}
+                  onChange={() => toggleChecked(row.userId)}
+                  disabled={mutating}
+                  className="size-4 rounded border-zinc-300 text-emerald-700 focus:ring-emerald-600"
+                />
+                <span className="truncate">{row.name}</span>
+              </label>
+              {isChecked && (
+                <input
+                  type="number"
+                  min={0}
+                  inputMode="numeric"
+                  value={amounts[row.userId] ?? ""}
+                  onChange={(e) =>
+                    setAmounts((prev) => ({
+                      ...prev,
+                      [row.userId]: e.target.value,
+                    }))
+                  }
+                  disabled={mutating}
+                  aria-label={`${row.name} の負担額`}
+                  placeholder="0"
+                  className="h-11 w-24 rounded-lg border border-zinc-200 px-2 text-right font-mono text-base tabular-nums focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
+                />
+              )}
+            </li>
+          );
+        })}
+      </ul>
+
+      {checked.size > 0 && (
+        <p className="mt-2 text-xs text-zinc-500">
+          合計{" "}
+          <Mono>
+            {formatYen(drafts.reduce((sum, d) => sum + d.amount, 0))}
+          </Mono>
+          （{checked.size} 人）
+          {amountInvalid && (
+            <span className="ml-2 text-amber-800">
+              金額が未入力の対象者がいます。
+            </span>
+          )}
+        </p>
+      )}
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => onSubmit(title.trim(), drafts)}
+          disabled={!canSubmit}
+          className="inline-flex h-11 items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 active:bg-emerald-900 disabled:opacity-50"
+        >
+          {submitLabel}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={mutating}
+          className="inline-flex h-11 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+        >
+          キャンセル
+        </button>
+      </div>
+    </div>
   );
 }

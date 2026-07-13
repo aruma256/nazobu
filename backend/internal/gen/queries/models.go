@@ -71,6 +71,23 @@ type Ticket struct {
 	UpdatedAt                     time.Time
 }
 
+type TicketCharge struct {
+	ID        string
+	TicketID  string
+	Title     string
+	PaidBy    string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type TicketChargeParticipant struct {
+	ChargeID  string
+	UserID    string
+	Amount    int32
+	SettledAt sql.NullTime
+	CreatedAt time.Time
+}
+
 type TicketParticipant struct {
 	TicketID  string
 	UserID    string

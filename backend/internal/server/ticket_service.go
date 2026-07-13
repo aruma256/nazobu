@@ -94,6 +94,7 @@ func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazo
 	}
 	participants := make([]*nazobuv1.TicketParticipant, 0, len(parts))
 	participantNames := make([]string, 0, len(parts))
+	isTicketParticipant := false
 	for _, p := range parts {
 		isPurchaser := p.UserID == row.PurchasedBy
 		participants = append(participants, &nazobuv1.TicketParticipant{
@@ -103,6 +104,14 @@ func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazo
 			IsPurchaser: isPurchaser,
 		})
 		participantNames = append(participantNames, p.Name)
+		if p.UserID == user.ID {
+			isTicketParticipant = true
+		}
+	}
+
+	charges, err := loadTicketCharges(ctx, s.q, user, ticketID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("追加精算の取得に失敗: %w", err))
 	}
 
 	ticket := &nazobuv1.Ticket{
@@ -130,6 +139,8 @@ func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazo
 		Ticket:       ticket,
 		Participants: participants,
 		CanEdit:      canEdit,
+		Charges:      charges,
+		CanAddCharge: user.Role == auth.RoleAdmin || isTicketParticipant,
 	}), nil
 }
 

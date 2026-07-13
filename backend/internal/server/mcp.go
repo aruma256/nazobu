@@ -44,7 +44,8 @@ func newMCPHandler(
 	mcp.AddTool(srv, &mcp.Tool{
 		Name: "get_ticket",
 		Description: "チケット 1 件の詳細を取得する。公演情報・定員に加え、" +
-			"参加者ごとの精算状況（立替者への支払いが済んでいるか）を含む。" +
+			"参加者ごとの精算状況（立替者への支払いが済んでいるか）と、" +
+			"打ち上げ飲み会などの追加精算（対象者ごとの負担額・精算状況）を含む。" +
 			"ticket_id は list_tickets や list_my_upcoming_tickets で確認する。",
 	}, getTicketTool(tickets))
 
@@ -157,11 +158,29 @@ type mcpTicketParticipant struct {
 	IsPurchaser bool   `json:"is_purchaser" jsonschema:"チケットを立て替え購入した本人かどうか"`
 }
 
+// mcpTicketChargeParticipant は追加精算の対象者 1 人分の情報。
+type mcpTicketChargeParticipant struct {
+	UserID  string `json:"user_id" jsonschema:"対象者の user ID"`
+	Name    string `json:"name" jsonschema:"表示名"`
+	Amount  int32  `json:"amount" jsonschema:"この人が立替者に支払う金額（税込・円）"`
+	Settled bool   `json:"settled" jsonschema:"立替者への精算が完了しているか。立替者本人は常に true"`
+	IsPayer bool   `json:"is_payer" jsonschema:"この追加精算を立て替えた本人かどうか"`
+}
+
+// mcpTicketCharge はチケットにぶら下がる追加精算（打ち上げ飲み会など）1 件分の情報。
+type mcpTicketCharge struct {
+	ChargeID     string                       `json:"charge_id" jsonschema:"追加精算の ID"`
+	Title        string                       `json:"title" jsonschema:"費目名（例: 打ち上げ飲み会）"`
+	PayerName    string                       `json:"payer_name" jsonschema:"立て替えたメンバーの表示名。チケットの立替者と別人のこともある"`
+	Participants []mcpTicketChargeParticipant `json:"participants" jsonschema:"対象者一覧（負担額・精算状況つき）。負担額は人によって異なることがある"`
+}
+
 type getTicketOutput struct {
 	Ticket                        mcpTicket              `json:"ticket" jsonschema:"チケット詳細"`
 	MaxParticipants               int32                  `json:"max_participants" jsonschema:"このチケット 1 枚で参加できる最大人数"`
 	UnregisteredParticipantsCount int32                  `json:"unregistered_participants_count" jsonschema:"謎部に未登録の同行者の人数"`
 	Participants                  []mcpTicketParticipant `json:"participants" jsonschema:"参加者一覧（精算状況つき）"`
+	Charges                       []mcpTicketCharge      `json:"charges" jsonschema:"チケットに紐づく追加精算（打ち上げ飲み会など）の一覧"`
 }
 
 func getTicketTool(tickets nazobuv1connect.TicketServiceHandler) mcp.ToolHandlerFor[getTicketInput, getTicketOutput] {
@@ -185,6 +204,25 @@ func getTicketTool(tickets nazobuv1connect.TicketServiceHandler) mcp.ToolHandler
 				Settled:     p.GetSettled(),
 				IsPurchaser: p.GetIsPurchaser(),
 			})
+		}
+		out.Charges = make([]mcpTicketCharge, 0, len(res.Msg.GetCharges()))
+		for _, c := range res.Msg.GetCharges() {
+			charge := mcpTicketCharge{
+				ChargeID:     c.GetId(),
+				Title:        c.GetTitle(),
+				PayerName:    c.GetPayerName(),
+				Participants: make([]mcpTicketChargeParticipant, 0, len(c.GetParticipants())),
+			}
+			for _, p := range c.GetParticipants() {
+				charge.Participants = append(charge.Participants, mcpTicketChargeParticipant{
+					UserID:  p.GetUserId(),
+					Name:    p.GetName(),
+					Amount:  p.GetAmount(),
+					Settled: p.GetSettled(),
+					IsPayer: p.GetIsPayer(),
+				})
+			}
+			out.Charges = append(out.Charges, charge)
 		}
 		return nil, out, nil
 	}

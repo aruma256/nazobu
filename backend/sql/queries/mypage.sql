@@ -1,6 +1,8 @@
 -- name: ListUnsettledTicketsByUserID :many
--- 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」かつ「開演が現在以前」を取る。
--- 立替者本人の自己持ち分は精算対象ではないので除外する。
+-- 自分に未払いが残っており「開演が現在以前」のチケットを取る。未払いは
+--   1. チケット代: 立替者が自分以外、かつ自分の participants 行が未精算
+--   2. 追加精算: 立替者が自分以外の charge に自分の未精算行がある
+-- のいずれか。立替者本人の自己持ち分は精算対象ではないので除外する。
 -- 未来分は精算対象として扱わない（公演前に表示しない）。
 -- 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
@@ -10,19 +12,35 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        t.unregistered_participants_count,
        t.meeting_place,
        pu.display_name AS purchaser_name
-FROM ticket_participants tp
-JOIN tickets t  ON t.id  = tp.ticket_id
-JOIN events  e  ON e.id  = t.event_id
-JOIN users   pu ON pu.id = t.purchased_by
-WHERE tp.user_id    = sqlc.arg('user_id')
-  AND tp.settled_at IS NULL
-  AND t.purchased_by <> tp.user_id
-  AND t.start_at <= sqlc.arg('now')
+FROM tickets t
+JOIN events e  ON e.id  = t.event_id
+JOIN users  pu ON pu.id = t.purchased_by
+WHERE t.start_at <= sqlc.arg('now')
+  AND (
+    EXISTS (
+      SELECT 1 FROM ticket_participants tp
+      WHERE tp.ticket_id = t.id
+        AND tp.user_id = sqlc.arg('user_id')
+        AND tp.settled_at IS NULL
+        AND t.purchased_by <> tp.user_id
+    )
+    OR EXISTS (
+      SELECT 1
+      FROM ticket_charges tc
+      JOIN ticket_charge_participants tcp ON tcp.charge_id = tc.id
+      WHERE tc.ticket_id = t.id
+        AND tcp.user_id = sqlc.arg('user_id')
+        AND tcp.settled_at IS NULL
+        AND tc.paid_by <> tcp.user_id
+    )
+  )
 ORDER BY t.start_at ASC, t.id ASC;
 
 -- name: ListUnsettledReceivablesByUserID :many
--- 自分が立て替えたチケットのうち「自分以外の参加者に未精算が 1 人以上残っている」かつ「開演が現在以前」を取る。
--- 受け取り側の貰い忘れ防止用。自分自身の参加分（自己持ち）は精算対象でないため EXISTS の条件から除外する。
+-- 自分に未回収が残っており「開演が現在以前」のチケットを取る。未回収は
+--   1. チケット代: 自分が立て替えており、自分以外の参加者に未精算が 1 人以上残っている
+--   2. 追加精算: 自分が立て替えた charge に、自分以外の未精算対象者が 1 人以上残っている
+-- のいずれか。受け取り側の貰い忘れ防止用。自分自身の参加分（自己持ち）は精算対象でないため除外する。
 -- 未来分は精算対象として扱わない（公演前に表示しない）。
 -- 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
@@ -35,13 +53,26 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
 FROM tickets t
 JOIN events e  ON e.id = t.event_id
 JOIN users  pu ON pu.id = t.purchased_by
-WHERE t.purchased_by = sqlc.arg('user_id')
-  AND t.start_at <= sqlc.arg('now')
-  AND EXISTS (
-    SELECT 1 FROM ticket_participants tp
-    WHERE tp.ticket_id = t.id
-      AND tp.user_id <> t.purchased_by
-      AND tp.settled_at IS NULL
+WHERE t.start_at <= sqlc.arg('now')
+  AND (
+    (
+      t.purchased_by = sqlc.arg('user_id')
+      AND EXISTS (
+        SELECT 1 FROM ticket_participants tp
+        WHERE tp.ticket_id = t.id
+          AND tp.user_id <> t.purchased_by
+          AND tp.settled_at IS NULL
+      )
+    )
+    OR EXISTS (
+      SELECT 1
+      FROM ticket_charges tc
+      JOIN ticket_charge_participants tcp ON tcp.charge_id = tc.id
+      WHERE tc.ticket_id = t.id
+        AND tc.paid_by = sqlc.arg('user_id')
+        AND tcp.user_id <> tc.paid_by
+        AND tcp.settled_at IS NULL
+    )
   )
 ORDER BY t.start_at ASC, t.id ASC;
 
@@ -69,10 +100,22 @@ ORDER BY t.start_at ASC, t.id ASC;
 
 -- name: ListMyMonthlyTicketsByUserID :many
 -- 当月分（[month_start, next_month_start) 半開区間）の自分の参加チケット。
--- 立替者本人 or 精算済みなら settled = 1 とみなす。
+-- チケット代（立替者本人 or 精算済み）に加え、そのチケットの追加精算にも
+-- 自分の未精算が残っていなければ settled = 1 とみなす。
 -- MySQL に BOOLEAN 型がないため CAST で UNSIGNED に固定し、sqlc に NullBool 推論させずに int64 で受ける。
 SELECT t.id, e.title AS event_title, t.start_at,
-       CAST((tp.settled_at IS NOT NULL OR t.purchased_by = tp.user_id) AS UNSIGNED) AS settled
+       CAST((
+         (tp.settled_at IS NOT NULL OR t.purchased_by = tp.user_id)
+         AND NOT EXISTS (
+           SELECT 1
+           FROM ticket_charges tc
+           JOIN ticket_charge_participants tcp ON tcp.charge_id = tc.id
+           WHERE tc.ticket_id = t.id
+             AND tcp.user_id = tp.user_id
+             AND tcp.settled_at IS NULL
+             AND tc.paid_by <> tcp.user_id
+         )
+       ) AS UNSIGNED) AS settled
 FROM ticket_participants tp
 JOIN tickets t ON t.id = tp.ticket_id
 JOIN events  e ON e.id = t.event_id
