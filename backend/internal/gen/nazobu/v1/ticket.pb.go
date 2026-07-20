@@ -332,9 +332,9 @@ type GetTicketResponse struct {
 	// 現在ログイン中の user が編集権限を持つか（admin もしくは立替者）。
 	CanEdit bool `protobuf:"varint,3,opt,name=can_edit,json=canEdit,proto3" json:"can_edit,omitempty"`
 	// ticket に紐づく追加精算の一覧。created_at 昇順。
-	Charges []*TicketCharge `protobuf:"bytes,4,rep,name=charges,proto3" json:"charges,omitempty"`
+	Expenses []*TicketExpense `protobuf:"bytes,4,rep,name=expenses,proto3" json:"expenses,omitempty"`
 	// 現在ログイン中の user が追加精算を新規登録できるか（admin もしくは ticket の参加者）。
-	CanAddCharge  bool `protobuf:"varint,5,opt,name=can_add_charge,json=canAddCharge,proto3" json:"can_add_charge,omitempty"`
+	CanAddExpense bool `protobuf:"varint,5,opt,name=can_add_expense,json=canAddExpense,proto3" json:"can_add_expense,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -390,22 +390,22 @@ func (x *GetTicketResponse) GetCanEdit() bool {
 	return false
 }
 
-func (x *GetTicketResponse) GetCharges() []*TicketCharge {
+func (x *GetTicketResponse) GetExpenses() []*TicketExpense {
 	if x != nil {
-		return x.Charges
+		return x.Expenses
 	}
 	return nil
 }
 
-func (x *GetTicketResponse) GetCanAddCharge() bool {
+func (x *GetTicketResponse) GetCanAddExpense() bool {
 	if x != nil {
-		return x.CanAddCharge
+		return x.CanAddExpense
 	}
 	return false
 }
 
-// TicketCharge は ticket にぶら下がる追加精算（打ち上げ飲み会など）1 件分。
-type TicketCharge struct {
+// TicketExpense は ticket にぶら下がる追加精算（打ち上げ飲み会など）1 件分。
+type TicketExpense struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// 費目名。例: '打ち上げ飲み会'
@@ -415,27 +415,27 @@ type TicketCharge struct {
 	// 立替者の表示名。
 	PayerName string `protobuf:"bytes,4,opt,name=payer_name,json=payerName,proto3" json:"payer_name,omitempty"`
 	// 対象者一覧（created_at 昇順）。負担額は対象者ごとに異なってよい。
-	Participants []*TicketChargeParticipant `protobuf:"bytes,5,rep,name=participants,proto3" json:"participants,omitempty"`
-	// 現在ログイン中の user がこの charge を編集・削除・精算操作できるか（admin もしくは立替者）。
+	Participants []*TicketExpenseParticipant `protobuf:"bytes,5,rep,name=participants,proto3" json:"participants,omitempty"`
+	// 現在ログイン中の user がこの expense を編集・削除・精算操作できるか（admin もしくは立替者）。
 	CanEdit       bool `protobuf:"varint,6,opt,name=can_edit,json=canEdit,proto3" json:"can_edit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *TicketCharge) Reset() {
-	*x = TicketCharge{}
+func (x *TicketExpense) Reset() {
+	*x = TicketExpense{}
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *TicketCharge) String() string {
+func (x *TicketExpense) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TicketCharge) ProtoMessage() {}
+func (*TicketExpense) ProtoMessage() {}
 
-func (x *TicketCharge) ProtoReflect() protoreflect.Message {
+func (x *TicketExpense) ProtoReflect() protoreflect.Message {
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -447,54 +447,54 @@ func (x *TicketCharge) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TicketCharge.ProtoReflect.Descriptor instead.
-func (*TicketCharge) Descriptor() ([]byte, []int) {
+// Deprecated: Use TicketExpense.ProtoReflect.Descriptor instead.
+func (*TicketExpense) Descriptor() ([]byte, []int) {
 	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *TicketCharge) GetId() string {
+func (x *TicketExpense) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *TicketCharge) GetTitle() string {
+func (x *TicketExpense) GetTitle() string {
 	if x != nil {
 		return x.Title
 	}
 	return ""
 }
 
-func (x *TicketCharge) GetPaidByUserId() string {
+func (x *TicketExpense) GetPaidByUserId() string {
 	if x != nil {
 		return x.PaidByUserId
 	}
 	return ""
 }
 
-func (x *TicketCharge) GetPayerName() string {
+func (x *TicketExpense) GetPayerName() string {
 	if x != nil {
 		return x.PayerName
 	}
 	return ""
 }
 
-func (x *TicketCharge) GetParticipants() []*TicketChargeParticipant {
+func (x *TicketExpense) GetParticipants() []*TicketExpenseParticipant {
 	if x != nil {
 		return x.Participants
 	}
 	return nil
 }
 
-func (x *TicketCharge) GetCanEdit() bool {
+func (x *TicketExpense) GetCanEdit() bool {
 	if x != nil {
 		return x.CanEdit
 	}
 	return false
 }
 
-type TicketChargeParticipant struct {
+type TicketExpenseParticipant struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	// 表示名。
@@ -503,26 +503,26 @@ type TicketChargeParticipant struct {
 	Amount int32 `protobuf:"varint,3,opt,name=amount,proto3" json:"amount,omitempty"`
 	// 精算が完了しているか。立替者本人なら常に true。
 	Settled bool `protobuf:"varint,4,opt,name=settled,proto3" json:"settled,omitempty"`
-	// charge の立替者本人かどうか。立替者は精算操作の対象外。
+	// expense の立替者本人かどうか。立替者は精算操作の対象外。
 	IsPayer       bool `protobuf:"varint,5,opt,name=is_payer,json=isPayer,proto3" json:"is_payer,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *TicketChargeParticipant) Reset() {
-	*x = TicketChargeParticipant{}
+func (x *TicketExpenseParticipant) Reset() {
+	*x = TicketExpenseParticipant{}
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *TicketChargeParticipant) String() string {
+func (x *TicketExpenseParticipant) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TicketChargeParticipant) ProtoMessage() {}
+func (*TicketExpenseParticipant) ProtoMessage() {}
 
-func (x *TicketChargeParticipant) ProtoReflect() protoreflect.Message {
+func (x *TicketExpenseParticipant) ProtoReflect() protoreflect.Message {
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -534,48 +534,48 @@ func (x *TicketChargeParticipant) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TicketChargeParticipant.ProtoReflect.Descriptor instead.
-func (*TicketChargeParticipant) Descriptor() ([]byte, []int) {
+// Deprecated: Use TicketExpenseParticipant.ProtoReflect.Descriptor instead.
+func (*TicketExpenseParticipant) Descriptor() ([]byte, []int) {
 	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *TicketChargeParticipant) GetUserId() string {
+func (x *TicketExpenseParticipant) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
 	return ""
 }
 
-func (x *TicketChargeParticipant) GetName() string {
+func (x *TicketExpenseParticipant) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *TicketChargeParticipant) GetAmount() int32 {
+func (x *TicketExpenseParticipant) GetAmount() int32 {
 	if x != nil {
 		return x.Amount
 	}
 	return 0
 }
 
-func (x *TicketChargeParticipant) GetSettled() bool {
+func (x *TicketExpenseParticipant) GetSettled() bool {
 	if x != nil {
 		return x.Settled
 	}
 	return false
 }
 
-func (x *TicketChargeParticipant) GetIsPayer() bool {
+func (x *TicketExpenseParticipant) GetIsPayer() bool {
 	if x != nil {
 		return x.IsPayer
 	}
 	return false
 }
 
-// TicketChargeParticipantInput は charge の登録・更新で対象者 1 人分を指定する。
-type TicketChargeParticipantInput struct {
+// TicketExpenseParticipantInput は expense の登録・更新で対象者 1 人分を指定する。
+type TicketExpenseParticipantInput struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	// この人が立替者に支払う金額（税込・円、0 以上）。
@@ -584,20 +584,20 @@ type TicketChargeParticipantInput struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *TicketChargeParticipantInput) Reset() {
-	*x = TicketChargeParticipantInput{}
+func (x *TicketExpenseParticipantInput) Reset() {
+	*x = TicketExpenseParticipantInput{}
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *TicketChargeParticipantInput) String() string {
+func (x *TicketExpenseParticipantInput) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TicketChargeParticipantInput) ProtoMessage() {}
+func (*TicketExpenseParticipantInput) ProtoMessage() {}
 
-func (x *TicketChargeParticipantInput) ProtoReflect() protoreflect.Message {
+func (x *TicketExpenseParticipantInput) ProtoReflect() protoreflect.Message {
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -609,19 +609,19 @@ func (x *TicketChargeParticipantInput) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TicketChargeParticipantInput.ProtoReflect.Descriptor instead.
-func (*TicketChargeParticipantInput) Descriptor() ([]byte, []int) {
+// Deprecated: Use TicketExpenseParticipantInput.ProtoReflect.Descriptor instead.
+func (*TicketExpenseParticipantInput) Descriptor() ([]byte, []int) {
 	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *TicketChargeParticipantInput) GetUserId() string {
+func (x *TicketExpenseParticipantInput) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
 	return ""
 }
 
-func (x *TicketChargeParticipantInput) GetAmount() int32 {
+func (x *TicketExpenseParticipantInput) GetAmount() int32 {
 	if x != nil {
 		return x.Amount
 	}
@@ -1673,32 +1673,32 @@ func (*UpdateTicketParticipantSettlementResponse) Descriptor() ([]byte, []int) {
 	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{22}
 }
 
-type CreateTicketChargeRequest struct {
+type CreateTicketExpenseRequest struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	TicketId string                 `protobuf:"bytes,1,opt,name=ticket_id,json=ticketId,proto3" json:"ticket_id,omitempty"`
 	// 費目名。必須。
 	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	// 対象者と負担額。1 件以上。ticket の参加者から選ぶ。
 	// 立替者（= ログイン中の user）を含めても構わない。
-	Participants  []*TicketChargeParticipantInput `protobuf:"bytes,3,rep,name=participants,proto3" json:"participants,omitempty"`
+	Participants  []*TicketExpenseParticipantInput `protobuf:"bytes,3,rep,name=participants,proto3" json:"participants,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CreateTicketChargeRequest) Reset() {
-	*x = CreateTicketChargeRequest{}
+func (x *CreateTicketExpenseRequest) Reset() {
+	*x = CreateTicketExpenseRequest{}
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CreateTicketChargeRequest) String() string {
+func (x *CreateTicketExpenseRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CreateTicketChargeRequest) ProtoMessage() {}
+func (*CreateTicketExpenseRequest) ProtoMessage() {}
 
-func (x *CreateTicketChargeRequest) ProtoReflect() protoreflect.Message {
+func (x *CreateTicketExpenseRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1710,52 +1710,52 @@ func (x *CreateTicketChargeRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CreateTicketChargeRequest.ProtoReflect.Descriptor instead.
-func (*CreateTicketChargeRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateTicketExpenseRequest.ProtoReflect.Descriptor instead.
+func (*CreateTicketExpenseRequest) Descriptor() ([]byte, []int) {
 	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{23}
 }
 
-func (x *CreateTicketChargeRequest) GetTicketId() string {
+func (x *CreateTicketExpenseRequest) GetTicketId() string {
 	if x != nil {
 		return x.TicketId
 	}
 	return ""
 }
 
-func (x *CreateTicketChargeRequest) GetTitle() string {
+func (x *CreateTicketExpenseRequest) GetTitle() string {
 	if x != nil {
 		return x.Title
 	}
 	return ""
 }
 
-func (x *CreateTicketChargeRequest) GetParticipants() []*TicketChargeParticipantInput {
+func (x *CreateTicketExpenseRequest) GetParticipants() []*TicketExpenseParticipantInput {
 	if x != nil {
 		return x.Participants
 	}
 	return nil
 }
 
-type CreateTicketChargeResponse struct {
+type CreateTicketExpenseResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CreateTicketChargeResponse) Reset() {
-	*x = CreateTicketChargeResponse{}
+func (x *CreateTicketExpenseResponse) Reset() {
+	*x = CreateTicketExpenseResponse{}
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CreateTicketChargeResponse) String() string {
+func (x *CreateTicketExpenseResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CreateTicketChargeResponse) ProtoMessage() {}
+func (*CreateTicketExpenseResponse) ProtoMessage() {}
 
-func (x *CreateTicketChargeResponse) ProtoReflect() protoreflect.Message {
+func (x *CreateTicketExpenseResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1767,37 +1767,37 @@ func (x *CreateTicketChargeResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CreateTicketChargeResponse.ProtoReflect.Descriptor instead.
-func (*CreateTicketChargeResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateTicketExpenseResponse.ProtoReflect.Descriptor instead.
+func (*CreateTicketExpenseResponse) Descriptor() ([]byte, []int) {
 	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{24}
 }
 
-type UpdateTicketChargeRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	ChargeId string                 `protobuf:"bytes,1,opt,name=charge_id,json=chargeId,proto3" json:"charge_id,omitempty"`
+type UpdateTicketExpenseRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	ExpenseId string                 `protobuf:"bytes,1,opt,name=expense_id,json=expenseId,proto3" json:"expense_id,omitempty"`
 	// 費目名。必須。
 	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	// 対象者と負担額の全置換。1 件以上。ticket の参加者から選ぶ。
 	// 既存対象者は金額を上書き（精算状態は維持）、指定から外れた対象者は削除する。
-	Participants  []*TicketChargeParticipantInput `protobuf:"bytes,3,rep,name=participants,proto3" json:"participants,omitempty"`
+	Participants  []*TicketExpenseParticipantInput `protobuf:"bytes,3,rep,name=participants,proto3" json:"participants,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UpdateTicketChargeRequest) Reset() {
-	*x = UpdateTicketChargeRequest{}
+func (x *UpdateTicketExpenseRequest) Reset() {
+	*x = UpdateTicketExpenseRequest{}
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UpdateTicketChargeRequest) String() string {
+func (x *UpdateTicketExpenseRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpdateTicketChargeRequest) ProtoMessage() {}
+func (*UpdateTicketExpenseRequest) ProtoMessage() {}
 
-func (x *UpdateTicketChargeRequest) ProtoReflect() protoreflect.Message {
+func (x *UpdateTicketExpenseRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1809,52 +1809,52 @@ func (x *UpdateTicketChargeRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpdateTicketChargeRequest.ProtoReflect.Descriptor instead.
-func (*UpdateTicketChargeRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpdateTicketExpenseRequest.ProtoReflect.Descriptor instead.
+func (*UpdateTicketExpenseRequest) Descriptor() ([]byte, []int) {
 	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{25}
 }
 
-func (x *UpdateTicketChargeRequest) GetChargeId() string {
+func (x *UpdateTicketExpenseRequest) GetExpenseId() string {
 	if x != nil {
-		return x.ChargeId
+		return x.ExpenseId
 	}
 	return ""
 }
 
-func (x *UpdateTicketChargeRequest) GetTitle() string {
+func (x *UpdateTicketExpenseRequest) GetTitle() string {
 	if x != nil {
 		return x.Title
 	}
 	return ""
 }
 
-func (x *UpdateTicketChargeRequest) GetParticipants() []*TicketChargeParticipantInput {
+func (x *UpdateTicketExpenseRequest) GetParticipants() []*TicketExpenseParticipantInput {
 	if x != nil {
 		return x.Participants
 	}
 	return nil
 }
 
-type UpdateTicketChargeResponse struct {
+type UpdateTicketExpenseResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UpdateTicketChargeResponse) Reset() {
-	*x = UpdateTicketChargeResponse{}
+func (x *UpdateTicketExpenseResponse) Reset() {
+	*x = UpdateTicketExpenseResponse{}
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UpdateTicketChargeResponse) String() string {
+func (x *UpdateTicketExpenseResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpdateTicketChargeResponse) ProtoMessage() {}
+func (*UpdateTicketExpenseResponse) ProtoMessage() {}
 
-func (x *UpdateTicketChargeResponse) ProtoReflect() protoreflect.Message {
+func (x *UpdateTicketExpenseResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1866,32 +1866,32 @@ func (x *UpdateTicketChargeResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpdateTicketChargeResponse.ProtoReflect.Descriptor instead.
-func (*UpdateTicketChargeResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpdateTicketExpenseResponse.ProtoReflect.Descriptor instead.
+func (*UpdateTicketExpenseResponse) Descriptor() ([]byte, []int) {
 	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{26}
 }
 
-type DeleteTicketChargeRequest struct {
+type DeleteTicketExpenseRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ChargeId      string                 `protobuf:"bytes,1,opt,name=charge_id,json=chargeId,proto3" json:"charge_id,omitempty"`
+	ExpenseId     string                 `protobuf:"bytes,1,opt,name=expense_id,json=expenseId,proto3" json:"expense_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteTicketChargeRequest) Reset() {
-	*x = DeleteTicketChargeRequest{}
+func (x *DeleteTicketExpenseRequest) Reset() {
+	*x = DeleteTicketExpenseRequest{}
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteTicketChargeRequest) String() string {
+func (x *DeleteTicketExpenseRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteTicketChargeRequest) ProtoMessage() {}
+func (*DeleteTicketExpenseRequest) ProtoMessage() {}
 
-func (x *DeleteTicketChargeRequest) ProtoReflect() protoreflect.Message {
+func (x *DeleteTicketExpenseRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1903,38 +1903,38 @@ func (x *DeleteTicketChargeRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteTicketChargeRequest.ProtoReflect.Descriptor instead.
-func (*DeleteTicketChargeRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use DeleteTicketExpenseRequest.ProtoReflect.Descriptor instead.
+func (*DeleteTicketExpenseRequest) Descriptor() ([]byte, []int) {
 	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{27}
 }
 
-func (x *DeleteTicketChargeRequest) GetChargeId() string {
+func (x *DeleteTicketExpenseRequest) GetExpenseId() string {
 	if x != nil {
-		return x.ChargeId
+		return x.ExpenseId
 	}
 	return ""
 }
 
-type DeleteTicketChargeResponse struct {
+type DeleteTicketExpenseResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteTicketChargeResponse) Reset() {
-	*x = DeleteTicketChargeResponse{}
+func (x *DeleteTicketExpenseResponse) Reset() {
+	*x = DeleteTicketExpenseResponse{}
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteTicketChargeResponse) String() string {
+func (x *DeleteTicketExpenseResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteTicketChargeResponse) ProtoMessage() {}
+func (*DeleteTicketExpenseResponse) ProtoMessage() {}
 
-func (x *DeleteTicketChargeResponse) ProtoReflect() protoreflect.Message {
+func (x *DeleteTicketExpenseResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1946,35 +1946,35 @@ func (x *DeleteTicketChargeResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteTicketChargeResponse.ProtoReflect.Descriptor instead.
-func (*DeleteTicketChargeResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use DeleteTicketExpenseResponse.ProtoReflect.Descriptor instead.
+func (*DeleteTicketExpenseResponse) Descriptor() ([]byte, []int) {
 	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{28}
 }
 
-type UpdateTicketChargeSettlementRequest struct {
-	state    protoimpl.MessageState `protogen:"open.v1"`
-	ChargeId string                 `protobuf:"bytes,1,opt,name=charge_id,json=chargeId,proto3" json:"charge_id,omitempty"`
-	UserId   string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+type UpdateTicketExpenseSettlementRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	ExpenseId string                 `protobuf:"bytes,1,opt,name=expense_id,json=expenseId,proto3" json:"expense_id,omitempty"`
+	UserId    string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	// true = 精算済みにする、false = 未精算に戻す。
 	Settled       bool `protobuf:"varint,3,opt,name=settled,proto3" json:"settled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UpdateTicketChargeSettlementRequest) Reset() {
-	*x = UpdateTicketChargeSettlementRequest{}
+func (x *UpdateTicketExpenseSettlementRequest) Reset() {
+	*x = UpdateTicketExpenseSettlementRequest{}
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UpdateTicketChargeSettlementRequest) String() string {
+func (x *UpdateTicketExpenseSettlementRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpdateTicketChargeSettlementRequest) ProtoMessage() {}
+func (*UpdateTicketExpenseSettlementRequest) ProtoMessage() {}
 
-func (x *UpdateTicketChargeSettlementRequest) ProtoReflect() protoreflect.Message {
+func (x *UpdateTicketExpenseSettlementRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1986,52 +1986,52 @@ func (x *UpdateTicketChargeSettlementRequest) ProtoReflect() protoreflect.Messag
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpdateTicketChargeSettlementRequest.ProtoReflect.Descriptor instead.
-func (*UpdateTicketChargeSettlementRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpdateTicketExpenseSettlementRequest.ProtoReflect.Descriptor instead.
+func (*UpdateTicketExpenseSettlementRequest) Descriptor() ([]byte, []int) {
 	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{29}
 }
 
-func (x *UpdateTicketChargeSettlementRequest) GetChargeId() string {
+func (x *UpdateTicketExpenseSettlementRequest) GetExpenseId() string {
 	if x != nil {
-		return x.ChargeId
+		return x.ExpenseId
 	}
 	return ""
 }
 
-func (x *UpdateTicketChargeSettlementRequest) GetUserId() string {
+func (x *UpdateTicketExpenseSettlementRequest) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
 	return ""
 }
 
-func (x *UpdateTicketChargeSettlementRequest) GetSettled() bool {
+func (x *UpdateTicketExpenseSettlementRequest) GetSettled() bool {
 	if x != nil {
 		return x.Settled
 	}
 	return false
 }
 
-type UpdateTicketChargeSettlementResponse struct {
+type UpdateTicketExpenseSettlementResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UpdateTicketChargeSettlementResponse) Reset() {
-	*x = UpdateTicketChargeSettlementResponse{}
+func (x *UpdateTicketExpenseSettlementResponse) Reset() {
+	*x = UpdateTicketExpenseSettlementResponse{}
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UpdateTicketChargeSettlementResponse) String() string {
+func (x *UpdateTicketExpenseSettlementResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpdateTicketChargeSettlementResponse) ProtoMessage() {}
+func (*UpdateTicketExpenseSettlementResponse) ProtoMessage() {}
 
-func (x *UpdateTicketChargeSettlementResponse) ProtoReflect() protoreflect.Message {
+func (x *UpdateTicketExpenseSettlementResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_nazobu_v1_ticket_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2043,8 +2043,8 @@ func (x *UpdateTicketChargeSettlementResponse) ProtoReflect() protoreflect.Messa
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpdateTicketChargeSettlementResponse.ProtoReflect.Descriptor instead.
-func (*UpdateTicketChargeSettlementResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpdateTicketExpenseSettlementResponse.ProtoReflect.Descriptor instead.
+func (*UpdateTicketExpenseSettlementResponse) Descriptor() ([]byte, []int) {
 	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{30}
 }
 
@@ -2078,28 +2078,28 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\x1funregistered_participants_count\x18\x11 \x01(\x05R\x1dunregisteredParticipantsCountB\"\n" +
 	" _event_doors_open_minutes_beforeJ\x04\b\x04\x10\x05\"/\n" +
 	"\x10GetTicketRequest\x12\x1b\n" +
-	"\tticket_id\x18\x01 \x01(\tR\bticketId\"\xf4\x01\n" +
+	"\tticket_id\x18\x01 \x01(\tR\bticketId\"\xf9\x01\n" +
 	"\x11GetTicketResponse\x12)\n" +
 	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket\x12@\n" +
 	"\fparticipants\x18\x02 \x03(\v2\x1c.nazobu.v1.TicketParticipantR\fparticipants\x12\x19\n" +
-	"\bcan_edit\x18\x03 \x01(\bR\acanEdit\x121\n" +
-	"\acharges\x18\x04 \x03(\v2\x17.nazobu.v1.TicketChargeR\acharges\x12$\n" +
-	"\x0ecan_add_charge\x18\x05 \x01(\bR\fcanAddCharge\"\xdd\x01\n" +
-	"\fTicketCharge\x12\x0e\n" +
+	"\bcan_edit\x18\x03 \x01(\bR\acanEdit\x124\n" +
+	"\bexpenses\x18\x04 \x03(\v2\x18.nazobu.v1.TicketExpenseR\bexpenses\x12&\n" +
+	"\x0fcan_add_expense\x18\x05 \x01(\bR\rcanAddExpense\"\xdf\x01\n" +
+	"\rTicketExpense\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12%\n" +
 	"\x0fpaid_by_user_id\x18\x03 \x01(\tR\fpaidByUserId\x12\x1d\n" +
 	"\n" +
-	"payer_name\x18\x04 \x01(\tR\tpayerName\x12F\n" +
-	"\fparticipants\x18\x05 \x03(\v2\".nazobu.v1.TicketChargeParticipantR\fparticipants\x12\x19\n" +
-	"\bcan_edit\x18\x06 \x01(\bR\acanEdit\"\x93\x01\n" +
-	"\x17TicketChargeParticipant\x12\x17\n" +
+	"payer_name\x18\x04 \x01(\tR\tpayerName\x12G\n" +
+	"\fparticipants\x18\x05 \x03(\v2#.nazobu.v1.TicketExpenseParticipantR\fparticipants\x12\x19\n" +
+	"\bcan_edit\x18\x06 \x01(\bR\acanEdit\"\x94\x01\n" +
+	"\x18TicketExpenseParticipant\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
 	"\x06amount\x18\x03 \x01(\x05R\x06amount\x12\x18\n" +
 	"\asettled\x18\x04 \x01(\bR\asettled\x12\x19\n" +
-	"\bis_payer\x18\x05 \x01(\bR\aisPayer\"O\n" +
-	"\x1cTicketChargeParticipantInput\x12\x17\n" +
+	"\bis_payer\x18\x05 \x01(\bR\aisPayer\"P\n" +
+	"\x1dTicketExpenseParticipantInput\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x16\n" +
 	"\x06amount\x18\x02 \x01(\x05R\x06amount\"}\n" +
 	"\x11TicketParticipant\x12\x17\n" +
@@ -2186,25 +2186,28 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x18\n" +
 	"\asettled\x18\x03 \x01(\bR\asettled\"+\n" +
-	")UpdateTicketParticipantSettlementResponse\"\x9b\x01\n" +
-	"\x19CreateTicketChargeRequest\x12\x1b\n" +
+	")UpdateTicketParticipantSettlementResponse\"\x9d\x01\n" +
+	"\x1aCreateTicketExpenseRequest\x12\x1b\n" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12K\n" +
-	"\fparticipants\x18\x03 \x03(\v2'.nazobu.v1.TicketChargeParticipantInputR\fparticipants\"\x1c\n" +
-	"\x1aCreateTicketChargeResponse\"\x9b\x01\n" +
-	"\x19UpdateTicketChargeRequest\x12\x1b\n" +
-	"\tcharge_id\x18\x01 \x01(\tR\bchargeId\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12K\n" +
-	"\fparticipants\x18\x03 \x03(\v2'.nazobu.v1.TicketChargeParticipantInputR\fparticipants\"\x1c\n" +
-	"\x1aUpdateTicketChargeResponse\"8\n" +
-	"\x19DeleteTicketChargeRequest\x12\x1b\n" +
-	"\tcharge_id\x18\x01 \x01(\tR\bchargeId\"\x1c\n" +
-	"\x1aDeleteTicketChargeResponse\"u\n" +
-	"#UpdateTicketChargeSettlementRequest\x12\x1b\n" +
-	"\tcharge_id\x18\x01 \x01(\tR\bchargeId\x12\x17\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12L\n" +
+	"\fparticipants\x18\x03 \x03(\v2(.nazobu.v1.TicketExpenseParticipantInputR\fparticipants\"\x1d\n" +
+	"\x1bCreateTicketExpenseResponse\"\x9f\x01\n" +
+	"\x1aUpdateTicketExpenseRequest\x12\x1d\n" +
+	"\n" +
+	"expense_id\x18\x01 \x01(\tR\texpenseId\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12L\n" +
+	"\fparticipants\x18\x03 \x03(\v2(.nazobu.v1.TicketExpenseParticipantInputR\fparticipants\"\x1d\n" +
+	"\x1bUpdateTicketExpenseResponse\";\n" +
+	"\x1aDeleteTicketExpenseRequest\x12\x1d\n" +
+	"\n" +
+	"expense_id\x18\x01 \x01(\tR\texpenseId\"\x1d\n" +
+	"\x1bDeleteTicketExpenseResponse\"x\n" +
+	"$UpdateTicketExpenseSettlementRequest\x12\x1d\n" +
+	"\n" +
+	"expense_id\x18\x01 \x01(\tR\texpenseId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x18\n" +
-	"\asettled\x18\x03 \x01(\bR\asettled\"&\n" +
-	"$UpdateTicketChargeSettlementResponse2\xb8\n" +
+	"\asettled\x18\x03 \x01(\bR\asettled\"'\n" +
+	"%UpdateTicketExpenseSettlementResponse2\xc5\n" +
 	"\n" +
 	"\rTicketService\x12L\n" +
 	"\vListTickets\x12\x1d.nazobu.v1.ListTicketsRequest\x1a\x1e.nazobu.v1.ListTicketsResponse\x12F\n" +
@@ -2215,11 +2218,11 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\x15UpdateTicketWithEvent\x12'.nazobu.v1.UpdateTicketWithEventRequest\x1a(.nazobu.v1.UpdateTicketWithEventResponse\x12j\n" +
 	"\x15AddTicketParticipants\x12'.nazobu.v1.AddTicketParticipantsRequest\x1a(.nazobu.v1.AddTicketParticipantsResponse\x12p\n" +
 	"\x17RemoveTicketParticipant\x12).nazobu.v1.RemoveTicketParticipantRequest\x1a*.nazobu.v1.RemoveTicketParticipantResponse\x12\x8e\x01\n" +
-	"!UpdateTicketParticipantSettlement\x123.nazobu.v1.UpdateTicketParticipantSettlementRequest\x1a4.nazobu.v1.UpdateTicketParticipantSettlementResponse\x12a\n" +
-	"\x12CreateTicketCharge\x12$.nazobu.v1.CreateTicketChargeRequest\x1a%.nazobu.v1.CreateTicketChargeResponse\x12a\n" +
-	"\x12UpdateTicketCharge\x12$.nazobu.v1.UpdateTicketChargeRequest\x1a%.nazobu.v1.UpdateTicketChargeResponse\x12a\n" +
-	"\x12DeleteTicketCharge\x12$.nazobu.v1.DeleteTicketChargeRequest\x1a%.nazobu.v1.DeleteTicketChargeResponse\x12\x7f\n" +
-	"\x1cUpdateTicketChargeSettlement\x12..nazobu.v1.UpdateTicketChargeSettlementRequest\x1a/.nazobu.v1.UpdateTicketChargeSettlementResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
+	"!UpdateTicketParticipantSettlement\x123.nazobu.v1.UpdateTicketParticipantSettlementRequest\x1a4.nazobu.v1.UpdateTicketParticipantSettlementResponse\x12d\n" +
+	"\x13CreateTicketExpense\x12%.nazobu.v1.CreateTicketExpenseRequest\x1a&.nazobu.v1.CreateTicketExpenseResponse\x12d\n" +
+	"\x13UpdateTicketExpense\x12%.nazobu.v1.UpdateTicketExpenseRequest\x1a&.nazobu.v1.UpdateTicketExpenseResponse\x12d\n" +
+	"\x13DeleteTicketExpense\x12%.nazobu.v1.DeleteTicketExpenseRequest\x1a&.nazobu.v1.DeleteTicketExpenseResponse\x12\x82\x01\n" +
+	"\x1dUpdateTicketExpenseSettlement\x12/.nazobu.v1.UpdateTicketExpenseSettlementRequest\x1a0.nazobu.v1.UpdateTicketExpenseSettlementResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
 
 var (
 	file_nazobu_v1_ticket_proto_rawDescOnce sync.Once
@@ -2240,9 +2243,9 @@ var file_nazobu_v1_ticket_proto_goTypes = []any{
 	(*Ticket)(nil),                                    // 2: nazobu.v1.Ticket
 	(*GetTicketRequest)(nil),                          // 3: nazobu.v1.GetTicketRequest
 	(*GetTicketResponse)(nil),                         // 4: nazobu.v1.GetTicketResponse
-	(*TicketCharge)(nil),                              // 5: nazobu.v1.TicketCharge
-	(*TicketChargeParticipant)(nil),                   // 6: nazobu.v1.TicketChargeParticipant
-	(*TicketChargeParticipantInput)(nil),              // 7: nazobu.v1.TicketChargeParticipantInput
+	(*TicketExpense)(nil),                             // 5: nazobu.v1.TicketExpense
+	(*TicketExpenseParticipant)(nil),                  // 6: nazobu.v1.TicketExpenseParticipant
+	(*TicketExpenseParticipantInput)(nil),             // 7: nazobu.v1.TicketExpenseParticipantInput
 	(*TicketParticipant)(nil),                         // 8: nazobu.v1.TicketParticipant
 	(*CreateTicketRequest)(nil),                       // 9: nazobu.v1.CreateTicketRequest
 	(*CreateTicketResponse)(nil),                      // 10: nazobu.v1.CreateTicketResponse
@@ -2258,27 +2261,27 @@ var file_nazobu_v1_ticket_proto_goTypes = []any{
 	(*RemoveTicketParticipantResponse)(nil),           // 20: nazobu.v1.RemoveTicketParticipantResponse
 	(*UpdateTicketParticipantSettlementRequest)(nil),  // 21: nazobu.v1.UpdateTicketParticipantSettlementRequest
 	(*UpdateTicketParticipantSettlementResponse)(nil), // 22: nazobu.v1.UpdateTicketParticipantSettlementResponse
-	(*CreateTicketChargeRequest)(nil),                 // 23: nazobu.v1.CreateTicketChargeRequest
-	(*CreateTicketChargeResponse)(nil),                // 24: nazobu.v1.CreateTicketChargeResponse
-	(*UpdateTicketChargeRequest)(nil),                 // 25: nazobu.v1.UpdateTicketChargeRequest
-	(*UpdateTicketChargeResponse)(nil),                // 26: nazobu.v1.UpdateTicketChargeResponse
-	(*DeleteTicketChargeRequest)(nil),                 // 27: nazobu.v1.DeleteTicketChargeRequest
-	(*DeleteTicketChargeResponse)(nil),                // 28: nazobu.v1.DeleteTicketChargeResponse
-	(*UpdateTicketChargeSettlementRequest)(nil),       // 29: nazobu.v1.UpdateTicketChargeSettlementRequest
-	(*UpdateTicketChargeSettlementResponse)(nil),      // 30: nazobu.v1.UpdateTicketChargeSettlementResponse
+	(*CreateTicketExpenseRequest)(nil),                // 23: nazobu.v1.CreateTicketExpenseRequest
+	(*CreateTicketExpenseResponse)(nil),               // 24: nazobu.v1.CreateTicketExpenseResponse
+	(*UpdateTicketExpenseRequest)(nil),                // 25: nazobu.v1.UpdateTicketExpenseRequest
+	(*UpdateTicketExpenseResponse)(nil),               // 26: nazobu.v1.UpdateTicketExpenseResponse
+	(*DeleteTicketExpenseRequest)(nil),                // 27: nazobu.v1.DeleteTicketExpenseRequest
+	(*DeleteTicketExpenseResponse)(nil),               // 28: nazobu.v1.DeleteTicketExpenseResponse
+	(*UpdateTicketExpenseSettlementRequest)(nil),      // 29: nazobu.v1.UpdateTicketExpenseSettlementRequest
+	(*UpdateTicketExpenseSettlementResponse)(nil),     // 30: nazobu.v1.UpdateTicketExpenseSettlementResponse
 }
 var file_nazobu_v1_ticket_proto_depIdxs = []int32{
 	2,  // 0: nazobu.v1.ListTicketsResponse.tickets:type_name -> nazobu.v1.Ticket
 	2,  // 1: nazobu.v1.GetTicketResponse.ticket:type_name -> nazobu.v1.Ticket
 	8,  // 2: nazobu.v1.GetTicketResponse.participants:type_name -> nazobu.v1.TicketParticipant
-	5,  // 3: nazobu.v1.GetTicketResponse.charges:type_name -> nazobu.v1.TicketCharge
-	6,  // 4: nazobu.v1.TicketCharge.participants:type_name -> nazobu.v1.TicketChargeParticipant
+	5,  // 3: nazobu.v1.GetTicketResponse.expenses:type_name -> nazobu.v1.TicketExpense
+	6,  // 4: nazobu.v1.TicketExpense.participants:type_name -> nazobu.v1.TicketExpenseParticipant
 	2,  // 5: nazobu.v1.CreateTicketResponse.ticket:type_name -> nazobu.v1.Ticket
 	2,  // 6: nazobu.v1.UpdateTicketResponse.ticket:type_name -> nazobu.v1.Ticket
 	2,  // 7: nazobu.v1.CreateTicketWithEventResponse.ticket:type_name -> nazobu.v1.Ticket
 	2,  // 8: nazobu.v1.UpdateTicketWithEventResponse.ticket:type_name -> nazobu.v1.Ticket
-	7,  // 9: nazobu.v1.CreateTicketChargeRequest.participants:type_name -> nazobu.v1.TicketChargeParticipantInput
-	7,  // 10: nazobu.v1.UpdateTicketChargeRequest.participants:type_name -> nazobu.v1.TicketChargeParticipantInput
+	7,  // 9: nazobu.v1.CreateTicketExpenseRequest.participants:type_name -> nazobu.v1.TicketExpenseParticipantInput
+	7,  // 10: nazobu.v1.UpdateTicketExpenseRequest.participants:type_name -> nazobu.v1.TicketExpenseParticipantInput
 	0,  // 11: nazobu.v1.TicketService.ListTickets:input_type -> nazobu.v1.ListTicketsRequest
 	3,  // 12: nazobu.v1.TicketService.GetTicket:input_type -> nazobu.v1.GetTicketRequest
 	9,  // 13: nazobu.v1.TicketService.CreateTicket:input_type -> nazobu.v1.CreateTicketRequest
@@ -2288,10 +2291,10 @@ var file_nazobu_v1_ticket_proto_depIdxs = []int32{
 	17, // 17: nazobu.v1.TicketService.AddTicketParticipants:input_type -> nazobu.v1.AddTicketParticipantsRequest
 	19, // 18: nazobu.v1.TicketService.RemoveTicketParticipant:input_type -> nazobu.v1.RemoveTicketParticipantRequest
 	21, // 19: nazobu.v1.TicketService.UpdateTicketParticipantSettlement:input_type -> nazobu.v1.UpdateTicketParticipantSettlementRequest
-	23, // 20: nazobu.v1.TicketService.CreateTicketCharge:input_type -> nazobu.v1.CreateTicketChargeRequest
-	25, // 21: nazobu.v1.TicketService.UpdateTicketCharge:input_type -> nazobu.v1.UpdateTicketChargeRequest
-	27, // 22: nazobu.v1.TicketService.DeleteTicketCharge:input_type -> nazobu.v1.DeleteTicketChargeRequest
-	29, // 23: nazobu.v1.TicketService.UpdateTicketChargeSettlement:input_type -> nazobu.v1.UpdateTicketChargeSettlementRequest
+	23, // 20: nazobu.v1.TicketService.CreateTicketExpense:input_type -> nazobu.v1.CreateTicketExpenseRequest
+	25, // 21: nazobu.v1.TicketService.UpdateTicketExpense:input_type -> nazobu.v1.UpdateTicketExpenseRequest
+	27, // 22: nazobu.v1.TicketService.DeleteTicketExpense:input_type -> nazobu.v1.DeleteTicketExpenseRequest
+	29, // 23: nazobu.v1.TicketService.UpdateTicketExpenseSettlement:input_type -> nazobu.v1.UpdateTicketExpenseSettlementRequest
 	1,  // 24: nazobu.v1.TicketService.ListTickets:output_type -> nazobu.v1.ListTicketsResponse
 	4,  // 25: nazobu.v1.TicketService.GetTicket:output_type -> nazobu.v1.GetTicketResponse
 	10, // 26: nazobu.v1.TicketService.CreateTicket:output_type -> nazobu.v1.CreateTicketResponse
@@ -2301,10 +2304,10 @@ var file_nazobu_v1_ticket_proto_depIdxs = []int32{
 	18, // 30: nazobu.v1.TicketService.AddTicketParticipants:output_type -> nazobu.v1.AddTicketParticipantsResponse
 	20, // 31: nazobu.v1.TicketService.RemoveTicketParticipant:output_type -> nazobu.v1.RemoveTicketParticipantResponse
 	22, // 32: nazobu.v1.TicketService.UpdateTicketParticipantSettlement:output_type -> nazobu.v1.UpdateTicketParticipantSettlementResponse
-	24, // 33: nazobu.v1.TicketService.CreateTicketCharge:output_type -> nazobu.v1.CreateTicketChargeResponse
-	26, // 34: nazobu.v1.TicketService.UpdateTicketCharge:output_type -> nazobu.v1.UpdateTicketChargeResponse
-	28, // 35: nazobu.v1.TicketService.DeleteTicketCharge:output_type -> nazobu.v1.DeleteTicketChargeResponse
-	30, // 36: nazobu.v1.TicketService.UpdateTicketChargeSettlement:output_type -> nazobu.v1.UpdateTicketChargeSettlementResponse
+	24, // 33: nazobu.v1.TicketService.CreateTicketExpense:output_type -> nazobu.v1.CreateTicketExpenseResponse
+	26, // 34: nazobu.v1.TicketService.UpdateTicketExpense:output_type -> nazobu.v1.UpdateTicketExpenseResponse
+	28, // 35: nazobu.v1.TicketService.DeleteTicketExpense:output_type -> nazobu.v1.DeleteTicketExpenseResponse
+	30, // 36: nazobu.v1.TicketService.UpdateTicketExpenseSettlement:output_type -> nazobu.v1.UpdateTicketExpenseSettlementResponse
 	24, // [24:37] is the sub-list for method output_type
 	11, // [11:24] is the sub-list for method input_type
 	11, // [11:11] is the sub-list for extension type_name

@@ -168,7 +168,7 @@ CREATE TABLE ticket_participants (
 -- ticket にぶら下がる追加精算（打ち上げ飲み会など）。1 ticket に複数持てる。
 -- チケット代と同じく「立替者へ各自が支払う」モデルだが、立替者（paid_by）は
 -- チケット購入者と別人でも構わない。金額は参加者ごとに持つため本体には置かない。
-CREATE TABLE ticket_charges (
+CREATE TABLE ticket_expenses (
   id          CHAR(36)     NOT NULL,
   ticket_id   CHAR(36)     NOT NULL,
   -- 費目名。例: '打ち上げ飲み会'
@@ -177,10 +177,10 @@ CREATE TABLE ticket_charges (
   created_at  DATETIME(6)  NOT NULL,
   updated_at  DATETIME(6)  NOT NULL,
   PRIMARY KEY (id),
-  KEY idx_ticket_charges_ticket_id (ticket_id),
-  KEY idx_ticket_charges_paid_by (paid_by),
-  CONSTRAINT fk_ticket_charges_ticket_id FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE,
-  CONSTRAINT fk_ticket_charges_paid_by   FOREIGN KEY (paid_by)   REFERENCES users(id)
+  KEY idx_ticket_expenses_ticket_id (ticket_id),
+  KEY idx_ticket_expenses_paid_by (paid_by),
+  CONSTRAINT fk_ticket_expenses_ticket_id FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ticket_expenses_paid_by   FOREIGN KEY (paid_by)   REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- 追加精算の対象者。amount は「この人が立替者に支払う金額（税込・円）」で、
@@ -188,14 +188,14 @@ CREATE TABLE ticket_charges (
 -- 登録時点ではチケット参加者から選ぶが、後からチケット参加者を外しても
 -- 精算記録として行は残す（FK はチケット参加者ではなく users を参照）。
 -- settled_at は ticket_participants と同じ流儀（NULL = 未精算）。
-CREATE TABLE ticket_charge_participants (
-  charge_id   CHAR(36)    NOT NULL,
+CREATE TABLE ticket_expense_participants (
+  expense_id   CHAR(36)    NOT NULL,
   user_id     CHAR(36)    NOT NULL,
   amount      INT         NOT NULL,
   settled_at  DATETIME(6) NULL DEFAULT NULL,
   created_at  DATETIME(6) NOT NULL,
-  PRIMARY KEY (charge_id, user_id),
-  KEY idx_ticket_charge_participants_user_id (user_id),
-  CONSTRAINT fk_ticket_charge_participants_charge_id FOREIGN KEY (charge_id) REFERENCES ticket_charges(id) ON DELETE CASCADE,
-  CONSTRAINT fk_ticket_charge_participants_user_id   FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE
+  PRIMARY KEY (expense_id, user_id),
+  KEY idx_ticket_expense_participants_user_id (user_id),
+  CONSTRAINT fk_ticket_expense_participants_expense_id FOREIGN KEY (expense_id) REFERENCES ticket_expenses(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ticket_expense_participants_user_id   FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

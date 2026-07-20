@@ -59,18 +59,18 @@ const (
 	// TicketServiceUpdateTicketParticipantSettlementProcedure is the fully-qualified name of the
 	// TicketService's UpdateTicketParticipantSettlement RPC.
 	TicketServiceUpdateTicketParticipantSettlementProcedure = "/nazobu.v1.TicketService/UpdateTicketParticipantSettlement"
-	// TicketServiceCreateTicketChargeProcedure is the fully-qualified name of the TicketService's
-	// CreateTicketCharge RPC.
-	TicketServiceCreateTicketChargeProcedure = "/nazobu.v1.TicketService/CreateTicketCharge"
-	// TicketServiceUpdateTicketChargeProcedure is the fully-qualified name of the TicketService's
-	// UpdateTicketCharge RPC.
-	TicketServiceUpdateTicketChargeProcedure = "/nazobu.v1.TicketService/UpdateTicketCharge"
-	// TicketServiceDeleteTicketChargeProcedure is the fully-qualified name of the TicketService's
-	// DeleteTicketCharge RPC.
-	TicketServiceDeleteTicketChargeProcedure = "/nazobu.v1.TicketService/DeleteTicketCharge"
-	// TicketServiceUpdateTicketChargeSettlementProcedure is the fully-qualified name of the
-	// TicketService's UpdateTicketChargeSettlement RPC.
-	TicketServiceUpdateTicketChargeSettlementProcedure = "/nazobu.v1.TicketService/UpdateTicketChargeSettlement"
+	// TicketServiceCreateTicketExpenseProcedure is the fully-qualified name of the TicketService's
+	// CreateTicketExpense RPC.
+	TicketServiceCreateTicketExpenseProcedure = "/nazobu.v1.TicketService/CreateTicketExpense"
+	// TicketServiceUpdateTicketExpenseProcedure is the fully-qualified name of the TicketService's
+	// UpdateTicketExpense RPC.
+	TicketServiceUpdateTicketExpenseProcedure = "/nazobu.v1.TicketService/UpdateTicketExpense"
+	// TicketServiceDeleteTicketExpenseProcedure is the fully-qualified name of the TicketService's
+	// DeleteTicketExpense RPC.
+	TicketServiceDeleteTicketExpenseProcedure = "/nazobu.v1.TicketService/DeleteTicketExpense"
+	// TicketServiceUpdateTicketExpenseSettlementProcedure is the fully-qualified name of the
+	// TicketService's UpdateTicketExpenseSettlement RPC.
+	TicketServiceUpdateTicketExpenseSettlementProcedure = "/nazobu.v1.TicketService/UpdateTicketExpenseSettlement"
 )
 
 // TicketServiceClient is a client for the nazobu.v1.TicketService service.
@@ -101,19 +101,19 @@ type TicketServiceClient interface {
 	// UpdateTicketParticipantSettlement は参加者の精算状態を切り替える。
 	// admin もしくは立替者のみ実行可能。立替者本人に対しては実行不可。
 	UpdateTicketParticipantSettlement(context.Context, *connect.Request[v1.UpdateTicketParticipantSettlementRequest]) (*connect.Response[v1.UpdateTicketParticipantSettlementResponse], error)
-	// CreateTicketCharge は ticket に追加精算（打ち上げ飲み会など）を 1 件登録する。
+	// CreateTicketExpense は ticket に追加精算（打ち上げ飲み会など）を 1 件登録する。
 	// ticket の参加者もしくは admin が実行でき、立替者はログイン中の user で固定する。
 	// 対象者は ticket の参加者から選び、負担額は対象者ごとに指定する。
-	CreateTicketCharge(context.Context, *connect.Request[v1.CreateTicketChargeRequest]) (*connect.Response[v1.CreateTicketChargeResponse], error)
-	// UpdateTicketCharge は追加精算の費目名と対象者（負担額を含む）を全置換で更新する。
-	// admin もしくは charge の立替者のみ実行可能。既存対象者の精算状態は金額が変わっても維持する。
-	UpdateTicketCharge(context.Context, *connect.Request[v1.UpdateTicketChargeRequest]) (*connect.Response[v1.UpdateTicketChargeResponse], error)
-	// DeleteTicketCharge は追加精算を 1 件削除する（対象者の行も一緒に消える）。
-	// admin もしくは charge の立替者のみ実行可能。
-	DeleteTicketCharge(context.Context, *connect.Request[v1.DeleteTicketChargeRequest]) (*connect.Response[v1.DeleteTicketChargeResponse], error)
-	// UpdateTicketChargeSettlement は追加精算の対象者の精算状態を切り替える。
-	// admin もしくは charge の立替者のみ実行可能。立替者本人に対しては実行不可。
-	UpdateTicketChargeSettlement(context.Context, *connect.Request[v1.UpdateTicketChargeSettlementRequest]) (*connect.Response[v1.UpdateTicketChargeSettlementResponse], error)
+	CreateTicketExpense(context.Context, *connect.Request[v1.CreateTicketExpenseRequest]) (*connect.Response[v1.CreateTicketExpenseResponse], error)
+	// UpdateTicketExpense は追加精算の費目名と対象者（負担額を含む）を全置換で更新する。
+	// admin もしくは expense の立替者のみ実行可能。既存対象者の精算状態は金額が変わっても維持する。
+	UpdateTicketExpense(context.Context, *connect.Request[v1.UpdateTicketExpenseRequest]) (*connect.Response[v1.UpdateTicketExpenseResponse], error)
+	// DeleteTicketExpense は追加精算を 1 件削除する（対象者の行も一緒に消える）。
+	// admin もしくは expense の立替者のみ実行可能。
+	DeleteTicketExpense(context.Context, *connect.Request[v1.DeleteTicketExpenseRequest]) (*connect.Response[v1.DeleteTicketExpenseResponse], error)
+	// UpdateTicketExpenseSettlement は追加精算の対象者の精算状態を切り替える。
+	// admin もしくは expense の立替者のみ実行可能。立替者本人に対しては実行不可。
+	UpdateTicketExpenseSettlement(context.Context, *connect.Request[v1.UpdateTicketExpenseSettlementRequest]) (*connect.Response[v1.UpdateTicketExpenseSettlementResponse], error)
 }
 
 // NewTicketServiceClient constructs a client for the nazobu.v1.TicketService service. By default,
@@ -181,28 +181,28 @@ func NewTicketServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(ticketServiceMethods.ByName("UpdateTicketParticipantSettlement")),
 			connect.WithClientOptions(opts...),
 		),
-		createTicketCharge: connect.NewClient[v1.CreateTicketChargeRequest, v1.CreateTicketChargeResponse](
+		createTicketExpense: connect.NewClient[v1.CreateTicketExpenseRequest, v1.CreateTicketExpenseResponse](
 			httpClient,
-			baseURL+TicketServiceCreateTicketChargeProcedure,
-			connect.WithSchema(ticketServiceMethods.ByName("CreateTicketCharge")),
+			baseURL+TicketServiceCreateTicketExpenseProcedure,
+			connect.WithSchema(ticketServiceMethods.ByName("CreateTicketExpense")),
 			connect.WithClientOptions(opts...),
 		),
-		updateTicketCharge: connect.NewClient[v1.UpdateTicketChargeRequest, v1.UpdateTicketChargeResponse](
+		updateTicketExpense: connect.NewClient[v1.UpdateTicketExpenseRequest, v1.UpdateTicketExpenseResponse](
 			httpClient,
-			baseURL+TicketServiceUpdateTicketChargeProcedure,
-			connect.WithSchema(ticketServiceMethods.ByName("UpdateTicketCharge")),
+			baseURL+TicketServiceUpdateTicketExpenseProcedure,
+			connect.WithSchema(ticketServiceMethods.ByName("UpdateTicketExpense")),
 			connect.WithClientOptions(opts...),
 		),
-		deleteTicketCharge: connect.NewClient[v1.DeleteTicketChargeRequest, v1.DeleteTicketChargeResponse](
+		deleteTicketExpense: connect.NewClient[v1.DeleteTicketExpenseRequest, v1.DeleteTicketExpenseResponse](
 			httpClient,
-			baseURL+TicketServiceDeleteTicketChargeProcedure,
-			connect.WithSchema(ticketServiceMethods.ByName("DeleteTicketCharge")),
+			baseURL+TicketServiceDeleteTicketExpenseProcedure,
+			connect.WithSchema(ticketServiceMethods.ByName("DeleteTicketExpense")),
 			connect.WithClientOptions(opts...),
 		),
-		updateTicketChargeSettlement: connect.NewClient[v1.UpdateTicketChargeSettlementRequest, v1.UpdateTicketChargeSettlementResponse](
+		updateTicketExpenseSettlement: connect.NewClient[v1.UpdateTicketExpenseSettlementRequest, v1.UpdateTicketExpenseSettlementResponse](
 			httpClient,
-			baseURL+TicketServiceUpdateTicketChargeSettlementProcedure,
-			connect.WithSchema(ticketServiceMethods.ByName("UpdateTicketChargeSettlement")),
+			baseURL+TicketServiceUpdateTicketExpenseSettlementProcedure,
+			connect.WithSchema(ticketServiceMethods.ByName("UpdateTicketExpenseSettlement")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -219,10 +219,10 @@ type ticketServiceClient struct {
 	addTicketParticipants             *connect.Client[v1.AddTicketParticipantsRequest, v1.AddTicketParticipantsResponse]
 	removeTicketParticipant           *connect.Client[v1.RemoveTicketParticipantRequest, v1.RemoveTicketParticipantResponse]
 	updateTicketParticipantSettlement *connect.Client[v1.UpdateTicketParticipantSettlementRequest, v1.UpdateTicketParticipantSettlementResponse]
-	createTicketCharge                *connect.Client[v1.CreateTicketChargeRequest, v1.CreateTicketChargeResponse]
-	updateTicketCharge                *connect.Client[v1.UpdateTicketChargeRequest, v1.UpdateTicketChargeResponse]
-	deleteTicketCharge                *connect.Client[v1.DeleteTicketChargeRequest, v1.DeleteTicketChargeResponse]
-	updateTicketChargeSettlement      *connect.Client[v1.UpdateTicketChargeSettlementRequest, v1.UpdateTicketChargeSettlementResponse]
+	createTicketExpense               *connect.Client[v1.CreateTicketExpenseRequest, v1.CreateTicketExpenseResponse]
+	updateTicketExpense               *connect.Client[v1.UpdateTicketExpenseRequest, v1.UpdateTicketExpenseResponse]
+	deleteTicketExpense               *connect.Client[v1.DeleteTicketExpenseRequest, v1.DeleteTicketExpenseResponse]
+	updateTicketExpenseSettlement     *connect.Client[v1.UpdateTicketExpenseSettlementRequest, v1.UpdateTicketExpenseSettlementResponse]
 }
 
 // ListTickets calls nazobu.v1.TicketService.ListTickets.
@@ -271,24 +271,24 @@ func (c *ticketServiceClient) UpdateTicketParticipantSettlement(ctx context.Cont
 	return c.updateTicketParticipantSettlement.CallUnary(ctx, req)
 }
 
-// CreateTicketCharge calls nazobu.v1.TicketService.CreateTicketCharge.
-func (c *ticketServiceClient) CreateTicketCharge(ctx context.Context, req *connect.Request[v1.CreateTicketChargeRequest]) (*connect.Response[v1.CreateTicketChargeResponse], error) {
-	return c.createTicketCharge.CallUnary(ctx, req)
+// CreateTicketExpense calls nazobu.v1.TicketService.CreateTicketExpense.
+func (c *ticketServiceClient) CreateTicketExpense(ctx context.Context, req *connect.Request[v1.CreateTicketExpenseRequest]) (*connect.Response[v1.CreateTicketExpenseResponse], error) {
+	return c.createTicketExpense.CallUnary(ctx, req)
 }
 
-// UpdateTicketCharge calls nazobu.v1.TicketService.UpdateTicketCharge.
-func (c *ticketServiceClient) UpdateTicketCharge(ctx context.Context, req *connect.Request[v1.UpdateTicketChargeRequest]) (*connect.Response[v1.UpdateTicketChargeResponse], error) {
-	return c.updateTicketCharge.CallUnary(ctx, req)
+// UpdateTicketExpense calls nazobu.v1.TicketService.UpdateTicketExpense.
+func (c *ticketServiceClient) UpdateTicketExpense(ctx context.Context, req *connect.Request[v1.UpdateTicketExpenseRequest]) (*connect.Response[v1.UpdateTicketExpenseResponse], error) {
+	return c.updateTicketExpense.CallUnary(ctx, req)
 }
 
-// DeleteTicketCharge calls nazobu.v1.TicketService.DeleteTicketCharge.
-func (c *ticketServiceClient) DeleteTicketCharge(ctx context.Context, req *connect.Request[v1.DeleteTicketChargeRequest]) (*connect.Response[v1.DeleteTicketChargeResponse], error) {
-	return c.deleteTicketCharge.CallUnary(ctx, req)
+// DeleteTicketExpense calls nazobu.v1.TicketService.DeleteTicketExpense.
+func (c *ticketServiceClient) DeleteTicketExpense(ctx context.Context, req *connect.Request[v1.DeleteTicketExpenseRequest]) (*connect.Response[v1.DeleteTicketExpenseResponse], error) {
+	return c.deleteTicketExpense.CallUnary(ctx, req)
 }
 
-// UpdateTicketChargeSettlement calls nazobu.v1.TicketService.UpdateTicketChargeSettlement.
-func (c *ticketServiceClient) UpdateTicketChargeSettlement(ctx context.Context, req *connect.Request[v1.UpdateTicketChargeSettlementRequest]) (*connect.Response[v1.UpdateTicketChargeSettlementResponse], error) {
-	return c.updateTicketChargeSettlement.CallUnary(ctx, req)
+// UpdateTicketExpenseSettlement calls nazobu.v1.TicketService.UpdateTicketExpenseSettlement.
+func (c *ticketServiceClient) UpdateTicketExpenseSettlement(ctx context.Context, req *connect.Request[v1.UpdateTicketExpenseSettlementRequest]) (*connect.Response[v1.UpdateTicketExpenseSettlementResponse], error) {
+	return c.updateTicketExpenseSettlement.CallUnary(ctx, req)
 }
 
 // TicketServiceHandler is an implementation of the nazobu.v1.TicketService service.
@@ -319,19 +319,19 @@ type TicketServiceHandler interface {
 	// UpdateTicketParticipantSettlement は参加者の精算状態を切り替える。
 	// admin もしくは立替者のみ実行可能。立替者本人に対しては実行不可。
 	UpdateTicketParticipantSettlement(context.Context, *connect.Request[v1.UpdateTicketParticipantSettlementRequest]) (*connect.Response[v1.UpdateTicketParticipantSettlementResponse], error)
-	// CreateTicketCharge は ticket に追加精算（打ち上げ飲み会など）を 1 件登録する。
+	// CreateTicketExpense は ticket に追加精算（打ち上げ飲み会など）を 1 件登録する。
 	// ticket の参加者もしくは admin が実行でき、立替者はログイン中の user で固定する。
 	// 対象者は ticket の参加者から選び、負担額は対象者ごとに指定する。
-	CreateTicketCharge(context.Context, *connect.Request[v1.CreateTicketChargeRequest]) (*connect.Response[v1.CreateTicketChargeResponse], error)
-	// UpdateTicketCharge は追加精算の費目名と対象者（負担額を含む）を全置換で更新する。
-	// admin もしくは charge の立替者のみ実行可能。既存対象者の精算状態は金額が変わっても維持する。
-	UpdateTicketCharge(context.Context, *connect.Request[v1.UpdateTicketChargeRequest]) (*connect.Response[v1.UpdateTicketChargeResponse], error)
-	// DeleteTicketCharge は追加精算を 1 件削除する（対象者の行も一緒に消える）。
-	// admin もしくは charge の立替者のみ実行可能。
-	DeleteTicketCharge(context.Context, *connect.Request[v1.DeleteTicketChargeRequest]) (*connect.Response[v1.DeleteTicketChargeResponse], error)
-	// UpdateTicketChargeSettlement は追加精算の対象者の精算状態を切り替える。
-	// admin もしくは charge の立替者のみ実行可能。立替者本人に対しては実行不可。
-	UpdateTicketChargeSettlement(context.Context, *connect.Request[v1.UpdateTicketChargeSettlementRequest]) (*connect.Response[v1.UpdateTicketChargeSettlementResponse], error)
+	CreateTicketExpense(context.Context, *connect.Request[v1.CreateTicketExpenseRequest]) (*connect.Response[v1.CreateTicketExpenseResponse], error)
+	// UpdateTicketExpense は追加精算の費目名と対象者（負担額を含む）を全置換で更新する。
+	// admin もしくは expense の立替者のみ実行可能。既存対象者の精算状態は金額が変わっても維持する。
+	UpdateTicketExpense(context.Context, *connect.Request[v1.UpdateTicketExpenseRequest]) (*connect.Response[v1.UpdateTicketExpenseResponse], error)
+	// DeleteTicketExpense は追加精算を 1 件削除する（対象者の行も一緒に消える）。
+	// admin もしくは expense の立替者のみ実行可能。
+	DeleteTicketExpense(context.Context, *connect.Request[v1.DeleteTicketExpenseRequest]) (*connect.Response[v1.DeleteTicketExpenseResponse], error)
+	// UpdateTicketExpenseSettlement は追加精算の対象者の精算状態を切り替える。
+	// admin もしくは expense の立替者のみ実行可能。立替者本人に対しては実行不可。
+	UpdateTicketExpenseSettlement(context.Context, *connect.Request[v1.UpdateTicketExpenseSettlementRequest]) (*connect.Response[v1.UpdateTicketExpenseSettlementResponse], error)
 }
 
 // NewTicketServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -395,28 +395,28 @@ func NewTicketServiceHandler(svc TicketServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(ticketServiceMethods.ByName("UpdateTicketParticipantSettlement")),
 		connect.WithHandlerOptions(opts...),
 	)
-	ticketServiceCreateTicketChargeHandler := connect.NewUnaryHandler(
-		TicketServiceCreateTicketChargeProcedure,
-		svc.CreateTicketCharge,
-		connect.WithSchema(ticketServiceMethods.ByName("CreateTicketCharge")),
+	ticketServiceCreateTicketExpenseHandler := connect.NewUnaryHandler(
+		TicketServiceCreateTicketExpenseProcedure,
+		svc.CreateTicketExpense,
+		connect.WithSchema(ticketServiceMethods.ByName("CreateTicketExpense")),
 		connect.WithHandlerOptions(opts...),
 	)
-	ticketServiceUpdateTicketChargeHandler := connect.NewUnaryHandler(
-		TicketServiceUpdateTicketChargeProcedure,
-		svc.UpdateTicketCharge,
-		connect.WithSchema(ticketServiceMethods.ByName("UpdateTicketCharge")),
+	ticketServiceUpdateTicketExpenseHandler := connect.NewUnaryHandler(
+		TicketServiceUpdateTicketExpenseProcedure,
+		svc.UpdateTicketExpense,
+		connect.WithSchema(ticketServiceMethods.ByName("UpdateTicketExpense")),
 		connect.WithHandlerOptions(opts...),
 	)
-	ticketServiceDeleteTicketChargeHandler := connect.NewUnaryHandler(
-		TicketServiceDeleteTicketChargeProcedure,
-		svc.DeleteTicketCharge,
-		connect.WithSchema(ticketServiceMethods.ByName("DeleteTicketCharge")),
+	ticketServiceDeleteTicketExpenseHandler := connect.NewUnaryHandler(
+		TicketServiceDeleteTicketExpenseProcedure,
+		svc.DeleteTicketExpense,
+		connect.WithSchema(ticketServiceMethods.ByName("DeleteTicketExpense")),
 		connect.WithHandlerOptions(opts...),
 	)
-	ticketServiceUpdateTicketChargeSettlementHandler := connect.NewUnaryHandler(
-		TicketServiceUpdateTicketChargeSettlementProcedure,
-		svc.UpdateTicketChargeSettlement,
-		connect.WithSchema(ticketServiceMethods.ByName("UpdateTicketChargeSettlement")),
+	ticketServiceUpdateTicketExpenseSettlementHandler := connect.NewUnaryHandler(
+		TicketServiceUpdateTicketExpenseSettlementProcedure,
+		svc.UpdateTicketExpenseSettlement,
+		connect.WithSchema(ticketServiceMethods.ByName("UpdateTicketExpenseSettlement")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/nazobu.v1.TicketService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -439,14 +439,14 @@ func NewTicketServiceHandler(svc TicketServiceHandler, opts ...connect.HandlerOp
 			ticketServiceRemoveTicketParticipantHandler.ServeHTTP(w, r)
 		case TicketServiceUpdateTicketParticipantSettlementProcedure:
 			ticketServiceUpdateTicketParticipantSettlementHandler.ServeHTTP(w, r)
-		case TicketServiceCreateTicketChargeProcedure:
-			ticketServiceCreateTicketChargeHandler.ServeHTTP(w, r)
-		case TicketServiceUpdateTicketChargeProcedure:
-			ticketServiceUpdateTicketChargeHandler.ServeHTTP(w, r)
-		case TicketServiceDeleteTicketChargeProcedure:
-			ticketServiceDeleteTicketChargeHandler.ServeHTTP(w, r)
-		case TicketServiceUpdateTicketChargeSettlementProcedure:
-			ticketServiceUpdateTicketChargeSettlementHandler.ServeHTTP(w, r)
+		case TicketServiceCreateTicketExpenseProcedure:
+			ticketServiceCreateTicketExpenseHandler.ServeHTTP(w, r)
+		case TicketServiceUpdateTicketExpenseProcedure:
+			ticketServiceUpdateTicketExpenseHandler.ServeHTTP(w, r)
+		case TicketServiceDeleteTicketExpenseProcedure:
+			ticketServiceDeleteTicketExpenseHandler.ServeHTTP(w, r)
+		case TicketServiceUpdateTicketExpenseSettlementProcedure:
+			ticketServiceUpdateTicketExpenseSettlementHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -492,18 +492,18 @@ func (UnimplementedTicketServiceHandler) UpdateTicketParticipantSettlement(conte
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.TicketService.UpdateTicketParticipantSettlement is not implemented"))
 }
 
-func (UnimplementedTicketServiceHandler) CreateTicketCharge(context.Context, *connect.Request[v1.CreateTicketChargeRequest]) (*connect.Response[v1.CreateTicketChargeResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.TicketService.CreateTicketCharge is not implemented"))
+func (UnimplementedTicketServiceHandler) CreateTicketExpense(context.Context, *connect.Request[v1.CreateTicketExpenseRequest]) (*connect.Response[v1.CreateTicketExpenseResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.TicketService.CreateTicketExpense is not implemented"))
 }
 
-func (UnimplementedTicketServiceHandler) UpdateTicketCharge(context.Context, *connect.Request[v1.UpdateTicketChargeRequest]) (*connect.Response[v1.UpdateTicketChargeResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.TicketService.UpdateTicketCharge is not implemented"))
+func (UnimplementedTicketServiceHandler) UpdateTicketExpense(context.Context, *connect.Request[v1.UpdateTicketExpenseRequest]) (*connect.Response[v1.UpdateTicketExpenseResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.TicketService.UpdateTicketExpense is not implemented"))
 }
 
-func (UnimplementedTicketServiceHandler) DeleteTicketCharge(context.Context, *connect.Request[v1.DeleteTicketChargeRequest]) (*connect.Response[v1.DeleteTicketChargeResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.TicketService.DeleteTicketCharge is not implemented"))
+func (UnimplementedTicketServiceHandler) DeleteTicketExpense(context.Context, *connect.Request[v1.DeleteTicketExpenseRequest]) (*connect.Response[v1.DeleteTicketExpenseResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.TicketService.DeleteTicketExpense is not implemented"))
 }
 
-func (UnimplementedTicketServiceHandler) UpdateTicketChargeSettlement(context.Context, *connect.Request[v1.UpdateTicketChargeSettlementRequest]) (*connect.Response[v1.UpdateTicketChargeSettlementResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.TicketService.UpdateTicketChargeSettlement is not implemented"))
+func (UnimplementedTicketServiceHandler) UpdateTicketExpenseSettlement(context.Context, *connect.Request[v1.UpdateTicketExpenseSettlementRequest]) (*connect.Response[v1.UpdateTicketExpenseSettlementResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.TicketService.UpdateTicketExpenseSettlement is not implemented"))
 }

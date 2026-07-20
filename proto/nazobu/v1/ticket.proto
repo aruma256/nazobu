@@ -32,19 +32,19 @@ service TicketService {
   // UpdateTicketParticipantSettlement は参加者の精算状態を切り替える。
   // admin もしくは立替者のみ実行可能。立替者本人に対しては実行不可。
   rpc UpdateTicketParticipantSettlement(UpdateTicketParticipantSettlementRequest) returns (UpdateTicketParticipantSettlementResponse);
-  // CreateTicketCharge は ticket に追加精算（打ち上げ飲み会など）を 1 件登録する。
+  // CreateTicketExpense は ticket に追加精算（打ち上げ飲み会など）を 1 件登録する。
   // ticket の参加者もしくは admin が実行でき、立替者はログイン中の user で固定する。
   // 対象者は ticket の参加者から選び、負担額は対象者ごとに指定する。
-  rpc CreateTicketCharge(CreateTicketChargeRequest) returns (CreateTicketChargeResponse);
-  // UpdateTicketCharge は追加精算の費目名と対象者（負担額を含む）を全置換で更新する。
-  // admin もしくは charge の立替者のみ実行可能。既存対象者の精算状態は金額が変わっても維持する。
-  rpc UpdateTicketCharge(UpdateTicketChargeRequest) returns (UpdateTicketChargeResponse);
-  // DeleteTicketCharge は追加精算を 1 件削除する（対象者の行も一緒に消える）。
-  // admin もしくは charge の立替者のみ実行可能。
-  rpc DeleteTicketCharge(DeleteTicketChargeRequest) returns (DeleteTicketChargeResponse);
-  // UpdateTicketChargeSettlement は追加精算の対象者の精算状態を切り替える。
-  // admin もしくは charge の立替者のみ実行可能。立替者本人に対しては実行不可。
-  rpc UpdateTicketChargeSettlement(UpdateTicketChargeSettlementRequest) returns (UpdateTicketChargeSettlementResponse);
+  rpc CreateTicketExpense(CreateTicketExpenseRequest) returns (CreateTicketExpenseResponse);
+  // UpdateTicketExpense は追加精算の費目名と対象者（負担額を含む）を全置換で更新する。
+  // admin もしくは expense の立替者のみ実行可能。既存対象者の精算状態は金額が変わっても維持する。
+  rpc UpdateTicketExpense(UpdateTicketExpenseRequest) returns (UpdateTicketExpenseResponse);
+  // DeleteTicketExpense は追加精算を 1 件削除する（対象者の行も一緒に消える）。
+  // admin もしくは expense の立替者のみ実行可能。
+  rpc DeleteTicketExpense(DeleteTicketExpenseRequest) returns (DeleteTicketExpenseResponse);
+  // UpdateTicketExpenseSettlement は追加精算の対象者の精算状態を切り替える。
+  // admin もしくは expense の立替者のみ実行可能。立替者本人に対しては実行不可。
+  rpc UpdateTicketExpenseSettlement(UpdateTicketExpenseSettlementRequest) returns (UpdateTicketExpenseSettlementResponse);
 }
 
 message ListTicketsRequest {}
@@ -99,13 +99,13 @@ message GetTicketResponse {
   // 現在ログイン中の user が編集権限を持つか（admin もしくは立替者）。
   bool can_edit = 3;
   // ticket に紐づく追加精算の一覧。created_at 昇順。
-  repeated TicketCharge charges = 4;
+  repeated TicketExpense expenses = 4;
   // 現在ログイン中の user が追加精算を新規登録できるか（admin もしくは ticket の参加者）。
-  bool can_add_charge = 5;
+  bool can_add_expense = 5;
 }
 
-// TicketCharge は ticket にぶら下がる追加精算（打ち上げ飲み会など）1 件分。
-message TicketCharge {
+// TicketExpense は ticket にぶら下がる追加精算（打ち上げ飲み会など）1 件分。
+message TicketExpense {
   string id = 1;
   // 費目名。例: '打ち上げ飲み会'
   string title = 2;
@@ -114,12 +114,12 @@ message TicketCharge {
   // 立替者の表示名。
   string payer_name = 4;
   // 対象者一覧（created_at 昇順）。負担額は対象者ごとに異なってよい。
-  repeated TicketChargeParticipant participants = 5;
-  // 現在ログイン中の user がこの charge を編集・削除・精算操作できるか（admin もしくは立替者）。
+  repeated TicketExpenseParticipant participants = 5;
+  // 現在ログイン中の user がこの expense を編集・削除・精算操作できるか（admin もしくは立替者）。
   bool can_edit = 6;
 }
 
-message TicketChargeParticipant {
+message TicketExpenseParticipant {
   string user_id = 1;
   // 表示名。
   string name = 2;
@@ -127,12 +127,12 @@ message TicketChargeParticipant {
   int32 amount = 3;
   // 精算が完了しているか。立替者本人なら常に true。
   bool settled = 4;
-  // charge の立替者本人かどうか。立替者は精算操作の対象外。
+  // expense の立替者本人かどうか。立替者は精算操作の対象外。
   bool is_payer = 5;
 }
 
-// TicketChargeParticipantInput は charge の登録・更新で対象者 1 人分を指定する。
-message TicketChargeParticipantInput {
+// TicketExpenseParticipantInput は expense の登録・更新で対象者 1 人分を指定する。
+message TicketExpenseParticipantInput {
   string user_id = 1;
   // この人が立替者に支払う金額（税込・円、0 以上）。
   int32 amount = 2;
@@ -284,39 +284,39 @@ message UpdateTicketParticipantSettlementRequest {
 
 message UpdateTicketParticipantSettlementResponse {}
 
-message CreateTicketChargeRequest {
+message CreateTicketExpenseRequest {
   string ticket_id = 1;
   // 費目名。必須。
   string title = 2;
   // 対象者と負担額。1 件以上。ticket の参加者から選ぶ。
   // 立替者（= ログイン中の user）を含めても構わない。
-  repeated TicketChargeParticipantInput participants = 3;
+  repeated TicketExpenseParticipantInput participants = 3;
 }
 
-message CreateTicketChargeResponse {}
+message CreateTicketExpenseResponse {}
 
-message UpdateTicketChargeRequest {
-  string charge_id = 1;
+message UpdateTicketExpenseRequest {
+  string expense_id = 1;
   // 費目名。必須。
   string title = 2;
   // 対象者と負担額の全置換。1 件以上。ticket の参加者から選ぶ。
   // 既存対象者は金額を上書き（精算状態は維持）、指定から外れた対象者は削除する。
-  repeated TicketChargeParticipantInput participants = 3;
+  repeated TicketExpenseParticipantInput participants = 3;
 }
 
-message UpdateTicketChargeResponse {}
+message UpdateTicketExpenseResponse {}
 
-message DeleteTicketChargeRequest {
-  string charge_id = 1;
+message DeleteTicketExpenseRequest {
+  string expense_id = 1;
 }
 
-message DeleteTicketChargeResponse {}
+message DeleteTicketExpenseResponse {}
 
-message UpdateTicketChargeSettlementRequest {
-  string charge_id = 1;
+message UpdateTicketExpenseSettlementRequest {
+  string expense_id = 1;
   string user_id = 2;
   // true = 精算済みにする、false = 未精算に戻す。
   bool settled = 3;
 }
 
-message UpdateTicketChargeSettlementResponse {}
+message UpdateTicketExpenseSettlementResponse {}

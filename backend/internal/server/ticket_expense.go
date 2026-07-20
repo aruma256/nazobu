@@ -15,9 +15,9 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/id"
 )
 
-const chargeTitleMaxLen = 255
+const expenseTitleMaxLen = 255
 
-func (s *ticketService) CreateTicketCharge(ctx context.Context, req *connect.Request[nazobuv1.CreateTicketChargeRequest]) (*connect.Response[nazobuv1.CreateTicketChargeResponse], error) {
+func (s *ticketService) CreateTicketExpense(ctx context.Context, req *connect.Request[nazobuv1.CreateTicketExpenseRequest]) (*connect.Response[nazobuv1.CreateTicketExpenseResponse], error) {
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -28,11 +28,11 @@ func (s *ticketService) CreateTicketCharge(ctx context.Context, req *connect.Req
 	if ticketID == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("ticket_id は必須"))
 	}
-	title, err := validateChargeTitle(msg.GetTitle())
+	title, err := validateExpenseTitle(msg.GetTitle())
 	if err != nil {
 		return nil, err
 	}
-	participants, err := validateChargeParticipants(msg.GetParticipants())
+	participants, err := validateExpenseParticipants(msg.GetParticipants())
 	if err != nil {
 		return nil, err
 	}
@@ -58,11 +58,11 @@ func (s *ticketService) CreateTicketCharge(ctx context.Context, req *connect.Req
 		}
 	}
 
-	if err := s.assertChargeParticipantsAreTicketParticipants(ctx, ticketID, participants); err != nil {
+	if err := s.assertExpenseParticipantsAreTicketParticipants(ctx, ticketID, participants); err != nil {
 		return nil, err
 	}
 
-	chargeID := id.New()
+	expenseID := id.New()
 
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -71,8 +71,8 @@ func (s *ticketService) CreateTicketCharge(ctx context.Context, req *connect.Req
 	defer func() { _ = tx.Rollback() }()
 
 	qtx := s.q.WithTx(tx)
-	if err := qtx.CreateTicketCharge(ctx, queries.CreateTicketChargeParams{
-		ID:       chargeID,
+	if err := qtx.CreateTicketExpense(ctx, queries.CreateTicketExpenseParams{
+		ID:       expenseID,
 		TicketID: ticketID,
 		Title:    title,
 		PaidBy:   user.ID,
@@ -80,8 +80,8 @@ func (s *ticketService) CreateTicketCharge(ctx context.Context, req *connect.Req
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("追加精算の登録に失敗: %w", err))
 	}
 	for _, p := range participants {
-		if err := qtx.CreateTicketChargeParticipant(ctx, queries.CreateTicketChargeParticipantParams{
-			ChargeID: chargeID,
+		if err := qtx.CreateTicketExpenseParticipant(ctx, queries.CreateTicketExpenseParticipantParams{
+			ExpenseID: expenseID,
 			UserID:   p.GetUserId(),
 			Amount:   p.GetAmount(),
 		}); err != nil {
@@ -92,41 +92,41 @@ func (s *ticketService) CreateTicketCharge(ctx context.Context, req *connect.Req
 	if err := tx.Commit(); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("トランザクション commit に失敗: %w", err))
 	}
-	return connect.NewResponse(&nazobuv1.CreateTicketChargeResponse{}), nil
+	return connect.NewResponse(&nazobuv1.CreateTicketExpenseResponse{}), nil
 }
 
-func (s *ticketService) UpdateTicketCharge(ctx context.Context, req *connect.Request[nazobuv1.UpdateTicketChargeRequest]) (*connect.Response[nazobuv1.UpdateTicketChargeResponse], error) {
+func (s *ticketService) UpdateTicketExpense(ctx context.Context, req *connect.Request[nazobuv1.UpdateTicketExpenseRequest]) (*connect.Response[nazobuv1.UpdateTicketExpenseResponse], error) {
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
 	}
 
 	msg := req.Msg
-	chargeID := strings.TrimSpace(msg.GetChargeId())
-	if chargeID == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("charge_id は必須"))
+	expenseID := strings.TrimSpace(msg.GetExpenseId())
+	if expenseID == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("expense_id は必須"))
 	}
-	title, err := validateChargeTitle(msg.GetTitle())
+	title, err := validateExpenseTitle(msg.GetTitle())
 	if err != nil {
 		return nil, err
 	}
-	participants, err := validateChargeParticipants(msg.GetParticipants())
+	participants, err := validateExpenseParticipants(msg.GetParticipants())
 	if err != nil {
 		return nil, err
 	}
 
-	charge, err := s.q.GetTicketChargeByID(ctx, chargeID)
+	expense, err := s.q.GetTicketExpenseByID(ctx, expenseID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("指定された追加精算は存在しない"))
 	}
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("追加精算の取得に失敗: %w", err))
 	}
-	if !canEditTicketCharge(user, charge.PaidBy) {
+	if !canEditTicketExpense(user, expense.PaidBy) {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("追加精算の編集は admin もしくは立替者のみ"))
 	}
 
-	if err := s.assertChargeParticipantsAreTicketParticipants(ctx, charge.TicketID, participants); err != nil {
+	if err := s.assertExpenseParticipantsAreTicketParticipants(ctx, expense.TicketID, participants); err != nil {
 		return nil, err
 	}
 
@@ -137,8 +137,8 @@ func (s *ticketService) UpdateTicketCharge(ctx context.Context, req *connect.Req
 	defer func() { _ = tx.Rollback() }()
 
 	qtx := s.q.WithTx(tx)
-	if err := qtx.UpdateTicketCharge(ctx, queries.UpdateTicketChargeParams{
-		ID:    chargeID,
+	if err := qtx.UpdateTicketExpense(ctx, queries.UpdateTicketExpenseParams{
+		ID:    expenseID,
 		Title: title,
 	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("追加精算の更新に失敗: %w", err))
@@ -146,7 +146,7 @@ func (s *ticketService) UpdateTicketCharge(ctx context.Context, req *connect.Req
 
 	// 対象者は全置換。既存対象者は金額のみ上書きして精算状態（settled_at）を維持し、
 	// 指定から外れた対象者は削除、新しい対象者は未精算で追加する。
-	existing, err := qtx.ListTicketChargeParticipantsByChargeID(ctx, chargeID)
+	existing, err := qtx.ListTicketExpenseParticipantsByExpenseID(ctx, expenseID)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("既存対象者の取得に失敗: %w", err))
 	}
@@ -158,16 +158,16 @@ func (s *ticketService) UpdateTicketCharge(ctx context.Context, req *connect.Req
 	for _, p := range participants {
 		requested[p.GetUserId()] = struct{}{}
 		if _, ok := existingByID[p.GetUserId()]; ok {
-			if err := qtx.UpdateTicketChargeParticipantAmount(ctx, queries.UpdateTicketChargeParticipantAmountParams{
+			if err := qtx.UpdateTicketExpenseParticipantAmount(ctx, queries.UpdateTicketExpenseParticipantAmountParams{
 				Amount:   p.GetAmount(),
-				ChargeID: chargeID,
+				ExpenseID: expenseID,
 				UserID:   p.GetUserId(),
 			}); err != nil {
 				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("対象者の金額更新に失敗: %w", err))
 			}
 		} else {
-			if err := qtx.CreateTicketChargeParticipant(ctx, queries.CreateTicketChargeParticipantParams{
-				ChargeID: chargeID,
+			if err := qtx.CreateTicketExpenseParticipant(ctx, queries.CreateTicketExpenseParticipantParams{
+				ExpenseID: expenseID,
 				UserID:   p.GetUserId(),
 				Amount:   p.GetAmount(),
 			}); err != nil {
@@ -177,8 +177,8 @@ func (s *ticketService) UpdateTicketCharge(ctx context.Context, req *connect.Req
 	}
 	for _, e := range existing {
 		if _, ok := requested[e.UserID]; !ok {
-			if err := qtx.DeleteTicketChargeParticipant(ctx, queries.DeleteTicketChargeParticipantParams{
-				ChargeID: chargeID,
+			if err := qtx.DeleteTicketExpenseParticipant(ctx, queries.DeleteTicketExpenseParticipantParams{
+				ExpenseID: expenseID,
 				UserID:   e.UserID,
 			}); err != nil {
 				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("対象者の削除に失敗: %w", err))
@@ -189,69 +189,69 @@ func (s *ticketService) UpdateTicketCharge(ctx context.Context, req *connect.Req
 	if err := tx.Commit(); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("トランザクション commit に失敗: %w", err))
 	}
-	return connect.NewResponse(&nazobuv1.UpdateTicketChargeResponse{}), nil
+	return connect.NewResponse(&nazobuv1.UpdateTicketExpenseResponse{}), nil
 }
 
-func (s *ticketService) DeleteTicketCharge(ctx context.Context, req *connect.Request[nazobuv1.DeleteTicketChargeRequest]) (*connect.Response[nazobuv1.DeleteTicketChargeResponse], error) {
+func (s *ticketService) DeleteTicketExpense(ctx context.Context, req *connect.Request[nazobuv1.DeleteTicketExpenseRequest]) (*connect.Response[nazobuv1.DeleteTicketExpenseResponse], error) {
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
 	}
 
-	chargeID := strings.TrimSpace(req.Msg.GetChargeId())
-	if chargeID == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("charge_id は必須"))
+	expenseID := strings.TrimSpace(req.Msg.GetExpenseId())
+	if expenseID == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("expense_id は必須"))
 	}
 
-	charge, err := s.q.GetTicketChargeByID(ctx, chargeID)
+	expense, err := s.q.GetTicketExpenseByID(ctx, expenseID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("指定された追加精算は存在しない"))
 	}
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("追加精算の取得に失敗: %w", err))
 	}
-	if !canEditTicketCharge(user, charge.PaidBy) {
+	if !canEditTicketExpense(user, expense.PaidBy) {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("追加精算の削除は admin もしくは立替者のみ"))
 	}
 
-	if err := s.q.DeleteTicketCharge(ctx, chargeID); err != nil {
+	if err := s.q.DeleteTicketExpense(ctx, expenseID); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("追加精算の削除に失敗: %w", err))
 	}
-	return connect.NewResponse(&nazobuv1.DeleteTicketChargeResponse{}), nil
+	return connect.NewResponse(&nazobuv1.DeleteTicketExpenseResponse{}), nil
 }
 
-func (s *ticketService) UpdateTicketChargeSettlement(ctx context.Context, req *connect.Request[nazobuv1.UpdateTicketChargeSettlementRequest]) (*connect.Response[nazobuv1.UpdateTicketChargeSettlementResponse], error) {
+func (s *ticketService) UpdateTicketExpenseSettlement(ctx context.Context, req *connect.Request[nazobuv1.UpdateTicketExpenseSettlementRequest]) (*connect.Response[nazobuv1.UpdateTicketExpenseSettlementResponse], error) {
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
 	}
 
-	chargeID := strings.TrimSpace(req.Msg.GetChargeId())
+	expenseID := strings.TrimSpace(req.Msg.GetExpenseId())
 	userID := strings.TrimSpace(req.Msg.GetUserId())
 	settled := req.Msg.GetSettled()
-	if chargeID == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("charge_id は必須"))
+	if expenseID == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("expense_id は必須"))
 	}
 	if userID == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("user_id は必須"))
 	}
 
-	charge, err := s.q.GetTicketChargeByID(ctx, chargeID)
+	expense, err := s.q.GetTicketExpenseByID(ctx, expenseID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("指定された追加精算は存在しない"))
 	}
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("追加精算の取得に失敗: %w", err))
 	}
-	if !canEditTicketCharge(user, charge.PaidBy) {
+	if !canEditTicketExpense(user, expense.PaidBy) {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("精算状態の更新は admin もしくは立替者のみ"))
 	}
-	if userID == charge.PaidBy {
+	if userID == expense.PaidBy {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("立替者本人は精算操作の対象外"))
 	}
 
-	count, err := s.q.CountTicketChargeParticipant(ctx, queries.CountTicketChargeParticipantParams{
-		ChargeID: chargeID,
+	count, err := s.q.CountTicketExpenseParticipant(ctx, queries.CountTicketExpenseParticipantParams{
+		ExpenseID: expenseID,
 		UserID:   userID,
 	})
 	if err != nil {
@@ -262,49 +262,49 @@ func (s *ticketService) UpdateTicketChargeSettlement(ctx context.Context, req *c
 	}
 
 	if settled {
-		if err := s.q.MarkTicketChargeParticipantSettled(ctx, queries.MarkTicketChargeParticipantSettledParams{
-			ChargeID: chargeID,
+		if err := s.q.MarkTicketExpenseParticipantSettled(ctx, queries.MarkTicketExpenseParticipantSettledParams{
+			ExpenseID: expenseID,
 			UserID:   userID,
 		}); err != nil {
 			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("精算済みの登録に失敗: %w", err))
 		}
 	} else {
-		if err := s.q.MarkTicketChargeParticipantUnsettled(ctx, queries.MarkTicketChargeParticipantUnsettledParams{
-			ChargeID: chargeID,
+		if err := s.q.MarkTicketExpenseParticipantUnsettled(ctx, queries.MarkTicketExpenseParticipantUnsettledParams{
+			ExpenseID: expenseID,
 			UserID:   userID,
 		}); err != nil {
 			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("未精算の登録に失敗: %w", err))
 		}
 	}
-	return connect.NewResponse(&nazobuv1.UpdateTicketChargeSettlementResponse{}), nil
+	return connect.NewResponse(&nazobuv1.UpdateTicketExpenseSettlementResponse{}), nil
 }
 
-// canEditTicketCharge は admin もしくは charge の立替者本人なら編集可とする。
-// チケット本体（canEditTicket）とは別で、チケット立替者であっても他人の charge は編集できない。
-func canEditTicketCharge(user *auth.User, paidBy string) bool {
+// canEditTicketExpense は admin もしくは expense の立替者本人なら編集可とする。
+// チケット本体（canEditTicket）とは別で、チケット立替者であっても他人の expense は編集できない。
+func canEditTicketExpense(user *auth.User, paidBy string) bool {
 	return user.Role == auth.RoleAdmin || user.ID == paidBy
 }
 
-// validateChargeTitle は費目名の必須・長さを検証し、trim 済みの値を返す。
-func validateChargeTitle(raw string) (string, error) {
+// validateExpenseTitle は費目名の必須・長さを検証し、trim 済みの値を返す。
+func validateExpenseTitle(raw string) (string, error) {
 	title := strings.TrimSpace(raw)
 	if title == "" {
 		return "", connect.NewError(connect.CodeInvalidArgument, errors.New("title は必須"))
 	}
-	if len(title) > chargeTitleMaxLen {
-		return "", connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("title は %d 文字以内", chargeTitleMaxLen))
+	if len(title) > expenseTitleMaxLen {
+		return "", connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("title は %d 文字以内", expenseTitleMaxLen))
 	}
 	return title, nil
 }
 
-// validateChargeParticipants は対象者リストの必須・重複・金額の下限を検証する。
+// validateExpenseParticipants は対象者リストの必須・重複・金額の下限を検証する。
 // 金額は対象者ごとに異なってよい（不均等割りを許容する）。
-func validateChargeParticipants(in []*nazobuv1.TicketChargeParticipantInput) ([]*nazobuv1.TicketChargeParticipantInput, error) {
+func validateExpenseParticipants(in []*nazobuv1.TicketExpenseParticipantInput) ([]*nazobuv1.TicketExpenseParticipantInput, error) {
 	if len(in) == 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("participants は 1 件以上"))
 	}
 	seen := make(map[string]struct{}, len(in))
-	out := make([]*nazobuv1.TicketChargeParticipantInput, 0, len(in))
+	out := make([]*nazobuv1.TicketExpenseParticipantInput, 0, len(in))
 	for _, p := range in {
 		userID := strings.TrimSpace(p.GetUserId())
 		if userID == "" {
@@ -317,14 +317,14 @@ func validateChargeParticipants(in []*nazobuv1.TicketChargeParticipantInput) ([]
 		if p.GetAmount() < 0 {
 			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("participants の amount は 0 以上"))
 		}
-		out = append(out, &nazobuv1.TicketChargeParticipantInput{UserId: userID, Amount: p.GetAmount()})
+		out = append(out, &nazobuv1.TicketExpenseParticipantInput{UserId: userID, Amount: p.GetAmount()})
 	}
 	return out, nil
 }
 
-// assertChargeParticipantsAreTicketParticipants は charge の対象者が全員
+// assertExpenseParticipantsAreTicketParticipants は expense の対象者が全員
 // ticket の参加者であることを確認する（対象者はチケット参加者から選ぶ仕様）。
-func (s *ticketService) assertChargeParticipantsAreTicketParticipants(ctx context.Context, ticketID string, participants []*nazobuv1.TicketChargeParticipantInput) error {
+func (s *ticketService) assertExpenseParticipantsAreTicketParticipants(ctx context.Context, ticketID string, participants []*nazobuv1.TicketExpenseParticipantInput) error {
 	for _, p := range participants {
 		count, err := s.q.CountTicketParticipant(ctx, queries.CountTicketParticipantParams{
 			TicketID: ticketID,
@@ -340,46 +340,46 @@ func (s *ticketService) assertChargeParticipantsAreTicketParticipants(ctx contex
 	return nil
 }
 
-// loadTicketCharges は ticket に紐づく追加精算を表示用の形で組み立てる。GetTicket 用。
-func loadTicketCharges(ctx context.Context, q *queries.Queries, user *auth.User, ticketID string) ([]*nazobuv1.TicketCharge, error) {
-	rows, err := q.ListTicketChargesByTicketID(ctx, ticketID)
+// loadTicketExpenses は ticket に紐づく追加精算を表示用の形で組み立てる。GetTicket 用。
+func loadTicketExpenses(ctx context.Context, q *queries.Queries, user *auth.User, ticketID string) ([]*nazobuv1.TicketExpense, error) {
+	rows, err := q.ListTicketExpensesByTicketID(ctx, ticketID)
 	if err != nil {
 		return nil, err
 	}
-	charges := make([]*nazobuv1.TicketCharge, 0, len(rows))
+	expenses := make([]*nazobuv1.TicketExpense, 0, len(rows))
 	if len(rows) == 0 {
-		return charges, nil
+		return expenses, nil
 	}
 
-	indexByCharge := make(map[string]*nazobuv1.TicketCharge, len(rows))
-	chargeIDs := make([]string, 0, len(rows))
-	paidByByCharge := make(map[string]string, len(rows))
+	indexByExpense := make(map[string]*nazobuv1.TicketExpense, len(rows))
+	expenseIDs := make([]string, 0, len(rows))
+	paidByByExpense := make(map[string]string, len(rows))
 	for _, r := range rows {
-		c := &nazobuv1.TicketCharge{
+		c := &nazobuv1.TicketExpense{
 			Id:           r.ID,
 			Title:        r.Title,
 			PaidByUserId: r.PaidBy,
 			PayerName:    r.PayerName,
-			Participants: []*nazobuv1.TicketChargeParticipant{},
-			CanEdit:      canEditTicketCharge(user, r.PaidBy),
+			Participants: []*nazobuv1.TicketExpenseParticipant{},
+			CanEdit:      canEditTicketExpense(user, r.PaidBy),
 		}
-		charges = append(charges, c)
-		indexByCharge[r.ID] = c
-		chargeIDs = append(chargeIDs, r.ID)
-		paidByByCharge[r.ID] = r.PaidBy
+		expenses = append(expenses, c)
+		indexByExpense[r.ID] = c
+		expenseIDs = append(expenseIDs, r.ID)
+		paidByByExpense[r.ID] = r.PaidBy
 	}
 
-	parts, err := q.ListTicketChargeParticipantsByChargeIDs(ctx, chargeIDs)
+	parts, err := q.ListTicketExpenseParticipantsByExpenseIDs(ctx, expenseIDs)
 	if err != nil {
 		return nil, err
 	}
 	for _, p := range parts {
-		c, ok := indexByCharge[p.ChargeID]
+		c, ok := indexByExpense[p.ExpenseID]
 		if !ok {
 			continue
 		}
-		isPayer := p.UserID == paidByByCharge[p.ChargeID]
-		c.Participants = append(c.Participants, &nazobuv1.TicketChargeParticipant{
+		isPayer := p.UserID == paidByByExpense[p.ExpenseID]
+		c.Participants = append(c.Participants, &nazobuv1.TicketExpenseParticipant{
 			UserId:  p.UserID,
 			Name:    p.Name,
 			Amount:  p.Amount,
@@ -387,5 +387,5 @@ func loadTicketCharges(ctx context.Context, q *queries.Queries, user *auth.User,
 			IsPayer: isPayer,
 		})
 	}
-	return charges, nil
+	return expenses, nil
 }

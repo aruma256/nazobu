@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file nazobu/v1/ticket.proto.
  */
 export const file_nazobu_v1_ticket: GenFile = /*@__PURE__*/
-  fileDesc("ChZuYXpvYnUvdjEvdGlja2V0LnByb3RvEgluYXpvYnUudjEiFAoSTGlzdFRpY2tldHNSZXF1ZXN0IjkKE0xpc3RUaWNrZXRzUmVzcG9uc2USIgoHdGlja2V0cxgBIAMoCzIRLm5hem9idS52MS5UaWNrZXQi0AMKBlRpY2tldBIKCgJpZBgBIAEoCRIQCghldmVudF9pZBgCIAEoCRITCgtldmVudF90aXRsZRgDIAEoCRIYChBwcmljZV9wZXJfcGVyc29uGAUgASgFEhIKCm1lZXRpbmdfYXQYBiABKAkSFQoNbWVldGluZ19wbGFjZRgHIAEoCRIWCg5wdXJjaGFzZXJfbmFtZRgIIAEoCRIZChFwYXJ0aWNpcGFudF9uYW1lcxgJIAMoCRIRCglldmVudF91cmwYCiABKAkSEAoIc3RhcnRfYXQYCyABKAkSGAoQbWF4X3BhcnRpY2lwYW50cxgMIAEoBRIXCg9ldmVudF9pbWFnZV91cmwYDSABKAkSJwofZXZlbnRfZXhwZWN0ZWRfZHVyYXRpb25fbWludXRlcxgOIAEoBRIZChFldmVudF9jYXRjaHBocmFzZRgPIAEoCRIsCh9ldmVudF9kb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlGBAgASgFSACIAQESJwofdW5yZWdpc3RlcmVkX3BhcnRpY2lwYW50c19jb3VudBgRIAEoBUIiCiBfZXZlbnRfZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZUoECAQQBSIlChBHZXRUaWNrZXRSZXF1ZXN0EhEKCXRpY2tldF9pZBgBIAEoCSK+AQoRR2V0VGlja2V0UmVzcG9uc2USIQoGdGlja2V0GAEgASgLMhEubmF6b2J1LnYxLlRpY2tldBIyCgxwYXJ0aWNpcGFudHMYAiADKAsyHC5uYXpvYnUudjEuVGlja2V0UGFydGljaXBhbnQSEAoIY2FuX2VkaXQYAyABKAgSKAoHY2hhcmdlcxgEIAMoCzIXLm5hem9idS52MS5UaWNrZXRDaGFyZ2USFgoOY2FuX2FkZF9jaGFyZ2UYBSABKAgiogEKDFRpY2tldENoYXJnZRIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIXCg9wYWlkX2J5X3VzZXJfaWQYAyABKAkSEgoKcGF5ZXJfbmFtZRgEIAEoCRI4CgxwYXJ0aWNpcGFudHMYBSADKAsyIi5uYXpvYnUudjEuVGlja2V0Q2hhcmdlUGFydGljaXBhbnQSEAoIY2FuX2VkaXQYBiABKAgiawoXVGlja2V0Q2hhcmdlUGFydGljaXBhbnQSDwoHdXNlcl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEg4KBmFtb3VudBgDIAEoBRIPCgdzZXR0bGVkGAQgASgIEhAKCGlzX3BheWVyGAUgASgIIj8KHFRpY2tldENoYXJnZVBhcnRpY2lwYW50SW5wdXQSDwoHdXNlcl9pZBgBIAEoCRIOCgZhbW91bnQYAiABKAUiWQoRVGlja2V0UGFydGljaXBhbnQSDwoHdXNlcl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEg8KB3NldHRsZWQYAyABKAgSFAoMaXNfcHVyY2hhc2VyGAQgASgIIuUBChNDcmVhdGVUaWNrZXRSZXF1ZXN0EhAKCGV2ZW50X2lkGAEgASgJEhgKEHByaWNlX3Blcl9wZXJzb24YAyABKAUSEgoKbWVldGluZ19hdBgEIAEoCRIVCg1tZWV0aW5nX3BsYWNlGAUgASgJEhwKFHBhcnRpY2lwYW50X3VzZXJfaWRzGAYgAygJEhAKCHN0YXJ0X2F0GAcgASgJEhgKEG1heF9wYXJ0aWNpcGFudHMYCCABKAUSJwofdW5yZWdpc3RlcmVkX3BhcnRpY2lwYW50c19jb3VudBgJIAEoBUoECAIQAyI5ChRDcmVhdGVUaWNrZXRSZXNwb25zZRIhCgZ0aWNrZXQYASABKAsyES5uYXpvYnUudjEuVGlja2V0IuYBChNVcGRhdGVUaWNrZXRSZXF1ZXN0EhEKCXRpY2tldF9pZBgBIAEoCRIYChBwcmljZV9wZXJfcGVyc29uGAMgASgFEhIKCm1lZXRpbmdfYXQYBCABKAkSFQoNbWVldGluZ19wbGFjZRgFIAEoCRIQCghzdGFydF9hdBgGIAEoCRIcChRwdXJjaGFzZWRfYnlfdXNlcl9pZBgHIAEoCRIYChBtYXhfcGFydGljaXBhbnRzGAggASgFEicKH3VucmVnaXN0ZXJlZF9wYXJ0aWNpcGFudHNfY291bnQYCSABKAVKBAgCEAMiOQoUVXBkYXRlVGlja2V0UmVzcG9uc2USIQoGdGlja2V0GAEgASgLMhEubmF6b2J1LnYxLlRpY2tldCLuAwocQ3JlYXRlVGlja2V0V2l0aEV2ZW50UmVxdWVzdBITCgtldmVudF90aXRsZRgBIAEoCRIRCglldmVudF91cmwYAiABKAkSGQoRZXZlbnRfY2F0Y2hwaHJhc2UYAyABKAkSLAofZXZlbnRfZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZRgEIAEoBUgAiAEBEjAKI2V2ZW50X2VudHJ5X2RlYWRsaW5lX21pbnV0ZXNfYmVmb3JlGAUgASgFSAGIAQESJwofZXZlbnRfZXhwZWN0ZWRfZHVyYXRpb25fbWludXRlcxgGIAEoBRIYChBwcmljZV9wZXJfcGVyc29uGAcgASgFEhAKCHN0YXJ0X2F0GAggASgJEhIKCm1lZXRpbmdfYXQYCSABKAkSFQoNbWVldGluZ19wbGFjZRgKIAEoCRIcChRwYXJ0aWNpcGFudF91c2VyX2lkcxgLIAMoCRIYChBtYXhfcGFydGljaXBhbnRzGAwgASgFEicKH3VucmVnaXN0ZXJlZF9wYXJ0aWNpcGFudHNfY291bnQYDSABKAVCIgogX2V2ZW50X2Rvb3JzX29wZW5fbWludXRlc19iZWZvcmVCJgokX2V2ZW50X2VudHJ5X2RlYWRsaW5lX21pbnV0ZXNfYmVmb3JlIkIKHUNyZWF0ZVRpY2tldFdpdGhFdmVudFJlc3BvbnNlEiEKBnRpY2tldBgBIAEoCzIRLm5hem9idS52MS5UaWNrZXQigQQKHFVwZGF0ZVRpY2tldFdpdGhFdmVudFJlcXVlc3QSEQoJdGlja2V0X2lkGAEgASgJEhMKC2V2ZW50X3RpdGxlGAIgASgJEhEKCWV2ZW50X3VybBgDIAEoCRIZChFldmVudF9jYXRjaHBocmFzZRgEIAEoCRIsCh9ldmVudF9kb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlGAUgASgFSACIAQESMAojZXZlbnRfZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUYBiABKAVIAYgBARInCh9ldmVudF9leHBlY3RlZF9kdXJhdGlvbl9taW51dGVzGAcgASgFEhgKEHByaWNlX3Blcl9wZXJzb24YCCABKAUSEgoKbWVldGluZ19hdBgJIAEoCRIVCg1tZWV0aW5nX3BsYWNlGAogASgJEhAKCHN0YXJ0X2F0GAsgASgJEhwKFHB1cmNoYXNlZF9ieV91c2VyX2lkGAwgASgJEhgKEG1heF9wYXJ0aWNpcGFudHMYDSABKAUSJwofdW5yZWdpc3RlcmVkX3BhcnRpY2lwYW50c19jb3VudBgOIAEoBUIiCiBfZXZlbnRfZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZUImCiRfZXZlbnRfZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUiQgodVXBkYXRlVGlja2V0V2l0aEV2ZW50UmVzcG9uc2USIQoGdGlja2V0GAEgASgLMhEubmF6b2J1LnYxLlRpY2tldCJDChxBZGRUaWNrZXRQYXJ0aWNpcGFudHNSZXF1ZXN0EhEKCXRpY2tldF9pZBgBIAEoCRIQCgh1c2VyX2lkcxgCIAMoCSIfCh1BZGRUaWNrZXRQYXJ0aWNpcGFudHNSZXNwb25zZSJECh5SZW1vdmVUaWNrZXRQYXJ0aWNpcGFudFJlcXVlc3QSEQoJdGlja2V0X2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkiIQofUmVtb3ZlVGlja2V0UGFydGljaXBhbnRSZXNwb25zZSJfCihVcGRhdGVUaWNrZXRQYXJ0aWNpcGFudFNldHRsZW1lbnRSZXF1ZXN0EhEKCXRpY2tldF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEg8KB3NldHRsZWQYAyABKAgiKwopVXBkYXRlVGlja2V0UGFydGljaXBhbnRTZXR0bGVtZW50UmVzcG9uc2UifAoZQ3JlYXRlVGlja2V0Q2hhcmdlUmVxdWVzdBIRCgl0aWNrZXRfaWQYASABKAkSDQoFdGl0bGUYAiABKAkSPQoMcGFydGljaXBhbnRzGAMgAygLMicubmF6b2J1LnYxLlRpY2tldENoYXJnZVBhcnRpY2lwYW50SW5wdXQiHAoaQ3JlYXRlVGlja2V0Q2hhcmdlUmVzcG9uc2UifAoZVXBkYXRlVGlja2V0Q2hhcmdlUmVxdWVzdBIRCgljaGFyZ2VfaWQYASABKAkSDQoFdGl0bGUYAiABKAkSPQoMcGFydGljaXBhbnRzGAMgAygLMicubmF6b2J1LnYxLlRpY2tldENoYXJnZVBhcnRpY2lwYW50SW5wdXQiHAoaVXBkYXRlVGlja2V0Q2hhcmdlUmVzcG9uc2UiLgoZRGVsZXRlVGlja2V0Q2hhcmdlUmVxdWVzdBIRCgljaGFyZ2VfaWQYASABKAkiHAoaRGVsZXRlVGlja2V0Q2hhcmdlUmVzcG9uc2UiWgojVXBkYXRlVGlja2V0Q2hhcmdlU2V0dGxlbWVudFJlcXVlc3QSEQoJY2hhcmdlX2lkGAEgASgJEg8KB3VzZXJfaWQYAiABKAkSDwoHc2V0dGxlZBgDIAEoCCImCiRVcGRhdGVUaWNrZXRDaGFyZ2VTZXR0bGVtZW50UmVzcG9uc2UyuAoKDVRpY2tldFNlcnZpY2USTAoLTGlzdFRpY2tldHMSHS5uYXpvYnUudjEuTGlzdFRpY2tldHNSZXF1ZXN0Gh4ubmF6b2J1LnYxLkxpc3RUaWNrZXRzUmVzcG9uc2USRgoJR2V0VGlja2V0EhsubmF6b2J1LnYxLkdldFRpY2tldFJlcXVlc3QaHC5uYXpvYnUudjEuR2V0VGlja2V0UmVzcG9uc2USTwoMQ3JlYXRlVGlja2V0Eh4ubmF6b2J1LnYxLkNyZWF0ZVRpY2tldFJlcXVlc3QaHy5uYXpvYnUudjEuQ3JlYXRlVGlja2V0UmVzcG9uc2USagoVQ3JlYXRlVGlja2V0V2l0aEV2ZW50EicubmF6b2J1LnYxLkNyZWF0ZVRpY2tldFdpdGhFdmVudFJlcXVlc3QaKC5uYXpvYnUudjEuQ3JlYXRlVGlja2V0V2l0aEV2ZW50UmVzcG9uc2USTwoMVXBkYXRlVGlja2V0Eh4ubmF6b2J1LnYxLlVwZGF0ZVRpY2tldFJlcXVlc3QaHy5uYXpvYnUudjEuVXBkYXRlVGlja2V0UmVzcG9uc2USagoVVXBkYXRlVGlja2V0V2l0aEV2ZW50EicubmF6b2J1LnYxLlVwZGF0ZVRpY2tldFdpdGhFdmVudFJlcXVlc3QaKC5uYXpvYnUudjEuVXBkYXRlVGlja2V0V2l0aEV2ZW50UmVzcG9uc2USagoVQWRkVGlja2V0UGFydGljaXBhbnRzEicubmF6b2J1LnYxLkFkZFRpY2tldFBhcnRpY2lwYW50c1JlcXVlc3QaKC5uYXpvYnUudjEuQWRkVGlja2V0UGFydGljaXBhbnRzUmVzcG9uc2UScAoXUmVtb3ZlVGlja2V0UGFydGljaXBhbnQSKS5uYXpvYnUudjEuUmVtb3ZlVGlja2V0UGFydGljaXBhbnRSZXF1ZXN0GioubmF6b2J1LnYxLlJlbW92ZVRpY2tldFBhcnRpY2lwYW50UmVzcG9uc2USjgEKIVVwZGF0ZVRpY2tldFBhcnRpY2lwYW50U2V0dGxlbWVudBIzLm5hem9idS52MS5VcGRhdGVUaWNrZXRQYXJ0aWNpcGFudFNldHRsZW1lbnRSZXF1ZXN0GjQubmF6b2J1LnYxLlVwZGF0ZVRpY2tldFBhcnRpY2lwYW50U2V0dGxlbWVudFJlc3BvbnNlEmEKEkNyZWF0ZVRpY2tldENoYXJnZRIkLm5hem9idS52MS5DcmVhdGVUaWNrZXRDaGFyZ2VSZXF1ZXN0GiUubmF6b2J1LnYxLkNyZWF0ZVRpY2tldENoYXJnZVJlc3BvbnNlEmEKElVwZGF0ZVRpY2tldENoYXJnZRIkLm5hem9idS52MS5VcGRhdGVUaWNrZXRDaGFyZ2VSZXF1ZXN0GiUubmF6b2J1LnYxLlVwZGF0ZVRpY2tldENoYXJnZVJlc3BvbnNlEmEKEkRlbGV0ZVRpY2tldENoYXJnZRIkLm5hem9idS52MS5EZWxldGVUaWNrZXRDaGFyZ2VSZXF1ZXN0GiUubmF6b2J1LnYxLkRlbGV0ZVRpY2tldENoYXJnZVJlc3BvbnNlEn8KHFVwZGF0ZVRpY2tldENoYXJnZVNldHRsZW1lbnQSLi5uYXpvYnUudjEuVXBkYXRlVGlja2V0Q2hhcmdlU2V0dGxlbWVudFJlcXVlc3QaLy5uYXpvYnUudjEuVXBkYXRlVGlja2V0Q2hhcmdlU2V0dGxlbWVudFJlc3BvbnNlQkRaQmdpdGh1Yi5jb20vYXJ1bWEyNTYvbmF6b2J1L2JhY2tlbmQvaW50ZXJuYWwvZ2VuL25hem9idS92MTtuYXpvYnV2MWIGcHJvdG8z");
+  fileDesc("ChZuYXpvYnUvdjEvdGlja2V0LnByb3RvEgluYXpvYnUudjEiFAoSTGlzdFRpY2tldHNSZXF1ZXN0IjkKE0xpc3RUaWNrZXRzUmVzcG9uc2USIgoHdGlja2V0cxgBIAMoCzIRLm5hem9idS52MS5UaWNrZXQi0AMKBlRpY2tldBIKCgJpZBgBIAEoCRIQCghldmVudF9pZBgCIAEoCRITCgtldmVudF90aXRsZRgDIAEoCRIYChBwcmljZV9wZXJfcGVyc29uGAUgASgFEhIKCm1lZXRpbmdfYXQYBiABKAkSFQoNbWVldGluZ19wbGFjZRgHIAEoCRIWCg5wdXJjaGFzZXJfbmFtZRgIIAEoCRIZChFwYXJ0aWNpcGFudF9uYW1lcxgJIAMoCRIRCglldmVudF91cmwYCiABKAkSEAoIc3RhcnRfYXQYCyABKAkSGAoQbWF4X3BhcnRpY2lwYW50cxgMIAEoBRIXCg9ldmVudF9pbWFnZV91cmwYDSABKAkSJwofZXZlbnRfZXhwZWN0ZWRfZHVyYXRpb25fbWludXRlcxgOIAEoBRIZChFldmVudF9jYXRjaHBocmFzZRgPIAEoCRIsCh9ldmVudF9kb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlGBAgASgFSACIAQESJwofdW5yZWdpc3RlcmVkX3BhcnRpY2lwYW50c19jb3VudBgRIAEoBUIiCiBfZXZlbnRfZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZUoECAQQBSIlChBHZXRUaWNrZXRSZXF1ZXN0EhEKCXRpY2tldF9pZBgBIAEoCSLBAQoRR2V0VGlja2V0UmVzcG9uc2USIQoGdGlja2V0GAEgASgLMhEubmF6b2J1LnYxLlRpY2tldBIyCgxwYXJ0aWNpcGFudHMYAiADKAsyHC5uYXpvYnUudjEuVGlja2V0UGFydGljaXBhbnQSEAoIY2FuX2VkaXQYAyABKAgSKgoIZXhwZW5zZXMYBCADKAsyGC5uYXpvYnUudjEuVGlja2V0RXhwZW5zZRIXCg9jYW5fYWRkX2V4cGVuc2UYBSABKAgipAEKDVRpY2tldEV4cGVuc2USCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSFwoPcGFpZF9ieV91c2VyX2lkGAMgASgJEhIKCnBheWVyX25hbWUYBCABKAkSOQoMcGFydGljaXBhbnRzGAUgAygLMiMubmF6b2J1LnYxLlRpY2tldEV4cGVuc2VQYXJ0aWNpcGFudBIQCghjYW5fZWRpdBgGIAEoCCJsChhUaWNrZXRFeHBlbnNlUGFydGljaXBhbnQSDwoHdXNlcl9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEg4KBmFtb3VudBgDIAEoBRIPCgdzZXR0bGVkGAQgASgIEhAKCGlzX3BheWVyGAUgASgIIkAKHVRpY2tldEV4cGVuc2VQYXJ0aWNpcGFudElucHV0Eg8KB3VzZXJfaWQYASABKAkSDgoGYW1vdW50GAIgASgFIlkKEVRpY2tldFBhcnRpY2lwYW50Eg8KB3VzZXJfaWQYASABKAkSDAoEbmFtZRgCIAEoCRIPCgdzZXR0bGVkGAMgASgIEhQKDGlzX3B1cmNoYXNlchgEIAEoCCLlAQoTQ3JlYXRlVGlja2V0UmVxdWVzdBIQCghldmVudF9pZBgBIAEoCRIYChBwcmljZV9wZXJfcGVyc29uGAMgASgFEhIKCm1lZXRpbmdfYXQYBCABKAkSFQoNbWVldGluZ19wbGFjZRgFIAEoCRIcChRwYXJ0aWNpcGFudF91c2VyX2lkcxgGIAMoCRIQCghzdGFydF9hdBgHIAEoCRIYChBtYXhfcGFydGljaXBhbnRzGAggASgFEicKH3VucmVnaXN0ZXJlZF9wYXJ0aWNpcGFudHNfY291bnQYCSABKAVKBAgCEAMiOQoUQ3JlYXRlVGlja2V0UmVzcG9uc2USIQoGdGlja2V0GAEgASgLMhEubmF6b2J1LnYxLlRpY2tldCLmAQoTVXBkYXRlVGlja2V0UmVxdWVzdBIRCgl0aWNrZXRfaWQYASABKAkSGAoQcHJpY2VfcGVyX3BlcnNvbhgDIAEoBRISCgptZWV0aW5nX2F0GAQgASgJEhUKDW1lZXRpbmdfcGxhY2UYBSABKAkSEAoIc3RhcnRfYXQYBiABKAkSHAoUcHVyY2hhc2VkX2J5X3VzZXJfaWQYByABKAkSGAoQbWF4X3BhcnRpY2lwYW50cxgIIAEoBRInCh91bnJlZ2lzdGVyZWRfcGFydGljaXBhbnRzX2NvdW50GAkgASgFSgQIAhADIjkKFFVwZGF0ZVRpY2tldFJlc3BvbnNlEiEKBnRpY2tldBgBIAEoCzIRLm5hem9idS52MS5UaWNrZXQi7gMKHENyZWF0ZVRpY2tldFdpdGhFdmVudFJlcXVlc3QSEwoLZXZlbnRfdGl0bGUYASABKAkSEQoJZXZlbnRfdXJsGAIgASgJEhkKEWV2ZW50X2NhdGNocGhyYXNlGAMgASgJEiwKH2V2ZW50X2Rvb3JzX29wZW5fbWludXRlc19iZWZvcmUYBCABKAVIAIgBARIwCiNldmVudF9lbnRyeV9kZWFkbGluZV9taW51dGVzX2JlZm9yZRgFIAEoBUgBiAEBEicKH2V2ZW50X2V4cGVjdGVkX2R1cmF0aW9uX21pbnV0ZXMYBiABKAUSGAoQcHJpY2VfcGVyX3BlcnNvbhgHIAEoBRIQCghzdGFydF9hdBgIIAEoCRISCgptZWV0aW5nX2F0GAkgASgJEhUKDW1lZXRpbmdfcGxhY2UYCiABKAkSHAoUcGFydGljaXBhbnRfdXNlcl9pZHMYCyADKAkSGAoQbWF4X3BhcnRpY2lwYW50cxgMIAEoBRInCh91bnJlZ2lzdGVyZWRfcGFydGljaXBhbnRzX2NvdW50GA0gASgFQiIKIF9ldmVudF9kb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlQiYKJF9ldmVudF9lbnRyeV9kZWFkbGluZV9taW51dGVzX2JlZm9yZSJCCh1DcmVhdGVUaWNrZXRXaXRoRXZlbnRSZXNwb25zZRIhCgZ0aWNrZXQYASABKAsyES5uYXpvYnUudjEuVGlja2V0IoEEChxVcGRhdGVUaWNrZXRXaXRoRXZlbnRSZXF1ZXN0EhEKCXRpY2tldF9pZBgBIAEoCRITCgtldmVudF90aXRsZRgCIAEoCRIRCglldmVudF91cmwYAyABKAkSGQoRZXZlbnRfY2F0Y2hwaHJhc2UYBCABKAkSLAofZXZlbnRfZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZRgFIAEoBUgAiAEBEjAKI2V2ZW50X2VudHJ5X2RlYWRsaW5lX21pbnV0ZXNfYmVmb3JlGAYgASgFSAGIAQESJwofZXZlbnRfZXhwZWN0ZWRfZHVyYXRpb25fbWludXRlcxgHIAEoBRIYChBwcmljZV9wZXJfcGVyc29uGAggASgFEhIKCm1lZXRpbmdfYXQYCSABKAkSFQoNbWVldGluZ19wbGFjZRgKIAEoCRIQCghzdGFydF9hdBgLIAEoCRIcChRwdXJjaGFzZWRfYnlfdXNlcl9pZBgMIAEoCRIYChBtYXhfcGFydGljaXBhbnRzGA0gASgFEicKH3VucmVnaXN0ZXJlZF9wYXJ0aWNpcGFudHNfY291bnQYDiABKAVCIgogX2V2ZW50X2Rvb3JzX29wZW5fbWludXRlc19iZWZvcmVCJgokX2V2ZW50X2VudHJ5X2RlYWRsaW5lX21pbnV0ZXNfYmVmb3JlIkIKHVVwZGF0ZVRpY2tldFdpdGhFdmVudFJlc3BvbnNlEiEKBnRpY2tldBgBIAEoCzIRLm5hem9idS52MS5UaWNrZXQiQwocQWRkVGlja2V0UGFydGljaXBhbnRzUmVxdWVzdBIRCgl0aWNrZXRfaWQYASABKAkSEAoIdXNlcl9pZHMYAiADKAkiHwodQWRkVGlja2V0UGFydGljaXBhbnRzUmVzcG9uc2UiRAoeUmVtb3ZlVGlja2V0UGFydGljaXBhbnRSZXF1ZXN0EhEKCXRpY2tldF9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJIiEKH1JlbW92ZVRpY2tldFBhcnRpY2lwYW50UmVzcG9uc2UiXwooVXBkYXRlVGlja2V0UGFydGljaXBhbnRTZXR0bGVtZW50UmVxdWVzdBIRCgl0aWNrZXRfaWQYASABKAkSDwoHdXNlcl9pZBgCIAEoCRIPCgdzZXR0bGVkGAMgASgIIisKKVVwZGF0ZVRpY2tldFBhcnRpY2lwYW50U2V0dGxlbWVudFJlc3BvbnNlIn4KGkNyZWF0ZVRpY2tldEV4cGVuc2VSZXF1ZXN0EhEKCXRpY2tldF9pZBgBIAEoCRINCgV0aXRsZRgCIAEoCRI+CgxwYXJ0aWNpcGFudHMYAyADKAsyKC5uYXpvYnUudjEuVGlja2V0RXhwZW5zZVBhcnRpY2lwYW50SW5wdXQiHQobQ3JlYXRlVGlja2V0RXhwZW5zZVJlc3BvbnNlIn8KGlVwZGF0ZVRpY2tldEV4cGVuc2VSZXF1ZXN0EhIKCmV4cGVuc2VfaWQYASABKAkSDQoFdGl0bGUYAiABKAkSPgoMcGFydGljaXBhbnRzGAMgAygLMigubmF6b2J1LnYxLlRpY2tldEV4cGVuc2VQYXJ0aWNpcGFudElucHV0Ih0KG1VwZGF0ZVRpY2tldEV4cGVuc2VSZXNwb25zZSIwChpEZWxldGVUaWNrZXRFeHBlbnNlUmVxdWVzdBISCgpleHBlbnNlX2lkGAEgASgJIh0KG0RlbGV0ZVRpY2tldEV4cGVuc2VSZXNwb25zZSJcCiRVcGRhdGVUaWNrZXRFeHBlbnNlU2V0dGxlbWVudFJlcXVlc3QSEgoKZXhwZW5zZV9pZBgBIAEoCRIPCgd1c2VyX2lkGAIgASgJEg8KB3NldHRsZWQYAyABKAgiJwolVXBkYXRlVGlja2V0RXhwZW5zZVNldHRsZW1lbnRSZXNwb25zZTLFCgoNVGlja2V0U2VydmljZRJMCgtMaXN0VGlja2V0cxIdLm5hem9idS52MS5MaXN0VGlja2V0c1JlcXVlc3QaHi5uYXpvYnUudjEuTGlzdFRpY2tldHNSZXNwb25zZRJGCglHZXRUaWNrZXQSGy5uYXpvYnUudjEuR2V0VGlja2V0UmVxdWVzdBocLm5hem9idS52MS5HZXRUaWNrZXRSZXNwb25zZRJPCgxDcmVhdGVUaWNrZXQSHi5uYXpvYnUudjEuQ3JlYXRlVGlja2V0UmVxdWVzdBofLm5hem9idS52MS5DcmVhdGVUaWNrZXRSZXNwb25zZRJqChVDcmVhdGVUaWNrZXRXaXRoRXZlbnQSJy5uYXpvYnUudjEuQ3JlYXRlVGlja2V0V2l0aEV2ZW50UmVxdWVzdBooLm5hem9idS52MS5DcmVhdGVUaWNrZXRXaXRoRXZlbnRSZXNwb25zZRJPCgxVcGRhdGVUaWNrZXQSHi5uYXpvYnUudjEuVXBkYXRlVGlja2V0UmVxdWVzdBofLm5hem9idS52MS5VcGRhdGVUaWNrZXRSZXNwb25zZRJqChVVcGRhdGVUaWNrZXRXaXRoRXZlbnQSJy5uYXpvYnUudjEuVXBkYXRlVGlja2V0V2l0aEV2ZW50UmVxdWVzdBooLm5hem9idS52MS5VcGRhdGVUaWNrZXRXaXRoRXZlbnRSZXNwb25zZRJqChVBZGRUaWNrZXRQYXJ0aWNpcGFudHMSJy5uYXpvYnUudjEuQWRkVGlja2V0UGFydGljaXBhbnRzUmVxdWVzdBooLm5hem9idS52MS5BZGRUaWNrZXRQYXJ0aWNpcGFudHNSZXNwb25zZRJwChdSZW1vdmVUaWNrZXRQYXJ0aWNpcGFudBIpLm5hem9idS52MS5SZW1vdmVUaWNrZXRQYXJ0aWNpcGFudFJlcXVlc3QaKi5uYXpvYnUudjEuUmVtb3ZlVGlja2V0UGFydGljaXBhbnRSZXNwb25zZRKOAQohVXBkYXRlVGlja2V0UGFydGljaXBhbnRTZXR0bGVtZW50EjMubmF6b2J1LnYxLlVwZGF0ZVRpY2tldFBhcnRpY2lwYW50U2V0dGxlbWVudFJlcXVlc3QaNC5uYXpvYnUudjEuVXBkYXRlVGlja2V0UGFydGljaXBhbnRTZXR0bGVtZW50UmVzcG9uc2USZAoTQ3JlYXRlVGlja2V0RXhwZW5zZRIlLm5hem9idS52MS5DcmVhdGVUaWNrZXRFeHBlbnNlUmVxdWVzdBomLm5hem9idS52MS5DcmVhdGVUaWNrZXRFeHBlbnNlUmVzcG9uc2USZAoTVXBkYXRlVGlja2V0RXhwZW5zZRIlLm5hem9idS52MS5VcGRhdGVUaWNrZXRFeHBlbnNlUmVxdWVzdBomLm5hem9idS52MS5VcGRhdGVUaWNrZXRFeHBlbnNlUmVzcG9uc2USZAoTRGVsZXRlVGlja2V0RXhwZW5zZRIlLm5hem9idS52MS5EZWxldGVUaWNrZXRFeHBlbnNlUmVxdWVzdBomLm5hem9idS52MS5EZWxldGVUaWNrZXRFeHBlbnNlUmVzcG9uc2USggEKHVVwZGF0ZVRpY2tldEV4cGVuc2VTZXR0bGVtZW50Ei8ubmF6b2J1LnYxLlVwZGF0ZVRpY2tldEV4cGVuc2VTZXR0bGVtZW50UmVxdWVzdBowLm5hem9idS52MS5VcGRhdGVUaWNrZXRFeHBlbnNlU2V0dGxlbWVudFJlc3BvbnNlQkRaQmdpdGh1Yi5jb20vYXJ1bWEyNTYvbmF6b2J1L2JhY2tlbmQvaW50ZXJuYWwvZ2VuL25hem9idS92MTtuYXpvYnV2MWIGcHJvdG8z");
 
 /**
  * @generated from message nazobu.v1.ListTicketsRequest
@@ -206,16 +206,16 @@ export type GetTicketResponse = Message<"nazobu.v1.GetTicketResponse"> & {
   /**
    * ticket に紐づく追加精算の一覧。created_at 昇順。
    *
-   * @generated from field: repeated nazobu.v1.TicketCharge charges = 4;
+   * @generated from field: repeated nazobu.v1.TicketExpense expenses = 4;
    */
-  charges: TicketCharge[];
+  expenses: TicketExpense[];
 
   /**
    * 現在ログイン中の user が追加精算を新規登録できるか（admin もしくは ticket の参加者）。
    *
-   * @generated from field: bool can_add_charge = 5;
+   * @generated from field: bool can_add_expense = 5;
    */
-  canAddCharge: boolean;
+  canAddExpense: boolean;
 };
 
 /**
@@ -226,11 +226,11 @@ export const GetTicketResponseSchema: GenMessage<GetTicketResponse> = /*@__PURE_
   messageDesc(file_nazobu_v1_ticket, 4);
 
 /**
- * TicketCharge は ticket にぶら下がる追加精算（打ち上げ飲み会など）1 件分。
+ * TicketExpense は ticket にぶら下がる追加精算（打ち上げ飲み会など）1 件分。
  *
- * @generated from message nazobu.v1.TicketCharge
+ * @generated from message nazobu.v1.TicketExpense
  */
-export type TicketCharge = Message<"nazobu.v1.TicketCharge"> & {
+export type TicketExpense = Message<"nazobu.v1.TicketExpense"> & {
   /**
    * @generated from field: string id = 1;
    */
@@ -260,12 +260,12 @@ export type TicketCharge = Message<"nazobu.v1.TicketCharge"> & {
   /**
    * 対象者一覧（created_at 昇順）。負担額は対象者ごとに異なってよい。
    *
-   * @generated from field: repeated nazobu.v1.TicketChargeParticipant participants = 5;
+   * @generated from field: repeated nazobu.v1.TicketExpenseParticipant participants = 5;
    */
-  participants: TicketChargeParticipant[];
+  participants: TicketExpenseParticipant[];
 
   /**
-   * 現在ログイン中の user がこの charge を編集・削除・精算操作できるか（admin もしくは立替者）。
+   * 現在ログイン中の user がこの expense を編集・削除・精算操作できるか（admin もしくは立替者）。
    *
    * @generated from field: bool can_edit = 6;
    */
@@ -273,16 +273,16 @@ export type TicketCharge = Message<"nazobu.v1.TicketCharge"> & {
 };
 
 /**
- * Describes the message nazobu.v1.TicketCharge.
- * Use `create(TicketChargeSchema)` to create a new message.
+ * Describes the message nazobu.v1.TicketExpense.
+ * Use `create(TicketExpenseSchema)` to create a new message.
  */
-export const TicketChargeSchema: GenMessage<TicketCharge> = /*@__PURE__*/
+export const TicketExpenseSchema: GenMessage<TicketExpense> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_ticket, 5);
 
 /**
- * @generated from message nazobu.v1.TicketChargeParticipant
+ * @generated from message nazobu.v1.TicketExpenseParticipant
  */
-export type TicketChargeParticipant = Message<"nazobu.v1.TicketChargeParticipant"> & {
+export type TicketExpenseParticipant = Message<"nazobu.v1.TicketExpenseParticipant"> & {
   /**
    * @generated from field: string user_id = 1;
    */
@@ -310,7 +310,7 @@ export type TicketChargeParticipant = Message<"nazobu.v1.TicketChargeParticipant
   settled: boolean;
 
   /**
-   * charge の立替者本人かどうか。立替者は精算操作の対象外。
+   * expense の立替者本人かどうか。立替者は精算操作の対象外。
    *
    * @generated from field: bool is_payer = 5;
    */
@@ -318,18 +318,18 @@ export type TicketChargeParticipant = Message<"nazobu.v1.TicketChargeParticipant
 };
 
 /**
- * Describes the message nazobu.v1.TicketChargeParticipant.
- * Use `create(TicketChargeParticipantSchema)` to create a new message.
+ * Describes the message nazobu.v1.TicketExpenseParticipant.
+ * Use `create(TicketExpenseParticipantSchema)` to create a new message.
  */
-export const TicketChargeParticipantSchema: GenMessage<TicketChargeParticipant> = /*@__PURE__*/
+export const TicketExpenseParticipantSchema: GenMessage<TicketExpenseParticipant> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_ticket, 6);
 
 /**
- * TicketChargeParticipantInput は charge の登録・更新で対象者 1 人分を指定する。
+ * TicketExpenseParticipantInput は expense の登録・更新で対象者 1 人分を指定する。
  *
- * @generated from message nazobu.v1.TicketChargeParticipantInput
+ * @generated from message nazobu.v1.TicketExpenseParticipantInput
  */
-export type TicketChargeParticipantInput = Message<"nazobu.v1.TicketChargeParticipantInput"> & {
+export type TicketExpenseParticipantInput = Message<"nazobu.v1.TicketExpenseParticipantInput"> & {
   /**
    * @generated from field: string user_id = 1;
    */
@@ -344,10 +344,10 @@ export type TicketChargeParticipantInput = Message<"nazobu.v1.TicketChargePartic
 };
 
 /**
- * Describes the message nazobu.v1.TicketChargeParticipantInput.
- * Use `create(TicketChargeParticipantInputSchema)` to create a new message.
+ * Describes the message nazobu.v1.TicketExpenseParticipantInput.
+ * Use `create(TicketExpenseParticipantInputSchema)` to create a new message.
  */
-export const TicketChargeParticipantInputSchema: GenMessage<TicketChargeParticipantInput> = /*@__PURE__*/
+export const TicketExpenseParticipantInputSchema: GenMessage<TicketExpenseParticipantInput> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_ticket, 7);
 
 /**
@@ -901,9 +901,9 @@ export const UpdateTicketParticipantSettlementResponseSchema: GenMessage<UpdateT
   messageDesc(file_nazobu_v1_ticket, 22);
 
 /**
- * @generated from message nazobu.v1.CreateTicketChargeRequest
+ * @generated from message nazobu.v1.CreateTicketExpenseRequest
  */
-export type CreateTicketChargeRequest = Message<"nazobu.v1.CreateTicketChargeRequest"> & {
+export type CreateTicketExpenseRequest = Message<"nazobu.v1.CreateTicketExpenseRequest"> & {
   /**
    * @generated from field: string ticket_id = 1;
    */
@@ -920,39 +920,39 @@ export type CreateTicketChargeRequest = Message<"nazobu.v1.CreateTicketChargeReq
    * 対象者と負担額。1 件以上。ticket の参加者から選ぶ。
    * 立替者（= ログイン中の user）を含めても構わない。
    *
-   * @generated from field: repeated nazobu.v1.TicketChargeParticipantInput participants = 3;
+   * @generated from field: repeated nazobu.v1.TicketExpenseParticipantInput participants = 3;
    */
-  participants: TicketChargeParticipantInput[];
+  participants: TicketExpenseParticipantInput[];
 };
 
 /**
- * Describes the message nazobu.v1.CreateTicketChargeRequest.
- * Use `create(CreateTicketChargeRequestSchema)` to create a new message.
+ * Describes the message nazobu.v1.CreateTicketExpenseRequest.
+ * Use `create(CreateTicketExpenseRequestSchema)` to create a new message.
  */
-export const CreateTicketChargeRequestSchema: GenMessage<CreateTicketChargeRequest> = /*@__PURE__*/
+export const CreateTicketExpenseRequestSchema: GenMessage<CreateTicketExpenseRequest> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_ticket, 23);
 
 /**
- * @generated from message nazobu.v1.CreateTicketChargeResponse
+ * @generated from message nazobu.v1.CreateTicketExpenseResponse
  */
-export type CreateTicketChargeResponse = Message<"nazobu.v1.CreateTicketChargeResponse"> & {
+export type CreateTicketExpenseResponse = Message<"nazobu.v1.CreateTicketExpenseResponse"> & {
 };
 
 /**
- * Describes the message nazobu.v1.CreateTicketChargeResponse.
- * Use `create(CreateTicketChargeResponseSchema)` to create a new message.
+ * Describes the message nazobu.v1.CreateTicketExpenseResponse.
+ * Use `create(CreateTicketExpenseResponseSchema)` to create a new message.
  */
-export const CreateTicketChargeResponseSchema: GenMessage<CreateTicketChargeResponse> = /*@__PURE__*/
+export const CreateTicketExpenseResponseSchema: GenMessage<CreateTicketExpenseResponse> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_ticket, 24);
 
 /**
- * @generated from message nazobu.v1.UpdateTicketChargeRequest
+ * @generated from message nazobu.v1.UpdateTicketExpenseRequest
  */
-export type UpdateTicketChargeRequest = Message<"nazobu.v1.UpdateTicketChargeRequest"> & {
+export type UpdateTicketExpenseRequest = Message<"nazobu.v1.UpdateTicketExpenseRequest"> & {
   /**
-   * @generated from field: string charge_id = 1;
+   * @generated from field: string expense_id = 1;
    */
-  chargeId: string;
+  expenseId: string;
 
   /**
    * 費目名。必須。
@@ -965,69 +965,69 @@ export type UpdateTicketChargeRequest = Message<"nazobu.v1.UpdateTicketChargeReq
    * 対象者と負担額の全置換。1 件以上。ticket の参加者から選ぶ。
    * 既存対象者は金額を上書き（精算状態は維持）、指定から外れた対象者は削除する。
    *
-   * @generated from field: repeated nazobu.v1.TicketChargeParticipantInput participants = 3;
+   * @generated from field: repeated nazobu.v1.TicketExpenseParticipantInput participants = 3;
    */
-  participants: TicketChargeParticipantInput[];
+  participants: TicketExpenseParticipantInput[];
 };
 
 /**
- * Describes the message nazobu.v1.UpdateTicketChargeRequest.
- * Use `create(UpdateTicketChargeRequestSchema)` to create a new message.
+ * Describes the message nazobu.v1.UpdateTicketExpenseRequest.
+ * Use `create(UpdateTicketExpenseRequestSchema)` to create a new message.
  */
-export const UpdateTicketChargeRequestSchema: GenMessage<UpdateTicketChargeRequest> = /*@__PURE__*/
+export const UpdateTicketExpenseRequestSchema: GenMessage<UpdateTicketExpenseRequest> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_ticket, 25);
 
 /**
- * @generated from message nazobu.v1.UpdateTicketChargeResponse
+ * @generated from message nazobu.v1.UpdateTicketExpenseResponse
  */
-export type UpdateTicketChargeResponse = Message<"nazobu.v1.UpdateTicketChargeResponse"> & {
+export type UpdateTicketExpenseResponse = Message<"nazobu.v1.UpdateTicketExpenseResponse"> & {
 };
 
 /**
- * Describes the message nazobu.v1.UpdateTicketChargeResponse.
- * Use `create(UpdateTicketChargeResponseSchema)` to create a new message.
+ * Describes the message nazobu.v1.UpdateTicketExpenseResponse.
+ * Use `create(UpdateTicketExpenseResponseSchema)` to create a new message.
  */
-export const UpdateTicketChargeResponseSchema: GenMessage<UpdateTicketChargeResponse> = /*@__PURE__*/
+export const UpdateTicketExpenseResponseSchema: GenMessage<UpdateTicketExpenseResponse> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_ticket, 26);
 
 /**
- * @generated from message nazobu.v1.DeleteTicketChargeRequest
+ * @generated from message nazobu.v1.DeleteTicketExpenseRequest
  */
-export type DeleteTicketChargeRequest = Message<"nazobu.v1.DeleteTicketChargeRequest"> & {
+export type DeleteTicketExpenseRequest = Message<"nazobu.v1.DeleteTicketExpenseRequest"> & {
   /**
-   * @generated from field: string charge_id = 1;
+   * @generated from field: string expense_id = 1;
    */
-  chargeId: string;
+  expenseId: string;
 };
 
 /**
- * Describes the message nazobu.v1.DeleteTicketChargeRequest.
- * Use `create(DeleteTicketChargeRequestSchema)` to create a new message.
+ * Describes the message nazobu.v1.DeleteTicketExpenseRequest.
+ * Use `create(DeleteTicketExpenseRequestSchema)` to create a new message.
  */
-export const DeleteTicketChargeRequestSchema: GenMessage<DeleteTicketChargeRequest> = /*@__PURE__*/
+export const DeleteTicketExpenseRequestSchema: GenMessage<DeleteTicketExpenseRequest> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_ticket, 27);
 
 /**
- * @generated from message nazobu.v1.DeleteTicketChargeResponse
+ * @generated from message nazobu.v1.DeleteTicketExpenseResponse
  */
-export type DeleteTicketChargeResponse = Message<"nazobu.v1.DeleteTicketChargeResponse"> & {
+export type DeleteTicketExpenseResponse = Message<"nazobu.v1.DeleteTicketExpenseResponse"> & {
 };
 
 /**
- * Describes the message nazobu.v1.DeleteTicketChargeResponse.
- * Use `create(DeleteTicketChargeResponseSchema)` to create a new message.
+ * Describes the message nazobu.v1.DeleteTicketExpenseResponse.
+ * Use `create(DeleteTicketExpenseResponseSchema)` to create a new message.
  */
-export const DeleteTicketChargeResponseSchema: GenMessage<DeleteTicketChargeResponse> = /*@__PURE__*/
+export const DeleteTicketExpenseResponseSchema: GenMessage<DeleteTicketExpenseResponse> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_ticket, 28);
 
 /**
- * @generated from message nazobu.v1.UpdateTicketChargeSettlementRequest
+ * @generated from message nazobu.v1.UpdateTicketExpenseSettlementRequest
  */
-export type UpdateTicketChargeSettlementRequest = Message<"nazobu.v1.UpdateTicketChargeSettlementRequest"> & {
+export type UpdateTicketExpenseSettlementRequest = Message<"nazobu.v1.UpdateTicketExpenseSettlementRequest"> & {
   /**
-   * @generated from field: string charge_id = 1;
+   * @generated from field: string expense_id = 1;
    */
-  chargeId: string;
+  expenseId: string;
 
   /**
    * @generated from field: string user_id = 2;
@@ -1043,23 +1043,23 @@ export type UpdateTicketChargeSettlementRequest = Message<"nazobu.v1.UpdateTicke
 };
 
 /**
- * Describes the message nazobu.v1.UpdateTicketChargeSettlementRequest.
- * Use `create(UpdateTicketChargeSettlementRequestSchema)` to create a new message.
+ * Describes the message nazobu.v1.UpdateTicketExpenseSettlementRequest.
+ * Use `create(UpdateTicketExpenseSettlementRequestSchema)` to create a new message.
  */
-export const UpdateTicketChargeSettlementRequestSchema: GenMessage<UpdateTicketChargeSettlementRequest> = /*@__PURE__*/
+export const UpdateTicketExpenseSettlementRequestSchema: GenMessage<UpdateTicketExpenseSettlementRequest> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_ticket, 29);
 
 /**
- * @generated from message nazobu.v1.UpdateTicketChargeSettlementResponse
+ * @generated from message nazobu.v1.UpdateTicketExpenseSettlementResponse
  */
-export type UpdateTicketChargeSettlementResponse = Message<"nazobu.v1.UpdateTicketChargeSettlementResponse"> & {
+export type UpdateTicketExpenseSettlementResponse = Message<"nazobu.v1.UpdateTicketExpenseSettlementResponse"> & {
 };
 
 /**
- * Describes the message nazobu.v1.UpdateTicketChargeSettlementResponse.
- * Use `create(UpdateTicketChargeSettlementResponseSchema)` to create a new message.
+ * Describes the message nazobu.v1.UpdateTicketExpenseSettlementResponse.
+ * Use `create(UpdateTicketExpenseSettlementResponseSchema)` to create a new message.
  */
-export const UpdateTicketChargeSettlementResponseSchema: GenMessage<UpdateTicketChargeSettlementResponse> = /*@__PURE__*/
+export const UpdateTicketExpenseSettlementResponseSchema: GenMessage<UpdateTicketExpenseSettlementResponse> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_ticket, 30);
 
 /**
@@ -1167,49 +1167,49 @@ export const TicketService: GenService<{
     output: typeof UpdateTicketParticipantSettlementResponseSchema;
   },
   /**
-   * CreateTicketCharge は ticket に追加精算（打ち上げ飲み会など）を 1 件登録する。
+   * CreateTicketExpense は ticket に追加精算（打ち上げ飲み会など）を 1 件登録する。
    * ticket の参加者もしくは admin が実行でき、立替者はログイン中の user で固定する。
    * 対象者は ticket の参加者から選び、負担額は対象者ごとに指定する。
    *
-   * @generated from rpc nazobu.v1.TicketService.CreateTicketCharge
+   * @generated from rpc nazobu.v1.TicketService.CreateTicketExpense
    */
-  createTicketCharge: {
+  createTicketExpense: {
     methodKind: "unary";
-    input: typeof CreateTicketChargeRequestSchema;
-    output: typeof CreateTicketChargeResponseSchema;
+    input: typeof CreateTicketExpenseRequestSchema;
+    output: typeof CreateTicketExpenseResponseSchema;
   },
   /**
-   * UpdateTicketCharge は追加精算の費目名と対象者（負担額を含む）を全置換で更新する。
-   * admin もしくは charge の立替者のみ実行可能。既存対象者の精算状態は金額が変わっても維持する。
+   * UpdateTicketExpense は追加精算の費目名と対象者（負担額を含む）を全置換で更新する。
+   * admin もしくは expense の立替者のみ実行可能。既存対象者の精算状態は金額が変わっても維持する。
    *
-   * @generated from rpc nazobu.v1.TicketService.UpdateTicketCharge
+   * @generated from rpc nazobu.v1.TicketService.UpdateTicketExpense
    */
-  updateTicketCharge: {
+  updateTicketExpense: {
     methodKind: "unary";
-    input: typeof UpdateTicketChargeRequestSchema;
-    output: typeof UpdateTicketChargeResponseSchema;
+    input: typeof UpdateTicketExpenseRequestSchema;
+    output: typeof UpdateTicketExpenseResponseSchema;
   },
   /**
-   * DeleteTicketCharge は追加精算を 1 件削除する（対象者の行も一緒に消える）。
-   * admin もしくは charge の立替者のみ実行可能。
+   * DeleteTicketExpense は追加精算を 1 件削除する（対象者の行も一緒に消える）。
+   * admin もしくは expense の立替者のみ実行可能。
    *
-   * @generated from rpc nazobu.v1.TicketService.DeleteTicketCharge
+   * @generated from rpc nazobu.v1.TicketService.DeleteTicketExpense
    */
-  deleteTicketCharge: {
+  deleteTicketExpense: {
     methodKind: "unary";
-    input: typeof DeleteTicketChargeRequestSchema;
-    output: typeof DeleteTicketChargeResponseSchema;
+    input: typeof DeleteTicketExpenseRequestSchema;
+    output: typeof DeleteTicketExpenseResponseSchema;
   },
   /**
-   * UpdateTicketChargeSettlement は追加精算の対象者の精算状態を切り替える。
-   * admin もしくは charge の立替者のみ実行可能。立替者本人に対しては実行不可。
+   * UpdateTicketExpenseSettlement は追加精算の対象者の精算状態を切り替える。
+   * admin もしくは expense の立替者のみ実行可能。立替者本人に対しては実行不可。
    *
-   * @generated from rpc nazobu.v1.TicketService.UpdateTicketChargeSettlement
+   * @generated from rpc nazobu.v1.TicketService.UpdateTicketExpenseSettlement
    */
-  updateTicketChargeSettlement: {
+  updateTicketExpenseSettlement: {
     methodKind: "unary";
-    input: typeof UpdateTicketChargeSettlementRequestSchema;
-    output: typeof UpdateTicketChargeSettlementResponseSchema;
+    input: typeof UpdateTicketExpenseSettlementRequestSchema;
+    output: typeof UpdateTicketExpenseSettlementResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_nazobu_v1_ticket, 0);

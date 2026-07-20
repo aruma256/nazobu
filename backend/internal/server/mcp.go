@@ -158,8 +158,8 @@ type mcpTicketParticipant struct {
 	IsPurchaser bool   `json:"is_purchaser" jsonschema:"チケットを立て替え購入した本人かどうか"`
 }
 
-// mcpTicketChargeParticipant は追加精算の対象者 1 人分の情報。
-type mcpTicketChargeParticipant struct {
+// mcpTicketExpenseParticipant は追加精算の対象者 1 人分の情報。
+type mcpTicketExpenseParticipant struct {
 	UserID  string `json:"user_id" jsonschema:"対象者の user ID"`
 	Name    string `json:"name" jsonschema:"表示名"`
 	Amount  int32  `json:"amount" jsonschema:"この人が立替者に支払う金額（税込・円）"`
@@ -167,12 +167,12 @@ type mcpTicketChargeParticipant struct {
 	IsPayer bool   `json:"is_payer" jsonschema:"この追加精算を立て替えた本人かどうか"`
 }
 
-// mcpTicketCharge はチケットにぶら下がる追加精算（打ち上げ飲み会など）1 件分の情報。
-type mcpTicketCharge struct {
-	ChargeID     string                       `json:"charge_id" jsonschema:"追加精算の ID"`
+// mcpTicketExpense はチケットにぶら下がる追加精算（打ち上げ飲み会など）1 件分の情報。
+type mcpTicketExpense struct {
+	ExpenseID     string                       `json:"expense_id" jsonschema:"追加精算の ID"`
 	Title        string                       `json:"title" jsonschema:"費目名（例: 打ち上げ飲み会）"`
 	PayerName    string                       `json:"payer_name" jsonschema:"立て替えたメンバーの表示名。チケットの立替者と別人のこともある"`
-	Participants []mcpTicketChargeParticipant `json:"participants" jsonschema:"対象者一覧（負担額・精算状況つき）。負担額は人によって異なることがある"`
+	Participants []mcpTicketExpenseParticipant `json:"participants" jsonschema:"対象者一覧（負担額・精算状況つき）。負担額は人によって異なることがある"`
 }
 
 type getTicketOutput struct {
@@ -180,7 +180,7 @@ type getTicketOutput struct {
 	MaxParticipants               int32                  `json:"max_participants" jsonschema:"このチケット 1 枚で参加できる最大人数"`
 	UnregisteredParticipantsCount int32                  `json:"unregistered_participants_count" jsonschema:"謎部に未登録の同行者の人数"`
 	Participants                  []mcpTicketParticipant `json:"participants" jsonschema:"参加者一覧（精算状況つき）"`
-	Charges                       []mcpTicketCharge      `json:"charges" jsonschema:"チケットに紐づく追加精算（打ち上げ飲み会など）の一覧"`
+	Expenses                       []mcpTicketExpense      `json:"expenses" jsonschema:"チケットに紐づく追加精算（打ち上げ飲み会など）の一覧"`
 }
 
 func getTicketTool(tickets nazobuv1connect.TicketServiceHandler) mcp.ToolHandlerFor[getTicketInput, getTicketOutput] {
@@ -205,16 +205,16 @@ func getTicketTool(tickets nazobuv1connect.TicketServiceHandler) mcp.ToolHandler
 				IsPurchaser: p.GetIsPurchaser(),
 			})
 		}
-		out.Charges = make([]mcpTicketCharge, 0, len(res.Msg.GetCharges()))
-		for _, c := range res.Msg.GetCharges() {
-			charge := mcpTicketCharge{
-				ChargeID:     c.GetId(),
+		out.Expenses = make([]mcpTicketExpense, 0, len(res.Msg.GetExpenses()))
+		for _, c := range res.Msg.GetExpenses() {
+			expense := mcpTicketExpense{
+				ExpenseID:     c.GetId(),
 				Title:        c.GetTitle(),
 				PayerName:    c.GetPayerName(),
-				Participants: make([]mcpTicketChargeParticipant, 0, len(c.GetParticipants())),
+				Participants: make([]mcpTicketExpenseParticipant, 0, len(c.GetParticipants())),
 			}
 			for _, p := range c.GetParticipants() {
-				charge.Participants = append(charge.Participants, mcpTicketChargeParticipant{
+				expense.Participants = append(expense.Participants, mcpTicketExpenseParticipant{
 					UserID:  p.GetUserId(),
 					Name:    p.GetName(),
 					Amount:  p.GetAmount(),
@@ -222,7 +222,7 @@ func getTicketTool(tickets nazobuv1connect.TicketServiceHandler) mcp.ToolHandler
 					IsPayer: p.GetIsPayer(),
 				})
 			}
-			out.Charges = append(out.Charges, charge)
+			out.Expenses = append(out.Expenses, expense)
 		}
 		return nil, out, nil
 	}

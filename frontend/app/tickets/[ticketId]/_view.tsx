@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   GetTicketResponse,
   Ticket,
-  TicketCharge,
+  TicketExpense,
   TicketParticipant,
 } from "@/app/gen/nazobu/v1/ticket_pb";
 import type { GetMeResponse, User } from "@/app/gen/nazobu/v1/user_pb";
@@ -319,37 +319,37 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
           }
         />
 
-        <ChargesSection
-          charges={detail.charges}
+        <ExpensesSection
+          expenses={detail.expenses}
           ticketParticipants={detail.participants}
           myUserId={me.id}
-          canAddCharge={detail.canAddCharge}
+          canAddExpense={detail.canAddExpense}
           mutating={mutating}
           onCreate={(title, participants) =>
             handleMutation(() =>
-              ticketClient.createTicketCharge({
+              ticketClient.createTicketExpense({
                 ticketId: ticket.id,
                 title,
                 participants,
               }),
             )
           }
-          onUpdate={(chargeId, title, participants) =>
+          onUpdate={(expenseId, title, participants) =>
             handleMutation(() =>
-              ticketClient.updateTicketCharge({
-                chargeId,
+              ticketClient.updateTicketExpense({
+                expenseId,
                 title,
                 participants,
               }),
             )
           }
-          onDelete={(chargeId) =>
-            handleMutation(() => ticketClient.deleteTicketCharge({ chargeId }))
+          onDelete={(expenseId) =>
+            handleMutation(() => ticketClient.deleteTicketExpense({ expenseId }))
           }
-          onToggleSettlement={(chargeId, userId, settled) =>
+          onToggleSettlement={(expenseId, userId, settled) =>
             handleMutation(() =>
-              ticketClient.updateTicketChargeSettlement({
-                chargeId,
+              ticketClient.updateTicketExpenseSettlement({
+                expenseId,
                 userId,
                 settled,
               }),
@@ -723,95 +723,95 @@ function ParticipantsSection({
 }
 
 // 追加精算（打ち上げ飲み会など）の登録・更新で使う対象者 1 人分の入力。
-type ChargeParticipantDraft = { userId: string; amount: number };
+type ExpenseParticipantDraft = { userId: string; amount: number };
 
 // チケットにぶら下がる追加精算のセクション。
 // 費目ごとに対象者と負担額（人によって変えられる）・精算状況を表示し、
 // 立替者（と admin）は編集・削除・精算トグルができる。
-function ChargesSection({
-  charges,
+function ExpensesSection({
+  expenses,
   ticketParticipants,
   myUserId,
-  canAddCharge,
+  canAddExpense,
   mutating,
   onCreate,
   onUpdate,
   onDelete,
   onToggleSettlement,
 }: {
-  charges: TicketCharge[];
+  expenses: TicketExpense[];
   ticketParticipants: TicketParticipant[];
   myUserId: string;
-  canAddCharge: boolean;
+  canAddExpense: boolean;
   mutating: boolean;
-  onCreate: (title: string, participants: ChargeParticipantDraft[]) => Promise<void>;
+  onCreate: (title: string, participants: ExpenseParticipantDraft[]) => Promise<void>;
   onUpdate: (
-    chargeId: string,
+    expenseId: string,
     title: string,
-    participants: ChargeParticipantDraft[],
+    participants: ExpenseParticipantDraft[],
   ) => Promise<void>;
-  onDelete: (chargeId: string) => Promise<void>;
+  onDelete: (expenseId: string) => Promise<void>;
   onToggleSettlement: (
-    chargeId: string,
+    expenseId: string,
     userId: string,
     settled: boolean,
   ) => Promise<void>;
 }) {
   const [adding, setAdding] = useState(false);
-  const [editingChargeId, setEditingChargeId] = useState<string | null>(null);
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
 
-  if (charges.length === 0 && !canAddCharge) return null;
+  if (expenses.length === 0 && !canAddExpense) return null;
 
   return (
     <Section>
-      <SectionTitle count={charges.length > 0 ? charges.length : undefined}>
+      <SectionTitle count={expenses.length > 0 ? expenses.length : undefined}>
         追加精算
       </SectionTitle>
       <p className="mt-1 text-xs text-zinc-500">
         打ち上げ飲み会など、公演のあとに発生した費用の精算。負担額は人ごとに変えられます。
       </p>
 
-      {charges.map((charge) =>
-        editingChargeId === charge.id ? (
+      {expenses.map((expense) =>
+        editingExpenseId === expense.id ? (
           <div
-            key={charge.id}
+            key={expense.id}
             className="mt-3 overflow-hidden rounded-2xl border border-zinc-200 bg-white"
           >
-            <ChargeForm
-              heading={`「${charge.title}」を編集`}
+            <ExpenseForm
+              heading={`「${expense.title}」を編集`}
               ticketParticipants={ticketParticipants}
-              initial={charge}
+              initial={expense}
               mutating={mutating}
               submitLabel="保存"
               onSubmit={async (title, participants) => {
-                await onUpdate(charge.id, title, participants);
-                setEditingChargeId(null);
+                await onUpdate(expense.id, title, participants);
+                setEditingExpenseId(null);
               }}
-              onCancel={() => setEditingChargeId(null)}
+              onCancel={() => setEditingExpenseId(null)}
             />
           </div>
         ) : (
-          <ChargeCard
-            key={charge.id}
-            charge={charge}
+          <ExpenseCard
+            key={expense.id}
+            expense={expense}
             myUserId={myUserId}
             mutating={mutating}
             onEdit={() => {
               setAdding(false);
-              setEditingChargeId(charge.id);
+              setEditingExpenseId(expense.id);
             }}
-            onDelete={() => onDelete(charge.id)}
+            onDelete={() => onDelete(expense.id)}
             onToggleSettlement={(userId, settled) =>
-              onToggleSettlement(charge.id, userId, settled)
+              onToggleSettlement(expense.id, userId, settled)
             }
           />
         ),
       )}
 
-      {canAddCharge &&
+      {canAddExpense &&
         (adding ? (
           <div className="mt-4 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-            <ChargeForm
+            <ExpenseForm
               heading="追加精算を登録"
               ticketParticipants={ticketParticipants}
               mutating={mutating}
@@ -827,7 +827,7 @@ function ChargesSection({
           <button
             type="button"
             onClick={() => {
-              setEditingChargeId(null);
+              setEditingExpenseId(null);
               setAdding(true);
             }}
             disabled={mutating}
@@ -841,35 +841,35 @@ function ChargesSection({
 }
 
 // 追加精算 1 件分の表示カード。
-function ChargeCard({
-  charge,
+function ExpenseCard({
+  expense,
   myUserId,
   mutating,
   onEdit,
   onDelete,
   onToggleSettlement,
 }: {
-  charge: TicketCharge;
+  expense: TicketExpense;
   myUserId: string;
   mutating: boolean;
   onEdit: () => void;
   onDelete: () => Promise<void>;
   onToggleSettlement: (userId: string, settled: boolean) => Promise<void>;
 }) {
-  const total = charge.participants.reduce((sum, p) => sum + p.amount, 0);
+  const total = expense.participants.reduce((sum, p) => sum + p.amount, 0);
   return (
     <div className="mt-3 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
       <div className="flex items-baseline gap-3 px-4 pt-4">
-        <h3 className="text-sm leading-snug font-semibold">{charge.title}</h3>
+        <h3 className="text-sm leading-snug font-semibold">{expense.title}</h3>
         <Mono className="ml-auto text-sm font-semibold tracking-tight">
           {formatYen(total)}
         </Mono>
       </div>
       <p className="px-4 pt-0.5 pb-3 text-xs text-zinc-500">
-        立替 {charge.payerName}
+        立替 {expense.payerName}
       </p>
       <ul className="divide-y divide-zinc-100 border-t border-zinc-200">
-        {charge.participants.map((p) => (
+        {expense.participants.map((p) => (
           <li key={p.userId} className="flex items-center gap-3 px-4 py-3">
             <span
               className={
@@ -888,7 +888,7 @@ function ChargeCard({
             ) : (
               <Badge tone="unsettled">未精算</Badge>
             )}
-            {charge.canEdit && !p.isPayer && (
+            {expense.canEdit && !p.isPayer && (
               <button
                 type="button"
                 onClick={() => onToggleSettlement(p.userId, !p.settled)}
@@ -901,7 +901,7 @@ function ChargeCard({
           </li>
         ))}
       </ul>
-      {charge.canEdit && (
+      {expense.canEdit && (
         <div className="flex flex-wrap gap-2 border-t border-zinc-200 px-4 py-3">
           <button
             type="button"
@@ -927,7 +927,7 @@ function ChargeCard({
 
 // 追加精算の登録・編集フォーム。対象者はチケット参加者から選び、
 // 「一人あたり」で均等額を一括入力したうえで、人ごとに金額を調整できる。
-function ChargeForm({
+function ExpenseForm({
   heading,
   ticketParticipants,
   initial,
@@ -938,10 +938,10 @@ function ChargeForm({
 }: {
   heading: string;
   ticketParticipants: TicketParticipant[];
-  initial?: TicketCharge;
+  initial?: TicketExpense;
   mutating: boolean;
   submitLabel: string;
-  onSubmit: (title: string, participants: ChargeParticipantDraft[]) => Promise<void>;
+  onSubmit: (title: string, participants: ExpenseParticipantDraft[]) => Promise<void>;
   onCancel: () => void;
 }) {
   const [title, setTitle] = useState(initial?.title ?? "");
@@ -998,7 +998,7 @@ function ChargeForm({
     });
   };
 
-  const drafts: ChargeParticipantDraft[] = [];
+  const drafts: ExpenseParticipantDraft[] = [];
   let amountInvalid = false;
   for (const userId of checked) {
     const amount = Number.parseInt(amounts[userId] ?? "", 10);

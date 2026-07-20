@@ -71,7 +71,7 @@ type Ticket struct {
 	UpdatedAt                     time.Time
 }
 
-type TicketCharge struct {
+type TicketExpense struct {
 	ID        string
 	TicketID  string
 	Title     string
@@ -80,8 +80,8 @@ type TicketCharge struct {
 	UpdatedAt time.Time
 }
 
-type TicketChargeParticipant struct {
-	ChargeID  string
+type TicketExpenseParticipant struct {
+	ExpenseID string
 	UserID    string
 	Amount    int32
 	SettledAt sql.NullTime

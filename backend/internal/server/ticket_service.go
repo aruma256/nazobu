@@ -109,7 +109,7 @@ func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazo
 		}
 	}
 
-	charges, err := loadTicketCharges(ctx, s.q, user, ticketID)
+	expenses, err := loadTicketExpenses(ctx, s.q, user, ticketID)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("追加精算の取得に失敗: %w", err))
 	}
@@ -139,8 +139,8 @@ func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazo
 		Ticket:       ticket,
 		Participants: participants,
 		CanEdit:      canEdit,
-		Charges:      charges,
-		CanAddCharge: user.Role == auth.RoleAdmin || isTicketParticipant,
+		Expenses:      expenses,
+		CanAddExpense: user.Role == auth.RoleAdmin || isTicketParticipant,
 	}), nil
 }
 

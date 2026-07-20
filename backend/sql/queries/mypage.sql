@@ -1,7 +1,7 @@
 -- name: ListUnsettledTicketsByUserID :many
 -- 自分に未払いが残っており「開演が現在以前」のチケットを取る。未払いは
 --   1. チケット代: 立替者が自分以外、かつ自分の participants 行が未精算
---   2. 追加精算: 立替者が自分以外の charge に自分の未精算行がある
+--   2. 追加精算: 立替者が自分以外の expense に自分の未精算行がある
 -- のいずれか。立替者本人の自己持ち分は精算対象ではないので除外する。
 -- 未来分は精算対象として扱わない（公演前に表示しない）。
 -- 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
@@ -26,12 +26,12 @@ WHERE t.start_at <= sqlc.arg('now')
     )
     OR EXISTS (
       SELECT 1
-      FROM ticket_charges tc
-      JOIN ticket_charge_participants tcp ON tcp.charge_id = tc.id
-      WHERE tc.ticket_id = t.id
-        AND tcp.user_id = sqlc.arg('user_id')
-        AND tcp.settled_at IS NULL
-        AND tc.paid_by <> tcp.user_id
+      FROM ticket_expenses te
+      JOIN ticket_expense_participants tep ON tep.expense_id = te.id
+      WHERE te.ticket_id = t.id
+        AND tep.user_id = sqlc.arg('user_id')
+        AND tep.settled_at IS NULL
+        AND te.paid_by <> tep.user_id
     )
   )
 ORDER BY t.start_at ASC, t.id ASC;
@@ -39,7 +39,7 @@ ORDER BY t.start_at ASC, t.id ASC;
 -- name: ListUnsettledReceivablesByUserID :many
 -- 自分に未回収が残っており「開演が現在以前」のチケットを取る。未回収は
 --   1. チケット代: 自分が立て替えており、自分以外の参加者に未精算が 1 人以上残っている
---   2. 追加精算: 自分が立て替えた charge に、自分以外の未精算対象者が 1 人以上残っている
+--   2. 追加精算: 自分が立て替えた expense に、自分以外の未精算対象者が 1 人以上残っている
 -- のいずれか。受け取り側の貰い忘れ防止用。自分自身の参加分（自己持ち）は精算対象でないため除外する。
 -- 未来分は精算対象として扱わない（公演前に表示しない）。
 -- 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
@@ -66,12 +66,12 @@ WHERE t.start_at <= sqlc.arg('now')
     )
     OR EXISTS (
       SELECT 1
-      FROM ticket_charges tc
-      JOIN ticket_charge_participants tcp ON tcp.charge_id = tc.id
-      WHERE tc.ticket_id = t.id
-        AND tc.paid_by = sqlc.arg('user_id')
-        AND tcp.user_id <> tc.paid_by
-        AND tcp.settled_at IS NULL
+      FROM ticket_expenses te
+      JOIN ticket_expense_participants tep ON tep.expense_id = te.id
+      WHERE te.ticket_id = t.id
+        AND te.paid_by = sqlc.arg('user_id')
+        AND tep.user_id <> te.paid_by
+        AND tep.settled_at IS NULL
     )
   )
 ORDER BY t.start_at ASC, t.id ASC;
@@ -108,12 +108,12 @@ SELECT t.id, e.title AS event_title, t.start_at,
          (tp.settled_at IS NOT NULL OR t.purchased_by = tp.user_id)
          AND NOT EXISTS (
            SELECT 1
-           FROM ticket_charges tc
-           JOIN ticket_charge_participants tcp ON tcp.charge_id = tc.id
-           WHERE tc.ticket_id = t.id
-             AND tcp.user_id = tp.user_id
-             AND tcp.settled_at IS NULL
-             AND tc.paid_by <> tcp.user_id
+           FROM ticket_expenses te
+           JOIN ticket_expense_participants tep ON tep.expense_id = te.id
+           WHERE te.ticket_id = t.id
+             AND tep.user_id = tp.user_id
+             AND tep.settled_at IS NULL
+             AND te.paid_by <> tep.user_id
          )
        ) AS UNSIGNED) AS settled
 FROM ticket_participants tp

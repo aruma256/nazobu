@@ -13,7 +13,7 @@ type Querier interface {
 	// 参照整合性のフレンドリーなプリチェック用。FK でも担保されるが UX のために事前に存在確認する。
 	CountEventByID(ctx context.Context, id string) (int64, error)
 	// 対象者の存在確認。精算トグルのプリチェックで使う。
-	CountTicketChargeParticipant(ctx context.Context, arg CountTicketChargeParticipantParams) (int64, error)
+	CountTicketExpenseParticipant(ctx context.Context, arg CountTicketExpenseParticipantParams) (int64, error)
 	// 参加者の存在確認。重複登録を避けるためのプリチェック。
 	CountTicketParticipant(ctx context.Context, arg CountTicketParticipantParams) (int64, error)
 	// ticket の参加者数。max_participants 超過チェックで使う。
@@ -25,8 +25,8 @@ type Querier interface {
 	CreateOAuthToken(ctx context.Context, arg CreateOAuthTokenParams) error
 	CreateSession(ctx context.Context, arg CreateSessionParams) error
 	CreateTicket(ctx context.Context, arg CreateTicketParams) error
-	CreateTicketCharge(ctx context.Context, arg CreateTicketChargeParams) error
-	CreateTicketChargeParticipant(ctx context.Context, arg CreateTicketChargeParticipantParams) error
+	CreateTicketExpense(ctx context.Context, arg CreateTicketExpenseParams) error
+	CreateTicketExpenseParticipant(ctx context.Context, arg CreateTicketExpenseParticipantParams) error
 	CreateTicketParticipant(ctx context.Context, arg CreateTicketParticipantParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	CreateUserIdentity(ctx context.Context, arg CreateUserIdentityParams) error
@@ -40,8 +40,8 @@ type Querier interface {
 	DeleteOAuthTokenByID(ctx context.Context, id string) error
 	DeleteSessionByTokenHash(ctx context.Context, tokenHash string) error
 	// 対象者は FK の ON DELETE CASCADE で一緒に消える。
-	DeleteTicketCharge(ctx context.Context, id string) error
-	DeleteTicketChargeParticipant(ctx context.Context, arg DeleteTicketChargeParticipantParams) error
+	DeleteTicketExpense(ctx context.Context, id string) error
+	DeleteTicketExpenseParticipant(ctx context.Context, arg DeleteTicketExpenseParticipantParams) error
 	DeleteTicketParticipant(ctx context.Context, arg DeleteTicketParticipantParams) error
 	// 1 件の event を取得する。詳細・編集画面用。
 	GetEventByID(ctx context.Context, id string) (GetEventByIDRow, error)
@@ -55,7 +55,7 @@ type Querier interface {
 	// ticket 詳細表示用。立替者の id と表示名も返す（権限判定 / UI 表示で使う）。
 	GetTicketByID(ctx context.Context, id string) (GetTicketByIDRow, error)
 	// 権限判定（立替者かどうか）と ticket との紐付き確認に使う。
-	GetTicketChargeByID(ctx context.Context, id string) (GetTicketChargeByIDRow, error)
+	GetTicketExpenseByID(ctx context.Context, id string) (GetTicketExpenseByIDRow, error)
 	GetUserIDByIdentity(ctx context.Context, arg GetUserIDByIdentityParams) (string, error)
 	// 公演一覧画面で各 event に紐づく ticket をまとめて引く。
 	// 呼び出し側で event_id ごとに in-memory で振り分ける（N+1 回避）。
@@ -71,13 +71,13 @@ type Querier interface {
 	// Discord 連携済みのユーザーの subject（Discord user id）を返す。メンション用。
 	// 呼び出し側で ticket_id ごとに振り分ける。
 	ListNotifiableDiscordSubjectsByTicketIDs(ctx context.Context, ticketIds []string) ([]ListNotifiableDiscordSubjectsByTicketIDsRow, error)
-	// charge 更新時の差分計算用。既存対象者の user_id と精算状態を返す。
-	ListTicketChargeParticipantsByChargeID(ctx context.Context, chargeID string) ([]ListTicketChargeParticipantsByChargeIDRow, error)
-	// ticket 詳細用。複数 charge の対象者をまとめて引く（N+1 回避）。
-	// 呼び出し側で charge_id ごとに in-memory で振り分ける。
-	ListTicketChargeParticipantsByChargeIDs(ctx context.Context, chargeIds []string) ([]ListTicketChargeParticipantsByChargeIDsRow, error)
+	// expense 更新時の差分計算用。既存対象者の user_id と精算状態を返す。
+	ListTicketExpenseParticipantsByExpenseID(ctx context.Context, expenseID string) ([]ListTicketExpenseParticipantsByExpenseIDRow, error)
+	// ticket 詳細用。複数 expense の対象者をまとめて引く（N+1 回避）。
+	// 呼び出し側で expense_id ごとに in-memory で振り分ける。
+	ListTicketExpenseParticipantsByExpenseIDs(ctx context.Context, expenseIds []string) ([]ListTicketExpenseParticipantsByExpenseIDsRow, error)
 	// ticket 詳細用。追加精算の一覧を立替者名つきで created_at 昇順で返す。
-	ListTicketChargesByTicketID(ctx context.Context, ticketID string) ([]ListTicketChargesByTicketIDRow, error)
+	ListTicketExpensesByTicketID(ctx context.Context, ticketID string) ([]ListTicketExpensesByTicketIDRow, error)
 	// ticket 一覧 / 公演一覧で、各 ticket の参加者名をまとめて引く（N+1 回避）。
 	// 呼び出し側で ticket_id ごとに in-memory で振り分ける。
 	ListTicketParticipantNamesByTicketIDs(ctx context.Context, ticketIds []string) ([]ListTicketParticipantNamesByTicketIDsRow, error)
@@ -102,14 +102,14 @@ type Querier interface {
 	ListTicketsForMeetingNotification(ctx context.Context, startAt time.Time) ([]ListTicketsForMeetingNotificationRow, error)
 	// 自分に未回収が残っており「開演が現在以前」のチケットを取る。未回収は
 	//   1. チケット代: 自分が立て替えており、自分以外の参加者に未精算が 1 人以上残っている
-	//   2. 追加精算: 自分が立て替えた charge に、自分以外の未精算対象者が 1 人以上残っている
+	//   2. 追加精算: 自分が立て替えた expense に、自分以外の未精算対象者が 1 人以上残っている
 	// のいずれか。受け取り側の貰い忘れ防止用。自分自身の参加分（自己持ち）は精算対象でないため除外する。
 	// 未来分は精算対象として扱わない（公演前に表示しない）。
 	// 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
 	ListUnsettledReceivablesByUserID(ctx context.Context, arg ListUnsettledReceivablesByUserIDParams) ([]ListUnsettledReceivablesByUserIDRow, error)
 	// 自分に未払いが残っており「開演が現在以前」のチケットを取る。未払いは
 	//   1. チケット代: 立替者が自分以外、かつ自分の participants 行が未精算
-	//   2. 追加精算: 立替者が自分以外の charge に自分の未精算行がある
+	//   2. 追加精算: 立替者が自分以外の expense に自分の未精算行がある
 	// のいずれか。立替者本人の自己持ち分は精算対象ではないので除外する。
 	// 未来分は精算対象として扱わない（公演前に表示しない）。
 	// 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
@@ -123,9 +123,9 @@ type Querier interface {
 	// 表示用の最低限フィールドだけ返す。avatar_url 等は GetMe 経路（session join）で取る。
 	ListUsers(ctx context.Context) ([]ListUsersRow, error)
 	// 未精算 → 精算済み。settled_at に現在時刻を入れる。
-	MarkTicketChargeParticipantSettled(ctx context.Context, arg MarkTicketChargeParticipantSettledParams) error
+	MarkTicketExpenseParticipantSettled(ctx context.Context, arg MarkTicketExpenseParticipantSettledParams) error
 	// 精算済み → 未精算。settled_at を NULL に戻す。
-	MarkTicketChargeParticipantUnsettled(ctx context.Context, arg MarkTicketChargeParticipantUnsettledParams) error
+	MarkTicketExpenseParticipantUnsettled(ctx context.Context, arg MarkTicketExpenseParticipantUnsettledParams) error
 	// 集合 2 時間前リマインド送信済みマーク。未送信のものだけを対象にする。
 	MarkTicketMeetingNotified(ctx context.Context, arg MarkTicketMeetingNotifiedParams) error
 	// 未精算 → 精算済み。settled_at に現在時刻を入れる。
@@ -142,10 +142,10 @@ type Querier interface {
 	// 新しい立替者が ticket_participants に含まれることを保証する。max_participants は
 	// 呼び出し側で参加者数を下回らないことを保証する。
 	UpdateTicket(ctx context.Context, arg UpdateTicketParams) error
-	// charge 本体の更新。ticket_id / paid_by は変更しない。
-	UpdateTicketCharge(ctx context.Context, arg UpdateTicketChargeParams) error
+	// expense 本体の更新。ticket_id / paid_by は変更しない。
+	UpdateTicketExpense(ctx context.Context, arg UpdateTicketExpenseParams) error
 	// 金額のみ変更する。精算状態（settled_at）は維持する。
-	UpdateTicketChargeParticipantAmount(ctx context.Context, arg UpdateTicketChargeParticipantAmountParams) error
+	UpdateTicketExpenseParticipantAmount(ctx context.Context, arg UpdateTicketExpenseParticipantAmountParams) error
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) error
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error
 }
