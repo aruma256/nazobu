@@ -22,6 +22,24 @@ type Event struct {
 	UpdatedAt                  time.Time
 }
 
+type Expense struct {
+	ID         string
+	TicketID   sql.NullString
+	Title      string
+	PaidBy     string
+	OccurredOn time.Time
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
+type ExpenseParticipant struct {
+	ExpenseID string
+	UserID    string
+	Amount    int32
+	SettledAt sql.NullTime
+	CreatedAt time.Time
+}
+
 type OauthAuthorizationCode struct {
 	ID            string
 	CodeHash      string

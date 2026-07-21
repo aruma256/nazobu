@@ -54,6 +54,12 @@ export function formatDateJa(date: Date): string {
   return `${p.month}/${p.day} (${WEEKDAYS_JA[p.weekday]})`;
 }
 
+// "YYYY-MM-DD"（JST の日付だけ）を Date に変換する。
+// JST の 0 時基準で解釈し、実行環境のローカル TZ による日付ズレを避ける。
+export function parseDateOnly(dateStr: string): Date {
+  return new Date(`${dateStr}T00:00:00+09:00`);
+}
+
 export function formatMonoDate(date: Date): string {
   const p = jstParts(date);
   return `${String(p.month).padStart(2, "0")}/${String(p.day).padStart(2, "0")}`;

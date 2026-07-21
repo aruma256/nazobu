@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package nazobu.v1;
+
+option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1";
+
+// ExpenseService はチケット代以外の追加精算（公演後の飲み会、打ち上げ等）の
+// 参照・登録 RPC を提供する。ticket への紐付けは任意で、紐付けない単独の精算も扱える。
+// 立替者（paid_by）自身は参加者に含めない（自分の分は精算不要のため）。
+service ExpenseService {
+  // ListExpenses は expense 一覧を occurred_on 降順で返す。
+  // ticket_id を指定するとその ticket に紐づく expense のみ返す（ticket 詳細画面用）。
+  rpc ListExpenses(ListExpensesRequest) returns (ListExpensesResponse);
+  // GetExpense は 1 件の expense を詳細表示用の形（参加者の負担額・精算状況を含む）で返す。
+  rpc GetExpense(GetExpenseRequest) returns (GetExpenseResponse);
+  // CreateExpense は新規 expense を 1 件登録する。立替者はログイン中の user で固定。
+  // member でも実行可能（飲み会の立て替えは admin に限らないため）。
+  rpc CreateExpense(CreateExpenseRequest) returns (CreateExpenseResponse);
+  // UpdateExpense は expense 本体と参加者リストをまとめて更新する。
+  // participants は全量置換（残った参加者の settled_at は保持し、amount のみ更新する）。
+  // admin もしくは立替者のみ実行可能。
+  rpc UpdateExpense(UpdateExpenseRequest) returns (UpdateExpenseResponse);
+  // DeleteExpense は expense を削除する（参加者行も同時に消える）。
+  // admin もしくは立替者のみ実行可能。
+  rpc DeleteExpense(DeleteExpenseRequest) returns (DeleteExpenseResponse);
+  // UpdateExpenseParticipantSettlement は参加者の精算状態を切り替える。
+  // admin もしくは立替者のみ実行可能。
+  rpc UpdateExpenseParticipantSettlement(UpdateExpenseParticipantSettlementRequest) returns (UpdateExpenseParticipantSettlementResponse);
+}
+
+message ListExpensesRequest {
+  // 空文字なら全件、指定するとその ticket に紐づく expense のみ。
+  string ticket_id = 1;
+}
+
+message ListExpensesResponse {
+  // expenses は occurred_on 降順 / id 昇順。
+  repeated Expense expenses = 1;
+}
+
+message Expense {
+  string id = 1;
+  // 紐づく ticket の id。空文字なら紐付きなし。
+  string ticket_id = 2;
+  // 紐づく ticket の公演名（表示用）。紐付きなしなら空文字。
+  string event_title = 3;
+  // 「打ち上げ @ 〇〇」等の表示名。
+  string title = 4;
+  // 立て替えた人の user id。
+  string paid_by_user_id = 5;
+  // 立て替えた人の表示名。
+  string payer_name = 6;
+  // 発生日（YYYY-MM-DD, JST）。
+  string occurred_on = 7;
+  // 参加者の負担額合計（円）。立替者自身の分は含まない。
+  int32 total_amount = 8;
+  // 参加者数（立替者自身は含まない）。
+  int32 participant_count = 9;
+  // 精算済みの参加者数。
+  int32 settled_count = 10;
+  // 参加者の表示名（created_at 昇順）。
+  repeated string participant_names = 11;
+}
+
+message GetExpenseRequest {
+  string expense_id = 1;
+}
+
+message GetExpenseResponse {
+  Expense expense = 1;
+  // expense の参加者一覧。created_at 昇順。
+  repeated ExpenseParticipant participants = 2;
+  // 現在ログイン中の user が編集権限を持つか（admin もしくは立替者）。
+  bool can_edit = 3;
+}
+
+message ExpenseParticipant {
+  string user_id = 1;
+  // 表示名。
+  string name = 2;
+  // 負担額（円）。
+  int32 amount = 3;
+  // 精算が完了しているか。
+  bool settled = 4;
+}
+
+// 参加者の入力（登録・更新共通）。
+message ExpenseParticipantInput {
+  string user_id = 1;
+  // 負担額（円、0 以上）。
+  int32 amount = 2;
+}
+
+message CreateExpenseRequest {
+  // 紐づける ticket の id。空文字なら紐付きなし。
+  string ticket_id = 1;
+  // 表示名。必須。
+  string title = 2;
+  // 発生日（YYYY-MM-DD, JST）。必須。
+  string occurred_on = 3;
+  // 参加者と負担額。1 件以上。立替者（= ログイン中の user）を含めてはいけない。
+  repeated ExpenseParticipantInput participants = 4;
+}
+
+message CreateExpenseResponse {
+  Expense expense = 1;
+}
+
+message UpdateExpenseRequest {
+  string expense_id = 1;
+  // 紐づける ticket の id。空文字なら紐付き解除。
+  string ticket_id = 2;
+  // 表示名。必須。
+  string title = 3;
+  // 発生日（YYYY-MM-DD, JST）。必須。
+  string occurred_on = 4;
+  // 立替者の user id。必須。participants に含まれる user は指定できない。
+  string paid_by_user_id = 5;
+  // 参加者と負担額の全量。1 件以上。ここに無い既存参加者は削除し、
+  // 既存参加者は amount のみ更新（settled_at 保持）、新規参加者は追加する。
+  repeated ExpenseParticipantInput participants = 6;
+}
+
+message UpdateExpenseResponse {
+  Expense expense = 1;
+}
+
+message DeleteExpenseRequest {
+  string expense_id = 1;
+}
+
+message DeleteExpenseResponse {}
+
+message UpdateExpenseParticipantSettlementRequest {
+  string expense_id = 1;
+  string user_id = 2;
+  // true = 精算済みにする、false = 未精算に戻す。
+  bool settled = 3;
+}
+
+message UpdateExpenseParticipantSettlementResponse {}

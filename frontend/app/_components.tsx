@@ -8,11 +8,13 @@ import { usePathname } from "next/navigation";
 import { Fragment, useState } from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
+import type { Expense } from "@/app/gen/nazobu/v1/expense_pb";
 import type { Ticket } from "@/app/gen/nazobu/v1/ticket_pb";
 import {
   formatDateJa,
   formatTimeHM,
   formatYen,
+  parseDateOnly,
   parseDateTime,
 } from "@/app/_format";
 
@@ -28,6 +30,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/", label: "マイページ" },
   { href: "/events", label: "公演", adminOnly: true },
   { href: "/tickets", label: "全てのチケット" },
+  { href: "/expenses", label: "精算" },
 ] as const;
 
 function isNavActive(pathname: string, href: string): boolean {
@@ -387,6 +390,107 @@ export function TicketCard({
           </dl>
         </div>
       </Link>
+    </li>
+  );
+}
+
+// ExpenseCard は /expenses 一覧とチケット詳細の「追加の精算」で使う共通カード。
+// カード本体は精算の詳細（/expenses/[id]）へのリンク。紐付き公演がある場合は
+// 下部に公演（/tickets/[ticketId]）へのリンク行を出す。
+// チケット詳細から使うときは hideTicketLink で公演リンク行を隠す（自分自身への導線になるため）。
+export function ExpenseCard({
+  expense,
+  myName,
+  hideTicketLink = false,
+}: {
+  expense: Expense;
+  myName: string;
+  hideTicketLink?: boolean;
+}) {
+  const occurredOn = parseDateOnly(expense.occurredOn);
+  const allSettled =
+    expense.participantCount > 0 &&
+    expense.settledCount >= expense.participantCount;
+  const showTicketLink =
+    !hideTicketLink && expense.ticketId !== "" && expense.eventTitle !== "";
+  return (
+    <li className="overflow-hidden rounded-2xl border border-zinc-200 bg-white transition-colors hover:bg-zinc-50">
+      <Link href={`/expenses/${expense.id}`} className="block p-3">
+        <div className="flex items-baseline gap-3">
+          <Mono className="text-sm font-semibold text-emerald-700">
+            {formatDateJa(occurredOn)}
+          </Mono>
+          <Mono className="ml-auto text-sm font-semibold tracking-tight">
+            {formatYen(expense.totalAmount)}
+          </Mono>
+        </div>
+        <h3 className="pt-1 text-base leading-snug font-semibold">
+          {expense.title}
+        </h3>
+        {expense.eventTitle !== "" && (
+          <p className="pt-0.5 text-xs text-zinc-500">{expense.eventTitle}</p>
+        )}
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 pt-3 text-xs text-zinc-900">
+          <dt>立替</dt>
+          <dd>{expense.payerName}</dd>
+          <dt>精算</dt>
+          <dd>
+            <Mono>
+              {expense.settledCount}
+              <span className="text-zinc-500"> / </span>
+              {expense.participantCount}
+            </Mono>
+            <span className="text-zinc-500"> 人</span>
+            {allSettled ? (
+              <span className="ml-2 text-zinc-500">（完了）</span>
+            ) : (
+              <span className="ml-2 text-amber-800">
+                （未精算{" "}
+                <Mono className="font-semibold">
+                  {expense.participantCount - expense.settledCount}
+                </Mono>{" "}
+                人）
+              </span>
+            )}
+          </dd>
+          {expense.participantNames.length > 0 && (
+            <>
+              <dt>参加</dt>
+              <dd>
+                {[...expense.participantNames]
+                  .sort((a, b) => {
+                    if (a === myName) return -1;
+                    if (b === myName) return 1;
+                    return a.localeCompare(b, "ja");
+                  })
+                  .map((name, i) => (
+                    <Fragment key={i}>
+                      {i > 0 && "・"}
+                      {name === myName ? (
+                        <span className="font-semibold text-emerald-700">
+                          {name}
+                        </span>
+                      ) : (
+                        name
+                      )}
+                    </Fragment>
+                  ))}
+              </dd>
+            </>
+          )}
+        </dl>
+      </Link>
+      {showTicketLink && (
+        <Link
+          href={`/tickets/${expense.ticketId}`}
+          className="flex items-center gap-2 border-t border-zinc-200 px-3 py-2 text-xs text-emerald-700 hover:bg-zinc-50"
+        >
+          <span className="flex-1 truncate">公演: {expense.eventTitle}</span>
+          <span aria-hidden className="text-emerald-600">
+            ›
+          </span>
+        </Link>
+      )}
     </li>
   );
 }

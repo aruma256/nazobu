@@ -6,12 +6,17 @@ package queries
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
 type Querier interface {
 	// 参照整合性のフレンドリーなプリチェック用。FK でも担保されるが UX のために事前に存在確認する。
 	CountEventByID(ctx context.Context, id string) (int64, error)
+	// 参加者の存在確認。精算操作の対象チェックで使う。
+	CountExpenseParticipant(ctx context.Context, arg CountExpenseParticipantParams) (int64, error)
+	// expense 登録時の ticket_id 存在確認。
+	CountTicketByID(ctx context.Context, id string) (int64, error)
 	// 参加者の存在確認。重複登録を避けるためのプリチェック。
 	CountTicketParticipant(ctx context.Context, arg CountTicketParticipantParams) (int64, error)
 	// ticket の参加者数。max_participants 超過チェックで使う。
@@ -19,6 +24,8 @@ type Querier interface {
 	// 参照整合性のフレンドリーなプリチェック用。FK でも担保されるが UX のために事前に数を確認する。
 	CountUsersByIDs(ctx context.Context, ids []string) (int64, error)
 	CreateEvent(ctx context.Context, arg CreateEventParams) error
+	CreateExpense(ctx context.Context, arg CreateExpenseParams) error
+	CreateExpenseParticipant(ctx context.Context, arg CreateExpenseParticipantParams) error
 	CreateOAuthAuthorizationCode(ctx context.Context, arg CreateOAuthAuthorizationCodeParams) error
 	CreateOAuthToken(ctx context.Context, arg CreateOAuthTokenParams) error
 	CreateSession(ctx context.Context, arg CreateSessionParams) error
@@ -26,6 +33,9 @@ type Querier interface {
 	CreateTicketParticipant(ctx context.Context, arg CreateTicketParticipantParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	CreateUserIdentity(ctx context.Context, arg CreateUserIdentityParams) error
+	// expense_participants は FK CASCADE で同時に消える。
+	DeleteExpense(ctx context.Context, id string) error
+	DeleteExpenseParticipant(ctx context.Context, arg DeleteExpenseParticipantParams) error
 	// 期限切れの認可コードを掃除する（呼び出しは任意のタイミングで冪等）。
 	DeleteExpiredOAuthRecords(ctx context.Context, expiresAt time.Time) error
 	// refresh 期限も切れたトークンを掃除する。
@@ -38,6 +48,8 @@ type Querier interface {
 	DeleteTicketParticipant(ctx context.Context, arg DeleteTicketParticipantParams) error
 	// 1 件の event を取得する。詳細・編集画面用。
 	GetEventByID(ctx context.Context, id string) (GetEventByIDRow, error)
+	// expense 詳細表示・権限判定用。
+	GetExpenseByID(ctx context.Context, id string) (GetExpenseByIDRow, error)
 	GetOAuthAuthorizationCodeByHash(ctx context.Context, codeHash string) (GetOAuthAuthorizationCodeByHashRow, error)
 	GetOAuthTokenByRefreshTokenHash(ctx context.Context, refreshTokenHash string) (GetOAuthTokenByRefreshTokenHashRow, error)
 	// Bearer トークン検証用。紐づく user も一発で引く。期限判定は呼び出し側で行う。
@@ -53,6 +65,15 @@ type Querier interface {
 	ListEventTicketsByEventIDs(ctx context.Context, eventIds []string) ([]ListEventTicketsByEventIDsRow, error)
 	// 公演一覧（新しい順）。詳細表示用の最低限フィールドのみ返す。
 	ListEvents(ctx context.Context) ([]ListEventsRow, error)
+	// expense 詳細用。参加者の user_id / 名前 / 負担額 / 精算済みフラグを created_at 昇順で返す。
+	ListExpenseParticipantsByExpenseID(ctx context.Context, expenseID string) ([]ListExpenseParticipantsByExpenseIDRow, error)
+	// expense 一覧で、各 expense の参加者（金額・精算状態つき）をまとめて引く（N+1 回避）。
+	// 呼び出し側で expense_id ごとに in-memory で振り分ける。
+	ListExpenseParticipantsByExpenseIDs(ctx context.Context, expenseIds []string) ([]ListExpenseParticipantsByExpenseIDsRow, error)
+	// expense 一覧画面用。立替者名と、ticket 紐付き時の公演名を join して返す。
+	ListExpenses(ctx context.Context) ([]ListExpensesRow, error)
+	// ticket 詳細画面の「追加の精算」セクション用。
+	ListExpensesByTicketID(ctx context.Context, ticketID sql.NullString) ([]ListExpensesByTicketIDRow, error)
 	// 当月分（[month_start, next_month_start) 半開区間）の自分の参加チケット。
 	// 立替者本人 or 精算済みなら settled = 1 とみなす。
 	// MySQL に BOOLEAN 型がないため CAST で UNSIGNED に固定し、sqlc に NullBool 推論させずに int64 で受ける。
@@ -101,6 +122,10 @@ type Querier interface {
 	ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcomingTicketsByUserIDParams) ([]ListUpcomingTicketsByUserIDRow, error)
 	// 表示用の最低限フィールドだけ返す。avatar_url 等は GetMe 経路（session join）で取る。
 	ListUsers(ctx context.Context) ([]ListUsersRow, error)
+	// 未精算 → 精算済み。settled_at に現在時刻を入れる。
+	MarkExpenseParticipantSettled(ctx context.Context, arg MarkExpenseParticipantSettledParams) error
+	// 精算済み → 未精算。settled_at を NULL に戻す。
+	MarkExpenseParticipantUnsettled(ctx context.Context, arg MarkExpenseParticipantUnsettledParams) error
 	// 集合 2 時間前リマインド送信済みマーク。未送信のものだけを対象にする。
 	MarkTicketMeetingNotified(ctx context.Context, arg MarkTicketMeetingNotifiedParams) error
 	// 未精算 → 精算済み。settled_at に現在時刻を入れる。
@@ -113,6 +138,10 @@ type Querier interface {
 	// refresh grant 時にアクセストークンとリフレッシュトークンを同時にローテーションする。
 	RotateOAuthToken(ctx context.Context, arg RotateOAuthTokenParams) error
 	UpdateEvent(ctx context.Context, arg UpdateEventParams) error
+	// expense 本体の更新。参加者の付け替えは呼び出し側が別クエリで行う。
+	UpdateExpense(ctx context.Context, arg UpdateExpenseParams) error
+	// 参加者の負担額のみ更新する。settled_at は保持する。
+	UpdateExpenseParticipantAmount(ctx context.Context, arg UpdateExpenseParticipantAmountParams) error
 	// ticket 本体の更新。event_id は変更しない。purchased_by の変更は呼び出し側で
 	// 新しい立替者が ticket_participants に含まれることを保証する。max_participants は
 	// 呼び出し側で参加者数を下回らないことを保証する。

@@ -151,6 +151,44 @@ CREATE TABLE tickets (
   CONSTRAINT fk_tickets_purchased_by FOREIGN KEY (purchased_by) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- 立て替え 1 件（公演後の飲み会、打ち上げ等）。チケット代の精算は従来どおり
+-- ticket_participants.settled_at が持ち、こちらは「追加の精算」専用。
+-- ticket_id は文脈リンク。NULL = 公演に紐づかない単独の精算。
+-- チケット削除時も金銭記録は残したいので SET NULL（CASCADE にしない）。
+CREATE TABLE expenses (
+  id           CHAR(36)     NOT NULL,
+  ticket_id    CHAR(36)     NULL,
+  -- 「打ち上げ @ 〇〇」等の表示名
+  title        VARCHAR(255) NOT NULL,
+  -- 立て替えた人。チケットの purchased_by とは独立
+  paid_by      CHAR(36)     NOT NULL,
+  -- 発生日（JST）。月次集計の軸。ticket 紐付き時も start_at からは導出せず独立に持つ
+  occurred_on  DATE         NOT NULL,
+  created_at   DATETIME(6)  NOT NULL,
+  updated_at   DATETIME(6)  NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_expenses_ticket_id (ticket_id),
+  KEY idx_expenses_paid_by_occurred_on (paid_by, occurred_on),
+  CONSTRAINT fk_expenses_ticket_id FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE SET NULL,
+  CONSTRAINT fk_expenses_paid_by   FOREIGN KEY (paid_by)   REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- expense と参加者の M:N。負担額と精算状態を持つ。
+-- 立替者（paid_by）自身は行を作らない（自分の分は精算不要のため）。
+-- amount は税込・円。均等割りとは限らないため行ごとに持つ（UI は均等割りを初期値にする想定）。
+-- settled_at の意味論は ticket_participants と同一（NULL = 未精算、非 NULL = 精算時刻）。
+CREATE TABLE expense_participants (
+  expense_id  CHAR(36)    NOT NULL,
+  user_id     CHAR(36)    NOT NULL,
+  amount      INT         NOT NULL,
+  settled_at  DATETIME(6) NULL DEFAULT NULL,
+  created_at  DATETIME(6) NOT NULL,
+  PRIMARY KEY (expense_id, user_id),
+  KEY idx_expense_participants_user_id (user_id),
+  CONSTRAINT fk_expense_participants_expense_id FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE,
+  CONSTRAINT fk_expense_participants_user_id    FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 -- ticket と参加者の M:N。誰がどのチケットで参加したか。
 -- settled_at は立て替え分を購入者へ精算した時刻。NULL = 未精算（デフォルト）、
 -- 非 NULL = 精算済み。タイムスタンプを兼ねることで「いつ精算したか」も保持する。
