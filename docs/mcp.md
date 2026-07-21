@@ -18,14 +18,22 @@
 | `list_users` | - | 登録メンバー一覧（`user_id` と表示名）。参加者指定の前に ID を引く用途 |
 | `create_ticket_with_event` | `write` | 公演とチケットの同時登録（web の新規登録と同じ `CreateTicketWithEvent` RPC を再利用）。立替者は自分になる。admin ロールが必要 |
 | `update_ticket_with_event` | `write` | チケットと紐づく公演の部分更新。admin もしくは立替者のみ |
+| `list_expenses` | - | 追加精算（飲み会等）の一覧（発生日の降順）。`ticket_id` での絞り込み可 |
+| `get_expense` | - | 追加精算 1 件の詳細。参加者ごとの負担額と精算状況を含む |
+| `create_expense` | `write` | 追加精算の登録。立替者は自分になる（参加者に自分を含めない）。member でも可 |
+| `update_expense` | `write` | 追加精算の部分更新。`participants` 指定時は全量置換（精算状態は保持）。admin もしくは立替者のみ |
+| `update_expense_participant_settlement` | `write` | 追加精算の参加者 1 人の精算状態トグル。admin もしくは立替者のみ |
 
-### update_ticket_with_event の部分更新
+### update_ticket_with_event / update_expense の部分更新
 
-`UpdateTicketWithEvent` RPC は全置換だが、MCP ツール側で「現在値を取得（`GetTicket` + `GetEvent`）→ 指定フィールドだけ上書き → 全フィールド送信」するラッパーにしている。web の編集 form が現在値をロードしてから全送信するのと同じクライアント責務で、置換セマンティクス・バリデーション・権限は RPC 側に集約されたまま。
+`UpdateTicketWithEvent` / `UpdateExpense` RPC は全置換だが、MCP ツール側で「現在値を取得（`GetTicket` + `GetEvent` / `GetExpense`）→ 指定フィールドだけ上書き → 全フィールド送信」するラッパーにしている。web の編集 form が現在値をロードしてから全送信するのと同じクライアント責務で、置換セマンティクス・バリデーション・権限は RPC 側に集約されたまま。
 
 - 省略（null）したフィールドは現在値を維持
 - `meeting_at` / `meeting_place` / `event_catchphrase` は空文字で未設定に戻す
 - `event_doors_open_minutes_before` / `event_entry_deadline_minutes_before` は `-1` で未設定に戻す
+- `update_expense` の `ticket_id` は空文字で紐付け解除。`participants` は省略で現在の参加者を維持、指定で全量置換（残った参加者の settled は保持、外した参加者は記録ごと削除）
+
+削除系（`DeleteExpense`）は誤操作リスクを踏まえ MCP には出していない（web のみ）。
 
 ### scope
 
@@ -65,5 +73,5 @@
 
 ## 未対応・今後
 
-- write 系ツールの拡充（参加者管理・精算状態の更新など）
+- write 系ツールの拡充（チケット参加者管理・チケット代の精算状態の更新など。expense 系は対応済み）
 - 期限切れ OAuth レコードの定期掃除（`DeleteExpiredOAuthRecords` / `DeleteExpiredOAuthTokens` クエリは用意済みで未配線）

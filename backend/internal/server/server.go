@@ -80,7 +80,7 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	mux.HandleFunc("GET /oauth/authorize", oauthSrv.HandleAuthorizeGet)
 	mux.HandleFunc("POST /oauth/authorize", oauthSrv.HandleAuthorizePost)
 	mux.HandleFunc("POST /oauth/token", oauthSrv.HandleToken)
-	mux.Handle("/mcp", oauthSrv.Middleware(newMCPHandler(myPageService, ticketService, eventService, userService)))
+	mux.Handle("/mcp", oauthSrv.Middleware(newMCPHandler(myPageService, ticketService, eventService, userService, expenseService)))
 
 	httpSrv := &http.Server{
 		Addr:              cfg.HTTPAddr,

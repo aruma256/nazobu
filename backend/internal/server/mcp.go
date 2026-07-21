@@ -22,6 +22,7 @@ func newMCPHandler(
 	tickets nazobuv1connect.TicketServiceHandler,
 	events nazobuv1connect.EventServiceHandler,
 	users nazobuv1connect.UserServiceHandler,
+	expenses nazobuv1connect.ExpenseServiceHandler,
 ) http.Handler {
 	srv := mcp.NewServer(&mcp.Implementation{
 		Name:    "nazobu",
@@ -69,6 +70,42 @@ func newMCPHandler(
 			"日時は JST の RFC3339 形式（例 2026-08-01T14:00:00+09:00）で指定する。" +
 			"同じ公演に他のチケットがある場合、公演部分の変更はそれら全てに波及する。",
 	}, updateTicketWithEventTool(tickets, events))
+
+	mcp.AddTool(srv, &mcp.Tool{
+		Name: "list_expenses",
+		Description: "チケット代以外の追加精算（公演後の飲み会・打ち上げ等）の一覧を取得する（発生日の降順）。" +
+			"ticket_id を指定するとそのチケットに紐づく精算だけに絞り込める。" +
+			"合計金額・精算の進捗（済み人数 / 対象人数）を含む。",
+	}, listExpensesTool(expenses))
+
+	mcp.AddTool(srv, &mcp.Tool{
+		Name: "get_expense",
+		Description: "追加精算 1 件の詳細を取得する。参加者ごとの負担額（円）と精算状況を含む。" +
+			"expense_id は list_expenses で確認する。",
+	}, getExpenseTool(expenses))
+
+	mcp.AddTool(srv, &mcp.Tool{
+		Name: "create_expense",
+		Description: "追加精算（公演後の飲み会・打ち上げ等）を 1 件登録する。立替者はログイン中のユーザー自身になるため、" +
+			"参加者（participants）に自分を含めてはいけない。負担額は参加者ごとに指定する" +
+			"（均等割りしたい場合は合計を人数で割って端数を調整した金額を渡す）。" +
+			"member ロールでも実行できるが write スコープが必要。発生日は YYYY-MM-DD（JST）。",
+	}, createExpenseTool(expenses))
+
+	mcp.AddTool(srv, &mcp.Tool{
+		Name: "update_expense",
+		Description: "既存の追加精算を部分更新する。変更したいフィールドだけ指定すればよく、" +
+			"省略したフィールドはツール内部で現在値を取得して維持する。" +
+			"participants を指定した場合は全量置換（残った参加者の精算状態は保持、外した参加者は記録ごと削除）。" +
+			"admin ロールもしくは立替者と write スコープが必要。",
+	}, updateExpenseTool(expenses))
+
+	mcp.AddTool(srv, &mcp.Tool{
+		Name: "update_expense_participant_settlement",
+		Description: "追加精算の参加者 1 人の精算状態を切り替える（精算済み ⇔ 未精算）。" +
+			"admin ロールもしくは立替者と write スコープが必要。" +
+			"チケット代の精算状態はこのツールでは変更できない。",
+	}, updateExpenseParticipantSettlementTool(expenses))
 
 	// Stateless + JSONResponse: セッション管理を持たず、SSE ではなく素の JSON で応答する。
 	// Cloudflare Tunnel + Next.js rewrites 越しでもバッファリングの影響を受けない構成に寄せる。
@@ -385,6 +422,247 @@ func updateTicketWithEventTool(tickets nazobuv1connect.TicketServiceHandler, eve
 		out.Ticket = toMCPTicket(updated)
 		out.MaxParticipants = updated.GetMaxParticipants()
 		out.UnregisteredParticipantsCount = updated.GetUnregisteredParticipantsCount()
+		return nil, out, nil
+	}
+}
+
+// mcpExpense は MCP ツールが返す追加精算の情報。proto の Expense から
+// LLM が扱いやすいフィールドだけを抜き出した形。
+type mcpExpense struct {
+	ExpenseID        string   `json:"expense_id" jsonschema:"精算 ID"`
+	Title            string   `json:"title" jsonschema:"精算のタイトル（例: 打ち上げ @ 〇〇）"`
+	OccurredOn       string   `json:"occurred_on" jsonschema:"発生日（JST, YYYY-MM-DD）"`
+	TicketID         string   `json:"ticket_id,omitempty" jsonschema:"紐づくチケットの ID。紐付きなしなら空"`
+	EventTitle       string   `json:"event_title,omitempty" jsonschema:"紐づくチケットの公演タイトル。紐付きなしなら空"`
+	PayerName        string   `json:"payer_name" jsonschema:"立て替えたメンバーの表示名"`
+	TotalAmount      int32    `json:"total_amount" jsonschema:"参加者の負担額合計（円）。立替者自身の分は含まない"`
+	ParticipantCount int32    `json:"participant_count" jsonschema:"精算対象の参加者数（立替者自身は含まない）"`
+	SettledCount     int32    `json:"settled_count" jsonschema:"精算済みの参加者数"`
+	ParticipantNames []string `json:"participant_names" jsonschema:"参加メンバーの表示名一覧"`
+}
+
+// toMCPExpense は proto の Expense を MCP ツール出力用の形に変換する。
+func toMCPExpense(e *nazobuv1.Expense) mcpExpense {
+	return mcpExpense{
+		ExpenseID:        e.GetId(),
+		Title:            e.GetTitle(),
+		OccurredOn:       e.GetOccurredOn(),
+		TicketID:         e.GetTicketId(),
+		EventTitle:       e.GetEventTitle(),
+		PayerName:        e.GetPayerName(),
+		TotalAmount:      e.GetTotalAmount(),
+		ParticipantCount: e.GetParticipantCount(),
+		SettledCount:     e.GetSettledCount(),
+		ParticipantNames: e.GetParticipantNames(),
+	}
+}
+
+type listExpensesInput struct {
+	TicketID string `json:"ticket_id,omitempty" jsonschema:"チケット ID。指定するとそのチケットに紐づく精算だけを返す。省略時は全件"`
+}
+
+type listExpensesOutput struct {
+	Expenses []mcpExpense `json:"expenses" jsonschema:"追加精算の一覧（発生日の降順）"`
+}
+
+func listExpensesTool(expenses nazobuv1connect.ExpenseServiceHandler) mcp.ToolHandlerFor[listExpensesInput, listExpensesOutput] {
+	return func(ctx context.Context, _ *mcp.CallToolRequest, in listExpensesInput) (*mcp.CallToolResult, listExpensesOutput, error) {
+		var out listExpensesOutput
+		res, err := expenses.ListExpenses(ctx, connect.NewRequest(&nazobuv1.ListExpensesRequest{
+			TicketId: in.TicketID,
+		}))
+		if err != nil {
+			return nil, out, err
+		}
+		out.Expenses = make([]mcpExpense, 0, len(res.Msg.GetExpenses()))
+		for _, e := range res.Msg.GetExpenses() {
+			out.Expenses = append(out.Expenses, toMCPExpense(e))
+		}
+		return nil, out, nil
+	}
+}
+
+type getExpenseInput struct {
+	ExpenseID string `json:"expense_id" jsonschema:"精算 ID（必須）"`
+}
+
+// mcpExpenseParticipant は精算詳細に含める参加者 1 人分の情報。
+type mcpExpenseParticipant struct {
+	UserID  string `json:"user_id" jsonschema:"参加者の user ID"`
+	Name    string `json:"name" jsonschema:"表示名"`
+	Amount  int32  `json:"amount" jsonschema:"負担額（円）"`
+	Settled bool   `json:"settled" jsonschema:"立替者への精算が完了しているか"`
+}
+
+type getExpenseOutput struct {
+	Expense      mcpExpense              `json:"expense" jsonschema:"精算の詳細"`
+	Participants []mcpExpenseParticipant `json:"participants" jsonschema:"参加者一覧（負担額・精算状況つき）"`
+}
+
+func getExpenseTool(expenses nazobuv1connect.ExpenseServiceHandler) mcp.ToolHandlerFor[getExpenseInput, getExpenseOutput] {
+	return func(ctx context.Context, _ *mcp.CallToolRequest, in getExpenseInput) (*mcp.CallToolResult, getExpenseOutput, error) {
+		var out getExpenseOutput
+		res, err := expenses.GetExpense(ctx, connect.NewRequest(&nazobuv1.GetExpenseRequest{
+			ExpenseId: in.ExpenseID,
+		}))
+		if err != nil {
+			return nil, out, err
+		}
+		out.Expense = toMCPExpense(res.Msg.GetExpense())
+		out.Participants = make([]mcpExpenseParticipant, 0, len(res.Msg.GetParticipants()))
+		for _, p := range res.Msg.GetParticipants() {
+			out.Participants = append(out.Participants, mcpExpenseParticipant{
+				UserID:  p.GetUserId(),
+				Name:    p.GetName(),
+				Amount:  p.GetAmount(),
+				Settled: p.GetSettled(),
+			})
+		}
+		return nil, out, nil
+	}
+}
+
+// mcpExpenseParticipantInput は create / update の参加者指定。
+type mcpExpenseParticipantInput struct {
+	UserID string `json:"user_id" jsonschema:"参加者の user_id。list_users で確認した ID を使う"`
+	Amount int32  `json:"amount" jsonschema:"この参加者の負担額（円、0 以上）"`
+}
+
+func toExpenseParticipantInputs(in []mcpExpenseParticipantInput) []*nazobuv1.ExpenseParticipantInput {
+	out := make([]*nazobuv1.ExpenseParticipantInput, 0, len(in))
+	for _, p := range in {
+		out = append(out, &nazobuv1.ExpenseParticipantInput{
+			UserId: p.UserID,
+			Amount: p.Amount,
+		})
+	}
+	return out
+}
+
+// createExpenseInput は CreateExpenseRequest の MCP 向けミラー。
+// バリデーションは RPC ハンドラ側に集約されているため、ここでは行わない。
+type createExpenseInput struct {
+	Title        string                       `json:"title" jsonschema:"精算のタイトル（必須。例: 打ち上げ @ 〇〇）"`
+	OccurredOn   string                       `json:"occurred_on" jsonschema:"発生日（JST, YYYY-MM-DD、必須）"`
+	TicketID     string                       `json:"ticket_id,omitempty" jsonschema:"紐付けるチケットの ID。公演と無関係な精算なら省略"`
+	Participants []mcpExpenseParticipantInput `json:"participants" jsonschema:"参加者と負担額（1 件以上）。立替者（自分）は含めてはいけない"`
+}
+
+type createExpenseOutput struct {
+	Expense mcpExpense `json:"expense" jsonschema:"登録された精算"`
+}
+
+func createExpenseTool(expenses nazobuv1connect.ExpenseServiceHandler) mcp.ToolHandlerFor[createExpenseInput, createExpenseOutput] {
+	return func(ctx context.Context, _ *mcp.CallToolRequest, in createExpenseInput) (*mcp.CallToolResult, createExpenseOutput, error) {
+		var out createExpenseOutput
+		if !oauth.HasScope(ctx, oauth.ScopeWrite) {
+			return nil, out, errors.New("このアクセストークンには write スコープが無い。Claude のコネクタを一度削除して接続し直し、書き込みを許可してほしい")
+		}
+		res, err := expenses.CreateExpense(ctx, connect.NewRequest(&nazobuv1.CreateExpenseRequest{
+			TicketId:     in.TicketID,
+			Title:        in.Title,
+			OccurredOn:   in.OccurredOn,
+			Participants: toExpenseParticipantInputs(in.Participants),
+		}))
+		if err != nil {
+			return nil, out, err
+		}
+		out.Expense = toMCPExpense(res.Msg.GetExpense())
+		return nil, out, nil
+	}
+}
+
+// updateExpenseInput は部分更新の入力。expense_id 以外は全て任意で、
+// 省略（null）したフィールドは現在値を維持する。
+type updateExpenseInput struct {
+	ExpenseID    string                       `json:"expense_id" jsonschema:"更新する精算の ID（必須）"`
+	Title        *string                      `json:"title,omitempty" jsonschema:"精算のタイトル。省略時は変更しない"`
+	OccurredOn   *string                      `json:"occurred_on,omitempty" jsonschema:"発生日（JST, YYYY-MM-DD）。省略時は変更しない"`
+	TicketID     *string                      `json:"ticket_id,omitempty" jsonschema:"紐付けるチケットの ID。省略時は変更しない。空文字で紐付けを解除する"`
+	PaidByUserID *string                      `json:"paid_by_user_id,omitempty" jsonschema:"立替者の user_id。省略時は変更しない。participants に含まれる user は指定できない"`
+	Participants []mcpExpenseParticipantInput `json:"participants,omitempty" jsonschema:"参加者と負担額の全量。省略時は現在の参加者を維持する。指定すると全量置換（残った参加者の精算状態は保持、外した参加者は記録ごと削除）"`
+}
+
+type updateExpenseOutput struct {
+	Expense mcpExpense `json:"expense" jsonschema:"更新後の精算"`
+}
+
+// updateExpenseTool は全置換の UpdateExpense RPC を
+// 「現在値を取得 → 指定フィールドだけ上書き → 全フィールド送信」でラップし、
+// LLM からは部分更新として扱えるようにする（update_ticket_with_event と同じクライアント責務）。
+func updateExpenseTool(expenses nazobuv1connect.ExpenseServiceHandler) mcp.ToolHandlerFor[updateExpenseInput, updateExpenseOutput] {
+	return func(ctx context.Context, _ *mcp.CallToolRequest, in updateExpenseInput) (*mcp.CallToolResult, updateExpenseOutput, error) {
+		var out updateExpenseOutput
+		if !oauth.HasScope(ctx, oauth.ScopeWrite) {
+			return nil, out, errors.New("このアクセストークンには write スコープが無い。Claude のコネクタを一度削除して接続し直し、書き込みを許可してほしい")
+		}
+
+		cur, err := expenses.GetExpense(ctx, connect.NewRequest(&nazobuv1.GetExpenseRequest{
+			ExpenseId: in.ExpenseID,
+		}))
+		if err != nil {
+			return nil, out, err
+		}
+		e := cur.Msg.GetExpense()
+
+		// participants 省略時は現在の参加者（負担額込み）をそのまま送り、置換で実質維持する。
+		participants := toExpenseParticipantInputs(in.Participants)
+		if in.Participants == nil {
+			participants = make([]*nazobuv1.ExpenseParticipantInput, 0, len(cur.Msg.GetParticipants()))
+			for _, p := range cur.Msg.GetParticipants() {
+				participants = append(participants, &nazobuv1.ExpenseParticipantInput{
+					UserId: p.GetUserId(),
+					Amount: p.GetAmount(),
+				})
+			}
+		}
+
+		res, err := expenses.UpdateExpense(ctx, connect.NewRequest(&nazobuv1.UpdateExpenseRequest{
+			ExpenseId:    in.ExpenseID,
+			TicketId:     pickString(e.GetTicketId(), in.TicketID),
+			Title:        pickString(e.GetTitle(), in.Title),
+			OccurredOn:   pickString(e.GetOccurredOn(), in.OccurredOn),
+			PaidByUserId: pickString(e.GetPaidByUserId(), in.PaidByUserID),
+			Participants: participants,
+		}))
+		if err != nil {
+			return nil, out, err
+		}
+		out.Expense = toMCPExpense(res.Msg.GetExpense())
+		return nil, out, nil
+	}
+}
+
+type updateExpenseParticipantSettlementInput struct {
+	ExpenseID string `json:"expense_id" jsonschema:"精算 ID（必須）"`
+	UserID    string `json:"user_id" jsonschema:"精算状態を変更する参加者の user_id（必須）"`
+	Settled   bool   `json:"settled" jsonschema:"true で精算済みにする、false で未精算に戻す"`
+}
+
+type updateExpenseParticipantSettlementOutput struct {
+	Expense mcpExpense `json:"expense" jsonschema:"更新後の精算（精算済み人数を含む）"`
+}
+
+func updateExpenseParticipantSettlementTool(expenses nazobuv1connect.ExpenseServiceHandler) mcp.ToolHandlerFor[updateExpenseParticipantSettlementInput, updateExpenseParticipantSettlementOutput] {
+	return func(ctx context.Context, _ *mcp.CallToolRequest, in updateExpenseParticipantSettlementInput) (*mcp.CallToolResult, updateExpenseParticipantSettlementOutput, error) {
+		var out updateExpenseParticipantSettlementOutput
+		if !oauth.HasScope(ctx, oauth.ScopeWrite) {
+			return nil, out, errors.New("このアクセストークンには write スコープが無い。Claude のコネクタを一度削除して接続し直し、書き込みを許可してほしい")
+		}
+		if _, err := expenses.UpdateExpenseParticipantSettlement(ctx, connect.NewRequest(&nazobuv1.UpdateExpenseParticipantSettlementRequest{
+			ExpenseId: in.ExpenseID,
+			UserId:    in.UserID,
+			Settled:   in.Settled,
+		})); err != nil {
+			return nil, out, err
+		}
+		res, err := expenses.GetExpense(ctx, connect.NewRequest(&nazobuv1.GetExpenseRequest{
+			ExpenseId: in.ExpenseID,
+		}))
+		if err != nil {
+			return nil, out, err
+		}
+		out.Expense = toMCPExpense(res.Msg.GetExpense())
 		return nil, out, nil
 	}
 }

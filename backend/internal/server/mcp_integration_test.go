@@ -12,12 +12,16 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/aruma256/nazobu/backend/internal/auth"
+	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
+	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
 	"github.com/aruma256/nazobu/backend/internal/id"
 	"github.com/aruma256/nazobu/backend/internal/oauth"
@@ -109,7 +113,7 @@ func issueMCPAccessToken(t *testing.T, db *sql.DB, userID, scope string) string 
 func newMCPTestServer(t *testing.T, db *sql.DB) *httptest.Server {
 	t.Helper()
 	oauthSrv := oauth.NewServer(db, http.DefaultClient, "https://nazobu.example.com", false)
-	handler := newMCPHandler(newMyPageService(db), newTicketService(db), newEventService(db), newUserService(db))
+	handler := newMCPHandler(newMyPageService(db), newTicketService(db), newEventService(db), newUserService(db), newExpenseService(db))
 	ts := httptest.NewServer(oauthSrv.Middleware(handler))
 	t.Cleanup(ts.Close)
 	return ts
@@ -630,4 +634,728 @@ func TestIntegrationMCPUnauthorized(t *testing.T) {
 	if got := resp.Header.Get("WWW-Authenticate"); got == "" {
 		t.Error("WWW-Authenticate ヘッダが無い")
 	}
+}
+
+// -----------------------------------------------------------------------------
+// expense 系ツールの統合テスト。
+// フィクスチャ（既存 expense）の作成には expense_service_integration_test.go の
+// ヘルパー（mustCreateExpense / createTestTicket）を再利用し、
+// 検証は MCP ツール越し（list_expenses / get_expense / create_expense / update_expense /
+// update_expense_participant_settlement）で行う。
+// -----------------------------------------------------------------------------
+
+// mcpResultText は CallTool 結果の Content を文字列化する（エラーメッセージの検証用）。
+func mcpResultText(t *testing.T, res *mcp.CallToolResult) string {
+	t.Helper()
+	raw, err := json.Marshal(res.Content)
+	if err != nil {
+		t.Fatalf("Content の marshal に失敗: %v", err)
+	}
+	return string(raw)
+}
+
+// mustSettleExpenseParticipant は sessionUserID のセッションで参加者の精算状態を切り替える（成功前提）。
+func mustSettleExpenseParticipant(t *testing.T, ctx context.Context, svc nazobuv1connect.ExpenseServiceHandler, db *sql.DB, expenseID, userID, sessionUserID string, settled bool) {
+	t.Helper()
+	req := connect.NewRequest(&nazobuv1.UpdateExpenseParticipantSettlementRequest{
+		ExpenseId: expenseID, UserId: userID, Settled: settled,
+	})
+	setSessionCookie(t, db, req, sessionUserID)
+	if _, err := svc.UpdateExpenseParticipantSettlement(ctx, req); err != nil {
+		t.Fatalf("精算状態の更新に失敗: %v", err)
+	}
+}
+
+func TestIntegrationMCPListExpenses(t *testing.T) {
+	db := testdb.Open(t)
+	ctx := context.Background()
+	svc := newExpenseService(db)
+
+	payerID := createTestUser(t, db, "mcp-expense-payer", auth.RoleMember)
+	friendAID := createTestUser(t, db, "mcp-friend-a", auth.RoleMember)
+	friendBID := createTestUser(t, db, "mcp-friend-b", auth.RoleMember)
+	eventID := createTestEvent(t, db, "テスト公演")
+	ticketID := createTestTicket(t, db, eventID, payerID)
+
+	// occurred_on が異なる 3 件を、作成順と降順が一致しないように作る。
+	older := mustCreateExpense(t, ctx, svc, db, payerID, &nazobuv1.CreateExpenseRequest{
+		Title: "7/10 の会", OccurredOn: "2026-07-10",
+		Participants: []*nazobuv1.ExpenseParticipantInput{{UserId: friendAID, Amount: 500}},
+	})
+	newest := mustCreateExpense(t, ctx, svc, db, payerID, &nazobuv1.CreateExpenseRequest{
+		Title: "7/20 の会", OccurredOn: "2026-07-20",
+		Participants: []*nazobuv1.ExpenseParticipantInput{{UserId: friendAID, Amount: 500}},
+	})
+	// ticket 紐付きあり。参加者 2 名・片方精算済みで集計を検証する。
+	middle := mustCreateExpense(t, ctx, svc, db, payerID, &nazobuv1.CreateExpenseRequest{
+		TicketId: ticketID, Title: "7/15 の会", OccurredOn: "2026-07-15",
+		Participants: []*nazobuv1.ExpenseParticipantInput{
+			{UserId: friendAID, Amount: 1000},
+			{UserId: friendBID, Amount: 2000},
+		},
+	})
+	mustSettleExpenseParticipant(t, ctx, svc, db, middle.Id, friendAID, payerID, true)
+
+	ts := newMCPTestServer(t, db)
+	session := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, payerID, "read"))
+
+	// expense 系ツールが公開されていること。
+	tools, err := session.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatalf("ListTools に失敗: %v", err)
+	}
+	published := map[string]bool{}
+	for _, tool := range tools.Tools {
+		published[tool.Name] = true
+	}
+	for _, name := range []string{"list_expenses", "get_expense", "create_expense", "update_expense", "update_expense_participant_settlement"} {
+		if !published[name] {
+			t.Fatalf("%s が公開されていない: %v", name, tools.Tools)
+		}
+	}
+
+	type expenseOut struct {
+		ExpenseID        string   `json:"expense_id"`
+		Title            string   `json:"title"`
+		OccurredOn       string   `json:"occurred_on"`
+		TicketID         string   `json:"ticket_id"`
+		EventTitle       string   `json:"event_title"`
+		PayerName        string   `json:"payer_name"`
+		TotalAmount      int32    `json:"total_amount"`
+		ParticipantCount int32    `json:"participant_count"`
+		SettledCount     int32    `json:"settled_count"`
+		ParticipantNames []string `json:"participant_names"`
+	}
+
+	t.Run("ticket_id 未指定は全件を occurred_on 降順で返す", func(t *testing.T) {
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "list_expenses",
+			Arguments: map[string]any{},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if res.IsError {
+			t.Fatalf("ツールがエラーを返した: %+v", res.Content)
+		}
+		var out struct {
+			Expenses []expenseOut `json:"expenses"`
+		}
+		unmarshalStructuredContent(t, res, &out)
+
+		gotOrder := make([]string, 0, len(out.Expenses))
+		for _, e := range out.Expenses {
+			gotOrder = append(gotOrder, e.ExpenseID)
+		}
+		wantOrder := []string{newest.Id, middle.Id, older.Id}
+		if len(gotOrder) != len(wantOrder) {
+			t.Fatalf("expenses = %d 件, want %d 件: %+v", len(gotOrder), len(wantOrder), out.Expenses)
+		}
+		for i := range wantOrder {
+			if gotOrder[i] != wantOrder[i] {
+				t.Fatalf("並び順 = %v, want %v（occurred_on 降順）", gotOrder, wantOrder)
+			}
+		}
+
+		// middle の集計（合計金額 / 精算済み数 / 参加者名 / 公演名）を検証する。
+		var mid *expenseOut
+		for i := range out.Expenses {
+			if out.Expenses[i].ExpenseID == middle.Id {
+				mid = &out.Expenses[i]
+			}
+		}
+		if mid == nil {
+			t.Fatal("一覧に middle がいない")
+		}
+		if mid.TotalAmount != 3000 {
+			t.Errorf("total_amount = %d, want 3000", mid.TotalAmount)
+		}
+		if mid.ParticipantCount != 2 {
+			t.Errorf("participant_count = %d, want 2", mid.ParticipantCount)
+		}
+		if mid.SettledCount != 1 {
+			t.Errorf("settled_count = %d, want 1", mid.SettledCount)
+		}
+		if mid.TicketID != ticketID {
+			t.Errorf("ticket_id = %q, want %q", mid.TicketID, ticketID)
+		}
+		if mid.EventTitle != "テスト公演" {
+			t.Errorf("event_title = %q, want テスト公演", mid.EventTitle)
+		}
+		if mid.PayerName != "mcp-expense-payer" {
+			t.Errorf("payer_name = %q, want mcp-expense-payer", mid.PayerName)
+		}
+		for _, want := range []string{"mcp-friend-a", "mcp-friend-b"} {
+			found := false
+			for _, name := range mid.ParticipantNames {
+				if name == want {
+					found = true
+				}
+			}
+			if !found {
+				t.Errorf("participant_names に %q がいない: %v", want, mid.ParticipantNames)
+			}
+		}
+	})
+
+	t.Run("ticket_id 指定はその ticket に紐づく expense のみ返す", func(t *testing.T) {
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "list_expenses",
+			Arguments: map[string]any{"ticket_id": ticketID},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if res.IsError {
+			t.Fatalf("ツールがエラーを返した: %+v", res.Content)
+		}
+		var out struct {
+			Expenses []expenseOut `json:"expenses"`
+		}
+		unmarshalStructuredContent(t, res, &out)
+		if len(out.Expenses) != 1 || out.Expenses[0].ExpenseID != middle.Id {
+			t.Fatalf("ticket 絞り込み結果 = %+v, middle のみのはず", out.Expenses)
+		}
+	})
+}
+
+func TestIntegrationMCPGetExpense(t *testing.T) {
+	db := testdb.Open(t)
+	ctx := context.Background()
+	svc := newExpenseService(db)
+
+	payerID := createTestUser(t, db, "mcp-expense-payer", auth.RoleMember)
+	friendAID := createTestUser(t, db, "mcp-friend-a", auth.RoleMember)
+	friendBID := createTestUser(t, db, "mcp-friend-b", auth.RoleMember)
+
+	created := mustCreateExpense(t, ctx, svc, db, payerID, &nazobuv1.CreateExpenseRequest{
+		Title: "打ち上げ", OccurredOn: "2026-07-20",
+		Participants: []*nazobuv1.ExpenseParticipantInput{
+			{UserId: friendAID, Amount: 1000},
+			{UserId: friendBID, Amount: 2000},
+		},
+	})
+	// friendA を精算済みにしておく。
+	mustSettleExpenseParticipant(t, ctx, svc, db, created.Id, friendAID, payerID, true)
+
+	ts := newMCPTestServer(t, db)
+	session := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, payerID, "read"))
+
+	t.Run("参加者の負担額・精算状況を含む詳細が取得できる", func(t *testing.T) {
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "get_expense",
+			Arguments: map[string]any{"expense_id": created.Id},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if res.IsError {
+			t.Fatalf("ツールがエラーを返した: %+v", res.Content)
+		}
+
+		var out struct {
+			Expense struct {
+				ExpenseID   string `json:"expense_id"`
+				Title       string `json:"title"`
+				PayerName   string `json:"payer_name"`
+				TotalAmount int32  `json:"total_amount"`
+			} `json:"expense"`
+			Participants []struct {
+				UserID  string `json:"user_id"`
+				Name    string `json:"name"`
+				Amount  int32  `json:"amount"`
+				Settled bool   `json:"settled"`
+			} `json:"participants"`
+		}
+		unmarshalStructuredContent(t, res, &out)
+		if out.Expense.ExpenseID != created.Id {
+			t.Errorf("expense_id = %q, want %q", out.Expense.ExpenseID, created.Id)
+		}
+		if out.Expense.Title != "打ち上げ" {
+			t.Errorf("title = %q", out.Expense.Title)
+		}
+		if out.Expense.PayerName != "mcp-expense-payer" {
+			t.Errorf("payer_name = %q", out.Expense.PayerName)
+		}
+		if len(out.Participants) != 2 {
+			t.Fatalf("participants = %d 件, want 2 件: %+v", len(out.Participants), out.Participants)
+		}
+		byUser := map[string]struct {
+			amount  int32
+			settled bool
+			name    string
+		}{}
+		for _, p := range out.Participants {
+			byUser[p.UserID] = struct {
+				amount  int32
+				settled bool
+				name    string
+			}{p.Amount, p.Settled, p.Name}
+		}
+		if pa := byUser[friendAID]; pa.amount != 1000 || !pa.settled || pa.name != "mcp-friend-a" {
+			t.Errorf("friendA = %+v, want {1000 true mcp-friend-a}", pa)
+		}
+		if pb := byUser[friendBID]; pb.amount != 2000 || pb.settled || pb.name != "mcp-friend-b" {
+			t.Errorf("friendB = %+v, want {2000 false mcp-friend-b}", pb)
+		}
+	})
+
+	t.Run("存在しない expense_id はエラー", func(t *testing.T) {
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "get_expense",
+			Arguments: map[string]any{"expense_id": id.New()},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if !res.IsError {
+			t.Fatal("存在しない expense_id で成功してしまった")
+		}
+	})
+}
+
+func TestIntegrationMCPCreateExpense(t *testing.T) {
+	db := testdb.Open(t)
+	ctx := context.Background()
+
+	memberID := createTestUser(t, db, "mcp-expense-member", auth.RoleMember)
+	friendAID := createTestUser(t, db, "mcp-friend-a", auth.RoleMember)
+	friendBID := createTestUser(t, db, "mcp-friend-b", auth.RoleMember)
+	ts := newMCPTestServer(t, db)
+
+	// 立替者（自分 = memberID）は participants に含めない。
+	createArgs := func() map[string]any {
+		return map[string]any{
+			"title":       "打ち上げ @ 〇〇",
+			"occurred_on": "2026-07-20",
+			"participants": []map[string]any{
+				{"user_id": friendAID, "amount": 1000},
+				{"user_id": friendBID, "amount": 2000},
+			},
+		}
+	}
+
+	t.Run("member ロール + write スコープで登録でき、立替者は自分になる", func(t *testing.T) {
+		session := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, memberID, "read write"))
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "create_expense",
+			Arguments: createArgs(),
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if res.IsError {
+			t.Fatalf("ツールがエラーを返した: %+v", res.Content)
+		}
+
+		var out struct {
+			Expense struct {
+				ExpenseID        string   `json:"expense_id"`
+				Title            string   `json:"title"`
+				OccurredOn       string   `json:"occurred_on"`
+				PayerName        string   `json:"payer_name"`
+				TotalAmount      int32    `json:"total_amount"`
+				ParticipantCount int32    `json:"participant_count"`
+				SettledCount     int32    `json:"settled_count"`
+				ParticipantNames []string `json:"participant_names"`
+			} `json:"expense"`
+		}
+		unmarshalStructuredContent(t, res, &out)
+		if out.Expense.ExpenseID == "" {
+			t.Fatalf("expense_id が空: %+v", out)
+		}
+		if out.Expense.Title != "打ち上げ @ 〇〇" {
+			t.Errorf("title = %q", out.Expense.Title)
+		}
+		if out.Expense.OccurredOn != "2026-07-20" {
+			t.Errorf("occurred_on = %q", out.Expense.OccurredOn)
+		}
+		// 立替者は Bearer トークンのユーザー自身になること。
+		if out.Expense.PayerName != "mcp-expense-member" {
+			t.Errorf("payer_name = %q, want mcp-expense-member", out.Expense.PayerName)
+		}
+		if out.Expense.TotalAmount != 3000 {
+			t.Errorf("total_amount = %d, want 3000", out.Expense.TotalAmount)
+		}
+		if out.Expense.ParticipantCount != 2 {
+			t.Errorf("participant_count = %d, want 2", out.Expense.ParticipantCount)
+		}
+		if out.Expense.SettledCount != 0 {
+			t.Errorf("settled_count = %d, want 0", out.Expense.SettledCount)
+		}
+
+		// DB にも登録されていること。
+		var count int
+		if err := db.QueryRow("SELECT COUNT(*) FROM expenses WHERE id = ? AND paid_by = ?", out.Expense.ExpenseID, memberID).Scan(&count); err != nil {
+			t.Fatalf("expenses の件数取得に失敗: %v", err)
+		}
+		if count != 1 {
+			t.Errorf("登録後の expenses = %d 件, want 1（paid_by = 自分）", count)
+		}
+	})
+
+	t.Run("read のみのトークンでは write スコープ不足でエラー", func(t *testing.T) {
+		session := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, memberID, "read"))
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "create_expense",
+			Arguments: createArgs(),
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if !res.IsError {
+			t.Fatal("write スコープ無しで成功してしまった")
+		}
+		if text := mcpResultText(t, res); !strings.Contains(text, "write") {
+			t.Errorf("エラーメッセージに write スコープの言及が無い: %s", text)
+		}
+	})
+
+	t.Run("参加者に自分を含めるとエラー", func(t *testing.T) {
+		session := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, memberID, "read write"))
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name: "create_expense",
+			Arguments: map[string]any{
+				"title":       "自分入り",
+				"occurred_on": "2026-07-20",
+				"participants": []map[string]any{
+					{"user_id": memberID, "amount": 1000},
+				},
+			},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if !res.IsError {
+			t.Fatal("立替者自身を参加者に含めて成功してしまった")
+		}
+	})
+}
+
+func TestIntegrationMCPUpdateExpense(t *testing.T) {
+	db := testdb.Open(t)
+	ctx := context.Background()
+	svc := newExpenseService(db)
+
+	payerID := createTestUser(t, db, "mcp-expense-payer", auth.RoleMember)
+	friendAID := createTestUser(t, db, "mcp-friend-a", auth.RoleMember)
+	friendBID := createTestUser(t, db, "mcp-friend-b", auth.RoleMember)
+	friendCID := createTestUser(t, db, "mcp-friend-c", auth.RoleMember)
+	outsiderID := createTestUser(t, db, "mcp-outsider", auth.RoleMember)
+	eventID := createTestEvent(t, db, "テスト公演")
+	ticketID := createTestTicket(t, db, eventID, payerID)
+
+	ts := newMCPTestServer(t, db)
+	session := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, payerID, "read write"))
+
+	// getExpenseParticipants は payer セッションで get_expense を呼び、user_id → {amount, settled} を返す。
+	getExpenseParticipants := func(t *testing.T, expenseID string) map[string]struct {
+		amount  int32
+		settled bool
+	} {
+		t.Helper()
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "get_expense",
+			Arguments: map[string]any{"expense_id": expenseID},
+		})
+		if err != nil {
+			t.Fatalf("get_expense に失敗: %v", err)
+		}
+		if res.IsError {
+			t.Fatalf("get_expense がエラーを返した: %+v", res.Content)
+		}
+		var out struct {
+			Participants []struct {
+				UserID  string `json:"user_id"`
+				Amount  int32  `json:"amount"`
+				Settled bool   `json:"settled"`
+			} `json:"participants"`
+		}
+		unmarshalStructuredContent(t, res, &out)
+		m := map[string]struct {
+			amount  int32
+			settled bool
+		}{}
+		for _, p := range out.Participants {
+			m[p.UserID] = struct {
+				amount  int32
+				settled bool
+			}{p.Amount, p.Settled}
+		}
+		return m
+	}
+
+	t.Run("title だけ指定で他フィールドと参加者（settled 含む）が維持される", func(t *testing.T) {
+		e := mustCreateExpense(t, ctx, svc, db, payerID, &nazobuv1.CreateExpenseRequest{
+			Title: "打ち上げ", OccurredOn: "2026-07-20",
+			Participants: []*nazobuv1.ExpenseParticipantInput{
+				{UserId: friendAID, Amount: 1000},
+				{UserId: friendBID, Amount: 2000},
+			},
+		})
+		mustSettleExpenseParticipant(t, ctx, svc, db, e.Id, friendAID, payerID, true)
+
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "update_expense",
+			Arguments: map[string]any{"expense_id": e.Id, "title": "打ち上げ（改題）"},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if res.IsError {
+			t.Fatalf("ツールがエラーを返した: %+v", res.Content)
+		}
+
+		var out struct {
+			Expense struct {
+				Title            string `json:"title"`
+				OccurredOn       string `json:"occurred_on"`
+				PayerName        string `json:"payer_name"`
+				TotalAmount      int32  `json:"total_amount"`
+				ParticipantCount int32  `json:"participant_count"`
+				SettledCount     int32  `json:"settled_count"`
+			} `json:"expense"`
+		}
+		unmarshalStructuredContent(t, res, &out)
+		if out.Expense.Title != "打ち上げ（改題）" {
+			t.Errorf("title = %q", out.Expense.Title)
+		}
+		// 省略したフィールドが維持されていること。
+		if out.Expense.OccurredOn != "2026-07-20" {
+			t.Errorf("occurred_on が変わってしまった: %q", out.Expense.OccurredOn)
+		}
+		if out.Expense.PayerName != "mcp-expense-payer" {
+			t.Errorf("payer_name が変わってしまった: %q", out.Expense.PayerName)
+		}
+		if out.Expense.TotalAmount != 3000 {
+			t.Errorf("total_amount が変わってしまった: %d", out.Expense.TotalAmount)
+		}
+		if out.Expense.ParticipantCount != 2 {
+			t.Errorf("participant_count が変わってしまった: %d", out.Expense.ParticipantCount)
+		}
+		// friendA の精算済みが維持されていること。
+		if out.Expense.SettledCount != 1 {
+			t.Errorf("settled_count が変わってしまった: %d, want 1", out.Expense.SettledCount)
+		}
+		parts := getExpenseParticipants(t, e.Id)
+		if pa := parts[friendAID]; pa.amount != 1000 || !pa.settled {
+			t.Errorf("friendA = %+v, want {1000 true}", pa)
+		}
+		if pb := parts[friendBID]; pb.amount != 2000 || pb.settled {
+			t.Errorf("friendB = %+v, want {2000 false}", pb)
+		}
+	})
+
+	t.Run("participants 指定は全量置換で残存参加者の settled を維持する", func(t *testing.T) {
+		e := mustCreateExpense(t, ctx, svc, db, payerID, &nazobuv1.CreateExpenseRequest{
+			Title: "全量置換テスト", OccurredOn: "2026-07-20",
+			Participants: []*nazobuv1.ExpenseParticipantInput{
+				{UserId: friendAID, Amount: 1000},
+				{UserId: friendBID, Amount: 2000},
+			},
+		})
+		mustSettleExpenseParticipant(t, ctx, svc, db, e.Id, friendAID, payerID, true)
+
+		// friendA は残す（amount 変更）、friendB は外す、friendC は新規追加。
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name: "update_expense",
+			Arguments: map[string]any{
+				"expense_id": e.Id,
+				"participants": []map[string]any{
+					{"user_id": friendAID, "amount": 1500},
+					{"user_id": friendCID, "amount": 3000},
+				},
+			},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if res.IsError {
+			t.Fatalf("ツールがエラーを返した: %+v", res.Content)
+		}
+
+		parts := getExpenseParticipants(t, e.Id)
+		if len(parts) != 2 {
+			t.Fatalf("更新後の参加者数 = %d, want 2: %+v", len(parts), parts)
+		}
+		// 残った friendA は amount が更新され、settled が保持されていること。
+		if pa := parts[friendAID]; pa.amount != 1500 || !pa.settled {
+			t.Errorf("friendA = %+v, want {1500 true（settled 保持）}", pa)
+		}
+		// 新規 friendC は追加され、未精算であること。
+		if pc := parts[friendCID]; pc.amount != 3000 || pc.settled {
+			t.Errorf("friendC = %+v, want {3000 false}", pc)
+		}
+		// 外した friendB は消えていること。
+		if _, ok := parts[friendBID]; ok {
+			t.Error("外したはずの friendB が残っている")
+		}
+	})
+
+	t.Run("ticket_id='' で紐付けを解除できる", func(t *testing.T) {
+		e := mustCreateExpense(t, ctx, svc, db, payerID, &nazobuv1.CreateExpenseRequest{
+			TicketId: ticketID, Title: "公演後の飲み会", OccurredOn: "2026-07-20",
+			Participants: []*nazobuv1.ExpenseParticipantInput{{UserId: friendAID, Amount: 1000}},
+		})
+		if e.TicketId != ticketID {
+			t.Fatalf("登録直後の ticket_id = %q, want %q", e.TicketId, ticketID)
+		}
+
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "update_expense",
+			Arguments: map[string]any{"expense_id": e.Id, "ticket_id": ""},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if res.IsError {
+			t.Fatalf("ツールがエラーを返した: %+v", res.Content)
+		}
+		var out struct {
+			Expense struct {
+				TicketID   string `json:"ticket_id"`
+				EventTitle string `json:"event_title"`
+			} `json:"expense"`
+		}
+		unmarshalStructuredContent(t, res, &out)
+		if out.Expense.TicketID != "" {
+			t.Errorf("ticket_id = %q, want 空（紐付け解除）", out.Expense.TicketID)
+		}
+		if out.Expense.EventTitle != "" {
+			t.Errorf("event_title = %q, want 空", out.Expense.EventTitle)
+		}
+	})
+
+	t.Run("立替者でも admin でもない member はエラー", func(t *testing.T) {
+		e := mustCreateExpense(t, ctx, svc, db, payerID, &nazobuv1.CreateExpenseRequest{
+			Title: "権限テスト", OccurredOn: "2026-07-20",
+			Participants: []*nazobuv1.ExpenseParticipantInput{{UserId: friendAID, Amount: 1000}},
+		})
+		otherSession := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, outsiderID, "read write"))
+		res, err := otherSession.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "update_expense",
+			Arguments: map[string]any{"expense_id": e.Id, "title": "勝手に更新"},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if !res.IsError {
+			t.Fatal("編集権限の無い member で成功してしまった")
+		}
+	})
+
+	t.Run("read のみのトークンでは write スコープ不足でエラー", func(t *testing.T) {
+		e := mustCreateExpense(t, ctx, svc, db, payerID, &nazobuv1.CreateExpenseRequest{
+			Title: "スコープテスト", OccurredOn: "2026-07-20",
+			Participants: []*nazobuv1.ExpenseParticipantInput{{UserId: friendAID, Amount: 1000}},
+		})
+		readSession := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, payerID, "read"))
+		res, err := readSession.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "update_expense",
+			Arguments: map[string]any{"expense_id": e.Id, "title": "改題"},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if !res.IsError {
+			t.Fatal("write スコープ無しで成功してしまった")
+		}
+		if text := mcpResultText(t, res); !strings.Contains(text, "write") {
+			t.Errorf("エラーメッセージに write スコープの言及が無い: %s", text)
+		}
+	})
+}
+
+func TestIntegrationMCPUpdateExpenseParticipantSettlement(t *testing.T) {
+	db := testdb.Open(t)
+	ctx := context.Background()
+	svc := newExpenseService(db)
+
+	payerID := createTestUser(t, db, "mcp-expense-payer", auth.RoleMember)
+	friendID := createTestUser(t, db, "mcp-friend", auth.RoleMember)
+
+	created := mustCreateExpense(t, ctx, svc, db, payerID, &nazobuv1.CreateExpenseRequest{
+		Title: "打ち上げ", OccurredOn: "2026-07-20",
+		Participants: []*nazobuv1.ExpenseParticipantInput{{UserId: friendID, Amount: 1000}},
+	})
+
+	ts := newMCPTestServer(t, db)
+
+	// settledCountOf は payer セッションで get_expense を呼び、精算済み人数を返す。
+	writeSession := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, payerID, "read write"))
+	settledCountOf := func(t *testing.T) int32 {
+		t.Helper()
+		res, err := writeSession.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "get_expense",
+			Arguments: map[string]any{"expense_id": created.Id},
+		})
+		if err != nil {
+			t.Fatalf("get_expense に失敗: %v", err)
+		}
+		var out struct {
+			Expense struct {
+				SettledCount int32 `json:"settled_count"`
+			} `json:"expense"`
+		}
+		unmarshalStructuredContent(t, res, &out)
+		return out.Expense.SettledCount
+	}
+
+	t.Run("精算済み ⇔ 未精算をトグルできる", func(t *testing.T) {
+		// 未精算 → 精算済み。
+		res, err := writeSession.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "update_expense_participant_settlement",
+			Arguments: map[string]any{"expense_id": created.Id, "user_id": friendID, "settled": true},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if res.IsError {
+			t.Fatalf("ツールがエラーを返した: %+v", res.Content)
+		}
+		var out struct {
+			Expense struct {
+				SettledCount int32 `json:"settled_count"`
+			} `json:"expense"`
+		}
+		unmarshalStructuredContent(t, res, &out)
+		if out.Expense.SettledCount != 1 {
+			t.Errorf("精算後の settled_count = %d, want 1", out.Expense.SettledCount)
+		}
+		if got := settledCountOf(t); got != 1 {
+			t.Errorf("get_expense の settled_count = %d, want 1", got)
+		}
+
+		// 精算済み → 未精算。
+		res, err = writeSession.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "update_expense_participant_settlement",
+			Arguments: map[string]any{"expense_id": created.Id, "user_id": friendID, "settled": false},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if res.IsError {
+			t.Fatalf("ツールがエラーを返した: %+v", res.Content)
+		}
+		if got := settledCountOf(t); got != 0 {
+			t.Errorf("未精算に戻した後の settled_count = %d, want 0", got)
+		}
+	})
+
+	t.Run("read のみのトークンでは write スコープ不足でエラー", func(t *testing.T) {
+		readSession := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, payerID, "read"))
+		res, err := readSession.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "update_expense_participant_settlement",
+			Arguments: map[string]any{"expense_id": created.Id, "user_id": friendID, "settled": true},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if !res.IsError {
+			t.Fatal("write スコープ無しで成功してしまった")
+		}
+		if text := mcpResultText(t, res); !strings.Contains(text, "write") {
+			t.Errorf("エラーメッセージに write スコープの言及が無い: %s", text)
+		}
+	})
 }
