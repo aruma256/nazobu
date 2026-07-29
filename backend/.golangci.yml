@@ -1,0 +1,13 @@
+# golangci-lint v2 系の設定。CI は golangci/golangci-lint-action@v9 が
+# working-directory: backend で実行するため、このファイルが読まれる。
+version: "2"
+
+# gofmt は既定の linter に含まれず、v2 では linters ではなく formatters に属する。
+# 有効化すると golangci-lint run で未整形を検出でき、golangci-lint fmt で一括整形できる。
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    paths:
+      # buf / sqlc の生成物。整形は生成側の責務なので対象外にする。
+      - internal/gen
