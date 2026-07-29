@@ -152,6 +152,10 @@ func (e *flowEnv) obtainCode(t *testing.T, state string) string {
 	if got := loc.Query().Get("state"); got != state {
 		t.Errorf("state = %q, want %q", got, state)
 	}
+	// RFC 9207: 成功レスポンスにも issuer を含める。
+	if got := loc.Query().Get("iss"); got != testBaseURL {
+		t.Errorf("iss = %q, want %q", got, testBaseURL)
+	}
 	code := loc.Query().Get("code")
 	if code == "" {
 		t.Fatalf("Location に code が無い: %s", loc)
@@ -367,6 +371,10 @@ func TestIntegrationOAuthDenyAndPKCEFailure(t *testing.T) {
 	loc, _ := url.Parse(postResp.Header.Get("Location"))
 	if loc.Query().Get("error") != "access_denied" {
 		t.Errorf("拒否時の redirect = %q", postResp.Header.Get("Location"))
+	}
+	// RFC 9207: エラーレスポンスにも issuer を含める。
+	if got := loc.Query().Get("iss"); got != testBaseURL {
+		t.Errorf("拒否時の iss = %q, want %q", got, testBaseURL)
 	}
 }
 

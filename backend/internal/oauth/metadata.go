@@ -18,6 +18,10 @@ type authorizationServerMetadata struct {
 	TokenEndpointAuthMethodsSupported []string `json:"token_endpoint_auth_methods_supported"`
 	ScopesSupported                   []string `json:"scopes_supported"`
 	ClientIDMetadataDocumentSupported bool     `json:"client_id_metadata_document_supported"`
+	// RFC 9207。認可レスポンスに iss を必ず付ける旨を広告する。
+	// MCP 2026-07-28 でクライアント側の iss 検証が MUST になったため、
+	// これを出さないとクライアントは iss を検証できない。
+	AuthorizationResponseIssParameterSupported bool `json:"authorization_response_iss_parameter_supported"`
 }
 
 // protectedResourceMetadata は RFC 9728 の Protected Resource Metadata。
@@ -31,15 +35,16 @@ type protectedResourceMetadata struct {
 
 func (s *Server) HandleAuthorizationServerMetadata(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, authorizationServerMetadata{
-		Issuer:                            s.baseURL,
-		AuthorizationEndpoint:             s.baseURL + "/oauth/authorize",
-		TokenEndpoint:                     s.baseURL + "/oauth/token",
-		ResponseTypesSupported:            []string{"code"},
-		GrantTypesSupported:               []string{"authorization_code", "refresh_token"},
-		CodeChallengeMethodsSupported:     []string{"S256"},
-		TokenEndpointAuthMethodsSupported: []string{"none"},
-		ScopesSupported:                   []string{ScopeRead, ScopeWrite},
-		ClientIDMetadataDocumentSupported: true,
+		Issuer:                                     s.baseURL,
+		AuthorizationEndpoint:                      s.baseURL + "/oauth/authorize",
+		TokenEndpoint:                              s.baseURL + "/oauth/token",
+		ResponseTypesSupported:                     []string{"code"},
+		GrantTypesSupported:                        []string{"authorization_code", "refresh_token"},
+		CodeChallengeMethodsSupported:              []string{"S256"},
+		TokenEndpointAuthMethodsSupported:          []string{"none"},
+		ScopesSupported:                            []string{ScopeRead, ScopeWrite},
+		ClientIDMetadataDocumentSupported:          true,
+		AuthorizationResponseIssParameterSupported: true,
 	})
 }
 

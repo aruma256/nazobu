@@ -50,7 +50,7 @@
 
 | パス | 役割 |
 |---|---|
-| `/.well-known/oauth-authorization-server` | RFC 8414 メタデータ。`client_id_metadata_document_supported: true` と `token_endpoint_auth_methods_supported: ["none"]` の両方を広告すると Claude が CIMD 方式を選ぶ |
+| `/.well-known/oauth-authorization-server` | RFC 8414 メタデータ。`client_id_metadata_document_supported: true` と `token_endpoint_auth_methods_supported: ["none"]` の両方を広告すると Claude が CIMD 方式を選ぶ。`authorization_response_iss_parameter_supported: true` も広告する |
 | `/.well-known/oauth-protected-resource` | RFC 9728 メタデータ。`resource` は Claude に入力する MCP URL と完全一致が必要 |
 | `GET/POST /oauth/authorize` | CIMD の取得・検証 → 同意画面（backend 描画の素の HTML）。未ログインなら Discord ログインへ `next` 付きで往復 |
 | `POST /oauth/token` | `authorization_code` / `refresh_token` grant（form-urlencoded） |
@@ -65,10 +65,11 @@
 - コード・トークンは sessions と同様 SHA-256 hash のみ DB 保存（`oauth_authorization_codes` / `oauth_tokens`）
 - redirect_uri は CIMD の登録値と完全一致。例外としてループバック（`http://localhost` / `http://127.0.0.1`）のみ RFC 8252 7.3 に従い port を無視して比較する（Claude Code がセッションごとに ephemeral port を使うため）。同意画面ではループバック宛に警告を表示する
 - CIMD 取得は https のみ・プライベートアドレス拒否・64KB 上限・5 分キャッシュ
+- 認可レスポンス（成功・エラーとも）に issuer を示す `iss` を付ける（RFC 9207、mix-up attack 対策）。MCP 2026-07-28 でクライアント側の `iss` 検証が MUST になったため、メタデータでも `authorization_response_iss_parameter_supported: true` を広告する
 
 ## テスト
 
-- ユニット: CIMD 検証 / redirect_uri 照合 / PKCE / authorize パラメータ（scope 既定値・未知 scope 拒否を含む）/ メタデータ形状（`internal/oauth`）
+- ユニット: CIMD 検証 / redirect_uri 照合 / PKCE / authorize パラメータ（scope 既定値・未知 scope 拒否を含む）/ メタデータ形状 / エラー認可レスポンスの `iss`（`internal/oauth`）
 - 統合（実 MySQL）: 認可コードフロー一式（承認・拒否・PKCE 失敗・コード再利用・ローテーション・期限切れ）と、go-sdk クライアントによる `/mcp` 経由のツール呼び出し（read 系 + write 系の正常系 / 部分更新の維持・クリア / write scope 不足 / ロール・立替者権限の拒否）（`internal/oauth` / `internal/server/mcp_integration_test.go`）
 
 ## 未対応・今後

@@ -102,7 +102,7 @@ func (s *Server) HandleAuthorizeGet(w http.ResponseWriter, r *http.Request) {
 	}
 	params, aerr := parseAuthorizeParams(q, s.ResourceURL())
 	if aerr != nil {
-		redirectAuthorizeError(w, r, redirectURI, params.state, aerr)
+		s.redirectAuthorizeError(w, r, redirectURI, params.state, aerr)
 		return
 	}
 
@@ -169,12 +169,12 @@ func (s *Server) HandleAuthorizePost(w http.ResponseWriter, r *http.Request) {
 	form.Set("code_challenge_method", "S256")
 	params, aerr := parseAuthorizeParams(form, s.ResourceURL())
 	if aerr != nil {
-		redirectAuthorizeError(w, r, redirectURI, params.state, aerr)
+		s.redirectAuthorizeError(w, r, redirectURI, params.state, aerr)
 		return
 	}
 
 	if form.Get("action") != "approve" {
-		redirectAuthorizeError(w, r, redirectURI, params.state, &authorizeError{"access_denied", "ユーザーが拒否した"})
+		s.redirectAuthorizeError(w, r, redirectURI, params.state, &authorizeError{"access_denied", "ユーザーが拒否した"})
 		return
 	}
 
@@ -200,6 +200,8 @@ func (s *Server) HandleAuthorizePost(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, buildRedirectURL(redirectURI, url.Values{
 		"code":  {code},
 		"state": {params.state},
+		// RFC 9207: 認可レスポンスには issuer を必ず含める（mix-up attack 対策）。
+		"iss": {s.baseURL},
 	}), http.StatusFound)
 }
 
@@ -227,8 +229,11 @@ func (s *Server) resolveClientAndRedirect(w http.ResponseWriter, r *http.Request
 	return meta, redirectURI, true
 }
 
-func redirectAuthorizeError(w http.ResponseWriter, r *http.Request, redirectURI, state string, aerr *authorizeError) {
-	v := url.Values{"error": {aerr.code}}
+// redirectAuthorizeError は redirect_uri へ error= 付きで戻す。
+// RFC 9207 は成功・エラーどちらの認可レスポンスにも iss を要求するため、
+// issuer を参照できるよう Server のメソッドにしている。
+func (s *Server) redirectAuthorizeError(w http.ResponseWriter, r *http.Request, redirectURI, state string, aerr *authorizeError) {
+	v := url.Values{"error": {aerr.code}, "iss": {s.baseURL}}
 	if aerr.description != "" {
 		v.Set("error_description", aerr.description)
 	}
@@ -275,10 +280,10 @@ type consentView struct {
 	LoopbackRedirect bool
 	Scope            string
 	// ScopeWrite は write scope を含むか（同意画面の「許可される操作」の出し分け用）。
-	ScopeWrite bool
-	State      string
-	CodeChallenge    string
-	CSRFToken        string
+	ScopeWrite    bool
+	State         string
+	CodeChallenge string
+	CSRFToken     string
 }
 
 var consentTemplate = template.Must(template.New("consent").Parse(`<!DOCTYPE html>

@@ -145,6 +145,10 @@ func TestMetadataHandlers(t *testing.T) {
 		if len(pkce) != 1 || pkce[0] != "S256" {
 			t.Errorf("code_challenge_methods_supported = %v", pkce)
 		}
+		// RFC 9207。MCP 2026-07-28 のクライアントはこれを見て iss 検証を行う。
+		if m["authorization_response_iss_parameter_supported"] != true {
+			t.Error("authorization_response_iss_parameter_supported が true でない")
+		}
 		if m["issuer"] != "https://nazobu.example.com" {
 			t.Errorf("issuer = %v", m["issuer"])
 		}
@@ -212,5 +216,45 @@ func TestBuildRedirectURL(t *testing.T) {
 	q := u.Query()
 	if q.Get("keep") != "1" || q.Get("code") != "c0de" || q.Get("state") != "st" {
 		t.Errorf("buildRedirectURL = %q", got)
+	}
+}
+
+// RFC 9207 はエラーの認可レスポンスにも iss を要求する。
+// state 無しのケースでも iss だけは必ず付くことを確認する。
+func TestRedirectAuthorizeErrorIncludesIss(t *testing.T) {
+	const issuer = "https://nazobu.example.com"
+	s := NewServer(nil, http.DefaultClient, issuer, true)
+
+	for _, tt := range []struct {
+		name  string
+		state string
+	}{
+		{"state あり", "xyz"},
+		{"state なし", ""},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, "/oauth/authorize", nil)
+			s.redirectAuthorizeError(rec, req, "https://claude.ai/callback", tt.state,
+				&authorizeError{"access_denied", "ユーザーが拒否した"})
+
+			if rec.Code != http.StatusFound {
+				t.Fatalf("status = %d, want 302", rec.Code)
+			}
+			u, err := url.Parse(rec.Header().Get("Location"))
+			if err != nil {
+				t.Fatalf("Location の解析に失敗: %v", err)
+			}
+			q := u.Query()
+			if q.Get("iss") != issuer {
+				t.Errorf("iss = %q, want %q", q.Get("iss"), issuer)
+			}
+			if q.Get("error") != "access_denied" {
+				t.Errorf("error = %q", q.Get("error"))
+			}
+			if q.Get("state") != tt.state {
+				t.Errorf("state = %q, want %q", q.Get("state"), tt.state)
+			}
+		})
 	}
 }
