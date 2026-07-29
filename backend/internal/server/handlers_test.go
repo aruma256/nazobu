@@ -22,10 +22,10 @@ func TestSanitizeNextPath(t *testing.T) {
 		{"", ""},
 		{"/events", "/events"},
 		{"/events?id=1", "/events?id=1"},
-		{"//evil.example.com/", ""},        // プロトコル相対 URL の弾き
-		{"https://evil.example.com/", ""},  // 絶対 URL の弾き
-		{"events", ""},                     // / 始まりでない
-		{"javascript:alert(1)", ""},        // スキーマ付き
+		{"//evil.example.com/", ""},       // プロトコル相対 URL の弾き
+		{"https://evil.example.com/", ""}, // 絶対 URL の弾き
+		{"events", ""},                    // / 始まりでない
+		{"javascript:alert(1)", ""},       // スキーマ付き
 		{"/", "/"},
 	}
 	for _, c := range cases {
