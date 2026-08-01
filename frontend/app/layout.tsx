@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -14,6 +14,16 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "謎部",
+  // PWA インストール時のホーム画面表示名
+  appleWebApp: {
+    title: "謎部",
+    capable: true,
+  },
+};
+
+export const viewport: Viewport = {
+  // AppHeader（白 + backdrop-blur）に合わせてステータスバーも白にする
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
