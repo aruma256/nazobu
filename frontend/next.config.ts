@@ -3,6 +3,22 @@ import type { NextConfig } from "next";
 const backendURL = process.env.BACKEND_URL ?? "http://localhost:8080";
 
 const nextConfig: NextConfig = {
+  // Service Worker はブラウザに溜め込ませない。キャッシュされると更新が
+  // いつまでも反映されず、古い sw.js が生き残ってしまう。
+  async headers() {
+    return [
+      {
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate",
+          },
+        ],
+      },
+    ];
+  },
+
   // Connect RPC (/nazobu.v1.*) と /auth/* は backend に proxy する。
   // これにより frontend と同一 origin で扱えるので、Cookie まわりがシンプルになる。
   async rewrites() {

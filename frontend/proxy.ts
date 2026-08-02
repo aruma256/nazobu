@@ -26,8 +26,12 @@ export function proxy(request: NextRequest) {
 }
 
 // session cookie の有無だけ見るので RPC, 認証エンドポイント, Next 内部, 静的ファイルは除外する。
+// 静的ファイルは拡張子付きパス（`.*\..*`）でまとめて除外する。ここには
+// manifest.webmanifest / sw.js / icon-*.png / offline.html / favicon.ico が含まれる。
+// manifest とそのアイコンはブラウザが Cookie なしで取りに来るため、除外しないと
+// /login へリダイレクトされてしまい、PWA のインストール条件を満たせない。
 export const config = {
   matcher: [
-    "/((?!login|auth|oauth|mcp|\\.well-known|nazobu\\.v1|_next/static|_next/image|favicon\\.ico).*)",
+    "/((?!login|auth|oauth|mcp|\\.well-known|nazobu\\.v1|_next/static|_next/image|.*\\..*).*)",
   ],
 };

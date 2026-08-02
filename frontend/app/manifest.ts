@@ -6,7 +6,11 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "謎部",
     description: "謎解き仲間のための参加・精算管理",
     lang: "ja",
+    // id を明示しないと start_url から推定される。将来 start_url を変えたときに
+    // 別アプリ扱いされない（インストール済みの識別子が変わらない）ようにしておく。
+    id: "/",
     start_url: "/",
+    scope: "/",
     display: "standalone",
     // zinc-50（アプリ背景）と白（ヘッダー）に合わせる
     background_color: "#fafafa",

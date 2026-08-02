@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>オフライン - 謎部</title>
+    <!--
+      Service Worker がオフライン時に返す代替ページ。
+      Next.js のビルド成果物に依存させたくないので、単体で完結する静的 HTML にしている。
+      色は app/globals.css と揃える（zinc-50 / zinc-900 / zinc-200 / emerald-700）。
+    -->
+    <style>
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        background: #fafafa;
+        color: #18181b;
+        font-family:
+          system-ui,
+          -apple-system,
+          "Hiragino Kaku Gothic ProN",
+          "Noto Sans JP",
+          sans-serif;
+        line-height: 1.7;
+      }
+      main {
+        width: 100%;
+        max-width: 24rem;
+        padding: 1.5rem;
+        border: 1px solid #e4e4e7;
+        border-radius: 1rem;
+        background: #fff;
+        text-align: center;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 600;
+      }
+      p {
+        margin: 0.75rem 0 0;
+        font-size: 0.875rem;
+        color: #52525b;
+      }
+      button {
+        margin-top: 1.5rem;
+        width: 100%;
+        height: 2.75rem;
+        border: 0;
+        border-radius: 0.5rem;
+        background: #047857;
+        color: #fff;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button:active {
+        background: #064e3b;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>オフラインです</h1>
+      <p>ネットワークに接続できませんでした。接続を確認してから再読み込みしてください。</p>
+      <button type="button" onclick="location.reload()">再読み込み</button>
+    </main>
+  </body>
+</html>
