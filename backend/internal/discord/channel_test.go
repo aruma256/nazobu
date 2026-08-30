@@ -11,18 +11,26 @@ import (
 
 func TestCreateSpoilerChannel(t *testing.T) {
 	var got createChannelRequest
+	botUserRequests := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost || r.URL.Path != "/guilds/guild-1/channels" {
-			t.Errorf("request = %s %s", r.Method, r.URL.Path)
-		}
 		if r.Header.Get("Authorization") != "Bot test-token" {
 			t.Errorf("Authorization header が不正")
 		}
-		if err := json.NewDecoder(r.Body).Decode(&got); err != nil {
-			t.Fatalf("request JSON の decode に失敗: %v", err)
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/users/@me":
+			botUserRequests++
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"id":"bot-1"}`))
+		case r.Method == http.MethodPost && r.URL.Path == "/guilds/guild-1/channels":
+			if err := json.NewDecoder(r.Body).Decode(&got); err != nil {
+				t.Fatalf("request JSON の decode に失敗: %v", err)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"id":"channel-1"}`))
+		default:
+			t.Errorf("予期しない request = %s %s", r.Method, r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
 		}
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"id":"channel-1"}`))
 	}))
 	defer server.Close()
 
@@ -33,7 +41,7 @@ func TestCreateSpoilerChannel(t *testing.T) {
 		guildID:    "guild-1",
 		categoryID: "category-1",
 	}
-	channelID, err := client.CreateSpoilerChannel(context.Background(), "20260830-テスト公演", "event event-1", []string{"user-2", "user-1", "user-1"})
+	channelID, err := client.CreateSpoilerChannel(context.Background(), "20260830-テスト公演", "event event-1", []string{"user-2", "bot-1", "user-1", "user-1"})
 	if err != nil {
 		t.Fatalf("CreateSpoilerChannel に失敗: %v", err)
 	}
@@ -45,12 +53,71 @@ func TestCreateSpoilerChannel(t *testing.T) {
 	}
 	wantOverwrites := []permissionOverwrite{
 		{ID: "guild-1", Type: 0, Allow: "0", Deny: "1024"},
+		{ID: "bot-1", Type: 1, Allow: "1024", Deny: "0"},
 		{ID: "user-1", Type: 1, Allow: "1024", Deny: "0"},
 		{ID: "user-2", Type: 1, Allow: "1024", Deny: "0"},
 	}
 	if !slices.Equal(got.PermissionOverwrites, wantOverwrites) {
 		t.Errorf("permission_overwrites = %+v, want %+v", got.PermissionOverwrites, wantOverwrites)
 	}
+	if botUserRequests != 1 {
+		t.Errorf("bot user 取得回数 = %d, want 1", botUserRequests)
+	}
+}
+
+func TestCurrentBotUserID(t *testing.T) {
+	t.Run("成功した id をキャッシュする", func(t *testing.T) {
+		requests := 0
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requests++
+			if r.Method != http.MethodGet || r.URL.Path != "/users/@me" {
+				t.Errorf("request = %s %s", r.Method, r.URL.Path)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"id":" bot-1 "}`))
+		}))
+		defer server.Close()
+
+		client := &Client{httpClient: server.Client(), apiBaseURL: server.URL, botToken: "test-token"}
+		for range 2 {
+			got, err := client.currentBotUserID(context.Background())
+			if err != nil {
+				t.Fatalf("currentBotUserID に失敗: %v", err)
+			}
+			if got != "bot-1" {
+				t.Errorf("bot user id = %q, want bot-1", got)
+			}
+		}
+		if requests != 1 {
+			t.Errorf("request 数 = %d, want 1", requests)
+		}
+	})
+
+	t.Run("id 欠落はキャッシュせず再試行する", func(t *testing.T) {
+		requests := 0
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			requests++
+			w.Header().Set("Content-Type", "application/json")
+			if requests == 1 {
+				_, _ = w.Write([]byte(`{}`))
+				return
+			}
+			_, _ = w.Write([]byte(`{"id":"bot-1"}`))
+		}))
+		defer server.Close()
+
+		client := &Client{httpClient: server.Client(), apiBaseURL: server.URL, botToken: "test-token"}
+		if _, err := client.currentBotUserID(context.Background()); err == nil {
+			t.Fatal("id 欠落で err = nil")
+		}
+		got, err := client.currentBotUserID(context.Background())
+		if err != nil {
+			t.Fatalf("再試行に失敗: %v", err)
+		}
+		if got != "bot-1" || requests != 2 {
+			t.Errorf("bot user id = %q, requests = %d", got, requests)
+		}
+	})
 }
 
 func TestGrantMembersViewPreservesExistingPermissions(t *testing.T) {

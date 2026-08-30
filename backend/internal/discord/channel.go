@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -29,6 +30,9 @@ type Client struct {
 	botToken   string
 	guildID    string
 	categoryID string
+
+	botUserMu sync.Mutex
+	botUserID string
 }
 
 // NewClient は本番 Discord API 用の client を返す。
@@ -78,19 +82,35 @@ type channelResponse struct {
 	PermissionOverwrites []permissionOverwrite `json:"permission_overwrites"`
 }
 
+type userResponse struct {
+	ID string `json:"id"`
+}
+
 // CreateSpoilerChannel は @everyone から隠し、指定メンバーだけが閲覧できる
 // テキストチャンネルを設定済みカテゴリ配下に作成する。
 func (c *Client) CreateSpoilerChannel(ctx context.Context, name, topic string, memberIDs []string) (string, error) {
 	if !c.Configured() {
 		return "", fmt.Errorf("Discord ネタバレチャンネル設定が未完了")
 	}
+	botUserID, err := c.currentBotUserID(ctx)
+	if err != nil {
+		return "", fmt.Errorf("Discord bot user の取得に失敗: %w", err)
+	}
 	members := uniqueSorted(memberIDs)
-	overwrites := make([]permissionOverwrite, 0, len(members)+1)
+	overwrites := make([]permissionOverwrite, 0, len(members)+2)
 	// @everyone ロールの id は guild id と同じ。VIEW_CHANNEL だけを明示的に拒否する。
 	overwrites = append(overwrites, permissionOverwrite{
 		ID: c.guildID, Type: 0, Allow: "0", Deny: fmt.Sprint(viewChannel),
 	})
+	// @everyone の拒否は bot にも適用される。作成後の権限追加や補償削除を行えるよう、
+	// bot 自身には member overwrite で VIEW_CHANNEL を明示的に許可する。
+	overwrites = append(overwrites, permissionOverwrite{
+		ID: botUserID, Type: 1, Allow: fmt.Sprint(viewChannel), Deny: "0",
+	})
 	for _, memberID := range members {
+		if memberID == botUserID {
+			continue
+		}
 		overwrites = append(overwrites, permissionOverwrite{
 			ID: memberID, Type: 1, Allow: fmt.Sprint(viewChannel), Deny: "0",
 		})
@@ -111,6 +131,28 @@ func (c *Client) CreateSpoilerChannel(ctx context.Context, name, topic string, m
 		return "", fmt.Errorf("Discord のチャンネル作成応答に id が無い")
 	}
 	return created.ID, nil
+}
+
+// currentBotUserID は認証中の bot user ID を返す。チャンネル作成のたびに
+// Discord API へ問い合わせないよう成功した値だけを client 内にキャッシュする。
+// 取得失敗はキャッシュせず、次の操作で再試行できるようにする。
+func (c *Client) currentBotUserID(ctx context.Context) (string, error) {
+	c.botUserMu.Lock()
+	defer c.botUserMu.Unlock()
+	if c.botUserID != "" {
+		return c.botUserID, nil
+	}
+
+	var current userResponse
+	if err := c.doJSON(ctx, http.MethodGet, "/users/@me", nil, &current); err != nil {
+		return "", err
+	}
+	current.ID = strings.TrimSpace(current.ID)
+	if current.ID == "" {
+		return "", fmt.Errorf("Discord の bot user 応答に id が無い")
+	}
+	c.botUserID = current.ID
+	return c.botUserID, nil
 }
 
 // GrantMembersView は指定メンバーの既存 overwrite を保ったまま VIEW_CHANNEL を追加する。
