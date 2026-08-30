@@ -64,13 +64,13 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	eventService := newEventService(dbc)
 	eventPath, eventHandler := nazobuv1connect.NewEventServiceHandler(eventService)
 	mux.Handle(eventPath, eventHandler)
-	discordChannelClient := discord.NewClient(
+	discordClient := discord.NewClient(
 		srv.httpClient,
 		cfg.Discord.BotToken,
 		cfg.Discord.GuildID,
 		cfg.Discord.SpoilerCategoryID,
 	)
-	ticketService := newTicketServiceWithDiscord(dbc, discordChannelClient)
+	ticketService := newTicketServiceWithDiscord(dbc, discordClient)
 	ticketPath, ticketHandler := nazobuv1connect.NewTicketServiceHandler(ticketService)
 	mux.Handle(ticketPath, ticketHandler)
 	expenseService := newExpenseService(dbc)
@@ -98,12 +98,12 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	// リマインド通知ワーカー。webhook URL 未設定（ローカル開発の既定）なら起動しない。
-	if cfg.Discord.WebhookURL != "" {
-		go reminder.NewWorker(dbc, srv.httpClient, cfg.Discord.WebhookURL, cfg.FrontendURL).Run(ctx)
+	// リマインド通知ワーカー。bot または投稿先未設定（ローカル開発の既定）なら起動しない。
+	if discordClient.MessageConfigured(cfg.Discord.ReminderChannelID) {
+		go reminder.NewWorker(dbc, discordClient, cfg.Discord.ReminderChannelID, cfg.FrontendURL).Run(ctx)
 		fmt.Println("リマインド通知ワーカーを起動")
 	} else {
-		fmt.Println("DISCORD_WEBHOOK_URL 未設定のためリマインド通知ワーカーは起動しない")
+		fmt.Println("DISCORD_BOT_TOKEN または DISCORD_REMINDER_CHANNEL_ID 未設定のためリマインド通知ワーカーは起動しない")
 	}
 
 	errCh := make(chan error, 1)

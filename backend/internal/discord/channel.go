@@ -104,7 +104,7 @@ func (c *Client) CreateSpoilerChannel(ctx context.Context, name, topic string, m
 		PermissionOverwrites: overwrites,
 	}
 	var created channelResponse
-	if err := c.doJSON(ctx, http.MethodPost, "/guilds/"+url.PathEscape(c.guildID)+"/channels", payload, &created); err != nil {
+	if err := c.doAuditJSON(ctx, http.MethodPost, "/guilds/"+url.PathEscape(c.guildID)+"/channels", payload, &created); err != nil {
 		return "", err
 	}
 	if created.ID == "" {
@@ -158,7 +158,7 @@ func (c *Client) GrantMembersView(ctx context.Context, channelID string, memberI
 
 		payload := permissionOverwrite{Type: 1, Allow: allow.String(), Deny: deny.String()}
 		path := "/channels/" + url.PathEscape(channelID) + "/permissions/" + url.PathEscape(memberID)
-		if err := c.doJSON(ctx, http.MethodPut, path, payload, nil); err != nil {
+		if err := c.doAuditJSON(ctx, http.MethodPut, path, payload, nil); err != nil {
 			return err
 		}
 	}
@@ -170,10 +170,18 @@ func (c *Client) DeleteChannel(ctx context.Context, channelID string) error {
 	if !c.Configured() {
 		return fmt.Errorf("Discord ネタバレチャンネル設定が未完了")
 	}
-	return c.doJSON(ctx, http.MethodDelete, "/channels/"+url.PathEscape(channelID), nil, nil)
+	return c.doAuditJSON(ctx, http.MethodDelete, "/channels/"+url.PathEscape(channelID), nil, nil)
 }
 
 func (c *Client) doJSON(ctx context.Context, method, path string, payload, out any) error {
+	return c.doJSONWithAuditReason(ctx, method, path, payload, out, "")
+}
+
+func (c *Client) doAuditJSON(ctx context.Context, method, path string, payload, out any) error {
+	return c.doJSONWithAuditReason(ctx, method, path, payload, out, "nazobu spoiler channel")
+}
+
+func (c *Client) doJSONWithAuditReason(ctx context.Context, method, path string, payload, out any, auditReason string) error {
 	var body io.Reader
 	if payload != nil {
 		encoded, err := json.Marshal(payload)
@@ -190,8 +198,10 @@ func (c *Client) doJSON(ctx context.Context, method, path string, payload, out a
 		return fmt.Errorf("Discord request の生成に失敗: %w", err)
 	}
 	req.Header.Set("Authorization", "Bot "+c.botToken)
-	req.Header.Set("User-Agent", "nazobu/discord-channel")
-	req.Header.Set("X-Audit-Log-Reason", "nazobu spoiler channel")
+	req.Header.Set("User-Agent", "nazobu/discord")
+	if auditReason != "" {
+		req.Header.Set("X-Audit-Log-Reason", auditReason)
+	}
 	if payload != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}

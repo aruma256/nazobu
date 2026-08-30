@@ -12,9 +12,9 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"net/http"
 	"time"
 
+	"github.com/aruma256/nazobu/backend/internal/discord"
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
 )
 
@@ -43,12 +43,12 @@ type Worker struct {
 	now func() time.Time
 }
 
-// NewWorker は本番用の Worker を組み立てる。webhookURL の投稿先へ client で POST する。
+// NewWorker は本番用の Worker を組み立てる。Discord bot で channelID へ投稿する。
 // frontendURL はリマインドに載せるチケット詳細リンクのベース URL。
-func NewWorker(db *sql.DB, client *http.Client, webhookURL, frontendURL string) *Worker {
+func NewWorker(db *sql.DB, client *discord.Client, channelID, frontendURL string) *Worker {
 	return &Worker{
 		q:           queries.New(db),
-		poster:      &discordWebhook{url: webhookURL, client: client},
+		poster:      &discordBotPoster{client: client, channelID: channelID},
 		frontendURL: frontendURL,
 		now:         func() time.Time { return time.Now().In(jst) },
 	}

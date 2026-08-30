@@ -64,10 +64,10 @@ services:
       DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
       DISCORD_REDIRECT_URL: ${DISCORD_REDIRECT_URL:-http://localhost:3000/auth/discord/callback}
-      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
       DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
       DISCORD_GUILD_ID: ${DISCORD_GUILD_ID:-}
       DISCORD_SPOILER_CATEGORY_ID: ${DISCORD_SPOILER_CATEGORY_ID:-}
+      DISCORD_REMINDER_CHANNEL_ID: ${DISCORD_REMINDER_CHANNEL_ID:-}
       # 統合テスト用 (mysql-test)。TEST_DB_HOST が空だと統合テストは skip される。
       # TEST_DB_NAME は基底名で、実際にはパッケージごとの suffix が付く
       TEST_DB_HOST: mysql-test
