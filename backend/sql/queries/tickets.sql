@@ -50,6 +50,7 @@ ORDER BY tp.ticket_id, tp.created_at ASC;
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
        e.doors_open_minutes_before AS event_doors_open_minutes_before,
+       e.discord_spoiler_channel_id,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.unregistered_participants_count,
        t.meeting_place,
@@ -59,6 +60,17 @@ FROM tickets t
 JOIN events e  ON e.id  = t.event_id
 JOIN users  pu ON pu.id = t.purchased_by
 WHERE t.id = ?;
+
+-- name: ListTicketParticipantDiscordIdentities :many
+-- Discord ネタバレチャンネルの権限付与用。identity の欠落を検出できるよう LEFT JOIN にする。
+SELECT tp.user_id,
+       u.display_name,
+       ui.subject AS discord_subject
+FROM ticket_participants tp
+JOIN users u ON u.id = tp.user_id
+LEFT JOIN user_identities ui ON ui.user_id = tp.user_id AND ui.provider = 'discord'
+WHERE tp.ticket_id = ?
+ORDER BY tp.created_at ASC, tp.user_id ASC;
 
 -- name: ListTicketParticipantsByTicketID :many
 -- ticket 詳細用。参加者の user_id / 名前 / 精算済みフラグを created_at 昇順で返す。

@@ -24,7 +24,10 @@ type DiscordConfig struct {
 	ClientSecret string
 	RedirectURL  string
 	// リマインド通知の投稿先 webhook URL。空ならリマインドワーカーは起動しない。
-	WebhookURL string
+	WebhookURL        string
+	BotToken          string
+	GuildID           string
+	SpoilerCategoryID string
 }
 
 func Load() Config {
@@ -41,10 +44,13 @@ func Load() Config {
 			Name:     env("DB_NAME", "nazobu"),
 		},
 		Discord: DiscordConfig{
-			ClientID:     env("DISCORD_CLIENT_ID", ""),
-			ClientSecret: env("DISCORD_CLIENT_SECRET", ""),
-			RedirectURL:  env("DISCORD_REDIRECT_URL", "http://localhost:3000/auth/discord/callback"),
-			WebhookURL:   env("DISCORD_WEBHOOK_URL", ""),
+			ClientID:          env("DISCORD_CLIENT_ID", ""),
+			ClientSecret:      env("DISCORD_CLIENT_SECRET", ""),
+			RedirectURL:       env("DISCORD_REDIRECT_URL", "http://localhost:3000/auth/discord/callback"),
+			WebhookURL:        env("DISCORD_WEBHOOK_URL", ""),
+			BotToken:          env("DISCORD_BOT_TOKEN", ""),
+			GuildID:           env("DISCORD_GUILD_ID", ""),
+			SpoilerCategoryID: env("DISCORD_SPOILER_CATEGORY_ID", ""),
 		},
 	}
 }

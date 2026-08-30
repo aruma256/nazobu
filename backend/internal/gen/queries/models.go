@@ -18,6 +18,7 @@ type Event struct {
 	DoorsOpenMinutesBefore     sql.NullInt32
 	EntryDeadlineMinutesBefore sql.NullInt32
 	ExpectedDurationMinutes    int32
+	DiscordSpoilerChannelID    sql.NullString
 	CreatedAt                  time.Time
 	UpdatedAt                  time.Time
 }

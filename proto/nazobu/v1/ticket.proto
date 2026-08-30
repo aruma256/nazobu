@@ -32,6 +32,9 @@ service TicketService {
   // UpdateTicketParticipantSettlement は参加者の精算状態を切り替える。
   // admin もしくは立替者のみ実行可能。立替者本人に対しては実行不可。
   rpc UpdateTicketParticipantSettlement(UpdateTicketParticipantSettlementRequest) returns (UpdateTicketParticipantSettlementResponse);
+  // GrantTicketSpoilerChannelAccess は event の Discord ネタバレチャンネルを必要に応じて作成し、
+  // 指定 ticket の現在の参加者へ閲覧権限を追加付与する。admin のみ実行可能。
+  rpc GrantTicketSpoilerChannelAccess(GrantTicketSpoilerChannelAccessRequest) returns (GrantTicketSpoilerChannelAccessResponse);
 }
 
 message ListTicketsRequest {}
@@ -85,6 +88,8 @@ message GetTicketResponse {
   repeated TicketParticipant participants = 2;
   // 現在ログイン中の user が編集権限を持つか（admin もしくは立替者）。
   bool can_edit = 3;
+  // Discord ネタバレチャンネル。未作成または Discord 設定が無い場合は空文字。
+  string discord_spoiler_channel_url = 4;
 }
 
 message TicketParticipant {
@@ -232,3 +237,13 @@ message UpdateTicketParticipantSettlementRequest {
 }
 
 message UpdateTicketParticipantSettlementResponse {}
+
+message GrantTicketSpoilerChannelAccessRequest {
+  string ticket_id = 1;
+}
+
+message GrantTicketSpoilerChannelAccessResponse {
+  string discord_channel_url = 1;
+  // この呼び出しでチャンネルを新規作成したか。
+  bool channel_created = 2;
+}

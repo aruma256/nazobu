@@ -330,9 +330,11 @@ type GetTicketResponse struct {
 	// ticket の参加者一覧。created_at 昇順。
 	Participants []*TicketParticipant `protobuf:"bytes,2,rep,name=participants,proto3" json:"participants,omitempty"`
 	// 現在ログイン中の user が編集権限を持つか（admin もしくは立替者）。
-	CanEdit       bool `protobuf:"varint,3,opt,name=can_edit,json=canEdit,proto3" json:"can_edit,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	CanEdit bool `protobuf:"varint,3,opt,name=can_edit,json=canEdit,proto3" json:"can_edit,omitempty"`
+	// Discord ネタバレチャンネル。未作成または Discord 設定が無い場合は空文字。
+	DiscordSpoilerChannelUrl string `protobuf:"bytes,4,opt,name=discord_spoiler_channel_url,json=discordSpoilerChannelUrl,proto3" json:"discord_spoiler_channel_url,omitempty"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *GetTicketResponse) Reset() {
@@ -384,6 +386,13 @@ func (x *GetTicketResponse) GetCanEdit() bool {
 		return x.CanEdit
 	}
 	return false
+}
+
+func (x *GetTicketResponse) GetDiscordSpoilerChannelUrl() string {
+	if x != nil {
+		return x.DiscordSpoilerChannelUrl
+	}
+	return ""
 }
 
 type TicketParticipant struct {
@@ -1431,6 +1440,103 @@ func (*UpdateTicketParticipantSettlementResponse) Descriptor() ([]byte, []int) {
 	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{19}
 }
 
+type GrantTicketSpoilerChannelAccessRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TicketId      string                 `protobuf:"bytes,1,opt,name=ticket_id,json=ticketId,proto3" json:"ticket_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GrantTicketSpoilerChannelAccessRequest) Reset() {
+	*x = GrantTicketSpoilerChannelAccessRequest{}
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GrantTicketSpoilerChannelAccessRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GrantTicketSpoilerChannelAccessRequest) ProtoMessage() {}
+
+func (x *GrantTicketSpoilerChannelAccessRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GrantTicketSpoilerChannelAccessRequest.ProtoReflect.Descriptor instead.
+func (*GrantTicketSpoilerChannelAccessRequest) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *GrantTicketSpoilerChannelAccessRequest) GetTicketId() string {
+	if x != nil {
+		return x.TicketId
+	}
+	return ""
+}
+
+type GrantTicketSpoilerChannelAccessResponse struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	DiscordChannelUrl string                 `protobuf:"bytes,1,opt,name=discord_channel_url,json=discordChannelUrl,proto3" json:"discord_channel_url,omitempty"`
+	// この呼び出しでチャンネルを新規作成したか。
+	ChannelCreated bool `protobuf:"varint,2,opt,name=channel_created,json=channelCreated,proto3" json:"channel_created,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *GrantTicketSpoilerChannelAccessResponse) Reset() {
+	*x = GrantTicketSpoilerChannelAccessResponse{}
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GrantTicketSpoilerChannelAccessResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GrantTicketSpoilerChannelAccessResponse) ProtoMessage() {}
+
+func (x *GrantTicketSpoilerChannelAccessResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GrantTicketSpoilerChannelAccessResponse.ProtoReflect.Descriptor instead.
+func (*GrantTicketSpoilerChannelAccessResponse) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *GrantTicketSpoilerChannelAccessResponse) GetDiscordChannelUrl() string {
+	if x != nil {
+		return x.DiscordChannelUrl
+	}
+	return ""
+}
+
+func (x *GrantTicketSpoilerChannelAccessResponse) GetChannelCreated() bool {
+	if x != nil {
+		return x.ChannelCreated
+	}
+	return false
+}
+
 var File_nazobu_v1_ticket_proto protoreflect.FileDescriptor
 
 const file_nazobu_v1_ticket_proto_rawDesc = "" +
@@ -1461,11 +1567,12 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\x1funregistered_participants_count\x18\x11 \x01(\x05R\x1dunregisteredParticipantsCountB\"\n" +
 	" _event_doors_open_minutes_beforeJ\x04\b\x04\x10\x05\"/\n" +
 	"\x10GetTicketRequest\x12\x1b\n" +
-	"\tticket_id\x18\x01 \x01(\tR\bticketId\"\x9b\x01\n" +
+	"\tticket_id\x18\x01 \x01(\tR\bticketId\"\xda\x01\n" +
 	"\x11GetTicketResponse\x12)\n" +
 	"\x06ticket\x18\x01 \x01(\v2\x11.nazobu.v1.TicketR\x06ticket\x12@\n" +
 	"\fparticipants\x18\x02 \x03(\v2\x1c.nazobu.v1.TicketParticipantR\fparticipants\x12\x19\n" +
-	"\bcan_edit\x18\x03 \x01(\bR\acanEdit\"}\n" +
+	"\bcan_edit\x18\x03 \x01(\bR\acanEdit\x12=\n" +
+	"\x1bdiscord_spoiler_channel_url\x18\x04 \x01(\tR\x18discordSpoilerChannelUrl\"}\n" +
 	"\x11TicketParticipant\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
@@ -1550,7 +1657,12 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x18\n" +
 	"\asettled\x18\x03 \x01(\bR\asettled\"+\n" +
-	")UpdateTicketParticipantSettlementResponse2\x8e\a\n" +
+	")UpdateTicketParticipantSettlementResponse\"E\n" +
+	"&GrantTicketSpoilerChannelAccessRequest\x12\x1b\n" +
+	"\tticket_id\x18\x01 \x01(\tR\bticketId\"\x82\x01\n" +
+	"'GrantTicketSpoilerChannelAccessResponse\x12.\n" +
+	"\x13discord_channel_url\x18\x01 \x01(\tR\x11discordChannelUrl\x12'\n" +
+	"\x0fchannel_created\x18\x02 \x01(\bR\x0echannelCreated2\x99\b\n" +
 	"\rTicketService\x12L\n" +
 	"\vListTickets\x12\x1d.nazobu.v1.ListTicketsRequest\x1a\x1e.nazobu.v1.ListTicketsResponse\x12F\n" +
 	"\tGetTicket\x12\x1b.nazobu.v1.GetTicketRequest\x1a\x1c.nazobu.v1.GetTicketResponse\x12O\n" +
@@ -1560,7 +1672,8 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\x15UpdateTicketWithEvent\x12'.nazobu.v1.UpdateTicketWithEventRequest\x1a(.nazobu.v1.UpdateTicketWithEventResponse\x12j\n" +
 	"\x15AddTicketParticipants\x12'.nazobu.v1.AddTicketParticipantsRequest\x1a(.nazobu.v1.AddTicketParticipantsResponse\x12p\n" +
 	"\x17RemoveTicketParticipant\x12).nazobu.v1.RemoveTicketParticipantRequest\x1a*.nazobu.v1.RemoveTicketParticipantResponse\x12\x8e\x01\n" +
-	"!UpdateTicketParticipantSettlement\x123.nazobu.v1.UpdateTicketParticipantSettlementRequest\x1a4.nazobu.v1.UpdateTicketParticipantSettlementResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
+	"!UpdateTicketParticipantSettlement\x123.nazobu.v1.UpdateTicketParticipantSettlementRequest\x1a4.nazobu.v1.UpdateTicketParticipantSettlementResponse\x12\x88\x01\n" +
+	"\x1fGrantTicketSpoilerChannelAccess\x121.nazobu.v1.GrantTicketSpoilerChannelAccessRequest\x1a2.nazobu.v1.GrantTicketSpoilerChannelAccessResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
 
 var (
 	file_nazobu_v1_ticket_proto_rawDescOnce sync.Once
@@ -1574,7 +1687,7 @@ func file_nazobu_v1_ticket_proto_rawDescGZIP() []byte {
 	return file_nazobu_v1_ticket_proto_rawDescData
 }
 
-var file_nazobu_v1_ticket_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_nazobu_v1_ticket_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_nazobu_v1_ticket_proto_goTypes = []any{
 	(*ListTicketsRequest)(nil),                        // 0: nazobu.v1.ListTicketsRequest
 	(*ListTicketsResponse)(nil),                       // 1: nazobu.v1.ListTicketsResponse
@@ -1596,6 +1709,8 @@ var file_nazobu_v1_ticket_proto_goTypes = []any{
 	(*RemoveTicketParticipantResponse)(nil),           // 17: nazobu.v1.RemoveTicketParticipantResponse
 	(*UpdateTicketParticipantSettlementRequest)(nil),  // 18: nazobu.v1.UpdateTicketParticipantSettlementRequest
 	(*UpdateTicketParticipantSettlementResponse)(nil), // 19: nazobu.v1.UpdateTicketParticipantSettlementResponse
+	(*GrantTicketSpoilerChannelAccessRequest)(nil),    // 20: nazobu.v1.GrantTicketSpoilerChannelAccessRequest
+	(*GrantTicketSpoilerChannelAccessResponse)(nil),   // 21: nazobu.v1.GrantTicketSpoilerChannelAccessResponse
 }
 var file_nazobu_v1_ticket_proto_depIdxs = []int32{
 	2,  // 0: nazobu.v1.ListTicketsResponse.tickets:type_name -> nazobu.v1.Ticket
@@ -1614,17 +1729,19 @@ var file_nazobu_v1_ticket_proto_depIdxs = []int32{
 	14, // 13: nazobu.v1.TicketService.AddTicketParticipants:input_type -> nazobu.v1.AddTicketParticipantsRequest
 	16, // 14: nazobu.v1.TicketService.RemoveTicketParticipant:input_type -> nazobu.v1.RemoveTicketParticipantRequest
 	18, // 15: nazobu.v1.TicketService.UpdateTicketParticipantSettlement:input_type -> nazobu.v1.UpdateTicketParticipantSettlementRequest
-	1,  // 16: nazobu.v1.TicketService.ListTickets:output_type -> nazobu.v1.ListTicketsResponse
-	4,  // 17: nazobu.v1.TicketService.GetTicket:output_type -> nazobu.v1.GetTicketResponse
-	7,  // 18: nazobu.v1.TicketService.CreateTicket:output_type -> nazobu.v1.CreateTicketResponse
-	11, // 19: nazobu.v1.TicketService.CreateTicketWithEvent:output_type -> nazobu.v1.CreateTicketWithEventResponse
-	9,  // 20: nazobu.v1.TicketService.UpdateTicket:output_type -> nazobu.v1.UpdateTicketResponse
-	13, // 21: nazobu.v1.TicketService.UpdateTicketWithEvent:output_type -> nazobu.v1.UpdateTicketWithEventResponse
-	15, // 22: nazobu.v1.TicketService.AddTicketParticipants:output_type -> nazobu.v1.AddTicketParticipantsResponse
-	17, // 23: nazobu.v1.TicketService.RemoveTicketParticipant:output_type -> nazobu.v1.RemoveTicketParticipantResponse
-	19, // 24: nazobu.v1.TicketService.UpdateTicketParticipantSettlement:output_type -> nazobu.v1.UpdateTicketParticipantSettlementResponse
-	16, // [16:25] is the sub-list for method output_type
-	7,  // [7:16] is the sub-list for method input_type
+	20, // 16: nazobu.v1.TicketService.GrantTicketSpoilerChannelAccess:input_type -> nazobu.v1.GrantTicketSpoilerChannelAccessRequest
+	1,  // 17: nazobu.v1.TicketService.ListTickets:output_type -> nazobu.v1.ListTicketsResponse
+	4,  // 18: nazobu.v1.TicketService.GetTicket:output_type -> nazobu.v1.GetTicketResponse
+	7,  // 19: nazobu.v1.TicketService.CreateTicket:output_type -> nazobu.v1.CreateTicketResponse
+	11, // 20: nazobu.v1.TicketService.CreateTicketWithEvent:output_type -> nazobu.v1.CreateTicketWithEventResponse
+	9,  // 21: nazobu.v1.TicketService.UpdateTicket:output_type -> nazobu.v1.UpdateTicketResponse
+	13, // 22: nazobu.v1.TicketService.UpdateTicketWithEvent:output_type -> nazobu.v1.UpdateTicketWithEventResponse
+	15, // 23: nazobu.v1.TicketService.AddTicketParticipants:output_type -> nazobu.v1.AddTicketParticipantsResponse
+	17, // 24: nazobu.v1.TicketService.RemoveTicketParticipant:output_type -> nazobu.v1.RemoveTicketParticipantResponse
+	19, // 25: nazobu.v1.TicketService.UpdateTicketParticipantSettlement:output_type -> nazobu.v1.UpdateTicketParticipantSettlementResponse
+	21, // 26: nazobu.v1.TicketService.GrantTicketSpoilerChannelAccess:output_type -> nazobu.v1.GrantTicketSpoilerChannelAccessResponse
+	17, // [17:27] is the sub-list for method output_type
+	7,  // [7:17] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name
 	7,  // [7:7] is the sub-list for extension extendee
 	0,  // [0:7] is the sub-list for field type_name
@@ -1644,7 +1761,7 @@ func file_nazobu_v1_ticket_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_nazobu_v1_ticket_proto_rawDesc), len(file_nazobu_v1_ticket_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   20,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

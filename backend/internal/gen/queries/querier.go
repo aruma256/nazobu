@@ -82,6 +82,8 @@ type Querier interface {
 	// Discord 連携済みのユーザーの subject（Discord user id）を返す。メンション用。
 	// 呼び出し側で ticket_id ごとに振り分ける。
 	ListNotifiableDiscordSubjectsByTicketIDs(ctx context.Context, ticketIds []string) ([]ListNotifiableDiscordSubjectsByTicketIDsRow, error)
+	// Discord ネタバレチャンネルの権限付与用。identity の欠落を検出できるよう LEFT JOIN にする。
+	ListTicketParticipantDiscordIdentities(ctx context.Context, ticketID string) ([]ListTicketParticipantDiscordIdentitiesRow, error)
 	// ticket 一覧 / 公演一覧で、各 ticket の参加者名をまとめて引く（N+1 回避）。
 	// 呼び出し側で ticket_id ごとに in-memory で振り分ける。
 	ListTicketParticipantNamesByTicketIDs(ctx context.Context, ticketIds []string) ([]ListTicketParticipantNamesByTicketIDsRow, error)
@@ -137,6 +139,8 @@ type Querier interface {
 	MarkTicketsDayBeforeNotified(ctx context.Context, arg MarkTicketsDayBeforeNotifiedParams) error
 	// refresh grant 時にアクセストークンとリフレッシュトークンを同時にローテーションする。
 	RotateOAuthToken(ctx context.Context, arg RotateOAuthTokenParams) error
+	// 同時実行で既存の channel id を上書きしないよう、NULL のときだけ更新する。
+	SetEventDiscordSpoilerChannelID(ctx context.Context, arg SetEventDiscordSpoilerChannelIDParams) (int64, error)
 	UpdateEvent(ctx context.Context, arg UpdateEventParams) error
 	// expense 本体の更新。参加者の付け替えは呼び出し側が別クエリで行う。
 	UpdateExpense(ctx context.Context, arg UpdateExpenseParams) error

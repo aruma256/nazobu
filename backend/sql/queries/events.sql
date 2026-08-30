@@ -30,6 +30,12 @@ WHERE id = ?;
 -- 参照整合性のフレンドリーなプリチェック用。FK でも担保されるが UX のために事前に存在確認する。
 SELECT COUNT(*) FROM events WHERE id = ?;
 
+-- name: SetEventDiscordSpoilerChannelID :execrows
+-- 同時実行で既存の channel id を上書きしないよう、NULL のときだけ更新する。
+UPDATE events
+SET discord_spoiler_channel_id = ?, updated_at = NOW(6)
+WHERE id = ? AND discord_spoiler_channel_id IS NULL;
+
 -- name: ListEventTicketsByEventIDs :many
 -- 公演一覧画面で各 event に紐づく ticket をまとめて引く。
 -- 呼び出し側で event_id ごとに in-memory で振り分ける（N+1 回避）。

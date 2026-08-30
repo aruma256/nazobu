@@ -14,6 +14,7 @@ import (
 
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	"github.com/aruma256/nazobu/backend/internal/config"
+	"github.com/aruma256/nazobu/backend/internal/discord"
 	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
 	"github.com/aruma256/nazobu/backend/internal/oauth"
 	"github.com/aruma256/nazobu/backend/internal/reminder"
@@ -63,7 +64,13 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	eventService := newEventService(dbc)
 	eventPath, eventHandler := nazobuv1connect.NewEventServiceHandler(eventService)
 	mux.Handle(eventPath, eventHandler)
-	ticketService := newTicketService(dbc)
+	discordChannelClient := discord.NewClient(
+		srv.httpClient,
+		cfg.Discord.BotToken,
+		cfg.Discord.GuildID,
+		cfg.Discord.SpoilerCategoryID,
+	)
+	ticketService := newTicketServiceWithDiscord(dbc, discordChannelClient)
 	ticketPath, ticketHandler := nazobuv1connect.NewTicketServiceHandler(ticketService)
 	mux.Handle(ticketPath, ticketHandler)
 	expenseService := newExpenseService(dbc)

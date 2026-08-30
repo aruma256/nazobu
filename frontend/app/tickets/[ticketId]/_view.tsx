@@ -43,11 +43,16 @@ type LoadState =
       expenses: Expense[];
     };
 
+const DISCORD_SPOILER_CHANNEL_FEATURE_START_AT = new Date(
+  "2026-08-30T00:00:00+09:00",
+);
+
 export function TicketDetailView({ ticketId }: { ticketId: string }) {
   const router = useRouter();
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [mutating, setMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     try {
@@ -91,13 +96,17 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
   }, [reload]);
 
   const handleMutation = useCallback(
-    async (op: () => Promise<unknown>) => {
+    async (op: () => Promise<unknown>, successMessage?: string) => {
       if (mutating) return;
       setMutating(true);
       setError(null);
+      setNotice(null);
       try {
         await op();
         await reload();
+        if (successMessage !== undefined) {
+          setNotice(successMessage);
+        }
       } catch (err) {
         if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
           redirectToLogin(router, `/tickets/${ticketId}`);
@@ -187,6 +196,11 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
     ticket.meetingAt !== "" ? parseDateTime(ticket.meetingAt) : null;
   const hasMeeting = meetingAt !== null || ticket.meetingPlace !== "";
   const canEdit = detail.canEdit;
+  const canManageDiscordSpoilerChannel =
+    isAdmin &&
+    startAt.getTime() >= DISCORD_SPOILER_CHANNEL_FEATURE_START_AT.getTime();
+  const discordSpoilerChannelExists =
+    detail.discordSpoilerChannelUrl !== "";
 
   return (
     <>
@@ -288,6 +302,40 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
                   チケット情報を編集
                 </Link>
               )}
+              {canManageDiscordSpoilerChannel && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleMutation(
+                      () =>
+                        ticketClient.grantTicketSpoilerChannelAccess({
+                          ticketId: ticket.id,
+                        }),
+                      discordSpoilerChannelExists
+                        ? "このチケットの参加者に Discord 権限を付与しました。"
+                        : "Discord ネタバレチャンネルを作成しました。",
+                    )
+                  }
+                  disabled={mutating}
+                  className="inline-flex h-11 items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
+                >
+                  {mutating
+                    ? "処理中…"
+                    : discordSpoilerChannelExists
+                      ? "このチケットの参加者に権限を付与"
+                      : "ネタバレチャンネルを作成"}
+                </button>
+              )}
+              {isAdmin && discordSpoilerChannelExists && (
+                <a
+                  href={detail.discordSpoilerChannelUrl}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="inline-flex h-11 items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-emerald-700 hover:bg-zinc-50"
+                >
+                  Discord で開く
+                </a>
+              )}
             </div>
           </div>
         </Section>
@@ -342,6 +390,12 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
         {error !== null && (
           <Section>
             <p className="text-sm text-amber-800">エラー: {error}</p>
+          </Section>
+        )}
+
+        {notice !== null && (
+          <Section>
+            <p className="text-sm text-emerald-800">{notice}</p>
           </Section>
         )}
 

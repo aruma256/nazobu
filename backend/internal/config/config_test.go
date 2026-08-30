@@ -25,7 +25,8 @@ func TestLoadDefaults(t *testing.T) {
 		"HTTP_ADDR", "FRONTEND_URL", "SCHEMA_PATH", "COOKIE_SECURE",
 		"DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME",
 		"DISCORD_CLIENT_ID", "DISCORD_CLIENT_SECRET", "DISCORD_REDIRECT_URL",
-		"DISCORD_WEBHOOK_URL",
+		"DISCORD_WEBHOOK_URL", "DISCORD_BOT_TOKEN", "DISCORD_GUILD_ID",
+		"DISCORD_SPOILER_CATEGORY_ID",
 	}
 	for _, k := range keys {
 		t.Setenv(k, "")
@@ -71,6 +72,9 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.Discord.WebhookURL != "" {
 		t.Errorf("Discord.WebhookURL はデフォルト空")
 	}
+	if cfg.Discord.BotToken != "" || cfg.Discord.GuildID != "" || cfg.Discord.SpoilerCategoryID != "" {
+		t.Errorf("Discord ネタバレチャンネル設定はデフォルト空: %+v", cfg.Discord)
+	}
 }
 
 func TestLoadOverridden(t *testing.T) {
@@ -87,6 +91,9 @@ func TestLoadOverridden(t *testing.T) {
 	t.Setenv("DISCORD_CLIENT_SECRET", "csecret")
 	t.Setenv("DISCORD_REDIRECT_URL", "https://example.com/cb")
 	t.Setenv("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/123/abc")
+	t.Setenv("DISCORD_BOT_TOKEN", "bot-token")
+	t.Setenv("DISCORD_GUILD_ID", "guild-id")
+	t.Setenv("DISCORD_SPOILER_CATEGORY_ID", "category-id")
 
 	cfg := Load()
 	if cfg.HTTPAddr != ":9000" {
@@ -107,7 +114,9 @@ func TestLoadOverridden(t *testing.T) {
 	}
 	if cfg.Discord.ClientID != "cid" || cfg.Discord.ClientSecret != "csecret" ||
 		cfg.Discord.RedirectURL != "https://example.com/cb" ||
-		cfg.Discord.WebhookURL != "https://discord.com/api/webhooks/123/abc" {
+		cfg.Discord.WebhookURL != "https://discord.com/api/webhooks/123/abc" ||
+		cfg.Discord.BotToken != "bot-token" || cfg.Discord.GuildID != "guild-id" ||
+		cfg.Discord.SpoilerCategoryID != "category-id" {
 		t.Errorf("Discord = %+v", cfg.Discord)
 	}
 }

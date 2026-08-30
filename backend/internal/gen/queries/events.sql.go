@@ -199,6 +199,26 @@ func (q *Queries) ListEvents(ctx context.Context) ([]ListEventsRow, error) {
 	return items, nil
 }
 
+const setEventDiscordSpoilerChannelID = `-- name: SetEventDiscordSpoilerChannelID :execrows
+UPDATE events
+SET discord_spoiler_channel_id = ?, updated_at = NOW(6)
+WHERE id = ? AND discord_spoiler_channel_id IS NULL
+`
+
+type SetEventDiscordSpoilerChannelIDParams struct {
+	DiscordSpoilerChannelID sql.NullString
+	ID                      string
+}
+
+// 同時実行で既存の channel id を上書きしないよう、NULL のときだけ更新する。
+func (q *Queries) SetEventDiscordSpoilerChannelID(ctx context.Context, arg SetEventDiscordSpoilerChannelIDParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, setEventDiscordSpoilerChannelID, arg.DiscordSpoilerChannelID, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const updateEvent = `-- name: UpdateEvent :exec
 UPDATE events
 SET title = ?,

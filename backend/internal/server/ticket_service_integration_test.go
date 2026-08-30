@@ -20,6 +20,37 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/testdb"
 )
 
+type fakeDiscordSpoilerChannelManager struct {
+	configured    bool
+	createdID     string
+	createNames   []string
+	createTopics  []string
+	createMembers [][]string
+	grantChannels []string
+	grantMembers  [][]string
+	deletedIDs    []string
+}
+
+func (f *fakeDiscordSpoilerChannelManager) Configured() bool { return f.configured }
+func (f *fakeDiscordSpoilerChannelManager) ChannelURL(channelID string) string {
+	return "https://discord.example/channels/" + channelID
+}
+func (f *fakeDiscordSpoilerChannelManager) CreateSpoilerChannel(_ context.Context, name, topic string, memberIDs []string) (string, error) {
+	f.createNames = append(f.createNames, name)
+	f.createTopics = append(f.createTopics, topic)
+	f.createMembers = append(f.createMembers, slices.Clone(memberIDs))
+	return f.createdID, nil
+}
+func (f *fakeDiscordSpoilerChannelManager) GrantMembersView(_ context.Context, channelID string, memberIDs []string) error {
+	f.grantChannels = append(f.grantChannels, channelID)
+	f.grantMembers = append(f.grantMembers, slices.Clone(memberIDs))
+	return nil
+}
+func (f *fakeDiscordSpoilerChannelManager) DeleteChannel(_ context.Context, channelID string) error {
+	f.deletedIDs = append(f.deletedIDs, channelID)
+	return nil
+}
+
 // createTestUser は user を作成して ID を返す。
 func createTestUser(t *testing.T, db *sql.DB, displayName, role string) string {
 	t.Helper()
@@ -38,6 +69,15 @@ func createTestUser(t *testing.T, db *sql.DB, displayName, role string) string {
 		}
 	}
 	return userID
+}
+
+func createTestDiscordIdentity(t *testing.T, db *sql.DB, userID, subject string) {
+	t.Helper()
+	if err := queries.New(db).CreateUserIdentity(context.Background(), queries.CreateUserIdentityParams{
+		UserID: userID, Provider: auth.ProviderDiscord, Subject: subject,
+	}); err != nil {
+		t.Fatalf("Discord identity 作成に失敗: %v", err)
+	}
 }
 
 // createTestEvent は event を作成して ID を返す。
@@ -449,5 +489,118 @@ func TestIntegrationTicketParticipantManagement(t *testing.T) {
 	}
 	if got := participantCount(t); got != 2 {
 		t.Errorf("入れ替え後の参加者数 = %d, want 2", got)
+	}
+}
+
+func TestIntegrationGrantTicketSpoilerChannelAccess(t *testing.T) {
+	db := testdb.Open(t)
+	ctx := context.Background()
+	manager := &fakeDiscordSpoilerChannelManager{configured: true, createdID: "discord-channel-1"}
+	svc := newTicketServiceWithDiscord(db, manager)
+
+	adminID := createTestUser(t, db, "admin-user", auth.RoleAdmin)
+	member1ID := createTestUser(t, db, "member-1", auth.RoleMember)
+	member2ID := createTestUser(t, db, "member-2", auth.RoleMember)
+	createTestDiscordIdentity(t, db, adminID, "discord-admin")
+	createTestDiscordIdentity(t, db, member1ID, "discord-member-1")
+	createTestDiscordIdentity(t, db, member2ID, "discord-member-2")
+	eventID := createTestEvent(t, db, "テスト / 公演")
+
+	createTicket := func(startAt string, participantIDs ...string) string {
+		t.Helper()
+		req := connect.NewRequest(&nazobuv1.CreateTicketRequest{
+			EventId: eventID, StartAt: startAt, PricePerPerson: 3000,
+			MaxParticipants: int32(len(participantIDs)), ParticipantUserIds: participantIDs,
+		})
+		setSessionCookie(t, db, req, adminID)
+		res, err := svc.CreateTicket(ctx, req)
+		if err != nil {
+			t.Fatalf("CreateTicket に失敗: %v", err)
+		}
+		return res.Msg.Ticket.Id
+	}
+	grant := func(ticketID, actorID string) (*nazobuv1.GrantTicketSpoilerChannelAccessResponse, error) {
+		t.Helper()
+		req := connect.NewRequest(&nazobuv1.GrantTicketSpoilerChannelAccessRequest{TicketId: ticketID})
+		setSessionCookie(t, db, req, actorID)
+		res, err := svc.GrantTicketSpoilerChannelAccess(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		return res.Msg, nil
+	}
+
+	firstTicketID := createTicket("2026-08-30T14:00:00+09:00", adminID, member1ID)
+	created, err := grant(firstTicketID, adminID)
+	if err != nil {
+		t.Fatalf("チャンネル作成と権限付与に失敗: %v", err)
+	}
+	if !created.ChannelCreated || created.DiscordChannelUrl != "https://discord.example/channels/discord-channel-1" {
+		t.Errorf("create response = %+v", created)
+	}
+	if len(manager.createNames) != 1 || manager.createNames[0] != "20260830-テスト-公演" {
+		t.Errorf("create names = %v", manager.createNames)
+	}
+	if !slices.Equal(manager.createMembers[0], []string{"discord-admin", "discord-member-1"}) {
+		t.Errorf("create members = %v", manager.createMembers[0])
+	}
+	if len(manager.grantMembers) != 0 {
+		t.Errorf("新規作成時に追加の grant が呼ばれた: %v", manager.grantMembers)
+	}
+
+	getReq := connect.NewRequest(&nazobuv1.GetTicketRequest{TicketId: firstTicketID})
+	setSessionCookie(t, db, getReq, adminID)
+	getRes, err := svc.GetTicket(ctx, getReq)
+	if err != nil {
+		t.Fatalf("GetTicket に失敗: %v", err)
+	}
+	if getRes.Msg.DiscordSpoilerChannelUrl != "https://discord.example/channels/discord-channel-1" {
+		t.Errorf("DiscordSpoilerChannelUrl = %q", getRes.Msg.DiscordSpoilerChannelUrl)
+	}
+	memberGetReq := connect.NewRequest(&nazobuv1.GetTicketRequest{TicketId: firstTicketID})
+	setSessionCookie(t, db, memberGetReq, member1ID)
+	memberGetRes, err := svc.GetTicket(ctx, memberGetReq)
+	if err != nil {
+		t.Fatalf("member の GetTicket に失敗: %v", err)
+	}
+	if memberGetRes.Msg.DiscordSpoilerChannelUrl != "" {
+		t.Errorf("member に DiscordSpoilerChannelUrl が公開された: %q", memberGetRes.Msg.DiscordSpoilerChannelUrl)
+	}
+
+	// 同じ event の別日 ticket は既存 channel へその ticket の参加者だけ追加する。
+	secondTicketID := createTicket("2026-09-15T19:00:00+09:00", member2ID)
+	synced, err := grant(secondTicketID, adminID)
+	if err != nil {
+		t.Fatalf("別日 ticket の権限付与に失敗: %v", err)
+	}
+	if synced.ChannelCreated {
+		t.Error("既存 channel に対し ChannelCreated = true")
+	}
+	if len(manager.createNames) != 1 {
+		t.Errorf("チャンネルが二重作成された: %v", manager.createNames)
+	}
+	if len(manager.grantChannels) != 1 || manager.grantChannels[0] != "discord-channel-1" ||
+		!slices.Equal(manager.grantMembers[0], []string{"discord-member-2"}) {
+		t.Errorf("grant = channels:%v members:%v", manager.grantChannels, manager.grantMembers)
+	}
+
+	// admin 以外は実行できない。
+	if _, err := grant(secondTicketID, member2ID); connectCode(t, err) != connect.CodePermissionDenied {
+		t.Errorf("member の実行 code = %v, want %v", connectCode(t, err), connect.CodePermissionDenied)
+	}
+
+	// 機能境界より前の ticket は対象外。
+	legacyEventID := createTestEvent(t, db, "旧公演")
+	legacyReq := connect.NewRequest(&nazobuv1.CreateTicketRequest{
+		EventId: legacyEventID, StartAt: "2026-08-29T23:59:59+09:00", PricePerPerson: 1000,
+		MaxParticipants: 1, ParticipantUserIds: []string{adminID},
+	})
+	setSessionCookie(t, db, legacyReq, adminID)
+	legacyRes, err := svc.CreateTicket(ctx, legacyReq)
+	if err != nil {
+		t.Fatalf("旧 ticket の作成に失敗: %v", err)
+	}
+	if _, err := grant(legacyRes.Msg.Ticket.Id, adminID); connectCode(t, err) != connect.CodeFailedPrecondition {
+		t.Errorf("旧 ticket の grant code = %v, want %v", connectCode(t, err), connect.CodeFailedPrecondition)
 	}
 }

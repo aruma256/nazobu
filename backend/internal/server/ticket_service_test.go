@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -184,6 +185,35 @@ func TestDedupeStrings(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDiscordSpoilerChannelName(t *testing.T) {
+	startAt := time.Date(2026, 8, 30, 12, 0, 0, 0, jst)
+	t.Run("日本語と emoji は保ち、区切り文字を正規化する", func(t *testing.T) {
+		got := discordSpoilerChannelName(startAt, "  謎の / 部屋:#1\n🧩  ", "event-id")
+		want := "20260830-謎の-部屋-1-🧩"
+		if got != want {
+			t.Errorf("discordSpoilerChannelName = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("100 rune 以内に切り詰める", func(t *testing.T) {
+		got := discordSpoilerChannelName(startAt, strings.Repeat("謎", 200), "event-id")
+		if len([]rune(got)) != discordChannelNameMaxRunes {
+			t.Errorf("rune 数 = %d, want %d", len([]rune(got)), discordChannelNameMaxRunes)
+		}
+		if !strings.HasPrefix(got, "20260830-") {
+			t.Errorf("日付 prefix が無い: %q", got)
+		}
+	})
+
+	t.Run("公演名が空になる場合は event id へフォールバック", func(t *testing.T) {
+		got := discordSpoilerChannelName(startAt, " / # : ", "019c1234-0000-7000-8000-abcdef123456")
+		want := "20260830-nazobu-ef123456"
+		if got != want {
+			t.Errorf("discordSpoilerChannelName = %q, want %q", got, want)
+		}
+	})
 }
 
 func assertConnectCode(t *testing.T, err error, want connect.Code) {

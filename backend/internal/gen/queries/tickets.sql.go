@@ -106,6 +106,7 @@ const getTicketByID = `-- name: GetTicketByID :one
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
        e.doors_open_minutes_before AS event_doors_open_minutes_before,
+       e.discord_spoiler_channel_id,
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.unregistered_participants_count,
        t.meeting_place,
@@ -126,6 +127,7 @@ type GetTicketByIDRow struct {
 	EventImageUrl                 sql.NullString
 	EventExpectedDurationMinutes  int32
 	EventDoorsOpenMinutesBefore   sql.NullInt32
+	DiscordSpoilerChannelID       sql.NullString
 	StartAt                       time.Time
 	MeetingAt                     sql.NullTime
 	PricePerPerson                int32
@@ -149,6 +151,7 @@ func (q *Queries) GetTicketByID(ctx context.Context, id string) (GetTicketByIDRo
 		&i.EventImageUrl,
 		&i.EventExpectedDurationMinutes,
 		&i.EventDoorsOpenMinutesBefore,
+		&i.DiscordSpoilerChannelID,
 		&i.StartAt,
 		&i.MeetingAt,
 		&i.PricePerPerson,
@@ -159,6 +162,47 @@ func (q *Queries) GetTicketByID(ctx context.Context, id string) (GetTicketByIDRo
 		&i.PurchaserName,
 	)
 	return i, err
+}
+
+const listTicketParticipantDiscordIdentities = `-- name: ListTicketParticipantDiscordIdentities :many
+SELECT tp.user_id,
+       u.display_name,
+       ui.subject AS discord_subject
+FROM ticket_participants tp
+JOIN users u ON u.id = tp.user_id
+LEFT JOIN user_identities ui ON ui.user_id = tp.user_id AND ui.provider = 'discord'
+WHERE tp.ticket_id = ?
+ORDER BY tp.created_at ASC, tp.user_id ASC
+`
+
+type ListTicketParticipantDiscordIdentitiesRow struct {
+	UserID         string
+	DisplayName    string
+	DiscordSubject sql.NullString
+}
+
+// Discord ネタバレチャンネルの権限付与用。identity の欠落を検出できるよう LEFT JOIN にする。
+func (q *Queries) ListTicketParticipantDiscordIdentities(ctx context.Context, ticketID string) ([]ListTicketParticipantDiscordIdentitiesRow, error) {
+	rows, err := q.db.QueryContext(ctx, listTicketParticipantDiscordIdentities, ticketID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListTicketParticipantDiscordIdentitiesRow
+	for rows.Next() {
+		var i ListTicketParticipantDiscordIdentitiesRow
+		if err := rows.Scan(&i.UserID, &i.DisplayName, &i.DiscordSubject); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listTicketParticipantNamesByTicketIDs = `-- name: ListTicketParticipantNamesByTicketIDs :many

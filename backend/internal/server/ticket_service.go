@@ -7,25 +7,34 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"connectrpc.com/connect"
 
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
-	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
 	"github.com/aruma256/nazobu/backend/internal/id"
 )
 
 type ticketService struct {
-	db         *sql.DB
-	q          *queries.Queries
-	httpClient *http.Client
+	db                     *sql.DB
+	q                      *queries.Queries
+	httpClient             *http.Client
+	spoilerChannelManager  discordSpoilerChannelManager
+	spoilerChannelMutation sync.Mutex
 }
 
-func newTicketService(db *sql.DB) nazobuv1connect.TicketServiceHandler {
-	return &ticketService{db: db, q: queries.New(db), httpClient: http.DefaultClient}
+func newTicketService(db *sql.DB) *ticketService {
+	return newTicketServiceWithDiscord(db, nil)
+}
+
+func newTicketServiceWithDiscord(db *sql.DB, manager discordSpoilerChannelManager) *ticketService {
+	return &ticketService{
+		db: db, q: queries.New(db), httpClient: http.DefaultClient,
+		spoilerChannelManager: manager,
+	}
 }
 
 const meetingPlaceMaxLen = 255
@@ -125,11 +134,16 @@ func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazo
 	}
 
 	canEdit := canEditTicket(user, row.PurchasedBy)
+	discordSpoilerChannelURL := ""
+	if user.Role == auth.RoleAdmin {
+		discordSpoilerChannelURL = s.discordSpoilerChannelURL(row.DiscordSpoilerChannelID)
+	}
 
 	return connect.NewResponse(&nazobuv1.GetTicketResponse{
-		Ticket:       ticket,
-		Participants: participants,
-		CanEdit:      canEdit,
+		Ticket:                   ticket,
+		Participants:             participants,
+		CanEdit:                  canEdit,
+		DiscordSpoilerChannelUrl: discordSpoilerChannelURL,
 	}), nil
 }
 

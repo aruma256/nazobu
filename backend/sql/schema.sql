@@ -108,9 +108,13 @@ CREATE TABLE events (
   entry_deadline_minutes_before INT NULL,
   -- 想定所要時間（分）。カレンダー連携で終了時刻を算出するために使う。1 以上。デフォルトは 120 分。
   expected_duration_minutes     INT NOT NULL DEFAULT 120,
+  -- Discord のネタバレチャンネル。NULL = 未作成。
+  -- Snowflake は外部 ID として数値化せず文字列で保持する。
+  discord_spoiler_channel_id VARCHAR(32) NULL,
   created_at  DATETIME(6)  NOT NULL,
   updated_at  DATETIME(6)  NOT NULL,
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_events_discord_spoiler_channel_id (discord_spoiler_channel_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- チケット 1 枚。グループチケットなら 1 枚で複数人が参加でき、参加者で割り勘する。

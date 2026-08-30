@@ -59,6 +59,9 @@ const (
 	// TicketServiceUpdateTicketParticipantSettlementProcedure is the fully-qualified name of the
 	// TicketService's UpdateTicketParticipantSettlement RPC.
 	TicketServiceUpdateTicketParticipantSettlementProcedure = "/nazobu.v1.TicketService/UpdateTicketParticipantSettlement"
+	// TicketServiceGrantTicketSpoilerChannelAccessProcedure is the fully-qualified name of the
+	// TicketService's GrantTicketSpoilerChannelAccess RPC.
+	TicketServiceGrantTicketSpoilerChannelAccessProcedure = "/nazobu.v1.TicketService/GrantTicketSpoilerChannelAccess"
 )
 
 // TicketServiceClient is a client for the nazobu.v1.TicketService service.
@@ -89,6 +92,9 @@ type TicketServiceClient interface {
 	// UpdateTicketParticipantSettlement は参加者の精算状態を切り替える。
 	// admin もしくは立替者のみ実行可能。立替者本人に対しては実行不可。
 	UpdateTicketParticipantSettlement(context.Context, *connect.Request[v1.UpdateTicketParticipantSettlementRequest]) (*connect.Response[v1.UpdateTicketParticipantSettlementResponse], error)
+	// GrantTicketSpoilerChannelAccess は event の Discord ネタバレチャンネルを必要に応じて作成し、
+	// 指定 ticket の現在の参加者へ閲覧権限を追加付与する。admin のみ実行可能。
+	GrantTicketSpoilerChannelAccess(context.Context, *connect.Request[v1.GrantTicketSpoilerChannelAccessRequest]) (*connect.Response[v1.GrantTicketSpoilerChannelAccessResponse], error)
 }
 
 // NewTicketServiceClient constructs a client for the nazobu.v1.TicketService service. By default,
@@ -156,6 +162,12 @@ func NewTicketServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(ticketServiceMethods.ByName("UpdateTicketParticipantSettlement")),
 			connect.WithClientOptions(opts...),
 		),
+		grantTicketSpoilerChannelAccess: connect.NewClient[v1.GrantTicketSpoilerChannelAccessRequest, v1.GrantTicketSpoilerChannelAccessResponse](
+			httpClient,
+			baseURL+TicketServiceGrantTicketSpoilerChannelAccessProcedure,
+			connect.WithSchema(ticketServiceMethods.ByName("GrantTicketSpoilerChannelAccess")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -170,6 +182,7 @@ type ticketServiceClient struct {
 	addTicketParticipants             *connect.Client[v1.AddTicketParticipantsRequest, v1.AddTicketParticipantsResponse]
 	removeTicketParticipant           *connect.Client[v1.RemoveTicketParticipantRequest, v1.RemoveTicketParticipantResponse]
 	updateTicketParticipantSettlement *connect.Client[v1.UpdateTicketParticipantSettlementRequest, v1.UpdateTicketParticipantSettlementResponse]
+	grantTicketSpoilerChannelAccess   *connect.Client[v1.GrantTicketSpoilerChannelAccessRequest, v1.GrantTicketSpoilerChannelAccessResponse]
 }
 
 // ListTickets calls nazobu.v1.TicketService.ListTickets.
@@ -218,6 +231,11 @@ func (c *ticketServiceClient) UpdateTicketParticipantSettlement(ctx context.Cont
 	return c.updateTicketParticipantSettlement.CallUnary(ctx, req)
 }
 
+// GrantTicketSpoilerChannelAccess calls nazobu.v1.TicketService.GrantTicketSpoilerChannelAccess.
+func (c *ticketServiceClient) GrantTicketSpoilerChannelAccess(ctx context.Context, req *connect.Request[v1.GrantTicketSpoilerChannelAccessRequest]) (*connect.Response[v1.GrantTicketSpoilerChannelAccessResponse], error) {
+	return c.grantTicketSpoilerChannelAccess.CallUnary(ctx, req)
+}
+
 // TicketServiceHandler is an implementation of the nazobu.v1.TicketService service.
 type TicketServiceHandler interface {
 	// ListTickets は登録済み ticket を start_at 降順で返す。
@@ -246,6 +264,9 @@ type TicketServiceHandler interface {
 	// UpdateTicketParticipantSettlement は参加者の精算状態を切り替える。
 	// admin もしくは立替者のみ実行可能。立替者本人に対しては実行不可。
 	UpdateTicketParticipantSettlement(context.Context, *connect.Request[v1.UpdateTicketParticipantSettlementRequest]) (*connect.Response[v1.UpdateTicketParticipantSettlementResponse], error)
+	// GrantTicketSpoilerChannelAccess は event の Discord ネタバレチャンネルを必要に応じて作成し、
+	// 指定 ticket の現在の参加者へ閲覧権限を追加付与する。admin のみ実行可能。
+	GrantTicketSpoilerChannelAccess(context.Context, *connect.Request[v1.GrantTicketSpoilerChannelAccessRequest]) (*connect.Response[v1.GrantTicketSpoilerChannelAccessResponse], error)
 }
 
 // NewTicketServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -309,6 +330,12 @@ func NewTicketServiceHandler(svc TicketServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(ticketServiceMethods.ByName("UpdateTicketParticipantSettlement")),
 		connect.WithHandlerOptions(opts...),
 	)
+	ticketServiceGrantTicketSpoilerChannelAccessHandler := connect.NewUnaryHandler(
+		TicketServiceGrantTicketSpoilerChannelAccessProcedure,
+		svc.GrantTicketSpoilerChannelAccess,
+		connect.WithSchema(ticketServiceMethods.ByName("GrantTicketSpoilerChannelAccess")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/nazobu.v1.TicketService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case TicketServiceListTicketsProcedure:
@@ -329,6 +356,8 @@ func NewTicketServiceHandler(svc TicketServiceHandler, opts ...connect.HandlerOp
 			ticketServiceRemoveTicketParticipantHandler.ServeHTTP(w, r)
 		case TicketServiceUpdateTicketParticipantSettlementProcedure:
 			ticketServiceUpdateTicketParticipantSettlementHandler.ServeHTTP(w, r)
+		case TicketServiceGrantTicketSpoilerChannelAccessProcedure:
+			ticketServiceGrantTicketSpoilerChannelAccessHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -372,4 +401,8 @@ func (UnimplementedTicketServiceHandler) RemoveTicketParticipant(context.Context
 
 func (UnimplementedTicketServiceHandler) UpdateTicketParticipantSettlement(context.Context, *connect.Request[v1.UpdateTicketParticipantSettlementRequest]) (*connect.Response[v1.UpdateTicketParticipantSettlementResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.TicketService.UpdateTicketParticipantSettlement is not implemented"))
+}
+
+func (UnimplementedTicketServiceHandler) GrantTicketSpoilerChannelAccess(context.Context, *connect.Request[v1.GrantTicketSpoilerChannelAccessRequest]) (*connect.Response[v1.GrantTicketSpoilerChannelAccessResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.TicketService.GrantTicketSpoilerChannelAccess is not implemented"))
 }
