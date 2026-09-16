@@ -31,9 +31,6 @@ func TestIntegrationDeleteTicketAndEvent(t *testing.T) {
 			if err := q.MarkTicketParticipantSettled(ctx, queries.MarkTicketParticipantSettledParams{TicketID: ticket, UserID: other}); err != nil {
 				t.Fatal(err)
 			}
-			expense := mustCreateExpense(t, ctx, newExpenseService(db), db, payer, &nazobuv1.CreateExpenseRequest{
-				TicketId: ticket, Title: "残す追加精算", OccurredOn: "2026-09-16", Participants: []*nazobuv1.ExpenseParticipantInput{{UserId: other, Amount: 1000}},
-			})
 			manager := &fakeDiscordSpoilerChannelManager{configured: true}
 			tickets := &ticketService{db: db, q: q, spoilerChannelManager: manager}
 			events := newEventService(db)
@@ -88,10 +85,6 @@ func TestIntegrationDeleteTicketAndEvent(t *testing.T) {
 			var count int
 			if err := db.QueryRow("SELECT COUNT(*) FROM ticket_participants WHERE ticket_id = ?", ticket).Scan(&count); err != nil || count != 0 {
 				t.Fatalf("参加者が残存: %d, %v", count, err)
-			}
-			got := mustGetExpense(t, ctx, newExpenseService(db), db, expense.Id, payer)
-			if got.Expense.TicketId != "" || len(got.Participants) != 1 || got.Participants[0].Amount != 1000 {
-				t.Fatalf("追加精算が保持されていない: %v", got)
 			}
 			if _, err := q.GetEventByID(ctx, event); err != nil {
 				t.Fatalf("公演が残っていない: %v", err)
@@ -148,47 +141,34 @@ func TestIntegrationMCPDeletion(t *testing.T) {
 }
 
 func TestIntegrationDeleteRollback(t *testing.T) {
-	for _, kind := range []string{"ticket", "expense"} {
-		t.Run(kind, func(t *testing.T) {
-			db := testdb.Open(t)
-			ctx := context.Background()
-			payer := createTestUser(t, db, "立替者", auth.RoleMember)
-			other := createTestUser(t, db, "参加者", auth.RoleMember)
-			var parentID string
-			var deleteParent func() error
-			if kind == "ticket" {
-				parentID = createTestTicket(t, db, createTestEvent(t, db, "公演"), payer)
-				if err := queries.New(db).CreateTicketParticipant(ctx, queries.CreateTicketParticipantParams{TicketID: parentID, UserID: other}); err != nil {
-					t.Fatal(err)
-				}
-				req := connect.NewRequest(&nazobuv1.DeleteTicketRequest{TicketId: parentID})
-				setSessionCookie(t, db, req, payer)
-				deleteParent = func() error { _, err := newTicketService(db).DeleteTicket(ctx, req); return err }
-			} else {
-				parentID = mustCreateExpense(t, ctx, newExpenseService(db), db, payer, &nazobuv1.CreateExpenseRequest{Title: "追加精算", OccurredOn: "2026-09-16", Participants: []*nazobuv1.ExpenseParticipantInput{{UserId: other, Amount: 1000}}}).Id
-				req := connect.NewRequest(&nazobuv1.DeleteExpenseRequest{ExpenseId: parentID})
-				setSessionCookie(t, db, req, payer)
-				deleteParent = func() error { _, err := newExpenseService(db).DeleteExpense(ctx, req); return err }
-			}
-			// 子行を削除した後、親行の削除だけを失敗させ、子行も復元されることを検証する。
-			if _, err := db.Exec("CREATE TRIGGER reject_deletion BEFORE DELETE ON " + kind + "s FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = '削除失敗テスト'"); err != nil {
-				t.Fatal(err)
-			}
-			defer func() {
-				if _, err := db.Exec("DROP TRIGGER reject_deletion"); err != nil {
-					t.Error(err)
-				}
-			}()
-			if connectCode(t, deleteParent()) != connect.CodeInternal {
-				t.Fatal("削除失敗が返らなかった")
-			}
-			var count int
-			if err := db.QueryRow("SELECT COUNT(*) FROM "+kind+"_participants WHERE "+kind+"_id = ?", parentID).Scan(&count); err != nil || count != 1 {
-				t.Fatalf("参加者のロールバック失敗: %d, %v", count, err)
-			}
-			if err := db.QueryRow("SELECT COUNT(*) FROM "+kind+"s WHERE id = ?", parentID).Scan(&count); err != nil || count != 1 {
-				t.Fatalf("親行が残っていない: %d, %v", count, err)
-			}
-		})
+	db := testdb.Open(t)
+	ctx := context.Background()
+	payer := createTestUser(t, db, "立替者", auth.RoleMember)
+	other := createTestUser(t, db, "参加者", auth.RoleMember)
+	parentID := createTestTicket(t, db, createTestEvent(t, db, "公演"), payer)
+	if err := queries.New(db).CreateTicketParticipant(ctx, queries.CreateTicketParticipantParams{TicketID: parentID, UserID: other}); err != nil {
+		t.Fatal(err)
+	}
+	req := connect.NewRequest(&nazobuv1.DeleteTicketRequest{TicketId: parentID})
+	setSessionCookie(t, db, req, payer)
+	deleteParent := func() error { _, err := newTicketService(db).DeleteTicket(ctx, req); return err }
+	// 子行を削除した後、親行の削除だけを失敗させ、子行も復元されることを検証する。
+	if _, err := db.Exec("CREATE TRIGGER reject_deletion BEFORE DELETE ON tickets FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = '削除失敗テスト'"); err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if _, err := db.Exec("DROP TRIGGER reject_deletion"); err != nil {
+			t.Error(err)
+		}
+	}()
+	if connectCode(t, deleteParent()) != connect.CodeInternal {
+		t.Fatal("削除失敗が返らなかった")
+	}
+	var count int
+	if err := db.QueryRow("SELECT COUNT(*) FROM ticket_participants WHERE ticket_id = ?", parentID).Scan(&count); err != nil || count != 1 {
+		t.Fatalf("参加者のロールバック失敗: %d, %v", count, err)
+	}
+	if err := db.QueryRow("SELECT COUNT(*) FROM tickets WHERE id = ?", parentID).Scan(&count); err != nil || count != 1 {
+		t.Fatalf("親行が残っていない: %d, %v", count, err)
 	}
 }

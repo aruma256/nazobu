@@ -73,9 +73,6 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	ticketService := newTicketServiceWithDiscord(dbc, discordClient)
 	ticketPath, ticketHandler := nazobuv1connect.NewTicketServiceHandler(ticketService)
 	mux.Handle(ticketPath, ticketHandler)
-	expenseService := newExpenseService(dbc)
-	expensePath, expenseHandler := nazobuv1connect.NewExpenseServiceHandler(expenseService)
-	mux.Handle(expensePath, expenseHandler)
 
 	// Claude connector（remote MCP）向けの OAuth 2.1 認可サーバと MCP エンドポイント。
 	// 公開 origin は frontend と同一（rewrites 経由）なので issuer には FRONTEND_URL を流用する。
@@ -87,7 +84,7 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	mux.HandleFunc("GET /oauth/authorize", oauthSrv.HandleAuthorizeGet)
 	mux.HandleFunc("POST /oauth/authorize", oauthSrv.HandleAuthorizePost)
 	mux.HandleFunc("POST /oauth/token", oauthSrv.HandleToken)
-	mux.Handle("/mcp", oauthSrv.Middleware(newMCPHandler(myPageService, ticketService, eventService, userService, expenseService)))
+	mux.Handle("/mcp", oauthSrv.Middleware(newMCPHandler(myPageService, ticketService, eventService, userService)))
 
 	httpSrv := &http.Server{
 		Addr:              cfg.HTTPAddr,

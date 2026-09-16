@@ -10,6 +10,7 @@ import (
 	"errors"
 	"slices"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 
@@ -603,4 +604,23 @@ func TestIntegrationGrantTicketSpoilerChannelAccess(t *testing.T) {
 	if _, err := grant(legacyRes.Msg.Ticket.Id, adminID); connectCode(t, err) != connect.CodeFailedPrecondition {
 		t.Errorf("旧 ticket の grant code = %v, want %v", connectCode(t, err), connect.CodeFailedPrecondition)
 	}
+}
+
+// createTestTicket は event に紐づく ticket を作成して ID を返す。
+// 参加者は付けず本体だけを作る。
+func createTestTicket(t *testing.T, db *sql.DB, eventID, purchasedBy string) string {
+	t.Helper()
+	ticketID := id.New()
+	if err := queries.New(db).CreateTicket(context.Background(), queries.CreateTicketParams{
+		ID:              ticketID,
+		EventID:         eventID,
+		StartAt:         time.Date(2026, 8, 1, 14, 0, 0, 0, jst),
+		PricePerPerson:  3000,
+		MaxParticipants: 4,
+		PurchasedBy:     purchasedBy,
+		MeetingPlace:    "",
+	}); err != nil {
+		t.Fatalf("ticket 作成に失敗: %v", err)
+	}
+	return ticketID
 }

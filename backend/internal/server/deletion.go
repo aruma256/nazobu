@@ -68,7 +68,6 @@ func (s *ticketService) DeleteTicket(ctx context.Context, req *connect.Request[n
 	if err := qtx.DeleteTicketParticipants(ctx, ticketID); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	// 追加精算は FK の SET NULL で紐づけのみ解除し、金銭記録を保持する。
 	if err := qtx.DeleteTicket(ctx, ticketID); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}

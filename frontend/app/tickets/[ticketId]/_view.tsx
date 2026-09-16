@@ -5,19 +5,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import type { Expense } from "@/app/gen/nazobu/v1/expense_pb";
 import type {
   GetTicketResponse,
   Ticket,
   TicketParticipant,
 } from "@/app/gen/nazobu/v1/ticket_pb";
 import type { GetMeResponse, User } from "@/app/gen/nazobu/v1/user_pb";
-import { expenseClient, ticketClient, userClient } from "@/app/lib/rpc";
+import { ticketClient, userClient } from "@/app/lib/rpc";
 
 import {
   AppHeader,
   Badge,
-  ExpenseCard,
   Mono,
   PageShell,
   Section,
@@ -40,7 +38,6 @@ type LoadState =
       me: GetMeResponse;
       detail: GetTicketResponse;
       users: User[];
-      expenses: Expense[];
     };
 
 const DISCORD_SPOILER_CHANNEL_FEATURE_START_AT = new Date(
@@ -58,7 +55,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
     if (mutating || state.kind !== "ready") return;
     const ticket = state.detail.ticket;
     if (!ticket || !window.confirm(
-      `「${ticket.eventTitle}」（${formatDateJa(parseDateTime(ticket.startAt))} ${formatTimeHM(parseDateTime(ticket.startAt))}）のチケットを削除しますか？\n参加者・チケット代の精算情報も完全に削除され、元に戻せません。\n公演と追加精算の記録、Discord チャンネル・権限は残ります。`,
+      `「${ticket.eventTitle}」（${formatDateJa(parseDateTime(ticket.startAt))} ${formatTimeHM(parseDateTime(ticket.startAt))}）のチケットを削除しますか？\n参加者・チケット代の精算情報も完全に削除され、元に戻せません。\n公演、Discord チャンネル・権限は残ります。`,
     )) return;
     setMutating(true);
     setError(null);
@@ -78,18 +75,16 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
 
   const reload = useCallback(async () => {
     try {
-      const [me, detail, usersRes, expensesRes] = await Promise.all([
+      const [me, detail, usersRes] = await Promise.all([
         userClient.getMe({}),
         ticketClient.getTicket({ ticketId }),
         userClient.listUsers({}),
-        expenseClient.listExpenses({ ticketId }),
       ]);
       setState({
         kind: "ready",
         me,
         detail,
         users: usersRes.users,
-        expenses: expensesRes.expenses,
       });
     } catch (err) {
       if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
@@ -187,7 +182,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
     );
   }
 
-  const { me, detail, users, expenses } = state;
+  const { me, detail, users } = state;
   const ticket = detail.ticket;
   if (!ticket) {
     return (
@@ -411,12 +406,6 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
         <GroupShuffleSection
           participants={detail.participants}
           myUserId={me.id}
-        />
-
-        <TicketExpensesSection
-          ticketId={ticket.id}
-          expenses={expenses}
-          myName={displayName}
         />
 
         {error !== null && (
@@ -780,51 +769,6 @@ function ParticipantsSection({
             </>
           )}
         </div>
-      )}
-    </Section>
-  );
-}
-
-// TicketExpensesSection はチケット詳細に「追加の精算」（飲み会・打ち上げ等）を並べる。
-// このチケットに紐づく expense をカード表示し、新規登録リンクは 0 件でも常に出す。
-function TicketExpensesSection({
-  ticketId,
-  expenses,
-  myName,
-}: {
-  ticketId: string;
-  expenses: Expense[];
-  myName: string;
-}) {
-  return (
-    <Section>
-      <SectionTitle count={expenses.length}>追加の精算</SectionTitle>
-      <p className="mt-2 text-xs text-zinc-500">
-        公演後の飲み会・打ち上げなど、チケット代以外の精算です。
-      </p>
-      <div className="mt-3">
-        <Link
-          href={`/expenses/new?ticketId=${ticketId}`}
-          className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 active:bg-emerald-900"
-        >
-          精算を登録
-        </Link>
-      </div>
-      {expenses.length === 0 ? (
-        <p className="mt-4 text-sm text-zinc-500">
-          このチケットに紐づく追加の精算はまだありません。
-        </p>
-      ) : (
-        <ul className="mt-4 space-y-3">
-          {expenses.map((e) => (
-            <ExpenseCard
-              key={e.id}
-              expense={e}
-              myName={myName}
-              hideTicketLink
-            />
-          ))}
-        </ul>
       )}
     </Section>
   );
