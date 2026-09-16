@@ -85,7 +85,7 @@ const deleteExpense = `-- name: DeleteExpense :exec
 DELETE FROM expenses WHERE id = ?
 `
 
-// expense_participants は FK CASCADE で同時に消える。
+// 先に同じトランザクションで expense_participants を削除する。
 func (q *Queries) DeleteExpense(ctx context.Context, id string) error {
 	_, err := q.db.ExecContext(ctx, deleteExpense, id)
 	return err
@@ -102,6 +102,15 @@ type DeleteExpenseParticipantParams struct {
 
 func (q *Queries) DeleteExpenseParticipant(ctx context.Context, arg DeleteExpenseParticipantParams) error {
 	_, err := q.db.ExecContext(ctx, deleteExpenseParticipant, arg.ExpenseID, arg.UserID)
+	return err
+}
+
+const deleteExpenseParticipants = `-- name: DeleteExpenseParticipants :exec
+DELETE FROM expense_participants WHERE expense_id = ?
+`
+
+func (q *Queries) DeleteExpenseParticipants(ctx context.Context, expenseID string) error {
+	_, err := q.db.ExecContext(ctx, deleteExpenseParticipants, expenseID)
 	return err
 }
 
@@ -358,6 +367,17 @@ func (q *Queries) ListExpensesByTicketID(ctx context.Context, ticketID sql.NullS
 		return nil, err
 	}
 	return items, nil
+}
+
+const lockExpenseForDeletion = `-- name: LockExpenseForDeletion :one
+SELECT paid_by FROM expenses WHERE id = ? FOR UPDATE
+`
+
+func (q *Queries) LockExpenseForDeletion(ctx context.Context, id string) (string, error) {
+	row := q.db.QueryRowContext(ctx, lockExpenseForDeletion, id)
+	var paid_by string
+	err := row.Scan(&paid_by)
+	return paid_by, err
 }
 
 const markExpenseParticipantSettled = `-- name: MarkExpenseParticipantSettled :exec

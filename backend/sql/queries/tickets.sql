@@ -119,3 +119,13 @@ SELECT COUNT(*) FROM ticket_participants WHERE ticket_id = ? AND user_id = ?;
 -- name: CountTicketParticipantsByTicketID :one
 -- ticket の参加者数。max_participants 超過チェックで使う。
 SELECT COUNT(*) FROM ticket_participants WHERE ticket_id = ?;
+
+-- name: LockTicketForDeletion :one
+-- 削除の権限判定と参加者削除の間に立替者変更・参加者追加が割り込むのを防ぐ。
+SELECT purchased_by FROM tickets WHERE id = ? FOR UPDATE;
+
+-- name: DeleteTicketParticipants :exec
+DELETE FROM ticket_participants WHERE ticket_id = ?;
+
+-- name: DeleteTicket :exec
+DELETE FROM tickets WHERE id = ?;

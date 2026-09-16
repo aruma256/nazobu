@@ -4,7 +4,7 @@ package nazobu.v1;
 
 option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1";
 
-// EventService は event（公演）の参照・登録・更新 RPC を提供する。
+// EventService は event（公演）の参照・登録・更新・削除 RPC を提供する。
 service EventService {
   // ListEvents は登録済み event を新しい順で返す。各 event には紐づく ticket を含める。
   rpc ListEvents(ListEventsRequest) returns (ListEventsResponse);
@@ -14,6 +14,9 @@ service EventService {
   rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse);
   // UpdateEvent は event の title / url / catchphrase / 開場・締切オフセットを更新する。admin のみ実行可能。
   rpc UpdateEvent(UpdateEventRequest) returns (UpdateEventResponse);
+  // DeleteEvent は誤登録した event を完全削除する。admin のみ。チケットが残っている場合は削除不可。
+  rpc DeleteEvent(DeleteEventRequest) returns (DeleteEventResponse);
+
 }
 
 message ListEventsRequest {}
@@ -99,3 +102,9 @@ message UpdateEventRequest {
 message UpdateEventResponse {
   Event event = 1;
 }
+
+message DeleteEventRequest {
+  string event_id = 1;
+}
+
+message DeleteEventResponse {}

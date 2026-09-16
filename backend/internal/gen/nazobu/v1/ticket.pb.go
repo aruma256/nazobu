@@ -1537,6 +1537,86 @@ func (x *GrantTicketSpoilerChannelAccessResponse) GetChannelCreated() bool {
 	return false
 }
 
+type DeleteTicketRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TicketId      string                 `protobuf:"bytes,1,opt,name=ticket_id,json=ticketId,proto3" json:"ticket_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteTicketRequest) Reset() {
+	*x = DeleteTicketRequest{}
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteTicketRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteTicketRequest) ProtoMessage() {}
+
+func (x *DeleteTicketRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteTicketRequest.ProtoReflect.Descriptor instead.
+func (*DeleteTicketRequest) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *DeleteTicketRequest) GetTicketId() string {
+	if x != nil {
+		return x.TicketId
+	}
+	return ""
+}
+
+type DeleteTicketResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteTicketResponse) Reset() {
+	*x = DeleteTicketResponse{}
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteTicketResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteTicketResponse) ProtoMessage() {}
+
+func (x *DeleteTicketResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_ticket_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteTicketResponse.ProtoReflect.Descriptor instead.
+func (*DeleteTicketResponse) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_ticket_proto_rawDescGZIP(), []int{23}
+}
+
 var File_nazobu_v1_ticket_proto protoreflect.FileDescriptor
 
 const file_nazobu_v1_ticket_proto_rawDesc = "" +
@@ -1662,7 +1742,10 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\tticket_id\x18\x01 \x01(\tR\bticketId\"\x82\x01\n" +
 	"'GrantTicketSpoilerChannelAccessResponse\x12.\n" +
 	"\x13discord_channel_url\x18\x01 \x01(\tR\x11discordChannelUrl\x12'\n" +
-	"\x0fchannel_created\x18\x02 \x01(\bR\x0echannelCreated2\x99\b\n" +
+	"\x0fchannel_created\x18\x02 \x01(\bR\x0echannelCreated\"2\n" +
+	"\x13DeleteTicketRequest\x12\x1b\n" +
+	"\tticket_id\x18\x01 \x01(\tR\bticketId\"\x16\n" +
+	"\x14DeleteTicketResponse2\xea\b\n" +
 	"\rTicketService\x12L\n" +
 	"\vListTickets\x12\x1d.nazobu.v1.ListTicketsRequest\x1a\x1e.nazobu.v1.ListTicketsResponse\x12F\n" +
 	"\tGetTicket\x12\x1b.nazobu.v1.GetTicketRequest\x1a\x1c.nazobu.v1.GetTicketResponse\x12O\n" +
@@ -1673,7 +1756,8 @@ const file_nazobu_v1_ticket_proto_rawDesc = "" +
 	"\x15AddTicketParticipants\x12'.nazobu.v1.AddTicketParticipantsRequest\x1a(.nazobu.v1.AddTicketParticipantsResponse\x12p\n" +
 	"\x17RemoveTicketParticipant\x12).nazobu.v1.RemoveTicketParticipantRequest\x1a*.nazobu.v1.RemoveTicketParticipantResponse\x12\x8e\x01\n" +
 	"!UpdateTicketParticipantSettlement\x123.nazobu.v1.UpdateTicketParticipantSettlementRequest\x1a4.nazobu.v1.UpdateTicketParticipantSettlementResponse\x12\x88\x01\n" +
-	"\x1fGrantTicketSpoilerChannelAccess\x121.nazobu.v1.GrantTicketSpoilerChannelAccessRequest\x1a2.nazobu.v1.GrantTicketSpoilerChannelAccessResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
+	"\x1fGrantTicketSpoilerChannelAccess\x121.nazobu.v1.GrantTicketSpoilerChannelAccessRequest\x1a2.nazobu.v1.GrantTicketSpoilerChannelAccessResponse\x12O\n" +
+	"\fDeleteTicket\x12\x1e.nazobu.v1.DeleteTicketRequest\x1a\x1f.nazobu.v1.DeleteTicketResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
 
 var (
 	file_nazobu_v1_ticket_proto_rawDescOnce sync.Once
@@ -1687,7 +1771,7 @@ func file_nazobu_v1_ticket_proto_rawDescGZIP() []byte {
 	return file_nazobu_v1_ticket_proto_rawDescData
 }
 
-var file_nazobu_v1_ticket_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_nazobu_v1_ticket_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_nazobu_v1_ticket_proto_goTypes = []any{
 	(*ListTicketsRequest)(nil),                        // 0: nazobu.v1.ListTicketsRequest
 	(*ListTicketsResponse)(nil),                       // 1: nazobu.v1.ListTicketsResponse
@@ -1711,6 +1795,8 @@ var file_nazobu_v1_ticket_proto_goTypes = []any{
 	(*UpdateTicketParticipantSettlementResponse)(nil), // 19: nazobu.v1.UpdateTicketParticipantSettlementResponse
 	(*GrantTicketSpoilerChannelAccessRequest)(nil),    // 20: nazobu.v1.GrantTicketSpoilerChannelAccessRequest
 	(*GrantTicketSpoilerChannelAccessResponse)(nil),   // 21: nazobu.v1.GrantTicketSpoilerChannelAccessResponse
+	(*DeleteTicketRequest)(nil),                       // 22: nazobu.v1.DeleteTicketRequest
+	(*DeleteTicketResponse)(nil),                      // 23: nazobu.v1.DeleteTicketResponse
 }
 var file_nazobu_v1_ticket_proto_depIdxs = []int32{
 	2,  // 0: nazobu.v1.ListTicketsResponse.tickets:type_name -> nazobu.v1.Ticket
@@ -1730,18 +1816,20 @@ var file_nazobu_v1_ticket_proto_depIdxs = []int32{
 	16, // 14: nazobu.v1.TicketService.RemoveTicketParticipant:input_type -> nazobu.v1.RemoveTicketParticipantRequest
 	18, // 15: nazobu.v1.TicketService.UpdateTicketParticipantSettlement:input_type -> nazobu.v1.UpdateTicketParticipantSettlementRequest
 	20, // 16: nazobu.v1.TicketService.GrantTicketSpoilerChannelAccess:input_type -> nazobu.v1.GrantTicketSpoilerChannelAccessRequest
-	1,  // 17: nazobu.v1.TicketService.ListTickets:output_type -> nazobu.v1.ListTicketsResponse
-	4,  // 18: nazobu.v1.TicketService.GetTicket:output_type -> nazobu.v1.GetTicketResponse
-	7,  // 19: nazobu.v1.TicketService.CreateTicket:output_type -> nazobu.v1.CreateTicketResponse
-	11, // 20: nazobu.v1.TicketService.CreateTicketWithEvent:output_type -> nazobu.v1.CreateTicketWithEventResponse
-	9,  // 21: nazobu.v1.TicketService.UpdateTicket:output_type -> nazobu.v1.UpdateTicketResponse
-	13, // 22: nazobu.v1.TicketService.UpdateTicketWithEvent:output_type -> nazobu.v1.UpdateTicketWithEventResponse
-	15, // 23: nazobu.v1.TicketService.AddTicketParticipants:output_type -> nazobu.v1.AddTicketParticipantsResponse
-	17, // 24: nazobu.v1.TicketService.RemoveTicketParticipant:output_type -> nazobu.v1.RemoveTicketParticipantResponse
-	19, // 25: nazobu.v1.TicketService.UpdateTicketParticipantSettlement:output_type -> nazobu.v1.UpdateTicketParticipantSettlementResponse
-	21, // 26: nazobu.v1.TicketService.GrantTicketSpoilerChannelAccess:output_type -> nazobu.v1.GrantTicketSpoilerChannelAccessResponse
-	17, // [17:27] is the sub-list for method output_type
-	7,  // [7:17] is the sub-list for method input_type
+	22, // 17: nazobu.v1.TicketService.DeleteTicket:input_type -> nazobu.v1.DeleteTicketRequest
+	1,  // 18: nazobu.v1.TicketService.ListTickets:output_type -> nazobu.v1.ListTicketsResponse
+	4,  // 19: nazobu.v1.TicketService.GetTicket:output_type -> nazobu.v1.GetTicketResponse
+	7,  // 20: nazobu.v1.TicketService.CreateTicket:output_type -> nazobu.v1.CreateTicketResponse
+	11, // 21: nazobu.v1.TicketService.CreateTicketWithEvent:output_type -> nazobu.v1.CreateTicketWithEventResponse
+	9,  // 22: nazobu.v1.TicketService.UpdateTicket:output_type -> nazobu.v1.UpdateTicketResponse
+	13, // 23: nazobu.v1.TicketService.UpdateTicketWithEvent:output_type -> nazobu.v1.UpdateTicketWithEventResponse
+	15, // 24: nazobu.v1.TicketService.AddTicketParticipants:output_type -> nazobu.v1.AddTicketParticipantsResponse
+	17, // 25: nazobu.v1.TicketService.RemoveTicketParticipant:output_type -> nazobu.v1.RemoveTicketParticipantResponse
+	19, // 26: nazobu.v1.TicketService.UpdateTicketParticipantSettlement:output_type -> nazobu.v1.UpdateTicketParticipantSettlementResponse
+	21, // 27: nazobu.v1.TicketService.GrantTicketSpoilerChannelAccess:output_type -> nazobu.v1.GrantTicketSpoilerChannelAccessResponse
+	23, // 28: nazobu.v1.TicketService.DeleteTicket:output_type -> nazobu.v1.DeleteTicketResponse
+	18, // [18:29] is the sub-list for method output_type
+	7,  // [7:18] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name
 	7,  // [7:7] is the sub-list for extension extendee
 	0,  // [0:7] is the sub-list for field type_name
@@ -1761,7 +1849,7 @@ func file_nazobu_v1_ticket_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_nazobu_v1_ticket_proto_rawDesc), len(file_nazobu_v1_ticket_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   22,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

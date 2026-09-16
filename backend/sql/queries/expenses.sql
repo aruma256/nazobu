@@ -50,7 +50,7 @@ SET ticket_id   = ?,
 WHERE id = ?;
 
 -- name: DeleteExpense :exec
--- expense_participants は FK CASCADE で同時に消える。
+-- 先に同じトランザクションで expense_participants を削除する。
 DELETE FROM expenses WHERE id = ?;
 
 -- name: ListExpenseParticipantsByExpenseID :many
@@ -109,3 +109,9 @@ SELECT COUNT(*) FROM expense_participants WHERE expense_id = ? AND user_id = ?;
 -- name: CountTicketByID :one
 -- expense 登録時の ticket_id 存在確認。
 SELECT COUNT(*) FROM tickets WHERE id = ?;
+
+-- name: LockExpenseForDeletion :one
+SELECT paid_by FROM expenses WHERE id = ? FOR UPDATE;
+
+-- name: DeleteExpenseParticipants :exec
+DELETE FROM expense_participants WHERE expense_id = ?;

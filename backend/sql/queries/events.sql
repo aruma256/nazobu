@@ -46,3 +46,6 @@ FROM tickets t
 JOIN users pu ON pu.id = t.purchased_by
 WHERE t.event_id IN (sqlc.slice('event_ids'))
 ORDER BY t.start_at DESC, t.id ASC;
+
+-- name: DeleteEvent :execrows
+DELETE FROM events WHERE id = ?;

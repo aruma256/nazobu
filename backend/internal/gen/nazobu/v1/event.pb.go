@@ -674,6 +674,86 @@ func (x *UpdateEventResponse) GetEvent() *Event {
 	return nil
 }
 
+type DeleteEventRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EventId       string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteEventRequest) Reset() {
+	*x = DeleteEventRequest{}
+	mi := &file_nazobu_v1_event_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteEventRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteEventRequest) ProtoMessage() {}
+
+func (x *DeleteEventRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_event_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteEventRequest.ProtoReflect.Descriptor instead.
+func (*DeleteEventRequest) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_event_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *DeleteEventRequest) GetEventId() string {
+	if x != nil {
+		return x.EventId
+	}
+	return ""
+}
+
+type DeleteEventResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteEventResponse) Reset() {
+	*x = DeleteEventResponse{}
+	mi := &file_nazobu_v1_event_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteEventResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteEventResponse) ProtoMessage() {}
+
+func (x *DeleteEventResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_event_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteEventResponse.ProtoReflect.Descriptor instead.
+func (*DeleteEventResponse) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_event_proto_rawDescGZIP(), []int{11}
+}
+
 var File_nazobu_v1_event_proto protoreflect.FileDescriptor
 
 const file_nazobu_v1_event_proto_rawDesc = "" +
@@ -728,13 +808,17 @@ const file_nazobu_v1_event_proto_rawDesc = "" +
 	"\x1a_doors_open_minutes_beforeB \n" +
 	"\x1e_entry_deadline_minutes_before\"=\n" +
 	"\x13UpdateEventResponse\x12&\n" +
-	"\x05event\x18\x01 \x01(\v2\x10.nazobu.v1.EventR\x05event2\xba\x02\n" +
+	"\x05event\x18\x01 \x01(\v2\x10.nazobu.v1.EventR\x05event\"/\n" +
+	"\x12DeleteEventRequest\x12\x19\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\"\x15\n" +
+	"\x13DeleteEventResponse2\x88\x03\n" +
 	"\fEventService\x12I\n" +
 	"\n" +
 	"ListEvents\x12\x1c.nazobu.v1.ListEventsRequest\x1a\x1d.nazobu.v1.ListEventsResponse\x12C\n" +
 	"\bGetEvent\x12\x1a.nazobu.v1.GetEventRequest\x1a\x1b.nazobu.v1.GetEventResponse\x12L\n" +
 	"\vCreateEvent\x12\x1d.nazobu.v1.CreateEventRequest\x1a\x1e.nazobu.v1.CreateEventResponse\x12L\n" +
-	"\vUpdateEvent\x12\x1d.nazobu.v1.UpdateEventRequest\x1a\x1e.nazobu.v1.UpdateEventResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
+	"\vUpdateEvent\x12\x1d.nazobu.v1.UpdateEventRequest\x1a\x1e.nazobu.v1.UpdateEventResponse\x12L\n" +
+	"\vDeleteEvent\x12\x1d.nazobu.v1.DeleteEventRequest\x1a\x1e.nazobu.v1.DeleteEventResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
 
 var (
 	file_nazobu_v1_event_proto_rawDescOnce sync.Once
@@ -748,7 +832,7 @@ func file_nazobu_v1_event_proto_rawDescGZIP() []byte {
 	return file_nazobu_v1_event_proto_rawDescData
 }
 
-var file_nazobu_v1_event_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_nazobu_v1_event_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_nazobu_v1_event_proto_goTypes = []any{
 	(*ListEventsRequest)(nil),   // 0: nazobu.v1.ListEventsRequest
 	(*ListEventsResponse)(nil),  // 1: nazobu.v1.ListEventsResponse
@@ -760,26 +844,30 @@ var file_nazobu_v1_event_proto_goTypes = []any{
 	(*GetEventResponse)(nil),    // 7: nazobu.v1.GetEventResponse
 	(*UpdateEventRequest)(nil),  // 8: nazobu.v1.UpdateEventRequest
 	(*UpdateEventResponse)(nil), // 9: nazobu.v1.UpdateEventResponse
+	(*DeleteEventRequest)(nil),  // 10: nazobu.v1.DeleteEventRequest
+	(*DeleteEventResponse)(nil), // 11: nazobu.v1.DeleteEventResponse
 }
 var file_nazobu_v1_event_proto_depIdxs = []int32{
-	2, // 0: nazobu.v1.ListEventsResponse.events:type_name -> nazobu.v1.Event
-	3, // 1: nazobu.v1.Event.tickets:type_name -> nazobu.v1.EventTicket
-	2, // 2: nazobu.v1.CreateEventResponse.event:type_name -> nazobu.v1.Event
-	2, // 3: nazobu.v1.GetEventResponse.event:type_name -> nazobu.v1.Event
-	2, // 4: nazobu.v1.UpdateEventResponse.event:type_name -> nazobu.v1.Event
-	0, // 5: nazobu.v1.EventService.ListEvents:input_type -> nazobu.v1.ListEventsRequest
-	6, // 6: nazobu.v1.EventService.GetEvent:input_type -> nazobu.v1.GetEventRequest
-	4, // 7: nazobu.v1.EventService.CreateEvent:input_type -> nazobu.v1.CreateEventRequest
-	8, // 8: nazobu.v1.EventService.UpdateEvent:input_type -> nazobu.v1.UpdateEventRequest
-	1, // 9: nazobu.v1.EventService.ListEvents:output_type -> nazobu.v1.ListEventsResponse
-	7, // 10: nazobu.v1.EventService.GetEvent:output_type -> nazobu.v1.GetEventResponse
-	5, // 11: nazobu.v1.EventService.CreateEvent:output_type -> nazobu.v1.CreateEventResponse
-	9, // 12: nazobu.v1.EventService.UpdateEvent:output_type -> nazobu.v1.UpdateEventResponse
-	9, // [9:13] is the sub-list for method output_type
-	5, // [5:9] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	2,  // 0: nazobu.v1.ListEventsResponse.events:type_name -> nazobu.v1.Event
+	3,  // 1: nazobu.v1.Event.tickets:type_name -> nazobu.v1.EventTicket
+	2,  // 2: nazobu.v1.CreateEventResponse.event:type_name -> nazobu.v1.Event
+	2,  // 3: nazobu.v1.GetEventResponse.event:type_name -> nazobu.v1.Event
+	2,  // 4: nazobu.v1.UpdateEventResponse.event:type_name -> nazobu.v1.Event
+	0,  // 5: nazobu.v1.EventService.ListEvents:input_type -> nazobu.v1.ListEventsRequest
+	6,  // 6: nazobu.v1.EventService.GetEvent:input_type -> nazobu.v1.GetEventRequest
+	4,  // 7: nazobu.v1.EventService.CreateEvent:input_type -> nazobu.v1.CreateEventRequest
+	8,  // 8: nazobu.v1.EventService.UpdateEvent:input_type -> nazobu.v1.UpdateEventRequest
+	10, // 9: nazobu.v1.EventService.DeleteEvent:input_type -> nazobu.v1.DeleteEventRequest
+	1,  // 10: nazobu.v1.EventService.ListEvents:output_type -> nazobu.v1.ListEventsResponse
+	7,  // 11: nazobu.v1.EventService.GetEvent:output_type -> nazobu.v1.GetEventResponse
+	5,  // 12: nazobu.v1.EventService.CreateEvent:output_type -> nazobu.v1.CreateEventResponse
+	9,  // 13: nazobu.v1.EventService.UpdateEvent:output_type -> nazobu.v1.UpdateEventResponse
+	11, // 14: nazobu.v1.EventService.DeleteEvent:output_type -> nazobu.v1.DeleteEventResponse
+	10, // [10:15] is the sub-list for method output_type
+	5,  // [5:10] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_nazobu_v1_event_proto_init() }
@@ -796,7 +884,7 @@ func file_nazobu_v1_event_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_nazobu_v1_event_proto_rawDesc), len(file_nazobu_v1_event_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -1,5 +1,6 @@
 -- 謎部 DB スキーマ（SSOT）
 -- ここに DDL を記述すると、起動時に sqldef が現状 DB との差分を計算して適用する。
+-- 親行の削除で関連記録を連鎖削除しない。必要な子行はアプリのトランザクション内で明示的に削除する。
 -- 文字コード: utf8mb4 / エンジン: InnoDB / ID 型: CHAR(36) UUIDv7
 
 -- 内部ユーザー。IdP 非依存の anchor。
@@ -31,7 +32,7 @@ CREATE TABLE user_identities (
   updated_at  DATETIME(6)  NOT NULL,
   PRIMARY KEY (provider, subject),
   KEY idx_user_identities_user_id (user_id),
-  CONSTRAINT fk_user_identities_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_user_identities_user_id FOREIGN KEY (user_id) REFERENCES users(id),
   -- 当面 Discord のみで運用するため provider を固定する。新規 IdP を増やす際にここを更新する。
   -- ※ sqldef + MySQL では 1 要素の IN (...) に既知のバグがあるため = で書く。
   CONSTRAINT chk_user_identities_provider CHECK (provider = 'discord')
@@ -47,7 +48,7 @@ CREATE TABLE sessions (
   PRIMARY KEY (id),
   UNIQUE KEY uq_sessions_token_hash (token_hash),
   KEY idx_sessions_user_id (user_id),
-  CONSTRAINT fk_sessions_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  CONSTRAINT fk_sessions_user_id FOREIGN KEY (user_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- MCP 連携（Claude connector）用 OAuth 2.1 の認可コード。
@@ -68,7 +69,7 @@ CREATE TABLE oauth_authorization_codes (
   created_at      DATETIME(6)  NOT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_oauth_authorization_codes_code_hash (code_hash),
-  CONSTRAINT fk_oauth_authorization_codes_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  CONSTRAINT fk_oauth_authorization_codes_user_id FOREIGN KEY (user_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- MCP 連携用のアクセストークン / リフレッシュトークンのペア。
@@ -88,7 +89,7 @@ CREATE TABLE oauth_tokens (
   UNIQUE KEY uq_oauth_tokens_access_token_hash (access_token_hash),
   UNIQUE KEY uq_oauth_tokens_refresh_token_hash (refresh_token_hash),
   KEY idx_oauth_tokens_user_id (user_id),
-  CONSTRAINT fk_oauth_tokens_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  CONSTRAINT fk_oauth_tokens_user_id FOREIGN KEY (user_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- 謎解きイベント（公演）。長期開催が一般的なので、開催日は event ではなく
@@ -151,7 +152,7 @@ CREATE TABLE tickets (
   KEY idx_tickets_event_id (event_id),
   KEY idx_tickets_start_at (start_at),
   KEY idx_tickets_purchased_by_start_at (purchased_by, start_at),
-  CONSTRAINT fk_tickets_event_id     FOREIGN KEY (event_id)     REFERENCES events(id) ON DELETE CASCADE,
+  CONSTRAINT fk_tickets_event_id     FOREIGN KEY (event_id)     REFERENCES events(id),
   CONSTRAINT fk_tickets_purchased_by FOREIGN KEY (purchased_by) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -189,8 +190,8 @@ CREATE TABLE expense_participants (
   created_at  DATETIME(6) NOT NULL,
   PRIMARY KEY (expense_id, user_id),
   KEY idx_expense_participants_user_id (user_id),
-  CONSTRAINT fk_expense_participants_expense_id FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE,
-  CONSTRAINT fk_expense_participants_user_id    FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE
+  CONSTRAINT fk_expense_participants_expense_id FOREIGN KEY (expense_id) REFERENCES expenses(id),
+  CONSTRAINT fk_expense_participants_user_id    FOREIGN KEY (user_id)    REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ticket と参加者の M:N。誰がどのチケットで参加したか。
@@ -203,6 +204,6 @@ CREATE TABLE ticket_participants (
   created_at  DATETIME(6) NOT NULL,
   PRIMARY KEY (ticket_id, user_id),
   KEY idx_ticket_participants_user_id (user_id),
-  CONSTRAINT fk_ticket_participants_ticket_id FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE,
-  CONSTRAINT fk_ticket_participants_user_id   FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE
+  CONSTRAINT fk_ticket_participants_ticket_id FOREIGN KEY (ticket_id) REFERENCES tickets(id),
+  CONSTRAINT fk_ticket_participants_user_id   FOREIGN KEY (user_id)   REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

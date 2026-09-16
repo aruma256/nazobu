@@ -495,7 +495,7 @@ func TestIntegrationDeleteExpense(t *testing.T) {
 		t.Errorf("他 member の削除 code = %v, want %v", connectCode(t, err), connect.CodePermissionDenied)
 	}
 
-	// 立替者本人は削除でき、expense_participants も CASCADE で消えること。
+	// 立替者本人は削除でき、expense_participants も同じトランザクションで消えること。
 	deleteReq := connect.NewRequest(&nazobuv1.DeleteExpenseRequest{ExpenseId: created.Id})
 	setSessionCookie(t, db, deleteReq, payerID)
 	if _, err := svc.DeleteExpense(ctx, deleteReq); err != nil {
@@ -513,7 +513,7 @@ func TestIntegrationDeleteExpense(t *testing.T) {
 		t.Fatalf("expense_participants の件数取得に失敗: %v", err)
 	}
 	if count != 0 {
-		t.Errorf("削除後の expense_participants = %d 件, CASCADE で 0 になるはず", count)
+		t.Errorf("削除後の expense_participants = %d 件, 0 になるはず", count)
 	}
 }
 

@@ -321,19 +321,30 @@ func (s *expenseService) DeleteExpense(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("expense_id は必須"))
 	}
 
-	existing, err := s.q.GetExpenseByID(ctx, expenseID)
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	defer func() { _ = tx.Rollback() }()
+	qtx := s.q.WithTx(tx)
+	paidBy, err := qtx.LockExpenseForDeletion(ctx, expenseID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("指定された expense は存在しない"))
 	}
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("expense の取得に失敗: %w", err))
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	if !canEditExpense(user, existing.PaidBy) {
+	if !canEditExpense(user, paidBy) {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("expense の削除は admin もしくは立替者のみ"))
 	}
-
-	if err := s.q.DeleteExpense(ctx, expenseID); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("expense の削除に失敗: %w", err))
+	if err := qtx.DeleteExpenseParticipants(ctx, expenseID); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	if err := qtx.DeleteExpense(ctx, expenseID); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(&nazobuv1.DeleteExpenseResponse{}), nil
 }

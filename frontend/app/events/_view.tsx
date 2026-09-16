@@ -38,7 +38,31 @@ type LoadState =
 
 export function EventsView() {
   const router = useRouter();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [state, setState] = useState<LoadState>({ kind: "loading" });
+
+  async function handleDelete(event: NazobuEvent) {
+    if (deletingId || !window.confirm(
+      `「${event.title}」を完全に削除しますか？元に戻せません。\nDiscord チャンネル・権限は残ります。`,
+    )) return;
+    setDeletingId(event.id);
+    setDeleteError(null);
+    try {
+      await eventClient.deleteEvent({ eventId: event.id });
+      setState((current) => current.kind === "ready"
+        ? { ...current, events: current.events.filter((e) => e.id !== event.id) }
+        : current);
+    } catch (err) {
+      if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
+        redirectToLogin(router, "/events");
+        return;
+      }
+      setDeleteError(err instanceof Error ? err.message : "削除に失敗しました");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -119,6 +143,11 @@ export function EventsView() {
 
         <Section>
           <SectionTitle count={events.length}>公演一覧</SectionTitle>
+          {deleteError && (
+            <p role="alert" className="mt-3 text-sm text-red-700">
+              {deleteError}
+            </p>
+          )}
           {events.length === 0 ? (
             <p className="mt-3 text-sm text-zinc-500">
               まだ公演が登録されていません。
@@ -126,7 +155,13 @@ export function EventsView() {
           ) : (
             <ul className="mt-3 space-y-4">
               {events.map((e) => (
-                <EventCard key={e.id} event={e} myName={displayName} />
+                <EventCard
+                  key={e.id}
+                  event={e}
+                  myName={displayName}
+                  deleting={deletingId !== null}
+                  onDelete={() => handleDelete(e)}
+                />
               ))}
             </ul>
           )}
@@ -139,9 +174,13 @@ export function EventsView() {
 function EventCard({
   event,
   myName,
+  deleting,
+  onDelete,
 }: {
   event: NazobuEvent;
   myName: string;
+  deleting: boolean;
+  onDelete: () => void;
 }) {
   const hasOffsets =
     event.doorsOpenMinutesBefore !== undefined ||
@@ -199,6 +238,18 @@ function EventCard({
         >
           この公演にチケットを追加
         </Link>
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={deleting || event.tickets.length > 0}
+          className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-red-200 px-4 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
+        >
+          公演を削除
+        </button>
+        {event.tickets.length > 0 && (
+          <p className="text-sm text-zinc-500">公演を削除するには、先にチケットを削除してください。</p>
+        )}
+
       </div>
     </li>
   );

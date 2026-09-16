@@ -107,6 +107,15 @@ func newMCPHandler(
 			"チケット代の精算状態はこのツールでは変更できない。",
 	}, updateExpenseParticipantSettlementTool(expenses))
 
+	mcp.AddTool(srv, &mcp.Tool{
+		Name:        "delete_ticket",
+		Description: "チケットを参加者・チケット代の精算情報ごと完全削除する。元に戻せないため利用者に対象と影響を確認してから実行する。公演と追加精算の記録、Discord チャンネル・権限は残る。admin または立替者と write スコープが必要。",
+	}, deleteTicketTool(tickets))
+	mcp.AddTool(srv, &mcp.Tool{
+		Name:        "delete_event",
+		Description: "公演を完全削除する。元に戻せないため利用者に対象を確認してから実行する。チケットが残る公演は削除不可。Discord チャンネル・権限は残る。admin と write スコープが必要。event_id は get_ticket の event_id または Web の公演情報から確認する。",
+	}, deleteEventTool(events))
+
 	// Stateless + JSONResponse: セッション管理を持たず、SSE ではなく素の JSON で応答する。
 	// Cloudflare Tunnel + Next.js rewrites 越しでもバッファリングの影響を受けない構成に寄せる。
 	return mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return srv }, &mcp.StreamableHTTPOptions{
@@ -118,6 +127,7 @@ func newMCPHandler(
 // mcpTicket は MCP ツールが返すチケット情報。proto の Ticket から
 // LLM が扱いやすいフィールドだけを抜き出した形。
 type mcpTicket struct {
+	EventID          string   `json:"event_id" jsonschema:"公演 ID"`
 	TicketID         string   `json:"ticket_id" jsonschema:"チケット ID"`
 	EventTitle       string   `json:"event_title" jsonschema:"公演タイトル"`
 	EventURL         string   `json:"event_url" jsonschema:"公演の公式ページ URL"`
@@ -132,6 +142,7 @@ type mcpTicket struct {
 // toMCPTicket は proto の Ticket を MCP ツール出力用の形に変換する。
 func toMCPTicket(t *nazobuv1.Ticket) mcpTicket {
 	return mcpTicket{
+		EventID:          t.GetEventId(),
 		TicketID:         t.GetId(),
 		EventTitle:       t.GetEventTitle(),
 		EventURL:         t.GetEventUrl(),
@@ -664,5 +675,33 @@ func updateExpenseParticipantSettlementTool(expenses nazobuv1connect.ExpenseServ
 		}
 		out.Expense = toMCPExpense(res.Msg.GetExpense())
 		return nil, out, nil
+	}
+}
+
+type deleteTicketInput struct {
+	TicketID string `json:"ticket_id" jsonschema:"削除対象のチケット ID"`
+}
+
+func deleteTicketTool(service nazobuv1connect.TicketServiceHandler) mcp.ToolHandlerFor[deleteTicketInput, struct{}] {
+	return func(ctx context.Context, _ *mcp.CallToolRequest, in deleteTicketInput) (*mcp.CallToolResult, struct{}, error) {
+		if !oauth.HasScope(ctx, oauth.ScopeWrite) {
+			return nil, struct{}{}, errors.New("このアクセストークンには write スコープがありません。コネクタを再接続して書き込みを許可してください")
+		}
+		_, err := service.DeleteTicket(ctx, connect.NewRequest(&nazobuv1.DeleteTicketRequest{TicketId: in.TicketID}))
+		return nil, struct{}{}, err
+	}
+}
+
+type deleteEventInput struct {
+	EventID string `json:"event_id" jsonschema:"削除対象の公演 ID"`
+}
+
+func deleteEventTool(service nazobuv1connect.EventServiceHandler) mcp.ToolHandlerFor[deleteEventInput, struct{}] {
+	return func(ctx context.Context, _ *mcp.CallToolRequest, in deleteEventInput) (*mcp.CallToolResult, struct{}, error) {
+		if !oauth.HasScope(ctx, oauth.ScopeWrite) {
+			return nil, struct{}{}, errors.New("このアクセストークンには write スコープがありません。コネクタを再接続して書き込みを許可してください")
+		}
+		_, err := service.DeleteEvent(ctx, connect.NewRequest(&nazobuv1.DeleteEventRequest{EventId: in.EventID}))
+		return nil, struct{}{}, err
 	}
 }

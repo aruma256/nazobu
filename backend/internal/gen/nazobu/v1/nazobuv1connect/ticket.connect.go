@@ -62,6 +62,9 @@ const (
 	// TicketServiceGrantTicketSpoilerChannelAccessProcedure is the fully-qualified name of the
 	// TicketService's GrantTicketSpoilerChannelAccess RPC.
 	TicketServiceGrantTicketSpoilerChannelAccessProcedure = "/nazobu.v1.TicketService/GrantTicketSpoilerChannelAccess"
+	// TicketServiceDeleteTicketProcedure is the fully-qualified name of the TicketService's
+	// DeleteTicket RPC.
+	TicketServiceDeleteTicketProcedure = "/nazobu.v1.TicketService/DeleteTicket"
 )
 
 // TicketServiceClient is a client for the nazobu.v1.TicketService service.
@@ -95,6 +98,8 @@ type TicketServiceClient interface {
 	// GrantTicketSpoilerChannelAccess は event の Discord ネタバレチャンネルを必要に応じて作成し、
 	// 指定 ticket の現在の参加者へ閲覧権限を追加付与する。admin のみ実行可能。
 	GrantTicketSpoilerChannelAccess(context.Context, *connect.Request[v1.GrantTicketSpoilerChannelAccessRequest]) (*connect.Response[v1.GrantTicketSpoilerChannelAccessResponse], error)
+	// DeleteTicket は誤登録した ticket を完全削除する。admin もしくは立替者のみ。参加・精算情報も削除する。
+	DeleteTicket(context.Context, *connect.Request[v1.DeleteTicketRequest]) (*connect.Response[v1.DeleteTicketResponse], error)
 }
 
 // NewTicketServiceClient constructs a client for the nazobu.v1.TicketService service. By default,
@@ -168,6 +173,12 @@ func NewTicketServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(ticketServiceMethods.ByName("GrantTicketSpoilerChannelAccess")),
 			connect.WithClientOptions(opts...),
 		),
+		deleteTicket: connect.NewClient[v1.DeleteTicketRequest, v1.DeleteTicketResponse](
+			httpClient,
+			baseURL+TicketServiceDeleteTicketProcedure,
+			connect.WithSchema(ticketServiceMethods.ByName("DeleteTicket")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -183,6 +194,7 @@ type ticketServiceClient struct {
 	removeTicketParticipant           *connect.Client[v1.RemoveTicketParticipantRequest, v1.RemoveTicketParticipantResponse]
 	updateTicketParticipantSettlement *connect.Client[v1.UpdateTicketParticipantSettlementRequest, v1.UpdateTicketParticipantSettlementResponse]
 	grantTicketSpoilerChannelAccess   *connect.Client[v1.GrantTicketSpoilerChannelAccessRequest, v1.GrantTicketSpoilerChannelAccessResponse]
+	deleteTicket                      *connect.Client[v1.DeleteTicketRequest, v1.DeleteTicketResponse]
 }
 
 // ListTickets calls nazobu.v1.TicketService.ListTickets.
@@ -236,6 +248,11 @@ func (c *ticketServiceClient) GrantTicketSpoilerChannelAccess(ctx context.Contex
 	return c.grantTicketSpoilerChannelAccess.CallUnary(ctx, req)
 }
 
+// DeleteTicket calls nazobu.v1.TicketService.DeleteTicket.
+func (c *ticketServiceClient) DeleteTicket(ctx context.Context, req *connect.Request[v1.DeleteTicketRequest]) (*connect.Response[v1.DeleteTicketResponse], error) {
+	return c.deleteTicket.CallUnary(ctx, req)
+}
+
 // TicketServiceHandler is an implementation of the nazobu.v1.TicketService service.
 type TicketServiceHandler interface {
 	// ListTickets は登録済み ticket を start_at 降順で返す。
@@ -267,6 +284,8 @@ type TicketServiceHandler interface {
 	// GrantTicketSpoilerChannelAccess は event の Discord ネタバレチャンネルを必要に応じて作成し、
 	// 指定 ticket の現在の参加者へ閲覧権限を追加付与する。admin のみ実行可能。
 	GrantTicketSpoilerChannelAccess(context.Context, *connect.Request[v1.GrantTicketSpoilerChannelAccessRequest]) (*connect.Response[v1.GrantTicketSpoilerChannelAccessResponse], error)
+	// DeleteTicket は誤登録した ticket を完全削除する。admin もしくは立替者のみ。参加・精算情報も削除する。
+	DeleteTicket(context.Context, *connect.Request[v1.DeleteTicketRequest]) (*connect.Response[v1.DeleteTicketResponse], error)
 }
 
 // NewTicketServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -336,6 +355,12 @@ func NewTicketServiceHandler(svc TicketServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(ticketServiceMethods.ByName("GrantTicketSpoilerChannelAccess")),
 		connect.WithHandlerOptions(opts...),
 	)
+	ticketServiceDeleteTicketHandler := connect.NewUnaryHandler(
+		TicketServiceDeleteTicketProcedure,
+		svc.DeleteTicket,
+		connect.WithSchema(ticketServiceMethods.ByName("DeleteTicket")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/nazobu.v1.TicketService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case TicketServiceListTicketsProcedure:
@@ -358,6 +383,8 @@ func NewTicketServiceHandler(svc TicketServiceHandler, opts ...connect.HandlerOp
 			ticketServiceUpdateTicketParticipantSettlementHandler.ServeHTTP(w, r)
 		case TicketServiceGrantTicketSpoilerChannelAccessProcedure:
 			ticketServiceGrantTicketSpoilerChannelAccessHandler.ServeHTTP(w, r)
+		case TicketServiceDeleteTicketProcedure:
+			ticketServiceDeleteTicketHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -405,4 +432,8 @@ func (UnimplementedTicketServiceHandler) UpdateTicketParticipantSettlement(conte
 
 func (UnimplementedTicketServiceHandler) GrantTicketSpoilerChannelAccess(context.Context, *connect.Request[v1.GrantTicketSpoilerChannelAccessRequest]) (*connect.Response[v1.GrantTicketSpoilerChannelAccessResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.TicketService.GrantTicketSpoilerChannelAccess is not implemented"))
+}
+
+func (UnimplementedTicketServiceHandler) DeleteTicket(context.Context, *connect.Request[v1.DeleteTicketRequest]) (*connect.Response[v1.DeleteTicketResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.TicketService.DeleteTicket is not implemented"))
 }

@@ -54,6 +54,18 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) error 
 	return err
 }
 
+const deleteEvent = `-- name: DeleteEvent :execrows
+DELETE FROM events WHERE id = ?
+`
+
+func (q *Queries) DeleteEvent(ctx context.Context, id string) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteEvent, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const getEventByID = `-- name: GetEventByID :one
 SELECT id, title, url, catchphrase, image_url, doors_open_minutes_before, entry_deadline_minutes_before, expected_duration_minutes
 FROM events

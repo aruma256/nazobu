@@ -4,7 +4,7 @@ package nazobu.v1;
 
 option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1";
 
-// TicketService は ticket（公演に対する 1 枚分の参加チケット）の参照・登録 RPC を提供する。
+// TicketService は ticket（公演に対する 1 枚分の参加チケット）の参照・登録・更新・削除 RPC を提供する。
 service TicketService {
   // ListTickets は登録済み ticket を start_at 降順で返す。
   rpc ListTickets(ListTicketsRequest) returns (ListTicketsResponse);
@@ -35,6 +35,9 @@ service TicketService {
   // GrantTicketSpoilerChannelAccess は event の Discord ネタバレチャンネルを必要に応じて作成し、
   // 指定 ticket の現在の参加者へ閲覧権限を追加付与する。admin のみ実行可能。
   rpc GrantTicketSpoilerChannelAccess(GrantTicketSpoilerChannelAccessRequest) returns (GrantTicketSpoilerChannelAccessResponse);
+  // DeleteTicket は誤登録した ticket を完全削除する。admin もしくは立替者のみ。参加・精算情報も削除する。
+  rpc DeleteTicket(DeleteTicketRequest) returns (DeleteTicketResponse);
+
 }
 
 message ListTicketsRequest {}
@@ -247,3 +250,9 @@ message GrantTicketSpoilerChannelAccessResponse {
   // この呼び出しでチャンネルを新規作成したか。
   bool channel_created = 2;
 }
+
+message DeleteTicketRequest {
+  string ticket_id = 1;
+}
+
+message DeleteTicketResponse {}

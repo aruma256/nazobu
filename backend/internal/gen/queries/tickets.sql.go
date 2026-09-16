@@ -88,6 +88,15 @@ func (q *Queries) CreateTicketParticipant(ctx context.Context, arg CreateTicketP
 	return err
 }
 
+const deleteTicket = `-- name: DeleteTicket :exec
+DELETE FROM tickets WHERE id = ?
+`
+
+func (q *Queries) DeleteTicket(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, deleteTicket, id)
+	return err
+}
+
 const deleteTicketParticipant = `-- name: DeleteTicketParticipant :exec
 DELETE FROM ticket_participants WHERE ticket_id = ? AND user_id = ?
 `
@@ -99,6 +108,15 @@ type DeleteTicketParticipantParams struct {
 
 func (q *Queries) DeleteTicketParticipant(ctx context.Context, arg DeleteTicketParticipantParams) error {
 	_, err := q.db.ExecContext(ctx, deleteTicketParticipant, arg.TicketID, arg.UserID)
+	return err
+}
+
+const deleteTicketParticipants = `-- name: DeleteTicketParticipants :exec
+DELETE FROM ticket_participants WHERE ticket_id = ?
+`
+
+func (q *Queries) DeleteTicketParticipants(ctx context.Context, ticketID string) error {
+	_, err := q.db.ExecContext(ctx, deleteTicketParticipants, ticketID)
 	return err
 }
 
@@ -447,6 +465,18 @@ func (q *Queries) ListTicketsByIDs(ctx context.Context, ids []string) ([]ListTic
 		return nil, err
 	}
 	return items, nil
+}
+
+const lockTicketForDeletion = `-- name: LockTicketForDeletion :one
+SELECT purchased_by FROM tickets WHERE id = ? FOR UPDATE
+`
+
+// 削除の権限判定と参加者削除の間に立替者変更・参加者追加が割り込むのを防ぐ。
+func (q *Queries) LockTicketForDeletion(ctx context.Context, id string) (string, error) {
+	row := q.db.QueryRowContext(ctx, lockTicketForDeletion, id)
+	var purchased_by string
+	err := row.Scan(&purchased_by)
+	return purchased_by, err
 }
 
 const markTicketParticipantSettled = `-- name: MarkTicketParticipantSettled :exec

@@ -43,6 +43,9 @@ const (
 	// EventServiceUpdateEventProcedure is the fully-qualified name of the EventService's UpdateEvent
 	// RPC.
 	EventServiceUpdateEventProcedure = "/nazobu.v1.EventService/UpdateEvent"
+	// EventServiceDeleteEventProcedure is the fully-qualified name of the EventService's DeleteEvent
+	// RPC.
+	EventServiceDeleteEventProcedure = "/nazobu.v1.EventService/DeleteEvent"
 )
 
 // EventServiceClient is a client for the nazobu.v1.EventService service.
@@ -55,6 +58,8 @@ type EventServiceClient interface {
 	CreateEvent(context.Context, *connect.Request[v1.CreateEventRequest]) (*connect.Response[v1.CreateEventResponse], error)
 	// UpdateEvent は event の title / url / catchphrase / 開場・締切オフセットを更新する。admin のみ実行可能。
 	UpdateEvent(context.Context, *connect.Request[v1.UpdateEventRequest]) (*connect.Response[v1.UpdateEventResponse], error)
+	// DeleteEvent は誤登録した event を完全削除する。admin のみ。チケットが残っている場合は削除不可。
+	DeleteEvent(context.Context, *connect.Request[v1.DeleteEventRequest]) (*connect.Response[v1.DeleteEventResponse], error)
 }
 
 // NewEventServiceClient constructs a client for the nazobu.v1.EventService service. By default, it
@@ -92,6 +97,12 @@ func NewEventServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(eventServiceMethods.ByName("UpdateEvent")),
 			connect.WithClientOptions(opts...),
 		),
+		deleteEvent: connect.NewClient[v1.DeleteEventRequest, v1.DeleteEventResponse](
+			httpClient,
+			baseURL+EventServiceDeleteEventProcedure,
+			connect.WithSchema(eventServiceMethods.ByName("DeleteEvent")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -101,6 +112,7 @@ type eventServiceClient struct {
 	getEvent    *connect.Client[v1.GetEventRequest, v1.GetEventResponse]
 	createEvent *connect.Client[v1.CreateEventRequest, v1.CreateEventResponse]
 	updateEvent *connect.Client[v1.UpdateEventRequest, v1.UpdateEventResponse]
+	deleteEvent *connect.Client[v1.DeleteEventRequest, v1.DeleteEventResponse]
 }
 
 // ListEvents calls nazobu.v1.EventService.ListEvents.
@@ -123,6 +135,11 @@ func (c *eventServiceClient) UpdateEvent(ctx context.Context, req *connect.Reque
 	return c.updateEvent.CallUnary(ctx, req)
 }
 
+// DeleteEvent calls nazobu.v1.EventService.DeleteEvent.
+func (c *eventServiceClient) DeleteEvent(ctx context.Context, req *connect.Request[v1.DeleteEventRequest]) (*connect.Response[v1.DeleteEventResponse], error) {
+	return c.deleteEvent.CallUnary(ctx, req)
+}
+
 // EventServiceHandler is an implementation of the nazobu.v1.EventService service.
 type EventServiceHandler interface {
 	// ListEvents は登録済み event を新しい順で返す。各 event には紐づく ticket を含める。
@@ -133,6 +150,8 @@ type EventServiceHandler interface {
 	CreateEvent(context.Context, *connect.Request[v1.CreateEventRequest]) (*connect.Response[v1.CreateEventResponse], error)
 	// UpdateEvent は event の title / url / catchphrase / 開場・締切オフセットを更新する。admin のみ実行可能。
 	UpdateEvent(context.Context, *connect.Request[v1.UpdateEventRequest]) (*connect.Response[v1.UpdateEventResponse], error)
+	// DeleteEvent は誤登録した event を完全削除する。admin のみ。チケットが残っている場合は削除不可。
+	DeleteEvent(context.Context, *connect.Request[v1.DeleteEventRequest]) (*connect.Response[v1.DeleteEventResponse], error)
 }
 
 // NewEventServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -166,6 +185,12 @@ func NewEventServiceHandler(svc EventServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(eventServiceMethods.ByName("UpdateEvent")),
 		connect.WithHandlerOptions(opts...),
 	)
+	eventServiceDeleteEventHandler := connect.NewUnaryHandler(
+		EventServiceDeleteEventProcedure,
+		svc.DeleteEvent,
+		connect.WithSchema(eventServiceMethods.ByName("DeleteEvent")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/nazobu.v1.EventService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case EventServiceListEventsProcedure:
@@ -176,6 +201,8 @@ func NewEventServiceHandler(svc EventServiceHandler, opts ...connect.HandlerOpti
 			eventServiceCreateEventHandler.ServeHTTP(w, r)
 		case EventServiceUpdateEventProcedure:
 			eventServiceUpdateEventHandler.ServeHTTP(w, r)
+		case EventServiceDeleteEventProcedure:
+			eventServiceDeleteEventHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -199,4 +226,8 @@ func (UnimplementedEventServiceHandler) CreateEvent(context.Context, *connect.Re
 
 func (UnimplementedEventServiceHandler) UpdateEvent(context.Context, *connect.Request[v1.UpdateEventRequest]) (*connect.Response[v1.UpdateEventResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.EventService.UpdateEvent is not implemented"))
+}
+
+func (UnimplementedEventServiceHandler) DeleteEvent(context.Context, *connect.Request[v1.DeleteEventRequest]) (*connect.Response[v1.DeleteEventResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.EventService.DeleteEvent is not implemented"))
 }

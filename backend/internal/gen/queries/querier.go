@@ -33,9 +33,11 @@ type Querier interface {
 	CreateTicketParticipant(ctx context.Context, arg CreateTicketParticipantParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	CreateUserIdentity(ctx context.Context, arg CreateUserIdentityParams) error
-	// expense_participants は FK CASCADE で同時に消える。
+	DeleteEvent(ctx context.Context, id string) (int64, error)
+	// 先に同じトランザクションで expense_participants を削除する。
 	DeleteExpense(ctx context.Context, id string) error
 	DeleteExpenseParticipant(ctx context.Context, arg DeleteExpenseParticipantParams) error
+	DeleteExpenseParticipants(ctx context.Context, expenseID string) error
 	// 期限切れの認可コードを掃除する（呼び出しは任意のタイミングで冪等）。
 	DeleteExpiredOAuthRecords(ctx context.Context, expiresAt time.Time) error
 	// refresh 期限も切れたトークンを掃除する。
@@ -45,7 +47,9 @@ type Querier interface {
 	DeleteOAuthAuthorizationCode(ctx context.Context, id string) (int64, error)
 	DeleteOAuthTokenByID(ctx context.Context, id string) error
 	DeleteSessionByTokenHash(ctx context.Context, tokenHash string) error
+	DeleteTicket(ctx context.Context, id string) error
 	DeleteTicketParticipant(ctx context.Context, arg DeleteTicketParticipantParams) error
+	DeleteTicketParticipants(ctx context.Context, ticketID string) error
 	// 1 件の event を取得する。詳細・編集画面用。
 	GetEventByID(ctx context.Context, id string) (GetEventByIDRow, error)
 	// expense 詳細表示・権限判定用。
@@ -124,6 +128,9 @@ type Querier interface {
 	ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcomingTicketsByUserIDParams) ([]ListUpcomingTicketsByUserIDRow, error)
 	// 表示用の最低限フィールドだけ返す。avatar_url 等は GetMe 経路（session join）で取る。
 	ListUsers(ctx context.Context) ([]ListUsersRow, error)
+	LockExpenseForDeletion(ctx context.Context, id string) (string, error)
+	// 削除の権限判定と参加者削除の間に立替者変更・参加者追加が割り込むのを防ぐ。
+	LockTicketForDeletion(ctx context.Context, id string) (string, error)
 	// 未精算 → 精算済み。settled_at に現在時刻を入れる。
 	MarkExpenseParticipantSettled(ctx context.Context, arg MarkExpenseParticipantSettledParams) error
 	// 精算済み → 未精算。settled_at を NULL に戻す。

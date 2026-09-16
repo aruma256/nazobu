@@ -54,6 +54,28 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  async function handleDelete() {
+    if (mutating || state.kind !== "ready") return;
+    const ticket = state.detail.ticket;
+    if (!ticket || !window.confirm(
+      `「${ticket.eventTitle}」（${formatDateJa(parseDateTime(ticket.startAt))} ${formatTimeHM(parseDateTime(ticket.startAt))}）のチケットを削除しますか？\n参加者・チケット代の精算情報も完全に削除され、元に戻せません。\n公演と追加精算の記録、Discord チャンネル・権限は残ります。`,
+    )) return;
+    setMutating(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await ticketClient.deleteTicket({ ticketId });
+      router.replace("/tickets");
+    } catch (err) {
+      if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
+        redirectToLogin(router, `/tickets/${ticketId}`);
+        return;
+      }
+      setError(err instanceof Error ? err.message : "削除に失敗しました");
+      setMutating(false);
+    }
+  }
+
   const reload = useCallback(async () => {
     try {
       const [me, detail, usersRes, expensesRes] = await Promise.all([
@@ -301,6 +323,16 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
                 >
                   チケット情報を編集
                 </Link>
+              )}
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={mutating}
+                  className="inline-flex h-11 items-center justify-center rounded-lg border border-red-200 px-4 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
+                >
+                  チケットを削除
+                </button>
               )}
               {canManageDiscordSpoilerChannel && (
                 <button
