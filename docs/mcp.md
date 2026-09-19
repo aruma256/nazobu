@@ -17,7 +17,14 @@
 | `get_ticket` | - | チケット 1 件の詳細。参加者ごとの精算状況（精算済みか・立替者か）を含む |
 | `list_users` | - | 登録メンバー一覧（`user_id` と表示名）。参加者指定の前に ID を引く用途 |
 | `create_ticket_with_event` | `write` | 公演とチケットの同時登録（web の新規登録と同じ `CreateTicketWithEvent` RPC を再利用）。立替者は自分になる。admin ロールが必要 |
+| `link_event_spoiler_channel` | `write` | 既存の Discord ネタバレチャンネルを公演に紐づける。admin のみ |
 | `update_ticket_with_event` | `write` | チケットと紐づく公演の部分更新。admin もしくは立替者のみ |
+
+### link_event_spoiler_channel の手動紐づけ
+
+`event_id` と `discord_channel`（チャンネル ID または `https://discord.com/channels/サーバーID/チャンネルID`）を指定する。admin ロールと `write` scope が必要。設定済みサーバーの既存テキストチャンネルか Discord API で確認して保存する。
+
+紐づけは公演単位で全チケットに反映され、過去の公演にも利用できる。同じチャンネルの再指定は成功するが、別のチャンネルが既に紐づいている場合は上書きしない。チャンネルの作成・削除・権限変更は行わない。web ではチケット詳細の「既存のネタバレチャンネルを紐づける」から同じ操作ができる。紐づけ後、2026-08-30 以降のチケットは既存の「このチケットの参加者に権限を付与」を利用できる。
 
 ### update_ticket_with_event の部分更新
 

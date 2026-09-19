@@ -182,3 +182,34 @@ func TestChannelURLRequiresConfiguration(t *testing.T) {
 		t.Errorf("未設定時の ChannelURL = %q", got)
 	}
 }
+
+func TestValidateSpoilerChannel(t *testing.T) {
+	for _, tt := range []struct {
+		name, body string
+		status     int
+		wantError  bool
+	}{
+		{"対象サーバーのテキスト", `{"id":"456","guild_id":"123","type":0}`, 200, false},
+		{"別サーバー", `{"id":"456","guild_id":"999","type":0}`, 200, true},
+		{"音声", `{"id":"456","guild_id":"123","type":2}`, 200, true},
+		{"別チャンネル", `{"id":"789","guild_id":"123","type":0}`, 200, true},
+		{"存在しない", `{}`, 404, true},
+		{"権限なし", `{}`, 403, true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodGet || r.URL.Path != "/channels/456" {
+					t.Errorf("予期しない操作: %s %s", r.Method, r.URL.Path)
+				}
+				w.WriteHeader(tt.status)
+				_, _ = w.Write([]byte(tt.body))
+			}))
+			defer ts.Close()
+			client := NewClient(ts.Client(), "token", "123", "category")
+			client.apiBaseURL = ts.URL
+			if err := client.ValidateSpoilerChannel(context.Background(), "456"); (err != nil) != tt.wantError {
+				t.Fatalf("err=%v", err)
+			}
+		})
+	}
+}

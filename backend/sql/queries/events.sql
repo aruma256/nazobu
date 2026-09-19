@@ -6,7 +6,7 @@ ORDER BY created_at DESC, id DESC;
 
 -- name: GetEventByID :one
 -- 1 件の event を取得する。詳細・編集画面用。
-SELECT id, title, url, catchphrase, image_url, doors_open_minutes_before, entry_deadline_minutes_before, expected_duration_minutes
+SELECT id, title, url, catchphrase, discord_spoiler_channel_id, image_url, doors_open_minutes_before, entry_deadline_minutes_before, expected_duration_minutes
 FROM events
 WHERE id = ?;
 

@@ -43,6 +43,9 @@ const (
 	// EventServiceUpdateEventProcedure is the fully-qualified name of the EventService's UpdateEvent
 	// RPC.
 	EventServiceUpdateEventProcedure = "/nazobu.v1.EventService/UpdateEvent"
+	// EventServiceLinkEventSpoilerChannelProcedure is the fully-qualified name of the EventService's
+	// LinkEventSpoilerChannel RPC.
+	EventServiceLinkEventSpoilerChannelProcedure = "/nazobu.v1.EventService/LinkEventSpoilerChannel"
 	// EventServiceDeleteEventProcedure is the fully-qualified name of the EventService's DeleteEvent
 	// RPC.
 	EventServiceDeleteEventProcedure = "/nazobu.v1.EventService/DeleteEvent"
@@ -58,6 +61,8 @@ type EventServiceClient interface {
 	CreateEvent(context.Context, *connect.Request[v1.CreateEventRequest]) (*connect.Response[v1.CreateEventResponse], error)
 	// UpdateEvent は event の title / url / catchphrase / 開場・締切オフセットを更新する。admin のみ実行可能。
 	UpdateEvent(context.Context, *connect.Request[v1.UpdateEventRequest]) (*connect.Response[v1.UpdateEventResponse], error)
+	// LinkEventSpoilerChannel は既存の Discord チャンネルを未紐づけの公演に紐づける。admin のみ。
+	LinkEventSpoilerChannel(context.Context, *connect.Request[v1.LinkEventSpoilerChannelRequest]) (*connect.Response[v1.LinkEventSpoilerChannelResponse], error)
 	// DeleteEvent は誤登録した event を完全削除する。admin のみ。チケットが残っている場合は削除不可。
 	DeleteEvent(context.Context, *connect.Request[v1.DeleteEventRequest]) (*connect.Response[v1.DeleteEventResponse], error)
 }
@@ -97,6 +102,12 @@ func NewEventServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(eventServiceMethods.ByName("UpdateEvent")),
 			connect.WithClientOptions(opts...),
 		),
+		linkEventSpoilerChannel: connect.NewClient[v1.LinkEventSpoilerChannelRequest, v1.LinkEventSpoilerChannelResponse](
+			httpClient,
+			baseURL+EventServiceLinkEventSpoilerChannelProcedure,
+			connect.WithSchema(eventServiceMethods.ByName("LinkEventSpoilerChannel")),
+			connect.WithClientOptions(opts...),
+		),
 		deleteEvent: connect.NewClient[v1.DeleteEventRequest, v1.DeleteEventResponse](
 			httpClient,
 			baseURL+EventServiceDeleteEventProcedure,
@@ -108,11 +119,12 @@ func NewEventServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 
 // eventServiceClient implements EventServiceClient.
 type eventServiceClient struct {
-	listEvents  *connect.Client[v1.ListEventsRequest, v1.ListEventsResponse]
-	getEvent    *connect.Client[v1.GetEventRequest, v1.GetEventResponse]
-	createEvent *connect.Client[v1.CreateEventRequest, v1.CreateEventResponse]
-	updateEvent *connect.Client[v1.UpdateEventRequest, v1.UpdateEventResponse]
-	deleteEvent *connect.Client[v1.DeleteEventRequest, v1.DeleteEventResponse]
+	listEvents              *connect.Client[v1.ListEventsRequest, v1.ListEventsResponse]
+	getEvent                *connect.Client[v1.GetEventRequest, v1.GetEventResponse]
+	createEvent             *connect.Client[v1.CreateEventRequest, v1.CreateEventResponse]
+	updateEvent             *connect.Client[v1.UpdateEventRequest, v1.UpdateEventResponse]
+	linkEventSpoilerChannel *connect.Client[v1.LinkEventSpoilerChannelRequest, v1.LinkEventSpoilerChannelResponse]
+	deleteEvent             *connect.Client[v1.DeleteEventRequest, v1.DeleteEventResponse]
 }
 
 // ListEvents calls nazobu.v1.EventService.ListEvents.
@@ -135,6 +147,11 @@ func (c *eventServiceClient) UpdateEvent(ctx context.Context, req *connect.Reque
 	return c.updateEvent.CallUnary(ctx, req)
 }
 
+// LinkEventSpoilerChannel calls nazobu.v1.EventService.LinkEventSpoilerChannel.
+func (c *eventServiceClient) LinkEventSpoilerChannel(ctx context.Context, req *connect.Request[v1.LinkEventSpoilerChannelRequest]) (*connect.Response[v1.LinkEventSpoilerChannelResponse], error) {
+	return c.linkEventSpoilerChannel.CallUnary(ctx, req)
+}
+
 // DeleteEvent calls nazobu.v1.EventService.DeleteEvent.
 func (c *eventServiceClient) DeleteEvent(ctx context.Context, req *connect.Request[v1.DeleteEventRequest]) (*connect.Response[v1.DeleteEventResponse], error) {
 	return c.deleteEvent.CallUnary(ctx, req)
@@ -150,6 +167,8 @@ type EventServiceHandler interface {
 	CreateEvent(context.Context, *connect.Request[v1.CreateEventRequest]) (*connect.Response[v1.CreateEventResponse], error)
 	// UpdateEvent は event の title / url / catchphrase / 開場・締切オフセットを更新する。admin のみ実行可能。
 	UpdateEvent(context.Context, *connect.Request[v1.UpdateEventRequest]) (*connect.Response[v1.UpdateEventResponse], error)
+	// LinkEventSpoilerChannel は既存の Discord チャンネルを未紐づけの公演に紐づける。admin のみ。
+	LinkEventSpoilerChannel(context.Context, *connect.Request[v1.LinkEventSpoilerChannelRequest]) (*connect.Response[v1.LinkEventSpoilerChannelResponse], error)
 	// DeleteEvent は誤登録した event を完全削除する。admin のみ。チケットが残っている場合は削除不可。
 	DeleteEvent(context.Context, *connect.Request[v1.DeleteEventRequest]) (*connect.Response[v1.DeleteEventResponse], error)
 }
@@ -185,6 +204,12 @@ func NewEventServiceHandler(svc EventServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(eventServiceMethods.ByName("UpdateEvent")),
 		connect.WithHandlerOptions(opts...),
 	)
+	eventServiceLinkEventSpoilerChannelHandler := connect.NewUnaryHandler(
+		EventServiceLinkEventSpoilerChannelProcedure,
+		svc.LinkEventSpoilerChannel,
+		connect.WithSchema(eventServiceMethods.ByName("LinkEventSpoilerChannel")),
+		connect.WithHandlerOptions(opts...),
+	)
 	eventServiceDeleteEventHandler := connect.NewUnaryHandler(
 		EventServiceDeleteEventProcedure,
 		svc.DeleteEvent,
@@ -201,6 +226,8 @@ func NewEventServiceHandler(svc EventServiceHandler, opts ...connect.HandlerOpti
 			eventServiceCreateEventHandler.ServeHTTP(w, r)
 		case EventServiceUpdateEventProcedure:
 			eventServiceUpdateEventHandler.ServeHTTP(w, r)
+		case EventServiceLinkEventSpoilerChannelProcedure:
+			eventServiceLinkEventSpoilerChannelHandler.ServeHTTP(w, r)
 		case EventServiceDeleteEventProcedure:
 			eventServiceDeleteEventHandler.ServeHTTP(w, r)
 		default:
@@ -226,6 +253,10 @@ func (UnimplementedEventServiceHandler) CreateEvent(context.Context, *connect.Re
 
 func (UnimplementedEventServiceHandler) UpdateEvent(context.Context, *connect.Request[v1.UpdateEventRequest]) (*connect.Response[v1.UpdateEventResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.EventService.UpdateEvent is not implemented"))
+}
+
+func (UnimplementedEventServiceHandler) LinkEventSpoilerChannel(context.Context, *connect.Request[v1.LinkEventSpoilerChannelRequest]) (*connect.Response[v1.LinkEventSpoilerChannelResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.EventService.LinkEventSpoilerChannel is not implemented"))
 }
 
 func (UnimplementedEventServiceHandler) DeleteEvent(context.Context, *connect.Request[v1.DeleteEventRequest]) (*connect.Response[v1.DeleteEventResponse], error) {

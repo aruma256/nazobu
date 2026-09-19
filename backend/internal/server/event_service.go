@@ -18,10 +18,17 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/id"
 )
 
+type existingDiscordChannelManager interface {
+	Configured() bool
+	ChannelURL(string) string
+	ValidateSpoilerChannel(context.Context, string) error
+}
+
 type eventService struct {
-	db         *sql.DB
-	q          *queries.Queries
-	httpClient *http.Client
+	spoilerChannelManager existingDiscordChannelManager
+	db                    *sql.DB
+	q                     *queries.Queries
+	httpClient            *http.Client
 }
 
 func newEventService(db *sql.DB) nazobuv1connect.EventServiceHandler {

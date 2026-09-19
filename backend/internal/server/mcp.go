@@ -30,6 +30,11 @@ func newMCPHandler(
 	}, nil)
 
 	mcp.AddTool(srv, &mcp.Tool{
+		Name:        "link_event_spoiler_channel",
+		Description: "既存の Discord ネタバレチャンネルを公演に紐づける（admin・write スコープ必須）。event_id は get_ticket / list_tickets で確認する。同じ公演の全チケットで共有する。Discord 権限は変更しない。別のチャンネルが紐づけ済みならエラー。",
+	}, linkEventSpoilerChannelTool(events))
+
+	mcp.AddTool(srv, &mcp.Tool{
 		Name: "list_my_upcoming_tickets",
 		Description: "ログインユーザー自身の、今後参加予定の謎解き公演チケット一覧を取得する。" +
 			"開演日時・集合時刻・集合場所・同行者・一人あたりの参加費（円）を含む。日時は JST の RFC3339 形式。",
@@ -425,5 +430,29 @@ func deleteEventTool(service nazobuv1connect.EventServiceHandler) mcp.ToolHandle
 		}
 		_, err := service.DeleteEvent(ctx, connect.NewRequest(&nazobuv1.DeleteEventRequest{EventId: in.EventID}))
 		return nil, struct{}{}, err
+	}
+}
+
+type linkEventSpoilerChannelInput struct {
+	EventID        string `json:"event_id" jsonschema:"紐づけ対象の公演 ID（必須）"`
+	DiscordChannel string `json:"discord_channel" jsonschema:"既存 Discord チャンネルの ID または https://discord.com/channels/サーバーID/チャンネルID（必須）"`
+}
+
+type linkEventSpoilerChannelOutput struct {
+	DiscordChannelURL string `json:"discord_channel_url" jsonschema:"紐づけた Discord チャンネルの URL"`
+}
+
+func linkEventSpoilerChannelTool(events nazobuv1connect.EventServiceHandler) mcp.ToolHandlerFor[linkEventSpoilerChannelInput, linkEventSpoilerChannelOutput] {
+	return func(ctx context.Context, _ *mcp.CallToolRequest, in linkEventSpoilerChannelInput) (*mcp.CallToolResult, linkEventSpoilerChannelOutput, error) {
+		var out linkEventSpoilerChannelOutput
+		if !oauth.HasScope(ctx, oauth.ScopeWrite) {
+			return nil, out, errors.New("このアクセストークンには write スコープがありません。コネクタを再接続して書き込みを許可してください")
+		}
+		res, err := events.LinkEventSpoilerChannel(ctx, connect.NewRequest(&nazobuv1.LinkEventSpoilerChannelRequest{EventId: in.EventID, DiscordChannel: in.DiscordChannel}))
+		if err != nil {
+			return nil, out, err
+		}
+		out.DiscordChannelURL = res.Msg.GetDiscordChannelUrl()
+		return nil, out, nil
 	}
 }

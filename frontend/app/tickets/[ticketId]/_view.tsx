@@ -11,7 +11,7 @@ import type {
   TicketParticipant,
 } from "@/app/gen/nazobu/v1/ticket_pb";
 import type { GetMeResponse, User } from "@/app/gen/nazobu/v1/user_pb";
-import { ticketClient, userClient } from "@/app/lib/rpc";
+import { eventClient, ticketClient, userClient } from "@/app/lib/rpc";
 
 import {
   AppHeader,
@@ -47,6 +47,7 @@ const DISCORD_SPOILER_CHANNEL_FEATURE_START_AT = new Date(
 export function TicketDetailView({ ticketId }: { ticketId: string }) {
   const router = useRouter();
   const [state, setState] = useState<LoadState>({ kind: "loading" });
+  const [discordChannel, setDiscordChannel] = useState("");
   const [mutating, setMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -364,6 +365,46 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
                 </a>
               )}
             </div>
+            {isAdmin && !discordSpoilerChannelExists && (
+              <form
+                className="space-y-3 border-t border-zinc-200 px-4 py-3"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void handleMutation(
+                    () => eventClient.linkEventSpoilerChannel({
+                      eventId: ticket.eventId,
+                      discordChannel,
+                    }),
+                    "この公演に既存の Discord チャンネルを紐づけました。",
+                  );
+                }}
+              >
+                <label htmlFor="discord-channel" className="block text-base font-semibold">
+                  既存のネタバレチャンネルを紐づける
+                </label>
+                <input
+                  id="discord-channel"
+                  type="text"
+                  value={discordChannel}
+                  onChange={(e) => setDiscordChannel(e.target.value)}
+                  placeholder="Discord チャンネルの ID または URL"
+                  aria-describedby="discord-channel-help"
+                  required
+                  disabled={mutating}
+                  className="h-11 w-full rounded-lg border border-zinc-300 px-3 text-base"
+                />
+                <p id="discord-channel-help" className="text-sm text-zinc-600">
+                  同じ公演の全チケットで共有します。閲覧権限は変更されません。
+                </p>
+                <button
+                  type="submit"
+                  disabled={mutating || !discordChannel.trim()}
+                  className="inline-flex h-11 items-center justify-center rounded-lg border border-zinc-200 px-4 text-sm font-semibold text-emerald-700 hover:bg-zinc-50 disabled:opacity-50"
+                >
+                  {mutating ? "処理中…" : "既存チャンネルを紐づける"}
+                </button>
+              </form>
+            )}
           </div>
         </Section>
 

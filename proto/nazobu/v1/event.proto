@@ -14,6 +14,8 @@ service EventService {
   rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse);
   // UpdateEvent は event の title / url / catchphrase / 開場・締切オフセットを更新する。admin のみ実行可能。
   rpc UpdateEvent(UpdateEventRequest) returns (UpdateEventResponse);
+  // LinkEventSpoilerChannel は既存の Discord チャンネルを未紐づけの公演に紐づける。admin のみ。
+  rpc LinkEventSpoilerChannel(LinkEventSpoilerChannelRequest) returns (LinkEventSpoilerChannelResponse);
   // DeleteEvent は誤登録した event を完全削除する。admin のみ。チケットが残っている場合は削除不可。
   rpc DeleteEvent(DeleteEventRequest) returns (DeleteEventResponse);
 
@@ -108,3 +110,13 @@ message DeleteEventRequest {
 }
 
 message DeleteEventResponse {}
+
+message LinkEventSpoilerChannelRequest {
+  string event_id = 1;
+  // 既存チャンネルの ID または https://discord.com/channels/{guild_id}/{channel_id}。
+  string discord_channel = 2;
+}
+
+message LinkEventSpoilerChannelResponse {
+  string discord_channel_url = 1;
+}

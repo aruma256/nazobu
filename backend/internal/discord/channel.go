@@ -78,6 +78,8 @@ type createChannelRequest struct {
 }
 
 type channelResponse struct {
+	GuildID              string                `json:"guild_id"`
+	Type                 int                   `json:"type"`
 	ID                   string                `json:"id"`
 	PermissionOverwrites []permissionOverwrite `json:"permission_overwrites"`
 }
@@ -294,4 +296,20 @@ func permissionInt(raw string) (*big.Int, error) {
 		return nil, fmt.Errorf("不正な permission 値 %q", raw)
 	}
 	return value, nil
+}
+
+// ValidateSpoilerChannel は設定済みサーバーの既存テキストチャンネルか確認する。
+// 手動作成済みチャンネルのカテゴリ・権限は変更しない。
+func (c *Client) ValidateSpoilerChannel(ctx context.Context, channelID string) error {
+	if !c.Configured() {
+		return fmt.Errorf("Discord ネタバレチャンネル設定が未完了")
+	}
+	var channel channelResponse
+	if err := c.doJSON(ctx, http.MethodGet, "/channels/"+url.PathEscape(channelID), nil, &channel); err != nil {
+		return err
+	}
+	if channel.ID != channelID || channel.GuildID != c.guildID || channel.Type != 0 {
+		return fmt.Errorf("設定済み Discord サーバーのテキストチャンネルを指定してください")
+	}
+	return nil
 }

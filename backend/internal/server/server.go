@@ -16,6 +16,7 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/config"
 	"github.com/aruma256/nazobu/backend/internal/discord"
 	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
+	"github.com/aruma256/nazobu/backend/internal/gen/queries"
 	"github.com/aruma256/nazobu/backend/internal/oauth"
 	"github.com/aruma256/nazobu/backend/internal/reminder"
 )
@@ -61,15 +62,15 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	myPageService := newMyPageService(dbc)
 	myPagePath, myPageHandler := nazobuv1connect.NewMyPageServiceHandler(myPageService)
 	mux.Handle(myPagePath, myPageHandler)
-	eventService := newEventService(dbc)
-	eventPath, eventHandler := nazobuv1connect.NewEventServiceHandler(eventService)
-	mux.Handle(eventPath, eventHandler)
 	discordClient := discord.NewClient(
 		srv.httpClient,
 		cfg.Discord.BotToken,
 		cfg.Discord.GuildID,
 		cfg.Discord.SpoilerCategoryID,
 	)
+	eventService := &eventService{db: dbc, q: queries.New(dbc), httpClient: srv.httpClient, spoilerChannelManager: discordClient}
+	eventPath, eventHandler := nazobuv1connect.NewEventServiceHandler(eventService)
+	mux.Handle(eventPath, eventHandler)
 	ticketService := newTicketServiceWithDiscord(dbc, discordClient)
 	ticketPath, ticketHandler := nazobuv1connect.NewTicketServiceHandler(ticketService)
 	mux.Handle(ticketPath, ticketHandler)
