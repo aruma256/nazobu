@@ -11,8 +11,7 @@ import { userClient } from "@/app/lib/rpc";
 
 type GuardState = "checking" | "denied" | "ok";
 
-// /events 配下は admin 限定。member は / へ、未ログインは /login へ飛ばす。
-// children は admin と確定した後にだけ render する。
+// 公演一覧はログインユーザーに公開し、登録画面は admin に限定する。
 export function AdminGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -24,7 +23,7 @@ export function AdminGuard({ children }: { children: ReactNode }) {
       .getMe({})
       .then((me) => {
         if (cancelled) return;
-        if (me.role !== "admin") {
+        if (pathname !== "/events" && me.role !== "admin") {
           setState("denied");
           router.replace("/");
           return;

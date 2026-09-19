@@ -1,6 +1,6 @@
 -- name: ListEvents :many
 -- 公演一覧（新しい順）。詳細表示用の最低限フィールドのみ返す。
-SELECT id, title, url, catchphrase, image_url, doors_open_minutes_before, entry_deadline_minutes_before, expected_duration_minutes
+SELECT id, title, url, catchphrase, discord_spoiler_channel_id, image_url, doors_open_minutes_before, entry_deadline_minutes_before, expected_duration_minutes
 FROM events
 ORDER BY created_at DESC, id DESC;
 

@@ -22,6 +22,7 @@ import (
 )
 
 type fakeDiscordSpoilerChannelManager struct {
+	grantErr      error
 	configured    bool
 	createdID     string
 	createNames   []string
@@ -45,7 +46,7 @@ func (f *fakeDiscordSpoilerChannelManager) CreateSpoilerChannel(_ context.Contex
 func (f *fakeDiscordSpoilerChannelManager) GrantMembersView(_ context.Context, channelID string, memberIDs []string) error {
 	f.grantChannels = append(f.grantChannels, channelID)
 	f.grantMembers = append(f.grantMembers, slices.Clone(memberIDs))
-	return nil
+	return f.grantErr
 }
 func (f *fakeDiscordSpoilerChannelManager) DeleteChannel(_ context.Context, channelID string) error {
 	f.deletedIDs = append(f.deletedIDs, channelID)

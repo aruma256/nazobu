@@ -22,6 +22,7 @@ type existingDiscordChannelManager interface {
 	Configured() bool
 	ChannelURL(string) string
 	ValidateSpoilerChannel(context.Context, string) error
+	GrantMembersView(context.Context, string, []string) error
 }
 
 type eventService struct {
@@ -54,6 +55,7 @@ func (s *eventService) ListEvents(ctx context.Context, req *connect.Request[nazo
 	for _, r := range rows {
 		events = append(events, &nazobuv1.Event{
 			Id:                         r.ID,
+			HasSpoilerChannel:          r.DiscordSpoilerChannelID.Valid,
 			Title:                      r.Title,
 			Url:                        r.Url,
 			Catchphrase:                r.Catchphrase,
@@ -95,6 +97,7 @@ func (s *eventService) GetEvent(ctx context.Context, req *connect.Request[nazobu
 	return connect.NewResponse(&nazobuv1.GetEventResponse{
 		Event: &nazobuv1.Event{
 			Id:                         row.ID,
+			HasSpoilerChannel:          row.DiscordSpoilerChannelID.Valid,
 			Title:                      row.Title,
 			Url:                        row.Url,
 			Catchphrase:                row.Catchphrase,

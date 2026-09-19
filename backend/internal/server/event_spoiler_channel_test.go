@@ -2,9 +2,11 @@ package server
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 	"time"
 
@@ -157,4 +159,75 @@ func TestIntegrationMCPLinkEventSpoilerChannel(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestIntegrationJoinEventSpoilerChannel(t *testing.T) {
+	db := testdb.Open(t)
+	ctx := context.Background()
+	q := queries.New(db)
+	member := createTestUser(t, db, "参加記録のない一般ユーザー", auth.RoleMember)
+	other := createTestUser(t, db, "別のユーザー", auth.RoleMember)
+	createTestDiscordIdentity(t, db, other, "discord-other")
+	event := createTestEvent(t, db, "過去の公演")
+	manager := &fakeExistingChannelManager{fakeDiscordSpoilerChannelManager: fakeDiscordSpoilerChannelManager{configured: true}}
+	svc := &eventService{db: db, q: q, spoilerChannelManager: manager}
+	join := func(actor, eventID string) (*connect.Response[nazobuv1.JoinEventSpoilerChannelResponse], error) {
+		req := connect.NewRequest(&nazobuv1.JoinEventSpoilerChannelRequest{EventId: eventID})
+		if actor != "" {
+			setSessionCookie(t, db, req, actor)
+		}
+		return svc.JoinEventSpoilerChannel(ctx, req)
+	}
+	for _, tt := range []struct {
+		actor, eventID string
+		code           connect.Code
+	}{
+		{"", event, connect.CodeUnauthenticated},
+		{member, "  ", connect.CodeInvalidArgument},
+		{member, "missing", connect.CodeNotFound},
+		{member, event, connect.CodeFailedPrecondition},
+	} {
+		_, err := join(tt.actor, tt.eventID)
+		assertConnectCode(t, err, tt.code)
+	}
+	if _, err := q.SetEventDiscordSpoilerChannelID(ctx, queries.SetEventDiscordSpoilerChannelIDParams{ID: event, DiscordSpoilerChannelID: sql.NullString{String: "456", Valid: true}}); err != nil {
+		t.Fatal(err)
+	}
+	_, err := join(member, event)
+	assertConnectCode(t, err, connect.CodeFailedPrecondition)
+	createTestDiscordIdentity(t, db, member, "discord-self")
+	manager.configured = false
+	_, err = join(member, event)
+	assertConnectCode(t, err, connect.CodeFailedPrecondition)
+	manager.configured = true
+	if len(manager.grantChannels) != 0 {
+		t.Fatal("失敗時に権限を付与した")
+	}
+	// 本人だけに付与され、再実行可能。チケットを作成する必要もない。
+	for range 2 {
+		res, err := join(member, " "+event+" ")
+		if err != nil || res.Msg.DiscordChannelUrl != manager.ChannelURL("456") {
+			t.Fatalf("参加失敗: %v, %v", res, err)
+		}
+	}
+	if !slices.Equal(manager.grantChannels, []string{"456", "456"}) {
+		t.Fatalf("対象チャンネル: %v", manager.grantChannels)
+	}
+	for _, members := range manager.grantMembers {
+		if !slices.Equal(members, []string{"discord-self"}) {
+			t.Fatalf("本人以外への権限付与: %v", members)
+		}
+	}
+	if len(manager.createNames) != 0 || len(manager.deletedIDs) != 0 {
+		t.Fatal("チャンネルを作成・削除した")
+	}
+	listReq := connect.NewRequest(&nazobuv1.ListEventsRequest{})
+	setSessionCookie(t, db, listReq, member)
+	list, err := svc.ListEvents(ctx, listReq)
+	if err != nil || len(list.Msg.Events) != 1 || !list.Msg.Events[0].HasSpoilerChannel {
+		t.Fatalf("一覧にチャンネルが反映されていない: %v, %v", list, err)
+	}
+	manager.grantErr = errors.New("Discord API failure")
+	_, err = join(member, event)
+	assertConnectCode(t, err, connect.CodeUnavailable)
 }

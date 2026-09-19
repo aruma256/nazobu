@@ -39,6 +39,7 @@ type Querier interface {
 	DeleteTicket(ctx context.Context, id string) error
 	DeleteTicketParticipant(ctx context.Context, arg DeleteTicketParticipantParams) error
 	DeleteTicketParticipants(ctx context.Context, ticketID string) error
+	GetDiscordSubjectByUserID(ctx context.Context, userID string) (string, error)
 	// 1 件の event を取得する。詳細・編集画面用。
 	GetEventByID(ctx context.Context, id string) (GetEventByIDRow, error)
 	GetOAuthAuthorizationCodeByHash(ctx context.Context, codeHash string) (GetOAuthAuthorizationCodeByHashRow, error)

@@ -164,7 +164,7 @@ func (q *Queries) ListEventTicketsByEventIDs(ctx context.Context, eventIds []str
 }
 
 const listEvents = `-- name: ListEvents :many
-SELECT id, title, url, catchphrase, image_url, doors_open_minutes_before, entry_deadline_minutes_before, expected_duration_minutes
+SELECT id, title, url, catchphrase, discord_spoiler_channel_id, image_url, doors_open_minutes_before, entry_deadline_minutes_before, expected_duration_minutes
 FROM events
 ORDER BY created_at DESC, id DESC
 `
@@ -174,6 +174,7 @@ type ListEventsRow struct {
 	Title                      string
 	Url                        string
 	Catchphrase                string
+	DiscordSpoilerChannelID    sql.NullString
 	ImageUrl                   sql.NullString
 	DoorsOpenMinutesBefore     sql.NullInt32
 	EntryDeadlineMinutesBefore sql.NullInt32
@@ -195,6 +196,7 @@ func (q *Queries) ListEvents(ctx context.Context) ([]ListEventsRow, error) {
 			&i.Title,
 			&i.Url,
 			&i.Catchphrase,
+			&i.DiscordSpoilerChannelID,
 			&i.ImageUrl,
 			&i.DoorsOpenMinutesBefore,
 			&i.EntryDeadlineMinutesBefore,

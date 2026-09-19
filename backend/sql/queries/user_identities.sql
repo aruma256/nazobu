@@ -6,3 +6,6 @@ WHERE provider = ? AND subject = ?;
 -- name: CreateUserIdentity :exec
 INSERT INTO user_identities (user_id, provider, subject, created_at, updated_at)
 VALUES (?, ?, ?, NOW(6), NOW(6));
+
+-- name: GetDiscordSubjectByUserID :one
+SELECT subject FROM user_identities WHERE user_id = ? AND provider = 'discord';

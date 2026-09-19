@@ -100,7 +100,7 @@ export function EventsView() {
   if (state.kind === "loading") {
     return (
       <>
-        <AppHeader brand="謎部" user="" isAdmin />
+        <AppHeader brand="謎部" user="" />
         <PageShell>
           <p className="pt-8 text-sm text-zinc-500">読み込み中…</p>
         </PageShell>
@@ -111,7 +111,7 @@ export function EventsView() {
   if (state.kind === "error") {
     return (
       <>
-        <AppHeader brand="謎部" user="" isAdmin />
+        <AppHeader brand="謎部" user="" />
         <PageShell>
           <p className="pt-8 text-sm text-amber-800">
             読み込みに失敗しました: {state.message}
@@ -126,20 +126,22 @@ export function EventsView() {
 
   return (
     <>
-      <AppHeader brand="謎部" user={displayName} isAdmin />
+      <AppHeader brand="謎部" user={displayName} isAdmin={me.role === "admin"} />
       <PageShell>
         <UnsettledBanner
           unsettledCount={unsettledCount}
           receivablesCount={receivablesCount}
         />
-        <Section>
-          <Link
-            href="/tickets/new"
-            className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 active:bg-emerald-900"
-          >
-            公演と参加チケットを登録
-          </Link>
-        </Section>
+        {me.role === "admin" && (
+          <Section>
+            <Link
+              href="/tickets/new"
+              className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 active:bg-emerald-900"
+            >
+              公演と参加チケットを登録
+            </Link>
+          </Section>
+        )}
 
         <Section>
           <SectionTitle count={events.length}>公演一覧</SectionTitle>
@@ -159,6 +161,7 @@ export function EventsView() {
                   key={e.id}
                   event={e}
                   myName={displayName}
+                  isAdmin={me.role === "admin"}
                   deleting={deletingId !== null}
                   onDelete={() => handleDelete(e)}
                 />
@@ -174,14 +177,39 @@ export function EventsView() {
 function EventCard({
   event,
   myName,
+  isAdmin,
   deleting,
   onDelete,
 }: {
   event: NazobuEvent;
   myName: string;
+  isAdmin: boolean;
   deleting: boolean;
   onDelete: () => void;
 }) {
+  const router = useRouter();
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const [channelUrl, setChannelUrl] = useState("");
+
+  async function joinChannel() {
+    if (joining || !window.confirm(`「${event.title}」は参加済みですか？ネタバレを含むチャンネルへの参加を了承しますか？`)) return;
+    setJoining(true);
+    setJoinError(null);
+    try {
+      const res = await eventClient.joinEventSpoilerChannel({ eventId: event.id });
+      setChannelUrl(res.discordChannelUrl);
+    } catch (err) {
+      if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
+        redirectToLogin(router, "/events");
+        return;
+      }
+      setJoinError(err instanceof Error ? err.message : "参加に失敗しました");
+    } finally {
+      setJoining(false);
+    }
+  }
+
   const hasOffsets =
     event.doorsOpenMinutesBefore !== undefined ||
     event.entryDeadlineMinutesBefore !== undefined;
@@ -232,24 +260,40 @@ function EventCard({
       )}
 
       <div className="space-y-3 px-4 pt-4 pb-4">
-        <Link
-          href={`/events/${event.id}/tickets/new`}
-          className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-emerald-700 hover:bg-zinc-50"
-        >
-          この公演にチケットを追加
-        </Link>
-        <button
-          type="button"
-          onClick={onDelete}
-          disabled={deleting || event.tickets.length > 0}
-          className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-red-200 px-4 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
-        >
-          公演を削除
-        </button>
-        {event.tickets.length > 0 && (
-          <p className="text-sm text-zinc-500">公演を削除するには、先にチケットを削除してください。</p>
+        {event.hasSpoilerChannel && (channelUrl ? (
+          <div role="status">
+            <p className="text-sm text-emerald-800">閲覧権限を付与しました。</p>
+            <a href={channelUrl} target="_blank" rel="noreferrer noopener" className="inline-flex h-11 items-center text-base font-semibold text-emerald-700 underline">
+              Discord で開く
+            </a>
+          </div>
+        ) : (
+          <button type="button" onClick={joinChannel} disabled={joining} className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-emerald-700 px-4 py-2 text-base font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">
+            {joining ? "参加処理中…" : "ネタバレチャンネルに参加"}
+          </button>
+        ))}
+        {joinError && <p role="alert" className="text-sm text-red-700">{joinError}</p>}
+        {isAdmin && (
+          <>
+            <Link
+              href={`/events/${event.id}/tickets/new`}
+              className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-emerald-700 hover:bg-zinc-50"
+            >
+              この公演にチケットを追加
+            </Link>
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={deleting || event.tickets.length > 0}
+              className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-red-200 px-4 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
+            >
+              公演を削除
+            </button>
+            {event.tickets.length > 0 && (
+              <p className="text-sm text-zinc-500">公演を削除するには、先にチケットを削除してください。</p>
+            )}
+          </>
         )}
-
       </div>
     </li>
   );

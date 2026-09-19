@@ -25,6 +25,17 @@ func (q *Queries) CreateUserIdentity(ctx context.Context, arg CreateUserIdentity
 	return err
 }
 
+const getDiscordSubjectByUserID = `-- name: GetDiscordSubjectByUserID :one
+SELECT subject FROM user_identities WHERE user_id = ? AND provider = 'discord'
+`
+
+func (q *Queries) GetDiscordSubjectByUserID(ctx context.Context, userID string) (string, error) {
+	row := q.db.QueryRowContext(ctx, getDiscordSubjectByUserID, userID)
+	var subject string
+	err := row.Scan(&subject)
+	return subject, err
+}
+
 const getUserIDByIdentity = `-- name: GetUserIDByIdentity :one
 SELECT user_id
 FROM user_identities

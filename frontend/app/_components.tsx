@@ -26,7 +26,7 @@ type NavItem = { href: string; label: string; adminOnly?: boolean };
 
 const NAV_ITEMS: readonly NavItem[] = [
   { href: "/", label: "マイページ" },
-  { href: "/events", label: "公演", adminOnly: true },
+  { href: "/events", label: "公演" },
   { href: "/tickets", label: "全てのチケット" },
 ] as const;
 

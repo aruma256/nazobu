@@ -16,6 +16,8 @@ service EventService {
   rpc UpdateEvent(UpdateEventRequest) returns (UpdateEventResponse);
   // LinkEventSpoilerChannel は既存の Discord チャンネルを未紐づけの公演に紐づける。admin のみ。
   rpc LinkEventSpoilerChannel(LinkEventSpoilerChannelRequest) returns (LinkEventSpoilerChannelResponse);
+  // JoinEventSpoilerChannel は紐づけ済みチャンネルの閲覧権限を本人に付与する。
+  rpc JoinEventSpoilerChannel(JoinEventSpoilerChannelRequest) returns (JoinEventSpoilerChannelResponse);
   // DeleteEvent は誤登録した event を完全削除する。admin のみ。チケットが残っている場合は削除不可。
   rpc DeleteEvent(DeleteEventRequest) returns (DeleteEventResponse);
 
@@ -44,6 +46,8 @@ message Event {
   int32 expected_duration_minutes = 8;
   // 公演のキャッチコピー（手動入力）。未設定なら空文字。
   string catchphrase = 9;
+  // ネタバレチャンネルが紐づけ済みか。
+  bool has_spoiler_channel = 10;
 }
 
 message EventTicket {
@@ -118,5 +122,13 @@ message LinkEventSpoilerChannelRequest {
 }
 
 message LinkEventSpoilerChannelResponse {
+  string discord_channel_url = 1;
+}
+
+message JoinEventSpoilerChannelRequest {
+  string event_id = 1;
+}
+
+message JoinEventSpoilerChannelResponse {
   string discord_channel_url = 1;
 }

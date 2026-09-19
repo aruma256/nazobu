@@ -118,9 +118,11 @@ type Event struct {
 	// 想定所要時間（分）。カレンダー連携で終了時刻を算出する用途。1 以上。
 	ExpectedDurationMinutes int32 `protobuf:"varint,8,opt,name=expected_duration_minutes,json=expectedDurationMinutes,proto3" json:"expected_duration_minutes,omitempty"`
 	// 公演のキャッチコピー（手動入力）。未設定なら空文字。
-	Catchphrase   string `protobuf:"bytes,9,opt,name=catchphrase,proto3" json:"catchphrase,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Catchphrase string `protobuf:"bytes,9,opt,name=catchphrase,proto3" json:"catchphrase,omitempty"`
+	// ネタバレチャンネルが紐づけ済みか。
+	HasSpoilerChannel bool `protobuf:"varint,10,opt,name=has_spoiler_channel,json=hasSpoilerChannel,proto3" json:"has_spoiler_channel,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *Event) Reset() {
@@ -214,6 +216,13 @@ func (x *Event) GetCatchphrase() string {
 		return x.Catchphrase
 	}
 	return ""
+}
+
+func (x *Event) GetHasSpoilerChannel() bool {
+	if x != nil {
+		return x.HasSpoilerChannel
+	}
+	return false
 }
 
 type EventTicket struct {
@@ -851,6 +860,94 @@ func (x *LinkEventSpoilerChannelResponse) GetDiscordChannelUrl() string {
 	return ""
 }
 
+type JoinEventSpoilerChannelRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EventId       string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JoinEventSpoilerChannelRequest) Reset() {
+	*x = JoinEventSpoilerChannelRequest{}
+	mi := &file_nazobu_v1_event_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JoinEventSpoilerChannelRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JoinEventSpoilerChannelRequest) ProtoMessage() {}
+
+func (x *JoinEventSpoilerChannelRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_event_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JoinEventSpoilerChannelRequest.ProtoReflect.Descriptor instead.
+func (*JoinEventSpoilerChannelRequest) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_event_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *JoinEventSpoilerChannelRequest) GetEventId() string {
+	if x != nil {
+		return x.EventId
+	}
+	return ""
+}
+
+type JoinEventSpoilerChannelResponse struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	DiscordChannelUrl string                 `protobuf:"bytes,1,opt,name=discord_channel_url,json=discordChannelUrl,proto3" json:"discord_channel_url,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *JoinEventSpoilerChannelResponse) Reset() {
+	*x = JoinEventSpoilerChannelResponse{}
+	mi := &file_nazobu_v1_event_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JoinEventSpoilerChannelResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JoinEventSpoilerChannelResponse) ProtoMessage() {}
+
+func (x *JoinEventSpoilerChannelResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_event_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JoinEventSpoilerChannelResponse.ProtoReflect.Descriptor instead.
+func (*JoinEventSpoilerChannelResponse) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_event_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *JoinEventSpoilerChannelResponse) GetDiscordChannelUrl() string {
+	if x != nil {
+		return x.DiscordChannelUrl
+	}
+	return ""
+}
+
 var File_nazobu_v1_event_proto protoreflect.FileDescriptor
 
 const file_nazobu_v1_event_proto_rawDesc = "" +
@@ -858,7 +955,7 @@ const file_nazobu_v1_event_proto_rawDesc = "" +
 	"\x15nazobu/v1/event.proto\x12\tnazobu.v1\"\x13\n" +
 	"\x11ListEventsRequest\">\n" +
 	"\x12ListEventsResponse\x12(\n" +
-	"\x06events\x18\x01 \x03(\v2\x10.nazobu.v1.EventR\x06events\"\xb4\x03\n" +
+	"\x06events\x18\x01 \x03(\v2\x10.nazobu.v1.EventR\x06events\"\xe4\x03\n" +
 	"\x05Event\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x10\n" +
@@ -868,7 +965,9 @@ const file_nazobu_v1_event_proto_rawDesc = "" +
 	"\x1dentry_deadline_minutes_before\x18\x06 \x01(\x05H\x01R\x1aentryDeadlineMinutesBefore\x88\x01\x01\x12\x1b\n" +
 	"\timage_url\x18\a \x01(\tR\bimageUrl\x12:\n" +
 	"\x19expected_duration_minutes\x18\b \x01(\x05R\x17expectedDurationMinutes\x12 \n" +
-	"\vcatchphrase\x18\t \x01(\tR\vcatchphraseB\x1c\n" +
+	"\vcatchphrase\x18\t \x01(\tR\vcatchphrase\x12.\n" +
+	"\x13has_spoiler_channel\x18\n" +
+	" \x01(\bR\x11hasSpoilerChannelB\x1c\n" +
 	"\x1a_doors_open_minutes_beforeB \n" +
 	"\x1e_entry_deadline_minutes_before\"\xfe\x01\n" +
 	"\vEventTicket\x12\x0e\n" +
@@ -913,14 +1012,19 @@ const file_nazobu_v1_event_proto_rawDesc = "" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\x12'\n" +
 	"\x0fdiscord_channel\x18\x02 \x01(\tR\x0ediscordChannel\"Q\n" +
 	"\x1fLinkEventSpoilerChannelResponse\x12.\n" +
-	"\x13discord_channel_url\x18\x01 \x01(\tR\x11discordChannelUrl2\xfa\x03\n" +
+	"\x13discord_channel_url\x18\x01 \x01(\tR\x11discordChannelUrl\";\n" +
+	"\x1eJoinEventSpoilerChannelRequest\x12\x19\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\"Q\n" +
+	"\x1fJoinEventSpoilerChannelResponse\x12.\n" +
+	"\x13discord_channel_url\x18\x01 \x01(\tR\x11discordChannelUrl2\xec\x04\n" +
 	"\fEventService\x12I\n" +
 	"\n" +
 	"ListEvents\x12\x1c.nazobu.v1.ListEventsRequest\x1a\x1d.nazobu.v1.ListEventsResponse\x12C\n" +
 	"\bGetEvent\x12\x1a.nazobu.v1.GetEventRequest\x1a\x1b.nazobu.v1.GetEventResponse\x12L\n" +
 	"\vCreateEvent\x12\x1d.nazobu.v1.CreateEventRequest\x1a\x1e.nazobu.v1.CreateEventResponse\x12L\n" +
 	"\vUpdateEvent\x12\x1d.nazobu.v1.UpdateEventRequest\x1a\x1e.nazobu.v1.UpdateEventResponse\x12p\n" +
-	"\x17LinkEventSpoilerChannel\x12).nazobu.v1.LinkEventSpoilerChannelRequest\x1a*.nazobu.v1.LinkEventSpoilerChannelResponse\x12L\n" +
+	"\x17LinkEventSpoilerChannel\x12).nazobu.v1.LinkEventSpoilerChannelRequest\x1a*.nazobu.v1.LinkEventSpoilerChannelResponse\x12p\n" +
+	"\x17JoinEventSpoilerChannel\x12).nazobu.v1.JoinEventSpoilerChannelRequest\x1a*.nazobu.v1.JoinEventSpoilerChannelResponse\x12L\n" +
 	"\vDeleteEvent\x12\x1d.nazobu.v1.DeleteEventRequest\x1a\x1e.nazobu.v1.DeleteEventResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
 
 var (
@@ -935,7 +1039,7 @@ func file_nazobu_v1_event_proto_rawDescGZIP() []byte {
 	return file_nazobu_v1_event_proto_rawDescData
 }
 
-var file_nazobu_v1_event_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_nazobu_v1_event_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_nazobu_v1_event_proto_goTypes = []any{
 	(*ListEventsRequest)(nil),               // 0: nazobu.v1.ListEventsRequest
 	(*ListEventsResponse)(nil),              // 1: nazobu.v1.ListEventsResponse
@@ -951,6 +1055,8 @@ var file_nazobu_v1_event_proto_goTypes = []any{
 	(*DeleteEventResponse)(nil),             // 11: nazobu.v1.DeleteEventResponse
 	(*LinkEventSpoilerChannelRequest)(nil),  // 12: nazobu.v1.LinkEventSpoilerChannelRequest
 	(*LinkEventSpoilerChannelResponse)(nil), // 13: nazobu.v1.LinkEventSpoilerChannelResponse
+	(*JoinEventSpoilerChannelRequest)(nil),  // 14: nazobu.v1.JoinEventSpoilerChannelRequest
+	(*JoinEventSpoilerChannelResponse)(nil), // 15: nazobu.v1.JoinEventSpoilerChannelResponse
 }
 var file_nazobu_v1_event_proto_depIdxs = []int32{
 	2,  // 0: nazobu.v1.ListEventsResponse.events:type_name -> nazobu.v1.Event
@@ -963,15 +1069,17 @@ var file_nazobu_v1_event_proto_depIdxs = []int32{
 	4,  // 7: nazobu.v1.EventService.CreateEvent:input_type -> nazobu.v1.CreateEventRequest
 	8,  // 8: nazobu.v1.EventService.UpdateEvent:input_type -> nazobu.v1.UpdateEventRequest
 	12, // 9: nazobu.v1.EventService.LinkEventSpoilerChannel:input_type -> nazobu.v1.LinkEventSpoilerChannelRequest
-	10, // 10: nazobu.v1.EventService.DeleteEvent:input_type -> nazobu.v1.DeleteEventRequest
-	1,  // 11: nazobu.v1.EventService.ListEvents:output_type -> nazobu.v1.ListEventsResponse
-	7,  // 12: nazobu.v1.EventService.GetEvent:output_type -> nazobu.v1.GetEventResponse
-	5,  // 13: nazobu.v1.EventService.CreateEvent:output_type -> nazobu.v1.CreateEventResponse
-	9,  // 14: nazobu.v1.EventService.UpdateEvent:output_type -> nazobu.v1.UpdateEventResponse
-	13, // 15: nazobu.v1.EventService.LinkEventSpoilerChannel:output_type -> nazobu.v1.LinkEventSpoilerChannelResponse
-	11, // 16: nazobu.v1.EventService.DeleteEvent:output_type -> nazobu.v1.DeleteEventResponse
-	11, // [11:17] is the sub-list for method output_type
-	5,  // [5:11] is the sub-list for method input_type
+	14, // 10: nazobu.v1.EventService.JoinEventSpoilerChannel:input_type -> nazobu.v1.JoinEventSpoilerChannelRequest
+	10, // 11: nazobu.v1.EventService.DeleteEvent:input_type -> nazobu.v1.DeleteEventRequest
+	1,  // 12: nazobu.v1.EventService.ListEvents:output_type -> nazobu.v1.ListEventsResponse
+	7,  // 13: nazobu.v1.EventService.GetEvent:output_type -> nazobu.v1.GetEventResponse
+	5,  // 14: nazobu.v1.EventService.CreateEvent:output_type -> nazobu.v1.CreateEventResponse
+	9,  // 15: nazobu.v1.EventService.UpdateEvent:output_type -> nazobu.v1.UpdateEventResponse
+	13, // 16: nazobu.v1.EventService.LinkEventSpoilerChannel:output_type -> nazobu.v1.LinkEventSpoilerChannelResponse
+	15, // 17: nazobu.v1.EventService.JoinEventSpoilerChannel:output_type -> nazobu.v1.JoinEventSpoilerChannelResponse
+	11, // 18: nazobu.v1.EventService.DeleteEvent:output_type -> nazobu.v1.DeleteEventResponse
+	12, // [12:19] is the sub-list for method output_type
+	5,  // [5:12] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name
 	5,  // [5:5] is the sub-list for extension extendee
 	0,  // [0:5] is the sub-list for field type_name
@@ -991,7 +1099,7 @@ func file_nazobu_v1_event_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_nazobu_v1_event_proto_rawDesc), len(file_nazobu_v1_event_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
