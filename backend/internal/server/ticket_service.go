@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -16,6 +17,7 @@ import (
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
 	"github.com/aruma256/nazobu/backend/internal/id"
+	"github.com/aruma256/nazobu/backend/internal/logging"
 )
 
 type ticketService struct {
@@ -39,7 +41,8 @@ func newTicketServiceWithDiscord(db *sql.DB, manager discordSpoilerChannelManage
 
 const meetingPlaceMaxLen = 255
 
-func (s *ticketService) ListTickets(ctx context.Context, req *connect.Request[nazobuv1.ListTicketsRequest]) (*connect.Response[nazobuv1.ListTicketsResponse], error) {
+func (s *ticketService) ListTickets(ctx context.Context, req *connect.Request[nazobuv1.ListTicketsRequest]) (response *connect.Response[nazobuv1.ListTicketsResponse], returnErr error) {
+	defer logRPCFailure(ctx, "ListTickets", &returnErr)
 	if _, err := lookupSessionUser(ctx, s.db, req.Header()); err != nil {
 		return nil, err
 	}
@@ -78,7 +81,8 @@ func (s *ticketService) ListTickets(ctx context.Context, req *connect.Request[na
 	return connect.NewResponse(&nazobuv1.ListTicketsResponse{Tickets: tickets}), nil
 }
 
-func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazobuv1.GetTicketRequest]) (*connect.Response[nazobuv1.GetTicketResponse], error) {
+func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazobuv1.GetTicketRequest]) (response *connect.Response[nazobuv1.GetTicketResponse], returnErr error) {
+	defer logRPCFailure(ctx, "GetTicket", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -147,7 +151,8 @@ func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazo
 	}), nil
 }
 
-func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[nazobuv1.CreateTicketRequest]) (*connect.Response[nazobuv1.CreateTicketResponse], error) {
+func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[nazobuv1.CreateTicketRequest]) (response *connect.Response[nazobuv1.CreateTicketResponse], returnErr error) {
+	defer logRPCFailure(ctx, "CreateTicket", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -237,6 +242,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 	if err := tx.Commit(); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("トランザクション commit に失敗: %w", err))
 	}
+	slog.InfoContext(ctx, "ticket created", logging.ID("ticket_id", ticketID), logging.ID("actor_user_id", user.ID))
 
 	rows, err := s.q.ListTicketsByIDs(ctx, []string{ticketID})
 	if err != nil || len(rows) == 0 {
@@ -266,7 +272,8 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 	return connect.NewResponse(&nazobuv1.CreateTicketResponse{Ticket: ticket}), nil
 }
 
-func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[nazobuv1.UpdateTicketRequest]) (*connect.Response[nazobuv1.UpdateTicketResponse], error) {
+func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[nazobuv1.UpdateTicketRequest]) (response *connect.Response[nazobuv1.UpdateTicketResponse], returnErr error) {
+	defer logRPCFailure(ctx, "UpdateTicket", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -350,6 +357,8 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket の更新に失敗: %w", err))
 	}
 
+	slog.InfoContext(ctx, "ticket updated", logging.ID("ticket_id", ticketID), logging.ID("actor_user_id", user.ID))
+
 	rows, err := s.q.ListTicketsByIDs(ctx, []string{ticketID})
 	if err != nil || len(rows) == 0 {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("更新後の ticket 取得に失敗: %w", err))
@@ -378,7 +387,8 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 	return connect.NewResponse(&nazobuv1.UpdateTicketResponse{Ticket: ticket}), nil
 }
 
-func (s *ticketService) CreateTicketWithEvent(ctx context.Context, req *connect.Request[nazobuv1.CreateTicketWithEventRequest]) (*connect.Response[nazobuv1.CreateTicketWithEventResponse], error) {
+func (s *ticketService) CreateTicketWithEvent(ctx context.Context, req *connect.Request[nazobuv1.CreateTicketWithEventRequest]) (response *connect.Response[nazobuv1.CreateTicketWithEventResponse], returnErr error) {
+	defer logRPCFailure(ctx, "CreateTicketWithEvent", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -480,6 +490,8 @@ func (s *ticketService) CreateTicketWithEvent(ctx context.Context, req *connect.
 	if err := tx.Commit(); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("トランザクション commit に失敗: %w", err))
 	}
+	slog.InfoContext(ctx, "event created", logging.ID("event_id", eventID), logging.ID("actor_user_id", user.ID))
+	slog.InfoContext(ctx, "ticket created", logging.ID("ticket_id", ticketID), logging.ID("actor_user_id", user.ID))
 
 	ticket, err := s.buildTicketResponse(ctx, ticketID)
 	if err != nil {
@@ -488,7 +500,8 @@ func (s *ticketService) CreateTicketWithEvent(ctx context.Context, req *connect.
 	return connect.NewResponse(&nazobuv1.CreateTicketWithEventResponse{Ticket: ticket}), nil
 }
 
-func (s *ticketService) UpdateTicketWithEvent(ctx context.Context, req *connect.Request[nazobuv1.UpdateTicketWithEventRequest]) (*connect.Response[nazobuv1.UpdateTicketWithEventResponse], error) {
+func (s *ticketService) UpdateTicketWithEvent(ctx context.Context, req *connect.Request[nazobuv1.UpdateTicketWithEventRequest]) (response *connect.Response[nazobuv1.UpdateTicketWithEventResponse], returnErr error) {
+	defer logRPCFailure(ctx, "UpdateTicketWithEvent", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -602,6 +615,8 @@ func (s *ticketService) UpdateTicketWithEvent(ctx context.Context, req *connect.
 	if err := tx.Commit(); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("トランザクション commit に失敗: %w", err))
 	}
+	slog.InfoContext(ctx, "event updated", logging.ID("event_id", existing.EventID), logging.ID("actor_user_id", user.ID))
+	slog.InfoContext(ctx, "ticket updated", logging.ID("ticket_id", ticketID), logging.ID("actor_user_id", user.ID))
 
 	ticket, err := s.buildTicketResponse(ctx, ticketID)
 	if err != nil {
@@ -642,7 +657,8 @@ func (s *ticketService) buildTicketResponse(ctx context.Context, ticketID string
 	return ticket, nil
 }
 
-func (s *ticketService) AddTicketParticipants(ctx context.Context, req *connect.Request[nazobuv1.AddTicketParticipantsRequest]) (*connect.Response[nazobuv1.AddTicketParticipantsResponse], error) {
+func (s *ticketService) AddTicketParticipants(ctx context.Context, req *connect.Request[nazobuv1.AddTicketParticipantsRequest]) (response *connect.Response[nazobuv1.AddTicketParticipantsResponse], returnErr error) {
+	defer logRPCFailure(ctx, "AddTicketParticipants", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -685,6 +701,7 @@ func (s *ticketService) AddTicketParticipants(ctx context.Context, req *connect.
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者数の取得に失敗: %w", err))
 	}
+	var addedUserIDs []string
 	for _, uid := range userIDs {
 		count, err := qtx.CountTicketParticipant(ctx, queries.CountTicketParticipantParams{
 			TicketID: ticketID,
@@ -706,16 +723,21 @@ func (s *ticketService) AddTicketParticipants(ctx context.Context, req *connect.
 		}); err != nil {
 			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の追加に失敗: %w", err))
 		}
+		addedUserIDs = append(addedUserIDs, uid)
 		currentCount++
 	}
 
 	if err := tx.Commit(); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("トランザクション commit に失敗: %w", err))
 	}
+	for _, uid := range addedUserIDs {
+		slog.InfoContext(ctx, "ticket participant added", logging.ID("ticket_id", ticketID), logging.ID("participant_user_id", uid), logging.ID("actor_user_id", user.ID))
+	}
 	return connect.NewResponse(&nazobuv1.AddTicketParticipantsResponse{}), nil
 }
 
-func (s *ticketService) RemoveTicketParticipant(ctx context.Context, req *connect.Request[nazobuv1.RemoveTicketParticipantRequest]) (*connect.Response[nazobuv1.RemoveTicketParticipantResponse], error) {
+func (s *ticketService) RemoveTicketParticipant(ctx context.Context, req *connect.Request[nazobuv1.RemoveTicketParticipantRequest]) (response *connect.Response[nazobuv1.RemoveTicketParticipantResponse], returnErr error) {
+	defer logRPCFailure(ctx, "RemoveTicketParticipant", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -750,10 +772,12 @@ func (s *ticketService) RemoveTicketParticipant(ctx context.Context, req *connec
 	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の削除に失敗: %w", err))
 	}
+	slog.InfoContext(ctx, "ticket participant removal completed", logging.ID("ticket_id", ticketID), logging.ID("participant_user_id", userID), logging.ID("actor_user_id", user.ID))
 	return connect.NewResponse(&nazobuv1.RemoveTicketParticipantResponse{}), nil
 }
 
-func (s *ticketService) UpdateTicketParticipantSettlement(ctx context.Context, req *connect.Request[nazobuv1.UpdateTicketParticipantSettlementRequest]) (*connect.Response[nazobuv1.UpdateTicketParticipantSettlementResponse], error) {
+func (s *ticketService) UpdateTicketParticipantSettlement(ctx context.Context, req *connect.Request[nazobuv1.UpdateTicketParticipantSettlementRequest]) (response *connect.Response[nazobuv1.UpdateTicketParticipantSettlementResponse], returnErr error) {
+	defer logRPCFailure(ctx, "UpdateTicketParticipantSettlement", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -809,6 +833,7 @@ func (s *ticketService) UpdateTicketParticipantSettlement(ctx context.Context, r
 			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("未精算の登録に失敗: %w", err))
 		}
 	}
+	slog.InfoContext(ctx, "ticket participant settlement updated", logging.ID("ticket_id", ticketID), logging.ID("participant_user_id", userID), logging.ID("actor_user_id", user.ID), "settled", settled)
 	return connect.NewResponse(&nazobuv1.UpdateTicketParticipantSettlementResponse{}), nil
 }
 

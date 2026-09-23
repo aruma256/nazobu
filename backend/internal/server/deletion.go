@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log/slog"
 	"strings"
 
 	"connectrpc.com/connect"
@@ -11,9 +12,11 @@ import (
 
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
+	"github.com/aruma256/nazobu/backend/internal/logging"
 )
 
-func (s *eventService) DeleteEvent(ctx context.Context, req *connect.Request[nazobuv1.DeleteEventRequest]) (*connect.Response[nazobuv1.DeleteEventResponse], error) {
+func (s *eventService) DeleteEvent(ctx context.Context, req *connect.Request[nazobuv1.DeleteEventRequest]) (response *connect.Response[nazobuv1.DeleteEventResponse], returnErr error) {
+	defer logRPCFailure(ctx, "DeleteEvent", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -37,10 +40,12 @@ func (s *eventService) DeleteEvent(ctx context.Context, req *connect.Request[naz
 	if count == 0 {
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("指定された公演は存在しません"))
 	}
+	slog.InfoContext(ctx, "event deleted", logging.ID("event_id", eventID), logging.ID("actor_user_id", user.ID))
 	return connect.NewResponse(&nazobuv1.DeleteEventResponse{}), nil
 }
 
-func (s *ticketService) DeleteTicket(ctx context.Context, req *connect.Request[nazobuv1.DeleteTicketRequest]) (*connect.Response[nazobuv1.DeleteTicketResponse], error) {
+func (s *ticketService) DeleteTicket(ctx context.Context, req *connect.Request[nazobuv1.DeleteTicketRequest]) (response *connect.Response[nazobuv1.DeleteTicketResponse], returnErr error) {
+	defer logRPCFailure(ctx, "DeleteTicket", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -74,5 +79,6 @@ func (s *ticketService) DeleteTicket(ctx context.Context, req *connect.Request[n
 	if err := tx.Commit(); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
+	slog.InfoContext(ctx, "ticket deleted", logging.ID("ticket_id", ticketID), logging.ID("actor_user_id", user.ID))
 	return connect.NewResponse(&nazobuv1.DeleteTicketResponse{}), nil
 }

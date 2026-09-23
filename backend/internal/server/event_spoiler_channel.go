@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"strconv"
 	"strings"
@@ -14,10 +15,12 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
+	"github.com/aruma256/nazobu/backend/internal/logging"
 )
 
 // LinkEventSpoilerChannel は既存チャンネルの紐づけだけを行う。Discord 権限は変更しない。
-func (s *eventService) LinkEventSpoilerChannel(ctx context.Context, req *connect.Request[nazobuv1.LinkEventSpoilerChannelRequest]) (*connect.Response[nazobuv1.LinkEventSpoilerChannelResponse], error) {
+func (s *eventService) LinkEventSpoilerChannel(ctx context.Context, req *connect.Request[nazobuv1.LinkEventSpoilerChannelRequest]) (response *connect.Response[nazobuv1.LinkEventSpoilerChannelResponse], returnErr error) {
+	defer logRPCFailure(ctx, "LinkEventSpoilerChannel", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -65,6 +68,7 @@ func (s *eventService) LinkEventSpoilerChannel(ctx context.Context, req *connect
 			return nil, connect.NewError(connect.CodeAborted, errors.New("公演の紐づけが変更されました。再読み込みしてください"))
 		}
 	}
+	slog.InfoContext(ctx, "event spoiler channel link completed", logging.ID("event_id", eventID), logging.ID("actor_user_id", user.ID))
 	return connect.NewResponse(&nazobuv1.LinkEventSpoilerChannelResponse{DiscordChannelUrl: manager.ChannelURL(channelID)}), nil
 }
 
@@ -97,7 +101,8 @@ func validDiscordSnowflake(s string) bool {
 }
 
 // JoinEventSpoilerChannel は参加記録に関係なく本人だけに閲覧権限を付与する。
-func (s *eventService) JoinEventSpoilerChannel(ctx context.Context, req *connect.Request[nazobuv1.JoinEventSpoilerChannelRequest]) (*connect.Response[nazobuv1.JoinEventSpoilerChannelResponse], error) {
+func (s *eventService) JoinEventSpoilerChannel(ctx context.Context, req *connect.Request[nazobuv1.JoinEventSpoilerChannelRequest]) (response *connect.Response[nazobuv1.JoinEventSpoilerChannelResponse], returnErr error) {
+	defer logRPCFailure(ctx, "JoinEventSpoilerChannel", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -130,5 +135,6 @@ func (s *eventService) JoinEventSpoilerChannel(ctx context.Context, req *connect
 	if err := manager.GrantMembersView(ctx, event.DiscordSpoilerChannelID.String, []string{subject}); err != nil {
 		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("Discord 閲覧権限の付与に失敗: %w", err))
 	}
+	slog.InfoContext(ctx, "event spoiler channel access granted", logging.ID("event_id", eventID), logging.ID("actor_user_id", user.ID))
 	return connect.NewResponse(&nazobuv1.JoinEventSpoilerChannelResponse{DiscordChannelUrl: manager.ChannelURL(event.DiscordSpoilerChannelID.String)}), nil
 }

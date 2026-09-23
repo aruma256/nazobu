@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 	"unicode"
@@ -14,6 +15,7 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
+	"github.com/aruma256/nazobu/backend/internal/logging"
 )
 
 const discordChannelNameMaxRunes = 100
@@ -35,7 +37,8 @@ type discordSpoilerChannelManager interface {
 func (s *ticketService) GrantTicketSpoilerChannelAccess(
 	ctx context.Context,
 	req *connect.Request[nazobuv1.GrantTicketSpoilerChannelAccessRequest],
-) (*connect.Response[nazobuv1.GrantTicketSpoilerChannelAccessResponse], error) {
+) (response *connect.Response[nazobuv1.GrantTicketSpoilerChannelAccessResponse], returnErr error) {
+	defer logRPCFailure(ctx, "GrantTicketSpoilerChannelAccess", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -107,6 +110,9 @@ func (s *ticketService) GrantTicketSpoilerChannelAccess(
 		if updateErr != nil || updated != 1 {
 			// DB から参照できない orphan channel を残さないよう補償する。
 			deleteErr := s.spoilerChannelManager.DeleteChannel(ctx, channelID)
+			if deleteErr != nil {
+				slog.ErrorContext(ctx, "discord channel compensation failed", logging.ID("event_id", ticket.EventID))
+			}
 			if updateErr != nil {
 				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Discord channel id の保存に失敗: %w（補償削除: %v）", updateErr, deleteErr))
 			}
@@ -117,6 +123,7 @@ func (s *ticketService) GrantTicketSpoilerChannelAccess(
 		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("Discord ネタバレチャンネルの権限付与に失敗: %w", err))
 	}
 
+	slog.InfoContext(ctx, "ticket spoiler channel access granted", logging.ID("ticket_id", ticketID), logging.ID("event_id", ticket.EventID), logging.ID("actor_user_id", user.ID), "channel_created", created)
 	return connect.NewResponse(&nazobuv1.GrantTicketSpoilerChannelAccessResponse{
 		DiscordChannelUrl: s.spoilerChannelManager.ChannelURL(channelID),
 		ChannelCreated:    created,

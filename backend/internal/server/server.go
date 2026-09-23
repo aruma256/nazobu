@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os/signal"
 	"syscall"
@@ -99,19 +100,20 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	// リマインド通知ワーカー。bot または投稿先未設定（ローカル開発の既定）なら起動しない。
 	if discordClient.MessageConfigured(cfg.Discord.ReminderChannelID) {
 		go reminder.NewWorker(dbc, discordClient, cfg.Discord.ReminderChannelID, cfg.FrontendURL).Run(ctx)
-		fmt.Println("リマインド通知ワーカーを起動")
+		slog.InfoContext(ctx, "reminder worker started")
 	} else {
-		fmt.Println("DISCORD_BOT_TOKEN または DISCORD_REMINDER_CHANNEL_ID 未設定のためリマインド通知ワーカーは起動しない")
+		slog.InfoContext(ctx, "reminder worker disabled", "reason", "not_configured")
 	}
 
 	errCh := make(chan error, 1)
 	go func() {
-		fmt.Printf("listen %s\n", cfg.HTTPAddr)
+		slog.InfoContext(ctx, "server starting")
 		errCh <- httpSrv.ListenAndServe()
 	}()
 
 	select {
 	case <-ctx.Done():
+		slog.InfoContext(ctx, "server stopping")
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		return httpSrv.Shutdown(shutdownCtx)

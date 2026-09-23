@@ -21,7 +21,8 @@ func newUserService(db *sql.DB) nazobuv1connect.UserServiceHandler {
 	return &userService{db: db, q: queries.New(db)}
 }
 
-func (s *userService) GetMe(ctx context.Context, req *connect.Request[nazobuv1.GetMeRequest]) (*connect.Response[nazobuv1.GetMeResponse], error) {
+func (s *userService) GetMe(ctx context.Context, req *connect.Request[nazobuv1.GetMeRequest]) (response *connect.Response[nazobuv1.GetMeResponse], returnErr error) {
+	defer logRPCFailure(ctx, "GetMe", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -34,7 +35,8 @@ func (s *userService) GetMe(ctx context.Context, req *connect.Request[nazobuv1.G
 	}), nil
 }
 
-func (s *userService) ListUsers(ctx context.Context, req *connect.Request[nazobuv1.ListUsersRequest]) (*connect.Response[nazobuv1.ListUsersResponse], error) {
+func (s *userService) ListUsers(ctx context.Context, req *connect.Request[nazobuv1.ListUsersRequest]) (response *connect.Response[nazobuv1.ListUsersResponse], returnErr error) {
+	defer logRPCFailure(ctx, "ListUsers", &returnErr)
 	if _, err := lookupSessionUser(ctx, s.db, req.Header()); err != nil {
 		return nil, err
 	}

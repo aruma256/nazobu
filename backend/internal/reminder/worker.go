@@ -11,11 +11,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/aruma256/nazobu/backend/internal/discord"
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
+	"github.com/aruma256/nazobu/backend/internal/logging"
 )
 
 // jst は JST 固定オフセット。tzdata 非依存にするため LoadLocation ではなく
@@ -75,10 +76,10 @@ func (w *Worker) Run(ctx context.Context) {
 // 種別ごとに独立して扱い、片方の失敗がもう片方を止めないようにする。
 func (w *Worker) runOnce(ctx context.Context, now time.Time) {
 	if err := w.processDayBefore(ctx, now); err != nil {
-		log.Printf("リマインド: 前日通知の処理に失敗: %v", err)
+		slog.ErrorContext(ctx, "reminder failed", "kind", "day_before", "stage", "list")
 	}
 	if err := w.processMeeting(ctx, now); err != nil {
-		log.Printf("リマインド: 集合通知の処理に失敗: %v", err)
+		slog.ErrorContext(ctx, "reminder failed", "kind", "meeting", "stage", "list")
 	}
 }
 
@@ -109,7 +110,7 @@ func (w *Worker) sendDayBeforeGroup(ctx context.Context, now time.Time, group []
 
 	subjectsByTicket, err := w.mentionsByTicket(ctx, ticketIDs)
 	if err != nil {
-		log.Printf("リマインド: 前日通知のメンション取得に失敗: %v", err)
+		slog.ErrorContext(ctx, "reminder failed", "kind", "day_before", "stage", "mentions", "ticket_count", len(ticketIDs))
 		return
 	}
 
@@ -120,8 +121,12 @@ func (w *Worker) sendDayBeforeGroup(ctx context.Context, now time.Time, group []
 	}
 
 	if err := w.poster.post(ctx, content, mentions); err != nil {
-		log.Printf("リマインド: 前日通知の送信に失敗: %v", err)
+		slog.ErrorContext(ctx, "reminder failed", "kind", "day_before", "stage", "send", "ticket_count", len(ticketIDs))
 		return
+	}
+
+	for _, ticketID := range ticketIDs {
+		slog.InfoContext(ctx, "reminder sent", "kind", "day_before", logging.ID("ticket_id", ticketID))
 	}
 
 	if err := w.q.MarkTicketsDayBeforeNotified(ctx, queries.MarkTicketsDayBeforeNotifiedParams{
@@ -129,7 +134,7 @@ func (w *Worker) sendDayBeforeGroup(ctx context.Context, now time.Time, group []
 		Ids:                 ticketIDs,
 	}); err != nil {
 		// 送信済みだがマークに失敗。次回 tick で重複送信されうる（at-least-once）。
-		log.Printf("リマインド: 前日通知は送信したがマークに失敗（重複送信の可能性）: %v", err)
+		slog.ErrorContext(ctx, "reminder failed", "kind", "day_before", "stage", "mark", "ticket_count", len(ticketIDs), "sent", true)
 	}
 }
 
@@ -154,7 +159,7 @@ func (w *Worker) processMeeting(ctx context.Context, now time.Time) error {
 func (w *Worker) sendMeeting(ctx context.Context, now time.Time, t queries.ListTicketsForMeetingNotificationRow) {
 	subjectsByTicket, err := w.mentionsByTicket(ctx, []string{t.ID})
 	if err != nil {
-		log.Printf("リマインド: 集合通知のメンション取得に失敗: %v", err)
+		slog.ErrorContext(ctx, "reminder failed", "kind", "meeting", "stage", "mentions", logging.ID("ticket_id", t.ID))
 		return
 	}
 	mentions := dedupePreserveOrder(subjectsByTicket[t.ID])
@@ -164,15 +169,17 @@ func (w *Worker) sendMeeting(ctx context.Context, now time.Time, t queries.ListT
 	}
 
 	if err := w.poster.post(ctx, formatMeeting(w.frontendURL, t, mentions), mentions); err != nil {
-		log.Printf("リマインド: 集合通知の送信に失敗: %v", err)
+		slog.ErrorContext(ctx, "reminder failed", "kind", "meeting", "stage", "send", logging.ID("ticket_id", t.ID))
 		return
 	}
+
+	slog.InfoContext(ctx, "reminder sent", "kind", "meeting", logging.ID("ticket_id", t.ID))
 
 	if err := w.q.MarkTicketMeetingNotified(ctx, queries.MarkTicketMeetingNotifiedParams{
 		MeetingNotifiedAt: sql.NullTime{Time: now, Valid: true},
 		ID:                t.ID,
 	}); err != nil {
-		log.Printf("リマインド: 集合通知は送信したがマークに失敗（重複送信の可能性）: %v", err)
+		slog.ErrorContext(ctx, "reminder failed", "kind", "meeting", "stage", "mark", logging.ID("ticket_id", t.ID), "sent", true)
 	}
 }
 

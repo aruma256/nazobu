@@ -4,11 +4,13 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/aruma256/nazobu/backend/internal/auth"
+	"github.com/aruma256/nazobu/backend/internal/logging"
 )
 
 const (
@@ -37,11 +39,13 @@ func sanitizeNextPath(raw string) string {
 
 func (s *Server) handleDiscordLogin(w http.ResponseWriter, r *http.Request) {
 	if s.cfg.Discord.ClientID == "" {
+		slog.ErrorContext(r.Context(), "login failed", "stage", "configuration")
 		http.Error(w, "Discord client_id が未設定", http.StatusServiceUnavailable)
 		return
 	}
 	state, err := generateRandomString(32)
 	if err != nil {
+		slog.ErrorContext(r.Context(), "login failed", "stage", "generate_state")
 		http.Error(w, "state の生成に失敗", http.StatusInternalServerError)
 		return
 	}
@@ -92,12 +96,14 @@ func (s *Server) handleDiscordCallback(w http.ResponseWriter, r *http.Request) {
 
 	token, err := s.discordOAuth.Exchange(ctx, code)
 	if err != nil {
+		slog.ErrorContext(r.Context(), "login failed", "stage", "exchange_token")
 		http.Error(w, "token exchange 失敗: "+err.Error(), http.StatusBadGateway)
 		return
 	}
 
 	du, err := auth.FetchDiscordUser(ctx, s.httpClient, token)
 	if err != nil {
+		slog.ErrorContext(r.Context(), "login failed", "stage", "fetch_user")
 		http.Error(w, "discord user 取得失敗: "+err.Error(), http.StatusBadGateway)
 		return
 	}
@@ -111,16 +117,19 @@ func (s *Server) handleDiscordCallback(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, s.cfg.FrontendURL+"/login?error=not_registered", http.StatusFound)
 			return
 		}
+		slog.ErrorContext(r.Context(), "login failed", "stage", "lookup_user")
 		http.Error(w, "user lookup 失敗: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	rawToken, err := auth.CreateSession(ctx, s.db, user.ID)
 	if err != nil {
+		slog.ErrorContext(r.Context(), "login failed", "stage", "create_session")
 		http.Error(w, "session 作成失敗: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	slog.InfoContext(ctx, "login completed", logging.ID("user_id", user.ID))
 	http.SetCookie(w, &http.Cookie{
 		Name:     auth.SessionCookieName,
 		Value:    rawToken,
@@ -143,7 +152,9 @@ func (s *Server) handleDiscordCallback(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 	if c, err := r.Cookie(auth.SessionCookieName); err == nil && c.Value != "" {
-		_ = auth.DeleteSession(r.Context(), s.db, c.Value)
+		if err := auth.DeleteSession(r.Context(), s.db, c.Value); err != nil {
+			slog.ErrorContext(r.Context(), "logout failed", "stage", "delete_session")
+		}
 	}
 	clearCookie(w, auth.SessionCookieName, s.cfg.CookieSecure)
 	// POST → GET にしてログイン画面へ。

@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"os"
+	"log/slog"
 	"os/exec"
 
 	"github.com/aruma256/nazobu/backend/internal/config"
@@ -34,11 +34,12 @@ var migrateCmd = &cobra.Command{
 			"--before-apply=SET FOREIGN_KEY_CHECKS=0;",
 			cfg.DB.Name,
 		)
-		mysqldef.Stdout = os.Stdout
-		mysqldef.Stderr = os.Stderr
+		// 外部コマンドのエラー出力には接続情報が含まれ得るため転送しない。
+		slog.InfoContext(cmd.Context(), "migration started")
 		if err := mysqldef.Run(); err != nil {
 			return fmt.Errorf("mysqldef 実行失敗: %w", err)
 		}
+		slog.InfoContext(cmd.Context(), "migration completed")
 		return nil
 	},
 }

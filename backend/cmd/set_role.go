@@ -4,11 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	"github.com/aruma256/nazobu/backend/internal/config"
 	"github.com/aruma256/nazobu/backend/internal/db"
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
+	"github.com/aruma256/nazobu/backend/internal/logging"
 	"github.com/spf13/cobra"
 )
 
@@ -55,7 +57,7 @@ var setRoleCmd = &cobra.Command{
 			return fmt.Errorf("role の更新に失敗: %w", err)
 		}
 
-		fmt.Printf("role を更新: user_id=%s provider=%s subject=%s role=%s\n", userID, auth.ProviderDiscord, setRoleDiscordUserID, setRoleRole)
+		slog.InfoContext(ctx, "user role updated", logging.ID("user_id", userID), "role", setRoleRole)
 		return nil
 	},
 }

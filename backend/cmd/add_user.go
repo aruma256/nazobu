@@ -4,11 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	"github.com/aruma256/nazobu/backend/internal/config"
 	"github.com/aruma256/nazobu/backend/internal/db"
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
+	"github.com/aruma256/nazobu/backend/internal/logging"
 	"github.com/spf13/cobra"
 )
 
@@ -49,7 +51,7 @@ var addUserCmd = &cobra.Command{
 		if !isNew {
 			action = "既存ユーザーを更新"
 		}
-		fmt.Printf("%s: user_id=%s provider=%s subject=%s\n", action, user.ID, auth.ProviderDiscord, addUserDiscordUserID)
+		slog.InfoContext(ctx, "user upserted", logging.ID("user_id", user.ID), "action", action)
 		return nil
 	},
 }

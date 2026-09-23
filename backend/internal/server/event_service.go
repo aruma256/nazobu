@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
 	"github.com/aruma256/nazobu/backend/internal/id"
+	"github.com/aruma256/nazobu/backend/internal/logging"
 )
 
 type existingDiscordChannelManager interface {
@@ -42,7 +44,8 @@ const (
 	eventCatchphraseMaxLen = 255
 )
 
-func (s *eventService) ListEvents(ctx context.Context, req *connect.Request[nazobuv1.ListEventsRequest]) (*connect.Response[nazobuv1.ListEventsResponse], error) {
+func (s *eventService) ListEvents(ctx context.Context, req *connect.Request[nazobuv1.ListEventsRequest]) (response *connect.Response[nazobuv1.ListEventsResponse], returnErr error) {
+	defer logRPCFailure(ctx, "ListEvents", &returnErr)
 	if _, err := lookupSessionUser(ctx, s.db, req.Header()); err != nil {
 		return nil, err
 	}
@@ -75,7 +78,8 @@ func (s *eventService) ListEvents(ctx context.Context, req *connect.Request[nazo
 	return connect.NewResponse(&nazobuv1.ListEventsResponse{Events: events}), nil
 }
 
-func (s *eventService) GetEvent(ctx context.Context, req *connect.Request[nazobuv1.GetEventRequest]) (*connect.Response[nazobuv1.GetEventResponse], error) {
+func (s *eventService) GetEvent(ctx context.Context, req *connect.Request[nazobuv1.GetEventRequest]) (response *connect.Response[nazobuv1.GetEventResponse], returnErr error) {
+	defer logRPCFailure(ctx, "GetEvent", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -111,7 +115,8 @@ func (s *eventService) GetEvent(ctx context.Context, req *connect.Request[nazobu
 	}), nil
 }
 
-func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[nazobuv1.CreateEventRequest]) (*connect.Response[nazobuv1.CreateEventResponse], error) {
+func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[nazobuv1.CreateEventRequest]) (response *connect.Response[nazobuv1.CreateEventResponse], returnErr error) {
+	defer logRPCFailure(ctx, "CreateEvent", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -145,6 +150,7 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の登録に失敗: %w", err))
 	}
 
+	slog.InfoContext(ctx, "event created", logging.ID("event_id", eventID), logging.ID("actor_user_id", user.ID))
 	return connect.NewResponse(&nazobuv1.CreateEventResponse{
 		Event: &nazobuv1.Event{
 			Id:                         eventID,
@@ -160,7 +166,8 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 	}), nil
 }
 
-func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[nazobuv1.UpdateEventRequest]) (*connect.Response[nazobuv1.UpdateEventResponse], error) {
+func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[nazobuv1.UpdateEventRequest]) (response *connect.Response[nazobuv1.UpdateEventResponse], returnErr error) {
+	defer logRPCFailure(ctx, "UpdateEvent", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -203,6 +210,7 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の更新に失敗: %w", err))
 	}
 
+	slog.InfoContext(ctx, "event updated", logging.ID("event_id", eventID), logging.ID("actor_user_id", user.ID))
 	return connect.NewResponse(&nazobuv1.UpdateEventResponse{
 		Event: &nazobuv1.Event{
 			Id:                         eventID,

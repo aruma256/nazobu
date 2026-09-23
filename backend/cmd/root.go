@@ -1,14 +1,29 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"log/slog"
+	"os"
+
+	"github.com/spf13/cobra"
+)
 
 var rootCmd = &cobra.Command{
-	Use:   "nazobu",
-	Short: "謎部 backend",
+	Use:           "nazobu",
+	Short:         "謎部 backend",
+	SilenceErrors: true,
+	SilenceUsage:  true,
 }
 
 func Execute() {
-	cobra.CheckErr(rootCmd.Execute())
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stderr, nil)))
+	if cmd, err := rootCmd.ExecuteC(); err != nil {
+		operation := "nazobu"
+		if cmd != nil {
+			operation = cmd.Name()
+		}
+		slog.Error("command failed", "operation", operation)
+		os.Exit(1)
+	}
 }
 
 func init() {

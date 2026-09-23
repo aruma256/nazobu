@@ -27,7 +27,8 @@ func newMyPageService(db *sql.DB) nazobuv1connect.MyPageServiceHandler {
 // jst はサーバの想定タイムゾーン。当日 0:00 や月初の境界算出に使う。
 var jst = time.FixedZone("Asia/Tokyo", 9*60*60)
 
-func (s *myPageService) ListMyUnsettledTickets(ctx context.Context, req *connect.Request[nazobuv1.ListMyUnsettledTicketsRequest]) (*connect.Response[nazobuv1.ListMyUnsettledTicketsResponse], error) {
+func (s *myPageService) ListMyUnsettledTickets(ctx context.Context, req *connect.Request[nazobuv1.ListMyUnsettledTicketsRequest]) (response *connect.Response[nazobuv1.ListMyUnsettledTicketsResponse], returnErr error) {
+	defer logRPCFailure(ctx, "ListMyUnsettledTickets", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -43,7 +44,8 @@ func (s *myPageService) ListMyUnsettledTickets(ctx context.Context, req *connect
 	return connect.NewResponse(&nazobuv1.ListMyUnsettledTicketsResponse{Tickets: tickets}), nil
 }
 
-func (s *myPageService) ListMyUnsettledReceivables(ctx context.Context, req *connect.Request[nazobuv1.ListMyUnsettledReceivablesRequest]) (*connect.Response[nazobuv1.ListMyUnsettledReceivablesResponse], error) {
+func (s *myPageService) ListMyUnsettledReceivables(ctx context.Context, req *connect.Request[nazobuv1.ListMyUnsettledReceivablesRequest]) (response *connect.Response[nazobuv1.ListMyUnsettledReceivablesResponse], returnErr error) {
+	defer logRPCFailure(ctx, "ListMyUnsettledReceivables", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -59,7 +61,8 @@ func (s *myPageService) ListMyUnsettledReceivables(ctx context.Context, req *con
 	return connect.NewResponse(&nazobuv1.ListMyUnsettledReceivablesResponse{Tickets: tickets}), nil
 }
 
-func (s *myPageService) ListMyUpcomingTickets(ctx context.Context, req *connect.Request[nazobuv1.ListMyUpcomingTicketsRequest]) (*connect.Response[nazobuv1.ListMyUpcomingTicketsResponse], error) {
+func (s *myPageService) ListMyUpcomingTickets(ctx context.Context, req *connect.Request[nazobuv1.ListMyUpcomingTicketsRequest]) (response *connect.Response[nazobuv1.ListMyUpcomingTicketsResponse], returnErr error) {
+	defer logRPCFailure(ctx, "ListMyUpcomingTickets", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
@@ -76,7 +79,8 @@ func (s *myPageService) ListMyUpcomingTickets(ctx context.Context, req *connect.
 	return connect.NewResponse(&nazobuv1.ListMyUpcomingTicketsResponse{Tickets: tickets}), nil
 }
 
-func (s *myPageService) ListMonthlyTickets(ctx context.Context, req *connect.Request[nazobuv1.ListMonthlyTicketsRequest]) (*connect.Response[nazobuv1.ListMonthlyTicketsResponse], error) {
+func (s *myPageService) ListMonthlyTickets(ctx context.Context, req *connect.Request[nazobuv1.ListMonthlyTicketsRequest]) (response *connect.Response[nazobuv1.ListMonthlyTicketsResponse], returnErr error) {
+	defer logRPCFailure(ctx, "ListMonthlyTickets", &returnErr)
 	user, err := lookupSessionUser(ctx, s.db, req.Header())
 	if err != nil {
 		return nil, err
