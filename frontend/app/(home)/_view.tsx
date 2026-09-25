@@ -179,6 +179,7 @@ export function HomeView() {
     <>
       <AppHeader brand="謎部" user={displayName} isAdmin={isAdmin} />
       <PageShell>
+        <h1 className="pt-6 text-xl font-semibold tracking-tight">ダッシュボード</h1>
         {unsettled.length > 0 && (
           <Section>
             <SectionTitle count={unsettled.length}>未精算</SectionTitle>

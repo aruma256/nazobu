@@ -5,7 +5,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 import type { Ticket } from "@/app/gen/nazobu/v1/ticket_pb";
@@ -18,16 +18,14 @@ import {
 
 export function PageShell({ children }: { children: ReactNode }) {
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-16">{children}</main>
+    <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-16">{children}</main>
   );
 }
 
-type NavItem = { href: string; label: string; adminOnly?: boolean };
-
-const NAV_ITEMS: readonly NavItem[] = [
-  { href: "/", label: "マイページ" },
-  { href: "/events", label: "公演" },
-  { href: "/tickets", label: "全てのチケット" },
+const NAV_ITEMS = [
+  { href: "/", label: "ダッシュボード", icon: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z" },
+  { href: "/events", label: "公演", icon: "M4 5h16v16H4z M8 3v4 M16 3v4 M4 11h16" },
+  { href: "/tickets", label: "チケット", icon: "M3 5h18v5a2 2 0 0 0 0 4v5H3v-5a2 2 0 0 0 0-4z M15 5v3 M15 11v2 M15 16v3" },
 ] as const;
 
 function isNavActive(pathname: string, href: string): boolean {
@@ -35,65 +33,103 @@ function isNavActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AppHeader({
-  brand,
-  user,
-  isAdmin = false,
-}: {
+function Navigation({ mobile = false }: { mobile?: boolean }) {
+  const pathname = usePathname();
+  return (
+    <nav
+      aria-label="メインナビゲーション"
+      className={mobile
+        ? "fixed inset-x-0 bottom-0 z-20 border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)] md:hidden"
+        : "hidden md:block"}
+    >
+      <div className={mobile ? "mx-auto grid max-w-2xl grid-cols-3 px-2 py-1" : "flex gap-1"}>
+        {NAV_ITEMS.map(({ href, label, icon }) => {
+          const active = isNavActive(pathname, href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? "page" : undefined}
+              className={`flex items-center justify-center rounded-lg whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${mobile ? "min-h-14 flex-col gap-1 text-xs" : "h-11 px-3 text-sm"} ${active ? "bg-emerald-50 font-semibold text-emerald-700" : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"}`}
+            >
+              {mobile && (
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="size-5">
+                  <path d={icon} />
+                </svg>
+              )}
+              {label}
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
+function AccountMenu({ user, isAdmin }: { user: string; isAdmin: boolean }) {
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    function closeOutside(event: PointerEvent) {
+      const details = detailsRef.current;
+      if (details && event.target instanceof Node && !details.contains(event.target)) details.open = false;
+    }
+    function closeOnEscape(event: KeyboardEvent) {
+      const details = detailsRef.current;
+      if (event.key === "Escape" && details?.open) {
+        details.open = false;
+        details.querySelector("summary")?.focus();
+      }
+    }
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+  return (
+    <details ref={detailsRef} className="relative ml-auto shrink-0" onBlur={(event) => {
+      if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
+    }}>
+      <summary aria-label="アカウント" className="flex size-11 cursor-pointer list-none items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-zinc-600 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 [&::-webkit-details-marker]:hidden">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" className="size-5">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 21v-2a8 8 0 0 1 16 0v2" />
+        </svg>
+      </summary>
+      <div className="absolute right-0 top-full mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-zinc-200 bg-white p-2 shadow-lg">
+        <div className="border-b border-zinc-100 px-3 py-3">
+          <p className="text-xs text-zinc-500">ログイン中{isAdmin ? "・管理者" : ""}</p>
+          <p className="mt-1 text-sm font-semibold wrap-anywhere">{user}</p>
+        </div>
+        <form action="/auth/logout" method="post">
+          <button type="submit" className="mt-1 flex h-11 w-full items-center rounded-lg px-3 text-sm text-zinc-700 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-emerald-700">ログアウト</button>
+        </form>
+      </div>
+    </details>
+  );
+}
+
+export function AppHeader({ brand, user, isAdmin = false }: {
   brand: string;
   user: string;
   isAdmin?: boolean;
 }) {
   const pathname = usePathname();
-  const navItems = NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin);
   return (
-    <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/85 backdrop-blur-md">
-      <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
-        <Link href="/" className="flex items-center gap-2">
-          <span
-            aria-hidden
-            className="inline-block size-2 rounded-full bg-emerald-600"
-          />
-          <span className="text-base font-semibold tracking-tight">{brand}</span>
-        </Link>
-        <nav className="flex items-center gap-1 text-sm">
-          {navItems.map(({ href, label }) => {
-            const active = isNavActive(pathname, href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                aria-current={active ? "page" : undefined}
-                className={
-                  active
-                    ? "rounded-md bg-zinc-100 px-2 py-1 font-semibold text-zinc-900"
-                    : "rounded-md px-2 py-1 text-zinc-600 hover:text-zinc-900"
-                }
-              >
-                {label}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="ml-auto flex items-center gap-3">
-          {user !== "" && (
-            <span className="max-w-[8rem] truncate text-sm text-zinc-500">
-              {user}
-            </span>
-          )}
-          {user !== "" && (
-            <form action="/auth/logout" method="post">
-              <button
-                type="submit"
-                className="text-xs text-zinc-500 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-700 hover:decoration-zinc-500"
-              >
-                ログアウト
-              </button>
-            </form>
-          )}
+    <>
+      <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-2xl items-center gap-4 px-4">
+          <Link href="/" aria-label={`${brand} ダッシュボード`} className="flex h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-md focus-visible:outline-2 focus-visible:outline-emerald-700">
+            <span aria-hidden="true" className="size-2 rounded-full bg-emerald-600" />
+            <span className="text-base font-semibold tracking-tight">{brand}</span>
+          </Link>
+          <Navigation />
+          {user !== "" && <AccountMenu key={pathname} user={user} isAdmin={isAdmin} />}
         </div>
-      </div>
-    </header>
+      </header>
+      <Navigation mobile />
+    </>
   );
 }
 
@@ -392,7 +428,7 @@ export function TicketCard({
 }
 
 // 未精算 / 未回収のチケットがある場合に上部に出す 1 行リンクバナー。
-// /tickets, /events 等、マイページ以外のページからユーザーをマイページへ誘導する。
+// /tickets, /events 等、ダッシュボード以外のページからユーザーをダッシュボードへ誘導する。
 export function UnsettledBanner({
   unsettledCount,
   receivablesCount,

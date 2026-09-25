@@ -103,7 +103,7 @@ export function TicketsView() {
           receivablesCount={receivablesCount}
         />
         <Section>
-          <SectionTitle count={tickets.length}>チケット一覧</SectionTitle>
+          <SectionTitle count={tickets.length}>みんなのチケット</SectionTitle>
           {tickets.length === 0 ? (
             <p className="mt-3 text-sm text-zinc-500">
               まだチケットが登録されていません。
