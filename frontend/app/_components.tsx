@@ -89,7 +89,12 @@ function AccountMenu({ user, isAdmin }: { user: string; isAdmin: boolean }) {
   }, []);
   return (
     <details ref={detailsRef} className="relative ml-auto shrink-0" onBlur={(event) => {
-      if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
+      // メニュー内の非フォーカス要素を押しても relatedTarget は null になる。
+      // その blur 中に閉じるとブラウザがクラッシュするため、移動先が外部の Node のときだけ閉じる。
+      // フォーカス先のない外側のタップは closeOutside で処理する。
+      if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget)) {
+        event.currentTarget.open = false;
+      }
     }}>
       <summary aria-label="アカウント" className="flex size-11 cursor-pointer list-none items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-zinc-600 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 [&::-webkit-details-marker]:hidden">
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" className="size-5">
