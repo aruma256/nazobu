@@ -2,6 +2,15 @@
 # working-directory: backend で実行するため、このファイルが読まれる。
 version: "2"
 
+linters:
+  exclusions:
+    rules:
+      # Discord は固有名詞なので、エラー文字列の先頭大文字を許容する。
+      - linters:
+          - staticcheck
+        text: 'ST1005: error strings should not be capitalized'
+        source: '"Discord '
+
 # gofmt は既定の linter に含まれず、v2 では linters ではなく formatters に属する。
 # 有効化すると golangci-lint run で未整形を検出でき、golangci-lint fmt で一括整形できる。
 formatters:
