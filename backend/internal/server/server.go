@@ -90,7 +90,7 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 
 	httpSrv := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           mux,
+		Handler:           withAccessLog(mux),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
