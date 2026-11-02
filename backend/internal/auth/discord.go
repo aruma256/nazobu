@@ -56,7 +56,6 @@ type DiscordUser struct {
 // avatar はハッシュなので Discord CDN の URL を組み立てる。
 // "a_" 接頭辞付きハッシュはアニメーションアバターなので gif、それ以外は png。
 // DisplayName は Discord の global_name が空のときは username にフォールバックする。
-// users.display_name は NOT NULL なので、必ず非空にする責務はここで吸収する。
 func (du *DiscordUser) ToProfile() UserProfile {
 	displayName := du.DisplayName
 	if displayName == "" {

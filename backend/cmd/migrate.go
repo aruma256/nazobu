@@ -20,8 +20,7 @@ var migrateCmd = &cobra.Command{
 		// --enable-drop で DROP TABLE / DROP COLUMN / DROP INDEX を許可する。
 		//
 		// --before-apply で FOREIGN_KEY_CHECKS=0 を流すのは、FK に使われている列の
-		// 型変更（例: ID を CHAR(36) に拡張）が MySQL の error 1833 で弾かれるのを
-		// 回避するため。session スコープの設定なので、適用後の通常運用には影響しない。
+		// 型変更が MySQL の error 1833 で弾かれるのを回避するため。session スコープの設定なので、適用後の通常運用には影響しない。
 		mysqldef := exec.Command(
 			"mysqldef",
 			"--host="+cfg.DB.Host,

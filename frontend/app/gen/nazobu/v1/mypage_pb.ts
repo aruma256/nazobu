@@ -32,8 +32,6 @@ export const ListMyUnsettledTicketsRequestSchema: GenMessage<ListMyUnsettledTick
  */
 export type ListMyUnsettledTicketsResponse = Message<"nazobu.v1.ListMyUnsettledTicketsResponse"> & {
   /**
-   * /tickets と同じ表示で扱うため Ticket 型に揃える。
-   *
    * @generated from field: repeated nazobu.v1.Ticket tickets = 1;
    */
   tickets: Ticket[];
@@ -203,8 +201,7 @@ export const MonthlyTicketSchema: GenMessage<MonthlyTicket> = /*@__PURE__*/
 
 /**
  * MyPageService はマイページ表示に必要な集約データを返す。
- * 表示要素ごとに RPC を分けてあり、マイページ以外（/tickets, /events の通知バナー等）
- * からも必要な要素だけを叩けるようにしてある。
+ * 表示要素ごとに RPC を分けてあり、必要な要素だけを取得できる。
  *
  * @generated from service nazobu.v1.MyPageService
  */
@@ -243,7 +240,7 @@ export const MyPageService: GenService<{
   },
   /**
    * ListMonthlyTickets は指定された年月の自分の参加チケット履歴を返す。
-   * year/month を共に 0 で渡すと「サーバ JST 基準の前月」を既定として返す（マイページ初期表示用）。
+   * year/month を共に 0 で渡すと「サーバ JST 基準の前月」を既定として返す。
    * 未ログインなら unauthenticated。
    *
    * @generated from rpc nazobu.v1.MyPageService.ListMonthlyTickets

@@ -16,7 +16,7 @@ SELECT COUNT(*) FROM users
 WHERE id IN (/*SLICE:ids*/?)
 `
 
-// 参照整合性のフレンドリーなプリチェック用。FK でも担保されるが UX のために事前に数を確認する。
+// FK でも担保されるが、分かりやすいエラーを返すために事前に存在を確認する。
 func (q *Queries) CountUsersByIDs(ctx context.Context, ids []string) (int64, error) {
 	query := countUsersByIDs
 	var queryParams []interface{}
@@ -61,7 +61,6 @@ type ListUsersRow struct {
 	DisplayName string
 }
 
-// 表示用の最低限フィールドだけ返す。avatar_url 等は GetMe 経路（session join）で取る。
 func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUsers)
 	if err != nil {

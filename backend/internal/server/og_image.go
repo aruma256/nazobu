@@ -56,7 +56,7 @@ func fetchOGTags(ctx context.Context, client *http.Client, eventURL string) ogTa
 	defer cancel()
 
 	// リダイレクトは毎回 allowlist で再検査する。
-	// http.Client が default で nil の場合は up to 10 回フォローするため、CheckRedirect を上書きする。
+	// CheckRedirect が nil の http.Client は検査なしで最大 10 回追従するため、上書きする。
 	c := *client
 	c.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		if len(via) >= 5 {

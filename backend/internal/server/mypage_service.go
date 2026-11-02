@@ -94,7 +94,7 @@ func (s *myPageService) ListMonthlyTickets(ctx context.Context, req *connect.Req
 	var monthStart time.Time
 	switch {
 	case year == 0 && month == 0:
-		// 既定（マイページ初期表示）として前月を返す。
+		// 既定として前月を返す。
 		currentMonthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, jst)
 		monthStart = currentMonthStart.AddDate(0, -1, 0)
 	case month < 1 || month > 12:

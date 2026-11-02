@@ -209,7 +209,7 @@ func (c *Client) GrantMembersView(ctx context.Context, channelID string, memberI
 	return nil
 }
 
-// DeleteChannel は DB 保存前に作成が失敗したチャンネルの補償削除用。
+// DeleteChannel は指定チャンネルを削除する。
 func (c *Client) DeleteChannel(ctx context.Context, channelID string) error {
 	if !c.Configured() {
 		return fmt.Errorf("Discord ネタバレチャンネル設定が未完了")

@@ -130,6 +130,7 @@ func (s *Server) HandleAuthorizeGet(w http.ResponseWriter, r *http.Request) {
 		ClientName:       clientName,
 		ClientID:         meta.ClientID,
 		RedirectURI:      redirectURI,
+		// MCP 仕様の推奨に従い、ループバックへの redirect は同意画面で警告する。
 		LoopbackRedirect: isLoopbackRedirectURI(redirectURI),
 		Scope:            params.scope,
 		ScopeWrite:       scopeContains(params.scope, ScopeWrite),

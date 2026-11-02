@@ -136,7 +136,7 @@ export const UserService: GenService<{
     output: typeof GetMeResponseSchema;
   },
   /**
-   * ListUsers は登録済み user を返す。ticket 登録時の参加者選択などで使う。
+   * ListUsers は登録済み user を返す。
    *
    * @generated from rpc nazobu.v1.UserService.ListUsers
    */

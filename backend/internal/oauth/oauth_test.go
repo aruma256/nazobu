@@ -12,7 +12,6 @@ import (
 	"time"
 )
 
-// testTime はテスト用の固定時刻。
 func testTime(t *testing.T) time.Time {
 	t.Helper()
 	return time.Date(2026, 7, 10, 12, 0, 0, 0, time.FixedZone("Asia/Tokyo", 9*60*60))

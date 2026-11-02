@@ -285,8 +285,7 @@ export function EventCover({
   );
 }
 
-// TicketCard は /tickets と mypage（未精算 / 今後の予定）で使う共通カード。
-// tone="alert" は amber 系のトーンで未精算カードに使う。
+// alert は amber 系の強調トーン。
 export type TicketCardTone = "default" | "alert";
 
 export function TicketCard({
@@ -432,8 +431,7 @@ export function TicketCard({
   );
 }
 
-// 未精算 / 未回収のチケットがある場合に上部に出す 1 行リンクバナー。
-// /tickets, /events 等、ダッシュボード以外のページからユーザーをダッシュボードへ誘導する。
+// 未精算 / 未回収のチケットがある場合に上部に出す、ダッシュボードへの 1 行リンクバナー。
 export function UnsettledBanner({
   unsettledCount,
   receivablesCount,

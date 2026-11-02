@@ -227,7 +227,6 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 }
 
 // preparedEventFields は event の入力検証 + OG タグ取得 + catchphrase 補完まで済ませた値を保持する。
-// CreateEvent / UpdateEvent / CreateTicketWithEvent / UpdateTicketWithEvent から共通で使う。
 type preparedEventFields struct {
 	title            string
 	url              string

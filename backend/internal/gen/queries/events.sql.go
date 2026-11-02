@@ -16,7 +16,7 @@ const countEventByID = `-- name: CountEventByID :one
 SELECT COUNT(*) FROM events WHERE id = ?
 `
 
-// 参照整合性のフレンドリーなプリチェック用。FK でも担保されるが UX のために事前に存在確認する。
+// FK でも担保されるが、分かりやすいエラーを返すために事前に存在を確認する。
 func (q *Queries) CountEventByID(ctx context.Context, id string) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countEventByID, id)
 	var count int64
@@ -84,7 +84,6 @@ type GetEventByIDRow struct {
 	ExpectedDurationMinutes    int32
 }
 
-// 1 件の event を取得する。詳細・編集画面用。
 func (q *Queries) GetEventByID(ctx context.Context, id string) (GetEventByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getEventByID, id)
 	var i GetEventByIDRow
@@ -121,8 +120,7 @@ type ListEventTicketsByEventIDsRow struct {
 	PurchaserName                 string
 }
 
-// 公演一覧画面で各 event に紐づく ticket をまとめて引く。
-// 呼び出し側で event_id ごとに in-memory で振り分ける（N+1 回避）。
+// 指定 event 群に紐づく ticket をまとめて引く（N+1 回避）。
 func (q *Queries) ListEventTicketsByEventIDs(ctx context.Context, eventIds []string) ([]ListEventTicketsByEventIDsRow, error) {
 	query := listEventTicketsByEventIDs
 	var queryParams []interface{}
@@ -181,7 +179,6 @@ type ListEventsRow struct {
 	ExpectedDurationMinutes    int32
 }
 
-// 公演一覧（新しい順）。詳細表示用の最低限フィールドのみ返す。
 func (q *Queries) ListEvents(ctx context.Context) ([]ListEventsRow, error) {
 	rows, err := q.db.QueryContext(ctx, listEvents)
 	if err != nil {

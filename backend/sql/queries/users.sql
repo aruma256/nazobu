@@ -1,11 +1,10 @@
 -- name: ListUsers :many
--- 表示用の最低限フィールドだけ返す。avatar_url 等は GetMe 経路（session join）で取る。
 SELECT id, display_name
 FROM users
 ORDER BY display_name ASC, id ASC;
 
 -- name: CountUsersByIDs :one
--- 参照整合性のフレンドリーなプリチェック用。FK でも担保されるが UX のために事前に数を確認する。
+-- FK でも担保されるが、分かりやすいエラーを返すために事前に存在を確認する。
 SELECT COUNT(*) FROM users
 WHERE id IN (sqlc.slice('ids'));
 

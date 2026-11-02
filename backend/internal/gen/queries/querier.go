@@ -10,13 +10,12 @@ import (
 )
 
 type Querier interface {
-	// 参照整合性のフレンドリーなプリチェック用。FK でも担保されるが UX のために事前に存在確認する。
+	// FK でも担保されるが、分かりやすいエラーを返すために事前に存在を確認する。
 	CountEventByID(ctx context.Context, id string) (int64, error)
 	// 参加者の存在確認。重複登録を避けるためのプリチェック。
 	CountTicketParticipant(ctx context.Context, arg CountTicketParticipantParams) (int64, error)
-	// ticket の参加者数。max_participants 超過チェックで使う。
 	CountTicketParticipantsByTicketID(ctx context.Context, ticketID string) (int64, error)
-	// 参照整合性のフレンドリーなプリチェック用。FK でも担保されるが UX のために事前に数を確認する。
+	// FK でも担保されるが、分かりやすいエラーを返すために事前に存在を確認する。
 	CountUsersByIDs(ctx context.Context, ids []string) (int64, error)
 	CreateEvent(ctx context.Context, arg CreateEventParams) error
 	CreateOAuthAuthorizationCode(ctx context.Context, arg CreateOAuthAuthorizationCodeParams) error
@@ -27,12 +26,10 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	CreateUserIdentity(ctx context.Context, arg CreateUserIdentityParams) error
 	DeleteEvent(ctx context.Context, id string) (int64, error)
-	// 期限切れの認可コードを掃除する（呼び出しは任意のタイミングで冪等）。
+	// 期限切れの認可コードを掃除する。
 	DeleteExpiredOAuthRecords(ctx context.Context, expiresAt time.Time) error
 	// refresh 期限も切れたトークンを掃除する。
 	DeleteExpiredOAuthTokens(ctx context.Context, refreshTokenExpiresAt time.Time) error
-	// 認可コードは単回使用。token 交換の成否に関わらず消費した時点で削除する。
-	// 影響行数を返すことで、並行リクエストによる二重使用を検知できるようにする。
 	DeleteOAuthAuthorizationCode(ctx context.Context, id string) (int64, error)
 	DeleteOAuthTokenByID(ctx context.Context, id string) error
 	DeleteSessionByTokenHash(ctx context.Context, tokenHash string) error
@@ -40,7 +37,6 @@ type Querier interface {
 	DeleteTicketParticipant(ctx context.Context, arg DeleteTicketParticipantParams) error
 	DeleteTicketParticipants(ctx context.Context, ticketID string) error
 	GetDiscordSubjectByUserID(ctx context.Context, userID string) (string, error)
-	// 1 件の event を取得する。詳細・編集画面用。
 	GetEventByID(ctx context.Context, id string) (GetEventByIDRow, error)
 	GetOAuthAuthorizationCodeByHash(ctx context.Context, codeHash string) (GetOAuthAuthorizationCodeByHashRow, error)
 	GetOAuthTokenByRefreshTokenHash(ctx context.Context, refreshTokenHash string) (GetOAuthTokenByRefreshTokenHashRow, error)
@@ -49,13 +45,11 @@ type Querier interface {
 	// session 引きで紐づく user と expires_at を一発で取得する。
 	// 期限切れ判定は呼び出し側で行う。
 	GetSessionUserByTokenHash(ctx context.Context, tokenHash string) (GetSessionUserByTokenHashRow, error)
-	// ticket 詳細表示用。立替者の id と表示名も返す（権限判定 / UI 表示で使う）。
+	// 立替者の id と表示名も返す。
 	GetTicketByID(ctx context.Context, id string) (GetTicketByIDRow, error)
 	GetUserIDByIdentity(ctx context.Context, arg GetUserIDByIdentityParams) (string, error)
-	// 公演一覧画面で各 event に紐づく ticket をまとめて引く。
-	// 呼び出し側で event_id ごとに in-memory で振り分ける（N+1 回避）。
+	// 指定 event 群に紐づく ticket をまとめて引く（N+1 回避）。
 	ListEventTicketsByEventIDs(ctx context.Context, eventIds []string) ([]ListEventTicketsByEventIDsRow, error)
-	// 公演一覧（新しい順）。詳細表示用の最低限フィールドのみ返す。
 	ListEvents(ctx context.Context) ([]ListEventsRow, error)
 	// 当月分（[month_start, next_month_start) 半開区間）の自分の参加チケット。
 	// 立替者本人 or 精算済みなら settled = 1 とみなす。
@@ -67,14 +61,13 @@ type Querier interface {
 	ListNotifiableDiscordSubjectsByTicketIDs(ctx context.Context, ticketIds []string) ([]ListNotifiableDiscordSubjectsByTicketIDsRow, error)
 	// Discord ネタバレチャンネルの権限付与用。identity の欠落を検出できるよう LEFT JOIN にする。
 	ListTicketParticipantDiscordIdentities(ctx context.Context, ticketID string) ([]ListTicketParticipantDiscordIdentitiesRow, error)
-	// ticket 一覧 / 公演一覧で、各 ticket の参加者名をまとめて引く（N+1 回避）。
-	// 呼び出し側で ticket_id ごとに in-memory で振り分ける。
+	// 指定 ticket 群の参加者名をまとめて引く（N+1 回避）。
 	ListTicketParticipantNamesByTicketIDs(ctx context.Context, ticketIds []string) ([]ListTicketParticipantNamesByTicketIDsRow, error)
-	// ticket 詳細用。参加者の user_id / 名前 / 精算済みフラグを created_at 昇順で返す。
+	// 参加者の user_id / 名前 / 精算済みフラグを created_at 昇順で返す。
 	ListTicketParticipantsByTicketID(ctx context.Context, ticketID string) ([]ListTicketParticipantsByTicketIDRow, error)
-	// ticket 一覧画面用。event 名と立替者名を join して返す。
+	// event 名と立替者名を join して返す。
 	ListTickets(ctx context.Context) ([]ListTicketsRow, error)
-	// CreateTicket 直後の返却用。1 件のことが多いがインタフェースは ListTickets と揃える。
+	// 列は ListTickets と揃える。
 	ListTicketsByIDs(ctx context.Context, ids []string) ([]ListTicketsByIDsRow, error)
 	// リマインド通知ワーカー用のクエリ。
 	// 締切（前日 20 時 / 集合 2 時間前）と猶予窓の判定は Go 側で行う。日付や時刻の
@@ -90,30 +83,27 @@ type Querier interface {
 	// 締切（meeting_at - 2h）・猶予窓の判定は呼び出し側。
 	ListTicketsForMeetingNotification(ctx context.Context, startAt time.Time) ([]ListTicketsForMeetingNotificationRow, error)
 	// 自分が立て替えたチケットのうち「自分以外の参加者に未精算が 1 人以上残っている」かつ「開演が現在以前」を取る。
-	// 受け取り側の貰い忘れ防止用。自分自身の参加分（自己持ち）は精算対象でないため EXISTS の条件から除外する。
-	// 未来分は精算対象として扱わない（公演前に表示しない）。
-	// 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
+	// 自分自身の参加分（自己持ち）は精算対象でないため EXISTS の条件から除外する。
+	// 未来分は精算対象として扱わない。
+	// 列は ListTickets と同じ。
 	ListUnsettledReceivablesByUserID(ctx context.Context, arg ListUnsettledReceivablesByUserIDParams) ([]ListUnsettledReceivablesByUserIDRow, error)
 	// 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」かつ「開演が現在以前」を取る。
 	// 立替者本人の自己持ち分は精算対象ではないので除外する。
-	// 未来分は精算対象として扱わない（公演前に表示しない）。
-	// 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
+	// 未来分は精算対象として扱わない。
+	// 列は ListTickets と同じ。
 	ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnsettledTicketsByUserIDParams) ([]ListUnsettledTicketsByUserIDRow, error)
 	// 当日 0:00（JST）以降に start_at を持ち、かつ終了予定時刻がまだ過ぎていない自分の参加チケット。
 	// 終了予定時刻は start_at + expected_duration_minutes（どちらも NOT NULL）で算出し、
 	// これを過ぎた公演は「今後の予定」から除外する。
 	// today_start による下限は対象を当日以降に絞り idx_tickets_start_at を効かせるため。
-	// 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
+	// 列は ListTickets と同じ。
 	ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcomingTicketsByUserIDParams) ([]ListUpcomingTicketsByUserIDRow, error)
-	// 表示用の最低限フィールドだけ返す。avatar_url 等は GetMe 経路（session join）で取る。
 	ListUsers(ctx context.Context) ([]ListUsersRow, error)
 	// 削除の権限判定と参加者削除の間に立替者変更・参加者追加が割り込むのを防ぐ。
 	LockTicketForDeletion(ctx context.Context, id string) (string, error)
 	// 集合 2 時間前リマインド送信済みマーク。未送信のものだけを対象にする。
 	MarkTicketMeetingNotified(ctx context.Context, arg MarkTicketMeetingNotifiedParams) error
-	// 未精算 → 精算済み。settled_at に現在時刻を入れる。
 	MarkTicketParticipantSettled(ctx context.Context, arg MarkTicketParticipantSettledParams) error
-	// 精算済み → 未精算。settled_at を NULL に戻す。
 	MarkTicketParticipantUnsettled(ctx context.Context, arg MarkTicketParticipantUnsettledParams) error
 	// 前日リマインド送信済みマーク。同日まとめ送信した全チケットに送信時刻（JST）を立てる。
 	// 多重送信防止のため未送信のものだけを対象にする。

@@ -58,9 +58,8 @@ func (*ListMyUnsettledTicketsRequest) Descriptor() ([]byte, []int) {
 }
 
 type ListMyUnsettledTicketsResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// /tickets と同じ表示で扱うため Ticket 型に揃える。
-	Tickets       []*Ticket `protobuf:"bytes,1,rep,name=tickets,proto3" json:"tickets,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tickets       []*Ticket              `protobuf:"bytes,1,rep,name=tickets,proto3" json:"tickets,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

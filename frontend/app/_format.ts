@@ -68,7 +68,7 @@ export function formatYen(amount: number): string {
   return `¥${amount.toLocaleString("ja-JP")}`;
 }
 
-// 現在の JST 年月を返す。サーバ往復なしに月切り替えの上限判定等に使う。
+// 現在の JST 年月を返す。
 export function jstCurrentYearMonth(now: Date = new Date()): { year: number; month: number } {
   const p = jstParts(now);
   return { year: p.year, month: p.month };
@@ -86,7 +86,7 @@ export function toTimeInputValue(date: Date): string {
 }
 
 // <input type="date"> + <input type="time"> から JST RFC3339 を組み立てる。
-// time が空文字なら null を返す（呼び出し側で「未設定」を判定しやすくするため）。
+// どちらかが空文字なら null を返す。
 export function joinJSTDateTime(dateValue: string, timeValue: string): string | null {
   if (dateValue === "" || timeValue === "") return null;
   return `${dateValue}T${timeValue}:00+09:00`;

@@ -7,7 +7,7 @@ import (
 	"connectrpc.com/connect"
 )
 
-// RPC と MCP で共通のサービス境界で障害だけを記録する。
+// logRPCFailure は RPC ハンドラの失敗だけを記録する。MCP ツールも同じハンドラを通るため共通で記録される。
 // エラー本文には入力値や外部サービスの応答が含まれ得るため出力しない。
 func logRPCFailure(ctx context.Context, operation string, err *error) {
 	if *err == nil {

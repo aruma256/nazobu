@@ -80,7 +80,7 @@ const deleteExpiredOAuthRecords = `-- name: DeleteExpiredOAuthRecords :exec
 DELETE FROM oauth_authorization_codes WHERE expires_at < ?
 `
 
-// 期限切れの認可コードを掃除する（呼び出しは任意のタイミングで冪等）。
+// 期限切れの認可コードを掃除する。
 func (q *Queries) DeleteExpiredOAuthRecords(ctx context.Context, expiresAt time.Time) error {
 	_, err := q.db.ExecContext(ctx, deleteExpiredOAuthRecords, expiresAt)
 	return err
@@ -100,8 +100,6 @@ const deleteOAuthAuthorizationCode = `-- name: DeleteOAuthAuthorizationCode :exe
 DELETE FROM oauth_authorization_codes WHERE id = ?
 `
 
-// 認可コードは単回使用。token 交換の成否に関わらず消費した時点で削除する。
-// 影響行数を返すことで、並行リクエストによる二重使用を検知できるようにする。
 func (q *Queries) DeleteOAuthAuthorizationCode(ctx context.Context, id string) (int64, error) {
 	result, err := q.db.ExecContext(ctx, deleteOAuthAuthorizationCode, id)
 	if err != nil {

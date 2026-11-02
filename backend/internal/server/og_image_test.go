@@ -285,7 +285,6 @@ func TestFetchOGTags_RejectsTooLongImageURL(t *testing.T) {
 	}
 }
 
-// stripPort は host:port から host だけを返す。
 func stripPort(host string) string {
 	if i := strings.IndexByte(host, ':'); i >= 0 {
 		return host[:i]

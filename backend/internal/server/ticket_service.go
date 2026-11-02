@@ -626,7 +626,6 @@ func (s *ticketService) UpdateTicketWithEvent(ctx context.Context, req *connect.
 }
 
 // buildTicketResponse は ticket_id から表示用の Ticket メッセージを組み立てる。
-// Create/Update 系で末尾の「最新の状態を返す」処理を共有する用途。
 func (s *ticketService) buildTicketResponse(ctx context.Context, ticketID string) (*nazobuv1.Ticket, error) {
 	rows, err := s.q.ListTicketsByIDs(ctx, []string{ticketID})
 	if err != nil || len(rows) == 0 {
@@ -843,7 +842,6 @@ func canEditTicket(user *auth.User, purchasedBy string) bool {
 }
 
 // validateTicketCapacityInput は定員関連のリクエスト値そのものの下限を検証する。
-// ticket の作成・更新の全 RPC で共通。
 func validateTicketCapacityInput(maxParticipants, unregisteredCount int32) error {
 	if maxParticipants < 1 {
 		return connect.NewError(connect.CodeInvalidArgument, errors.New("max_participants は 1 以上"))
@@ -901,8 +899,7 @@ func parseNullableJSTDateTime(raw, field string) (sql.NullTime, error) {
 	return sql.NullTime{Time: t.In(jst), Valid: true}, nil
 }
 
-// attachTicketParticipantNames は tickets の各 ticket に
-// 参加者名（created_at 昇順）を埋める。/tickets と mypage の両方から呼ぶ。
+// attachTicketParticipantNames は tickets の各 ticket に参加者名（created_at 昇順）を埋める。
 func attachTicketParticipantNames(ctx context.Context, q *queries.Queries, tickets []*nazobuv1.Ticket) error {
 	if len(tickets) == 0 {
 		return nil

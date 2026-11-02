@@ -591,7 +591,7 @@ func TestIntegrationGrantTicketSpoilerChannelAccess(t *testing.T) {
 		t.Errorf("member の実行 code = %v, want %v", connectCode(t, err), connect.CodePermissionDenied)
 	}
 
-	// 機能境界より前の ticket は対象外。
+	// 連携対象日（2026-08-30）より前の ticket は対象外。
 	legacyEventID := createTestEvent(t, db, "旧公演")
 	legacyReq := connect.NewRequest(&nazobuv1.CreateTicketRequest{
 		EventId: legacyEventID, StartAt: "2026-08-29T23:59:59+09:00", PricePerPerson: 1000,

@@ -33,7 +33,6 @@ const countTicketParticipantsByTicketID = `-- name: CountTicketParticipantsByTic
 SELECT COUNT(*) FROM ticket_participants WHERE ticket_id = ?
 `
 
-// ticket の参加者数。max_participants 超過チェックで使う。
 func (q *Queries) CountTicketParticipantsByTicketID(ctx context.Context, ticketID string) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countTicketParticipantsByTicketID, ticketID)
 	var count int64
@@ -156,7 +155,7 @@ type GetTicketByIDRow struct {
 	PurchaserName                 string
 }
 
-// ticket 詳細表示用。立替者の id と表示名も返す（権限判定 / UI 表示で使う）。
+// 立替者の id と表示名も返す。
 func (q *Queries) GetTicketByID(ctx context.Context, id string) (GetTicketByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getTicketByID, id)
 	var i GetTicketByIDRow
@@ -237,8 +236,7 @@ type ListTicketParticipantNamesByTicketIDsRow struct {
 	Name     string
 }
 
-// ticket 一覧 / 公演一覧で、各 ticket の参加者名をまとめて引く（N+1 回避）。
-// 呼び出し側で ticket_id ごとに in-memory で振り分ける。
+// 指定 ticket 群の参加者名をまとめて引く（N+1 回避）。
 func (q *Queries) ListTicketParticipantNamesByTicketIDs(ctx context.Context, ticketIds []string) ([]ListTicketParticipantNamesByTicketIDsRow, error) {
 	query := listTicketParticipantNamesByTicketIDs
 	var queryParams []interface{}
@@ -288,7 +286,7 @@ type ListTicketParticipantsByTicketIDRow struct {
 	SettledAt sql.NullTime
 }
 
-// ticket 詳細用。参加者の user_id / 名前 / 精算済みフラグを created_at 昇順で返す。
+// 参加者の user_id / 名前 / 精算済みフラグを created_at 昇順で返す。
 func (q *Queries) ListTicketParticipantsByTicketID(ctx context.Context, ticketID string) ([]ListTicketParticipantsByTicketIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, listTicketParticipantsByTicketID, ticketID)
 	if err != nil {
@@ -344,7 +342,7 @@ type ListTicketsRow struct {
 	PurchaserName                 string
 }
 
-// ticket 一覧画面用。event 名と立替者名を join して返す。
+// event 名と立替者名を join して返す。
 func (q *Queries) ListTickets(ctx context.Context) ([]ListTicketsRow, error) {
 	rows, err := q.db.QueryContext(ctx, listTickets)
 	if err != nil {
@@ -417,7 +415,7 @@ type ListTicketsByIDsRow struct {
 	PurchaserName                 string
 }
 
-// CreateTicket 直後の返却用。1 件のことが多いがインタフェースは ListTickets と揃える。
+// 列は ListTickets と揃える。
 func (q *Queries) ListTicketsByIDs(ctx context.Context, ids []string) ([]ListTicketsByIDsRow, error) {
 	query := listTicketsByIDs
 	var queryParams []interface{}
@@ -490,7 +488,6 @@ type MarkTicketParticipantSettledParams struct {
 	UserID   string
 }
 
-// 未精算 → 精算済み。settled_at に現在時刻を入れる。
 func (q *Queries) MarkTicketParticipantSettled(ctx context.Context, arg MarkTicketParticipantSettledParams) error {
 	_, err := q.db.ExecContext(ctx, markTicketParticipantSettled, arg.TicketID, arg.UserID)
 	return err
@@ -507,7 +504,6 @@ type MarkTicketParticipantUnsettledParams struct {
 	UserID   string
 }
 
-// 精算済み → 未精算。settled_at を NULL に戻す。
 func (q *Queries) MarkTicketParticipantUnsettled(ctx context.Context, arg MarkTicketParticipantUnsettledParams) error {
 	_, err := q.db.ExecContext(ctx, markTicketParticipantUnsettled, arg.TicketID, arg.UserID)
 	return err

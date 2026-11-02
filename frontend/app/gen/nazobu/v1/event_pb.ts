@@ -92,7 +92,7 @@ export type Event = Message<"nazobu.v1.Event"> & {
   imageUrl: string;
 
   /**
-   * 想定所要時間（分）。カレンダー連携で終了時刻を算出する用途。1 以上。
+   * 想定所要時間（分）。1 以上。
    *
    * @generated from field: int32 expected_duration_minutes = 8;
    */
@@ -130,7 +130,7 @@ export type EventTicket = Message<"nazobu.v1.EventTicket"> & {
   id: string;
 
   /**
-   * 開演日時（RFC3339, JST）。表示は日付部分のみ使われることが多い。
+   * 開演日時（RFC3339, JST）。
    *
    * @generated from field: string start_at = 2;
    */
@@ -151,7 +151,7 @@ export type EventTicket = Message<"nazobu.v1.EventTicket"> & {
   purchaserName: string;
 
   /**
-   * 参加者の表示名（created_at 昇順）。立て替えた人も参加者として含めて構わない。
+   * 参加者の表示名（created_at 昇順）。立替者も参加者なら含む。
    *
    * @generated from field: repeated string participant_names = 5;
    */
@@ -474,7 +474,7 @@ export const EventService: GenService<{
     output: typeof ListEventsResponseSchema;
   },
   /**
-   * GetEvent は 1 件の event を返す。詳細・編集画面の初期表示用。
+   * GetEvent は 1 件の event を返す。
    *
    * @generated from rpc nazobu.v1.EventService.GetEvent
    */

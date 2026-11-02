@@ -113,9 +113,9 @@ type ListUnsettledReceivablesByUserIDRow struct {
 }
 
 // 自分が立て替えたチケットのうち「自分以外の参加者に未精算が 1 人以上残っている」かつ「開演が現在以前」を取る。
-// 受け取り側の貰い忘れ防止用。自分自身の参加分（自己持ち）は精算対象でないため EXISTS の条件から除外する。
-// 未来分は精算対象として扱わない（公演前に表示しない）。
-// 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
+// 自分自身の参加分（自己持ち）は精算対象でないため EXISTS の条件から除外する。
+// 未来分は精算対象として扱わない。
+// 列は ListTickets と同じ。
 func (q *Queries) ListUnsettledReceivablesByUserID(ctx context.Context, arg ListUnsettledReceivablesByUserIDParams) ([]ListUnsettledReceivablesByUserIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUnsettledReceivablesByUserID, arg.UserID, arg.Now)
 	if err != nil {
@@ -199,8 +199,8 @@ type ListUnsettledTicketsByUserIDRow struct {
 
 // 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」かつ「開演が現在以前」を取る。
 // 立替者本人の自己持ち分は精算対象ではないので除外する。
-// 未来分は精算対象として扱わない（公演前に表示しない）。
-// 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
+// 未来分は精算対象として扱わない。
+// 列は ListTickets と同じ。
 func (q *Queries) ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnsettledTicketsByUserIDParams) ([]ListUnsettledTicketsByUserIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUnsettledTicketsByUserID, arg.UserID, arg.Now)
 	if err != nil {
@@ -286,7 +286,7 @@ type ListUpcomingTicketsByUserIDRow struct {
 // 終了予定時刻は start_at + expected_duration_minutes（どちらも NOT NULL）で算出し、
 // これを過ぎた公演は「今後の予定」から除外する。
 // today_start による下限は対象を当日以降に絞り idx_tickets_start_at を効かせるため。
-// 列は ListTickets と同じ。マイページでも /tickets と同じ TicketCard で表示するため。
+// 列は ListTickets と同じ。
 func (q *Queries) ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcomingTicketsByUserIDParams) ([]ListUpcomingTicketsByUserIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUpcomingTicketsByUserID, arg.UserID, arg.TodayStart, arg.Now)
 	if err != nil {

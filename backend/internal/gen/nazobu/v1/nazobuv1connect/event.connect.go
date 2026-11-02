@@ -58,7 +58,7 @@ const (
 type EventServiceClient interface {
 	// ListEvents は登録済み event を新しい順で返す。各 event には紐づく ticket を含める。
 	ListEvents(context.Context, *connect.Request[v1.ListEventsRequest]) (*connect.Response[v1.ListEventsResponse], error)
-	// GetEvent は 1 件の event を返す。詳細・編集画面の初期表示用。
+	// GetEvent は 1 件の event を返す。
 	GetEvent(context.Context, *connect.Request[v1.GetEventRequest]) (*connect.Response[v1.GetEventResponse], error)
 	// CreateEvent は新規 event を 1 件登録する。
 	CreateEvent(context.Context, *connect.Request[v1.CreateEventRequest]) (*connect.Response[v1.CreateEventResponse], error)
@@ -178,7 +178,7 @@ func (c *eventServiceClient) DeleteEvent(ctx context.Context, req *connect.Reque
 type EventServiceHandler interface {
 	// ListEvents は登録済み event を新しい順で返す。各 event には紐づく ticket を含める。
 	ListEvents(context.Context, *connect.Request[v1.ListEventsRequest]) (*connect.Response[v1.ListEventsResponse], error)
-	// GetEvent は 1 件の event を返す。詳細・編集画面の初期表示用。
+	// GetEvent は 1 件の event を返す。
 	GetEvent(context.Context, *connect.Request[v1.GetEventRequest]) (*connect.Response[v1.GetEventResponse], error)
 	// CreateEvent は新規 event を 1 件登録する。
 	CreateEvent(context.Context, *connect.Request[v1.CreateEventRequest]) (*connect.Response[v1.CreateEventResponse], error)

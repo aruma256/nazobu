@@ -43,7 +43,6 @@ func withGrantedScope(ctx context.Context, scope string) context.Context {
 }
 
 // HasScope は Bearer 認証済み context の granted scope に scope が含まれるかを返す。
-// MCP の書き込みツールが ScopeWrite の有無を確認するのに使う。
 func HasScope(ctx context.Context, scope string) bool {
 	granted, _ := ctx.Value(grantedScopeContextKey{}).(string)
 	return scopeContains(granted, scope)

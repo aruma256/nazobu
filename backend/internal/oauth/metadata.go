@@ -19,7 +19,7 @@ type authorizationServerMetadata struct {
 	ScopesSupported                   []string `json:"scopes_supported"`
 	ClientIDMetadataDocumentSupported bool     `json:"client_id_metadata_document_supported"`
 	// RFC 9207。認可レスポンスに iss を必ず付ける旨を広告する。
-	// MCP 2026-07-28 でクライアント側の iss 検証が MUST になったため、
+	// MCP 2026-07-28 はクライアントに iss 検証を求めており、
 	// これを出さないとクライアントは iss を検証できない。
 	AuthorizationResponseIssParameterSupported bool `json:"authorization_response_iss_parameter_supported"`
 }

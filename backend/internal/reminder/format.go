@@ -132,7 +132,6 @@ func sameDate(a, b time.Time) bool {
 	return ay == by && am == bm && ad == bd
 }
 
-// dedupePreserveOrder は出現順を保ったまま重複を除く。
 func dedupePreserveOrder(in []string) []string {
 	seen := make(map[string]struct{}, len(in))
 	out := make([]string, 0, len(in))

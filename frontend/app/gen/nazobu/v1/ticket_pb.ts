@@ -92,7 +92,7 @@ export type Ticket = Message<"nazobu.v1.Ticket"> & {
   purchaserName: string;
 
   /**
-   * 参加者の表示名（created_at 昇順）。立て替えた人も参加者として含めて構わない。
+   * 参加者の表示名（created_at 昇順）。立替者も参加者なら含む。
    *
    * @generated from field: repeated string participant_names = 9;
    */
@@ -127,7 +127,7 @@ export type Ticket = Message<"nazobu.v1.Ticket"> & {
   eventImageUrl: string;
 
   /**
-   * 公演の想定所要時間（分）。カレンダー連携で終了時刻を算出する用途。1 以上。
+   * 公演の想定所要時間（分）。1 以上。
    *
    * @generated from field: int32 event_expected_duration_minutes = 14;
    */

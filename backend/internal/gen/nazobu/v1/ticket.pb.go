@@ -115,7 +115,7 @@ type Ticket struct {
 	MeetingPlace string `protobuf:"bytes,7,opt,name=meeting_place,json=meetingPlace,proto3" json:"meeting_place,omitempty"`
 	// 立て替えてくれた人の表示名。
 	PurchaserName string `protobuf:"bytes,8,opt,name=purchaser_name,json=purchaserName,proto3" json:"purchaser_name,omitempty"`
-	// 参加者の表示名（created_at 昇順）。立て替えた人も参加者として含めて構わない。
+	// 参加者の表示名（created_at 昇順）。立替者も参加者なら含む。
 	ParticipantNames []string `protobuf:"bytes,9,rep,name=participant_names,json=participantNames,proto3" json:"participant_names,omitempty"`
 	// 公演の URL（任意。空文字なら未設定）。
 	EventUrl string `protobuf:"bytes,10,opt,name=event_url,json=eventUrl,proto3" json:"event_url,omitempty"`
@@ -125,7 +125,7 @@ type Ticket struct {
 	MaxParticipants int32 `protobuf:"varint,12,opt,name=max_participants,json=maxParticipants,proto3" json:"max_participants,omitempty"`
 	// 公演 URL から取得した OG 画像の URL。未取得 / 取得失敗時は空文字。
 	EventImageUrl string `protobuf:"bytes,13,opt,name=event_image_url,json=eventImageUrl,proto3" json:"event_image_url,omitempty"`
-	// 公演の想定所要時間（分）。カレンダー連携で終了時刻を算出する用途。1 以上。
+	// 公演の想定所要時間（分）。1 以上。
 	EventExpectedDurationMinutes int32 `protobuf:"varint,14,opt,name=event_expected_duration_minutes,json=eventExpectedDurationMinutes,proto3" json:"event_expected_duration_minutes,omitempty"`
 	// 公演のキャッチコピー（手動入力）。未設定なら空文字。
 	EventCatchphrase string `protobuf:"bytes,15,opt,name=event_catchphrase,json=eventCatchphrase,proto3" json:"event_catchphrase,omitempty"`

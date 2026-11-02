@@ -9,8 +9,6 @@ FROM oauth_authorization_codes
 WHERE code_hash = ?;
 
 -- name: DeleteOAuthAuthorizationCode :execrows
--- 認可コードは単回使用。token 交換の成否に関わらず消費した時点で削除する。
--- 影響行数を返すことで、並行リクエストによる二重使用を検知できるようにする。
 DELETE FROM oauth_authorization_codes WHERE id = ?;
 
 -- name: CreateOAuthToken :exec
@@ -48,7 +46,7 @@ WHERE id = ?;
 DELETE FROM oauth_tokens WHERE id = ?;
 
 -- name: DeleteExpiredOAuthRecords :exec
--- 期限切れの認可コードを掃除する（呼び出しは任意のタイミングで冪等）。
+-- 期限切れの認可コードを掃除する。
 DELETE FROM oauth_authorization_codes WHERE expires_at < ?;
 
 -- name: DeleteExpiredOAuthTokens :exec

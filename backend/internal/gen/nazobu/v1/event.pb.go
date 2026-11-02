@@ -115,7 +115,7 @@ type Event struct {
 	EntryDeadlineMinutesBefore *int32 `protobuf:"varint,6,opt,name=entry_deadline_minutes_before,json=entryDeadlineMinutesBefore,proto3,oneof" json:"entry_deadline_minutes_before,omitempty"`
 	// 公演 URL から取得した OG 画像の URL（外部）。未取得 / 取得失敗時は空文字。
 	ImageUrl string `protobuf:"bytes,7,opt,name=image_url,json=imageUrl,proto3" json:"image_url,omitempty"`
-	// 想定所要時間（分）。カレンダー連携で終了時刻を算出する用途。1 以上。
+	// 想定所要時間（分）。1 以上。
 	ExpectedDurationMinutes int32 `protobuf:"varint,8,opt,name=expected_duration_minutes,json=expectedDurationMinutes,proto3" json:"expected_duration_minutes,omitempty"`
 	// 公演のキャッチコピー（手動入力）。未設定なら空文字。
 	Catchphrase string `protobuf:"bytes,9,opt,name=catchphrase,proto3" json:"catchphrase,omitempty"`
@@ -228,13 +228,13 @@ func (x *Event) GetHasSpoilerChannel() bool {
 type EventTicket struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// 開演日時（RFC3339, JST）。表示は日付部分のみ使われることが多い。
+	// 開演日時（RFC3339, JST）。
 	StartAt string `protobuf:"bytes,2,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
 	// 一人あたりの精算額（円）。
 	PricePerPerson int32 `protobuf:"varint,3,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
 	// 立て替えてくれた人の表示名。
 	PurchaserName string `protobuf:"bytes,4,opt,name=purchaser_name,json=purchaserName,proto3" json:"purchaser_name,omitempty"`
-	// 参加者の表示名（created_at 昇順）。立て替えた人も参加者として含めて構わない。
+	// 参加者の表示名（created_at 昇順）。立替者も参加者なら含む。
 	ParticipantNames []string `protobuf:"bytes,5,rep,name=participant_names,json=participantNames,proto3" json:"participant_names,omitempty"`
 	// 本サービスに未登録の同行者の人数。0 以上。
 	UnregisteredParticipantsCount int32 `protobuf:"varint,6,opt,name=unregistered_participants_count,json=unregisteredParticipantsCount,proto3" json:"unregistered_participants_count,omitempty"`

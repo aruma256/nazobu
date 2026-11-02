@@ -38,8 +38,8 @@ type User struct {
 
 // UserProfile は IdP から取得した、user 表示用プロフィールのスナップショット。
 // ログインのたびに users テーブルへキャッシュ更新される。
-// DisplayName は users.display_name の NOT NULL 制約に対応するため、IdP 側の fallback
-// （Discord なら global_name → username）を解決済みの値を渡す責務を呼び出し側に持たせる。
+// DisplayName は users.display_name の NOT NULL 制約を満たすよう、呼び出し側が IdP ごとの
+// フォールバック（Discord なら global_name → username）を解決してから渡す。
 type UserProfile struct {
 	DisplayName string
 	AvatarURL   string

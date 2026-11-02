@@ -153,7 +153,7 @@ func isLoopbackHost(host string) bool {
 	return host == "localhost" || host == "127.0.0.1"
 }
 
-// isLoopbackRedirectURI は同意画面での警告表示用（MCP 仕様の推奨事項）。
+// isLoopbackRedirectURI は redirect_uri が http のループバックかを返す。
 func isLoopbackRedirectURI(raw string) bool {
 	u, err := url.Parse(raw)
 	if err != nil {

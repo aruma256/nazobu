@@ -58,7 +58,7 @@ type MyPageServiceClient interface {
 	// 自分が参加予定で start_at が当日 0:00（JST）以降のチケット一覧。start_at 昇順。未ログインなら unauthenticated。
 	ListMyUpcomingTickets(context.Context, *connect.Request[v1.ListMyUpcomingTicketsRequest]) (*connect.Response[v1.ListMyUpcomingTicketsResponse], error)
 	// ListMonthlyTickets は指定された年月の自分の参加チケット履歴を返す。
-	// year/month を共に 0 で渡すと「サーバ JST 基準の前月」を既定として返す（マイページ初期表示用）。
+	// year/month を共に 0 で渡すと「サーバ JST 基準の前月」を既定として返す。
 	// 未ログインなら unauthenticated。
 	ListMonthlyTickets(context.Context, *connect.Request[v1.ListMonthlyTicketsRequest]) (*connect.Response[v1.ListMonthlyTicketsResponse], error)
 }
@@ -140,7 +140,7 @@ type MyPageServiceHandler interface {
 	// 自分が参加予定で start_at が当日 0:00（JST）以降のチケット一覧。start_at 昇順。未ログインなら unauthenticated。
 	ListMyUpcomingTickets(context.Context, *connect.Request[v1.ListMyUpcomingTicketsRequest]) (*connect.Response[v1.ListMyUpcomingTicketsResponse], error)
 	// ListMonthlyTickets は指定された年月の自分の参加チケット履歴を返す。
-	// year/month を共に 0 で渡すと「サーバ JST 基準の前月」を既定として返す（マイページ初期表示用）。
+	// year/month を共に 0 で渡すと「サーバ JST 基準の前月」を既定として返す。
 	// 未ログインなら unauthenticated。
 	ListMonthlyTickets(context.Context, *connect.Request[v1.ListMonthlyTicketsRequest]) (*connect.Response[v1.ListMonthlyTicketsResponse], error)
 }

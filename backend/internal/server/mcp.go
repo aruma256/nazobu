@@ -15,7 +15,7 @@ import (
 
 // newMCPHandler は Claude connector 向けの MCP（Streamable HTTP）ハンドラを組み立てる。
 // 認証は前段の oauth.Middleware が済ませ、auth.User を context に注入してくる前提。
-// ツール実装は既存の Connect RPC ハンドラを in-process 呼び出しして再利用する
+// ツール実装は Connect RPC ハンドラを in-process 呼び出しして再利用する
 // （lookupSessionUser が context の user を優先するため cookie なしで通る）。
 func newMCPHandler(
 	mypage nazobuv1connect.MyPageServiceHandler,
@@ -262,7 +262,7 @@ func createTicketWithEventTool(tickets nazobuv1connect.TicketServiceHandler) mcp
 	return func(ctx context.Context, _ *mcp.CallToolRequest, in createTicketWithEventInput) (*mcp.CallToolResult, createTicketWithEventOutput, error) {
 		var out createTicketWithEventOutput
 		// 書き込みツールはトークンの write スコープを要求する。
-		// 既存の read のみのトークンには、コネクタの再接続（再認可）を促す。
+		// read のみのトークンには、コネクタの再接続（再認可）を促す。
 		if !oauth.HasScope(ctx, oauth.ScopeWrite) {
 			return nil, out, errors.New("このアクセストークンには write スコープが無い。Claude のコネクタを一度削除して接続し直し、書き込みを許可してほしい")
 		}

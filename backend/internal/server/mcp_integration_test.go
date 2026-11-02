@@ -1,7 +1,7 @@
 package server
 
 // MCP エンドポイントの統合テスト。実 MySQL + go-sdk のクライアントで、
-// Bearer 認証 → ツール呼び出し → 既存 RPC の in-process 再利用までを一気通貫で検証する。
+// Bearer 認証 → ツール呼び出し → RPC の in-process 再利用までを一気通貫で検証する。
 // OAuth フロー（authorize / token）自体は internal/oauth の統合テストで担保する。
 
 import (
@@ -631,5 +631,3 @@ func TestIntegrationMCPUnauthorized(t *testing.T) {
 		t.Error("WWW-Authenticate ヘッダが無い")
 	}
 }
-
-// -----------------------------------------------------------------------------

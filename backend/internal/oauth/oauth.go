@@ -34,7 +34,6 @@ const (
 	refreshTokenTTL = 30 * 24 * time.Hour
 
 	// 提供する scope。read は参照系 MCP ツール、write は登録系 MCP ツールに対応する。
-	// MCP ツール側が HasScope で write の有無を確認する。
 	ScopeRead  = "read"
 	ScopeWrite = "write"
 
@@ -44,7 +43,6 @@ const (
 
 // Server は CIMD 方式の OAuth 2.1 認可サーバ。
 // baseURL（= issuer）は外部公開 origin（例 https://nazobu.aruma256.dev）。
-// frontend の rewrites 経由で同一 origin として見えるため FRONTEND_URL を流用する。
 type Server struct {
 	db           *sql.DB
 	q            *queries.Queries
