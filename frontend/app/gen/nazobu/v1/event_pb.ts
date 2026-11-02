@@ -99,7 +99,7 @@ export type Event = Message<"nazobu.v1.Event"> & {
   expectedDurationMinutes: number;
 
   /**
-   * 公演のキャッチコピー（手動入力）。未設定なら空文字。
+   * 公演のキャッチコピー。入力が空なら og:description で補完することがある。未設定なら空文字。
    *
    * @generated from field: string catchphrase = 9;
    */
@@ -474,8 +474,6 @@ export const EventService: GenService<{
     output: typeof ListEventsResponseSchema;
   },
   /**
-   * GetEvent は 1 件の event を返す。
-   *
    * @generated from rpc nazobu.v1.EventService.GetEvent
    */
   getEvent: {
@@ -484,8 +482,6 @@ export const EventService: GenService<{
     output: typeof GetEventResponseSchema;
   },
   /**
-   * CreateEvent は新規 event を 1 件登録する。
-   *
    * @generated from rpc nazobu.v1.EventService.CreateEvent
    */
   createEvent: {

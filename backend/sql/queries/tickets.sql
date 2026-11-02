@@ -1,5 +1,4 @@
 -- name: ListTickets :many
--- event 名と立替者名を join して返す。
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
        e.doors_open_minutes_before AS event_doors_open_minutes_before,
@@ -36,7 +35,6 @@ INSERT INTO ticket_participants (ticket_id, user_id, created_at)
 VALUES (?, ?, NOW(6));
 
 -- name: ListTicketParticipantNamesByTicketIDs :many
--- 指定 ticket 群の参加者名をまとめて引く（N+1 回避）。
 SELECT tp.ticket_id,
        u.display_name AS name
 FROM ticket_participants tp
@@ -45,7 +43,6 @@ WHERE tp.ticket_id IN (sqlc.slice('ticket_ids'))
 ORDER BY tp.ticket_id, tp.created_at ASC;
 
 -- name: GetTicketByID :one
--- 立替者の id と表示名も返す。
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
        e.doors_open_minutes_before AS event_doors_open_minutes_before,
@@ -61,7 +58,7 @@ JOIN users  pu ON pu.id = t.purchased_by
 WHERE t.id = ?;
 
 -- name: ListTicketParticipantDiscordIdentities :many
--- Discord ネタバレチャンネルの権限付与用。identity の欠落を検出できるよう LEFT JOIN にする。
+-- identity の欠落を検出できるよう LEFT JOIN にする。
 SELECT tp.user_id,
        u.display_name,
        ui.subject AS discord_subject
@@ -72,7 +69,6 @@ WHERE tp.ticket_id = ?
 ORDER BY tp.created_at ASC, tp.user_id ASC;
 
 -- name: ListTicketParticipantsByTicketID :many
--- 参加者の user_id / 名前 / 精算済みフラグを created_at 昇順で返す。
 SELECT tp.user_id,
        u.display_name AS name,
        tp.settled_at
@@ -82,9 +78,6 @@ WHERE tp.ticket_id = ?
 ORDER BY tp.created_at ASC, tp.user_id ASC;
 
 -- name: UpdateTicket :exec
--- ticket 本体の更新。event_id は変更しない。purchased_by の変更は呼び出し側で
--- 新しい立替者が ticket_participants に含まれることを保証する。max_participants は
--- 呼び出し側で参加者数を下回らないことを保証する。
 UPDATE tickets
 SET start_at         = ?,
     meeting_at       = ?,
@@ -110,7 +103,6 @@ SET settled_at = NULL
 WHERE ticket_id = ? AND user_id = ?;
 
 -- name: CountTicketParticipant :one
--- 参加者の存在確認。重複登録を避けるためのプリチェック。
 SELECT COUNT(*) FROM ticket_participants WHERE ticket_id = ? AND user_id = ?;
 
 -- name: CountTicketParticipantsByTicketID :one

@@ -4,7 +4,6 @@ FROM users
 ORDER BY display_name ASC, id ASC;
 
 -- name: CountUsersByIDs :one
--- FK でも担保されるが、分かりやすいエラーを返すために事前に存在を確認する。
 SELECT COUNT(*) FROM users
 WHERE id IN (sqlc.slice('ids'));
 

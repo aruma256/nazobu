@@ -19,7 +19,6 @@ var weekdayJP = [...]string{"日", "月", "火", "水", "木", "金", "土"}
 
 // formatDayBefore は同日の前日リマインドを 1 通分の本文に整形する。
 // tickets は同じ開演日のチケット群、subjectsByTicket は ticket_id → メンション対象。
-// baseURL は nazobu フロントエンドのベース URL（チケット詳細リンクの組み立てに使う）。
 // 返り値の第 2 戻り値は allowed_mentions 用に重複排除したメンション対象（送信順）。
 func formatDayBefore(
 	baseURL string,
@@ -51,7 +50,7 @@ func formatDayBefore(
 }
 
 // formatMeeting は集合 2 時間前リマインドを 1 件分の本文に整形する。
-// 集合・開演とも「当日」前提で時刻のみ表示する。baseURL はチケット詳細リンク用。
+// 集合・開演とも「当日」前提で時刻のみ表示する。
 func formatMeeting(baseURL string, t queries.ListTicketsForMeetingNotificationRow, subjects []string) string {
 	var b strings.Builder
 	b.WriteString(meetingHeader)
@@ -98,14 +97,11 @@ func formatDateTimeFull(t time.Time) string {
 		int(t.Month()), t.Day(), weekdayJP[t.Weekday()], t.Hour(), t.Minute())
 }
 
-// formatTimeOnly は "14:00" 形式（JST）。
 func formatTimeOnly(t time.Time) string {
 	t = t.In(jst)
 	return fmt.Sprintf("%02d:%02d", t.Hour(), t.Minute())
 }
 
-// ticketURL は nazobu のチケット詳細ページ URL を組み立てる。
-// フロントのルートは /tickets/[ticketId]。baseURL 末尾の "/" は重複を避けて除く。
 func ticketURL(baseURL, ticketID string) string {
 	return strings.TrimRight(baseURL, "/") + "/tickets/" + ticketID
 }
@@ -116,7 +112,6 @@ func urlLine(url string) string {
 	return "🔗 <" + url + ">"
 }
 
-// mentionLine は Discord user id 群を "<@id> <@id>" のメンション行にする。
 func mentionLine(subjects []string) string {
 	parts := make([]string, len(subjects))
 	for i, s := range subjects {
@@ -125,7 +120,6 @@ func mentionLine(subjects []string) string {
 	return strings.Join(parts, " ")
 }
 
-// sameDate は 2 つの時刻が JST で同じ日付かを返す。
 func sameDate(a, b time.Time) bool {
 	ay, am, ad := a.In(jst).Date()
 	by, bm, bd := b.In(jst).Date()

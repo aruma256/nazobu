@@ -126,10 +126,10 @@ func (s *Server) HandleAuthorizeGet(w http.ResponseWriter, r *http.Request) {
 		clientName = meta.ClientID
 	}
 	s.renderTemplate(w, http.StatusOK, consentTemplate, consentView{
-		UserName:         user.DisplayName,
-		ClientName:       clientName,
-		ClientID:         meta.ClientID,
-		RedirectURI:      redirectURI,
+		UserName:    user.DisplayName,
+		ClientName:  clientName,
+		ClientID:    meta.ClientID,
+		RedirectURI: redirectURI,
 		// MCP 仕様の推奨に従い、ループバックへの redirect は同意画面で警告する。
 		LoopbackRedirect: isLoopbackRedirectURI(redirectURI),
 		Scope:            params.scope,
@@ -231,8 +231,7 @@ func (s *Server) resolveClientAndRedirect(w http.ResponseWriter, r *http.Request
 }
 
 // redirectAuthorizeError は redirect_uri へ error= 付きで戻す。
-// RFC 9207 は成功・エラーどちらの認可レスポンスにも iss を要求するため、
-// issuer を参照できるよう Server のメソッドにしている。
+// RFC 9207 は成功・エラーどちらの認可レスポンスにも iss を要求する。
 func (s *Server) redirectAuthorizeError(w http.ResponseWriter, r *http.Request, redirectURI, state string, aerr *authorizeError) {
 	v := url.Values{"error": {aerr.code}, "iss": {s.baseURL}}
 	if aerr.description != "" {

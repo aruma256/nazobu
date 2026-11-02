@@ -8,7 +8,6 @@ option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;n
 service UserService {
   // GetMe は cookie session から現在の user を返す。未ログインなら unauthenticated。
   rpc GetMe(GetMeRequest) returns (GetMeResponse);
-  // ListUsers は登録済み user を返す。
   rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
 }
 

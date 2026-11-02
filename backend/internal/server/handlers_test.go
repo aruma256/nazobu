@@ -83,7 +83,6 @@ func newOAuthTestServer() *Server {
 	}
 }
 
-// findCookie は Set-Cookie から name の cookie を探す（無ければ nil）。
 func findCookie(t *testing.T, res *http.Response, name string) *http.Cookie {
 	t.Helper()
 	for _, c := range res.Cookies() {

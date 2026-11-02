@@ -73,7 +73,7 @@ type TicketServiceClient interface {
 	ListTickets(context.Context, *connect.Request[v1.ListTicketsRequest]) (*connect.Response[v1.ListTicketsResponse], error)
 	// GetTicket は 1 件の ticket を詳細表示用の形（参加者の精算状況を含む）で返す。
 	GetTicket(context.Context, *connect.Request[v1.GetTicketRequest]) (*connect.Response[v1.GetTicketResponse], error)
-	// CreateTicket は新規 ticket を 1 件登録する。参加者（割り勘元）も同時に登録する。
+	// CreateTicket は新規 ticket を 1 件登録する。参加者も同時に登録する。
 	CreateTicket(context.Context, *connect.Request[v1.CreateTicketRequest]) (*connect.Response[v1.CreateTicketResponse], error)
 	// CreateTicketWithEvent は event と ticket を 1 トランザクションで同時登録する。
 	// 1 公演 1 チケットが主流のため、新規作成はこの統合 RPC を主動線にする。admin のみ実行可能。
@@ -259,7 +259,7 @@ type TicketServiceHandler interface {
 	ListTickets(context.Context, *connect.Request[v1.ListTicketsRequest]) (*connect.Response[v1.ListTicketsResponse], error)
 	// GetTicket は 1 件の ticket を詳細表示用の形（参加者の精算状況を含む）で返す。
 	GetTicket(context.Context, *connect.Request[v1.GetTicketRequest]) (*connect.Response[v1.GetTicketResponse], error)
-	// CreateTicket は新規 ticket を 1 件登録する。参加者（割り勘元）も同時に登録する。
+	// CreateTicket は新規 ticket を 1 件登録する。参加者も同時に登録する。
 	CreateTicket(context.Context, *connect.Request[v1.CreateTicketRequest]) (*connect.Response[v1.CreateTicketResponse], error)
 	// CreateTicketWithEvent は event と ticket を 1 トランザクションで同時登録する。
 	// 1 公演 1 チケットが主流のため、新規作成はこの統合 RPC を主動線にする。admin のみ実行可能。

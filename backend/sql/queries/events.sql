@@ -25,7 +25,6 @@ SET title = ?,
 WHERE id = ?;
 
 -- name: CountEventByID :one
--- FK でも担保されるが、分かりやすいエラーを返すために事前に存在を確認する。
 SELECT COUNT(*) FROM events WHERE id = ?;
 
 -- name: SetEventDiscordSpoilerChannelID :execrows
@@ -35,7 +34,6 @@ SET discord_spoiler_channel_id = ?, updated_at = NOW(6)
 WHERE id = ? AND discord_spoiler_channel_id IS NULL;
 
 -- name: ListEventTicketsByEventIDs :many
--- 指定 event 群に紐づく ticket をまとめて引く（N+1 回避）。
 SELECT t.id, t.event_id, t.start_at, t.price_per_person,
        t.unregistered_participants_count,
        pu.display_name AS purchaser_name

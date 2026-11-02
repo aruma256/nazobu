@@ -34,7 +34,6 @@ const (
 	graceWindow = 2 * time.Hour
 )
 
-// Worker は定期ポーリングでリマインドを送るワーカー。
 type Worker struct {
 	q      *queries.Queries
 	poster poster
@@ -45,7 +44,6 @@ type Worker struct {
 }
 
 // NewWorker は本番用の Worker を組み立てる。Discord bot で channelID へ投稿する。
-// frontendURL はリマインドに載せるチケット詳細リンクのベース URL。
 func NewWorker(db *sql.DB, client *discord.Client, channelID, frontendURL string) *Worker {
 	return &Worker{
 		q:           queries.New(db),
@@ -203,7 +201,6 @@ func dayBeforeDeadline(startAt time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day()-1, dayBeforeHour, 0, 0, 0, jst)
 }
 
-// meetingDeadline は集合時刻から meetingLeadTime（2h）前の締切を返す。
 func meetingDeadline(meetingAt time.Time) time.Time {
 	return meetingAt.In(jst).Add(-meetingLeadTime)
 }
@@ -211,7 +208,7 @@ func meetingDeadline(meetingAt time.Time) time.Time {
 // isDue は締切を過ぎ、かつ猶予窓内（締切が古すぎない）なら true を返す。
 func isDue(deadline, now time.Time, grace time.Duration) bool {
 	if now.Before(deadline) {
-		return false // まだ締切前
+		return false
 	}
 	if deadline.Before(now.Add(-grace)) {
 		return false // 締切が猶予窓より古い（長時間停止後の取りこぼし）

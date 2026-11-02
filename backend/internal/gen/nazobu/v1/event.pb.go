@@ -117,7 +117,7 @@ type Event struct {
 	ImageUrl string `protobuf:"bytes,7,opt,name=image_url,json=imageUrl,proto3" json:"image_url,omitempty"`
 	// 想定所要時間（分）。1 以上。
 	ExpectedDurationMinutes int32 `protobuf:"varint,8,opt,name=expected_duration_minutes,json=expectedDurationMinutes,proto3" json:"expected_duration_minutes,omitempty"`
-	// 公演のキャッチコピー（手動入力）。未設定なら空文字。
+	// 公演のキャッチコピー。入力が空なら og:description で補完することがある。未設定なら空文字。
 	Catchphrase string `protobuf:"bytes,9,opt,name=catchphrase,proto3" json:"catchphrase,omitempty"`
 	// ネタバレチャンネルが紐づけ済みか。
 	HasSpoilerChannel bool `protobuf:"varint,10,opt,name=has_spoiler_channel,json=hasSpoilerChannel,proto3" json:"has_spoiler_channel,omitempty"`

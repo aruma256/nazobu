@@ -53,7 +53,6 @@ func (f *fakeDiscordSpoilerChannelManager) DeleteChannel(_ context.Context, chan
 	return nil
 }
 
-// createTestUser は user を作成して ID を返す。
 func createTestUser(t *testing.T, db *sql.DB, displayName, role string) string {
 	t.Helper()
 	ctx := context.Background()
@@ -82,7 +81,6 @@ func createTestDiscordIdentity(t *testing.T, db *sql.DB, userID, subject string)
 	}
 }
 
-// createTestEvent は event を作成して ID を返す。
 func createTestEvent(t *testing.T, db *sql.DB, title string) string {
 	t.Helper()
 	eventID := id.New()

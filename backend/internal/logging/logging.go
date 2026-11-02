@@ -7,7 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// ID は ID 欄に渡された任意の文字列をログへ流さないよう UUID を正規化する。
+// ID は value が UUID なら正規化して出力し、それ以外は "invalid" に置き換える。
+// ID 欄に渡された任意の文字列をログへ流さないため。
 func ID(key, value string) slog.Attr {
 	parsed, err := uuid.Parse(value)
 	if err != nil {

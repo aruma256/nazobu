@@ -53,9 +53,9 @@ type MyPageServiceClient interface {
 	// start_at 昇順。未ログインなら unauthenticated。
 	ListMyUnsettledTickets(context.Context, *connect.Request[v1.ListMyUnsettledTicketsRequest]) (*connect.Response[v1.ListMyUnsettledTicketsResponse], error)
 	// 自分が立て替えたチケットのうち、他参加者の精算が残っており開演済みのもの一覧。
-	// 受け取り忘れ防止用。start_at 昇順。未ログインなら unauthenticated。
+	// start_at 昇順。未ログインなら unauthenticated。
 	ListMyUnsettledReceivables(context.Context, *connect.Request[v1.ListMyUnsettledReceivablesRequest]) (*connect.Response[v1.ListMyUnsettledReceivablesResponse], error)
-	// 自分が参加予定で start_at が当日 0:00（JST）以降のチケット一覧。start_at 昇順。未ログインなら unauthenticated。
+	// 自分が参加予定で start_at が当日 0:00（JST）以降のチケット一覧。終了予定時刻を過ぎたものは除く。start_at 昇順。未ログインなら unauthenticated。
 	ListMyUpcomingTickets(context.Context, *connect.Request[v1.ListMyUpcomingTicketsRequest]) (*connect.Response[v1.ListMyUpcomingTicketsResponse], error)
 	// ListMonthlyTickets は指定された年月の自分の参加チケット履歴を返す。
 	// year/month を共に 0 で渡すと「サーバ JST 基準の前月」を既定として返す。
@@ -135,9 +135,9 @@ type MyPageServiceHandler interface {
 	// start_at 昇順。未ログインなら unauthenticated。
 	ListMyUnsettledTickets(context.Context, *connect.Request[v1.ListMyUnsettledTicketsRequest]) (*connect.Response[v1.ListMyUnsettledTicketsResponse], error)
 	// 自分が立て替えたチケットのうち、他参加者の精算が残っており開演済みのもの一覧。
-	// 受け取り忘れ防止用。start_at 昇順。未ログインなら unauthenticated。
+	// start_at 昇順。未ログインなら unauthenticated。
 	ListMyUnsettledReceivables(context.Context, *connect.Request[v1.ListMyUnsettledReceivablesRequest]) (*connect.Response[v1.ListMyUnsettledReceivablesResponse], error)
-	// 自分が参加予定で start_at が当日 0:00（JST）以降のチケット一覧。start_at 昇順。未ログインなら unauthenticated。
+	// 自分が参加予定で start_at が当日 0:00（JST）以降のチケット一覧。終了予定時刻を過ぎたものは除く。start_at 昇順。未ログインなら unauthenticated。
 	ListMyUpcomingTickets(context.Context, *connect.Request[v1.ListMyUpcomingTicketsRequest]) (*connect.Response[v1.ListMyUpcomingTicketsResponse], error)
 	// ListMonthlyTickets は指定された年月の自分の参加チケット履歴を返す。
 	// year/month を共に 0 で渡すと「サーバ JST 基準の前月」を既定として返す。

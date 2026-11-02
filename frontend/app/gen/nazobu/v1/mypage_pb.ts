@@ -201,7 +201,6 @@ export const MonthlyTicketSchema: GenMessage<MonthlyTicket> = /*@__PURE__*/
 
 /**
  * MyPageService はマイページ表示に必要な集約データを返す。
- * 表示要素ごとに RPC を分けてあり、必要な要素だけを取得できる。
  *
  * @generated from service nazobu.v1.MyPageService
  */
@@ -219,7 +218,7 @@ export const MyPageService: GenService<{
   },
   /**
    * 自分が立て替えたチケットのうち、他参加者の精算が残っており開演済みのもの一覧。
-   * 受け取り忘れ防止用。start_at 昇順。未ログインなら unauthenticated。
+   * start_at 昇順。未ログインなら unauthenticated。
    *
    * @generated from rpc nazobu.v1.MyPageService.ListMyUnsettledReceivables
    */
@@ -229,7 +228,7 @@ export const MyPageService: GenService<{
     output: typeof ListMyUnsettledReceivablesResponseSchema;
   },
   /**
-   * 自分が参加予定で start_at が当日 0:00（JST）以降のチケット一覧。start_at 昇順。未ログインなら unauthenticated。
+   * 自分が参加予定で start_at が当日 0:00（JST）以降のチケット一覧。終了予定時刻を過ぎたものは除く。start_at 昇順。未ログインなら unauthenticated。
    *
    * @generated from rpc nazobu.v1.MyPageService.ListMyUpcomingTickets
    */

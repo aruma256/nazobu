@@ -836,7 +836,6 @@ func (s *ticketService) UpdateTicketParticipantSettlement(ctx context.Context, r
 	return connect.NewResponse(&nazobuv1.UpdateTicketParticipantSettlementResponse{}), nil
 }
 
-// canEditTicket は admin もしくは立替者本人なら編集可とする。
 func canEditTicket(user *auth.User, purchasedBy string) bool {
 	return user.Role == auth.RoleAdmin || user.ID == purchasedBy
 }
@@ -853,18 +852,15 @@ func validateTicketCapacityInput(maxParticipants, unregisteredCount int32) error
 }
 
 // ticketCapacityExceeded は登録ユーザーの参加者数と未登録の同行者の合計が
-// max_participants を超えるかどうかを判定する。未登録の同行者も定員の枠を消費する。
-// registeredCount は DB の COUNT(int64) をそのまま受けられるよう int64 で取る。
+// max_participants を超えるかどうかを判定する。
 func ticketCapacityExceeded(registeredCount int64, unregisteredCount, maxParticipants int32) bool {
 	return registeredCount+int64(unregisteredCount) > int64(maxParticipants)
 }
 
-// formatJSTDateTime は DATETIME カラムの time.Time を JST RFC3339 文字列に整形する。
 func formatJSTDateTime(t time.Time) string {
 	return t.In(jst).Format(time.RFC3339)
 }
 
-// formatNullableJSTDateTime は NULL 可な DATETIME を JST RFC3339（NULL なら空文字）にする。
 func formatNullableJSTDateTime(v sql.NullTime) string {
 	if !v.Valid {
 		return ""
@@ -886,7 +882,6 @@ func parseRequiredJSTDateTime(raw, field string) (time.Time, error) {
 	return t.In(jst), nil
 }
 
-// parseNullableJSTDateTime は RFC3339 を任意で受け取る（空文字なら NULL）。
 func parseNullableJSTDateTime(raw, field string) (sql.NullTime, error) {
 	s := strings.TrimSpace(raw)
 	if s == "" {

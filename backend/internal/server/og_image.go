@@ -13,8 +13,8 @@ import (
 )
 
 // OG 画像取得対象のドメイン allowlist。
-// SSRF 対策の本丸。リダイレクト先もこの allowlist で再検査するため、
-// allowlist 外への bounce で内部ホストに到達することはない。
+// SSRF 対策の要。リダイレクト先もこの allowlist で再検査するため、
+// allowlist 外へのリダイレクトで内部ホストに到達することはない。
 var ogImageAllowedHosts = map[string]struct{}{
 	"realdgame.jp":          {},
 	"escape.id":             {},
@@ -36,13 +36,13 @@ const escapeIDGenericDescription = "閉じ込められたいあなたのため�
 type ogTags struct {
 	// 絶対化済みの https URL。長さオーバーや非 https の場合は空文字。
 	Image string
-	// raw な og:description（前後空白は trim 済み）。
+	// 前後空白のみ trim した og:description。
 	Description string
 }
 
 // fetchOGTags は eventURL のページから og:image / og:description を 1 リクエストで取り出す。
 // 失敗（allowlist 外 / ネットワーク / パース失敗 / 該当タグ無し）時は対応フィールドが空文字。
-// caller は失敗を区別せず空のまま保存する仕様なので error は返さない。
+// 失敗理由を区別せず空のまま保存するため error は返さない。
 func fetchOGTags(ctx context.Context, client *http.Client, eventURL string) ogTags {
 	parsed, err := url.Parse(eventURL)
 	if err != nil || parsed.Scheme != "https" {
@@ -135,8 +135,7 @@ func isAllowedOGHost(host string) bool {
 }
 
 // extractOGTags は HTML を読み <meta property="og:image" / "og:description" content="..."> を探す。
-// 見つからない項目は空文字のまま。<body> に入った時点で打ち切り（OG タグは <head> 内なので）。
-// og:description の前後空白は trim する。
+// 見つからない項目は空文字のまま。
 func extractOGTags(r io.Reader) ogTags {
 	var tags ogTags
 	z := html.NewTokenizer(r)
@@ -148,6 +147,7 @@ func extractOGTags(r io.Reader) ogTags {
 		case html.StartTagToken, html.SelfClosingTagToken:
 			name, hasAttr := z.TagName()
 			tag := string(name)
+			// OG タグは <head> 内なので <body> に入ったら打ち切る。
 			if tag == "body" {
 				return tags
 			}

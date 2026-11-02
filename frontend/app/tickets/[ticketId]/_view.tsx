@@ -476,7 +476,6 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
 
 // Google カレンダーの「予定を作成」プリフィル URL を組み立てる。
 // 開始 = meeting_at（あれば）/ start_at、終了 = start_at + event.expected_duration_minutes。
-// 立替・参加者は意図的に説明欄に含めない。
 function buildGoogleCalendarUrl(ticket: Ticket): string {
   const startAt = parseDateTime(ticket.startAt);
   const startMs =
@@ -687,7 +686,6 @@ function ParticipantsSection({
     await onAdd(ids);
   };
 
-  // 未登録の同行者も定員の枠を消費する。
   const occupiedCount = participants.length + unregisteredCount;
 
   return (

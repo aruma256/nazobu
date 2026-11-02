@@ -81,7 +81,6 @@ func (s *Server) protectedResourceMetadataURL() string {
 }
 
 // generateToken は認可コード / トークン用の乱数文字列を生成する。
-// sessions と同じ 32 byte / base64url。
 func generateToken() (string, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
@@ -90,13 +89,11 @@ func generateToken() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
-// hashToken は raw 値の SHA-256 hex を返す。DB には hash のみ保存する。
 func hashToken(raw string) string {
 	sum := sha256.Sum256([]byte(raw))
 	return hex.EncodeToString(sum[:])
 }
 
-// scopeContains は空白区切りの scope 文字列に target が含まれるかを返す。
 func scopeContains(scope, target string) bool {
 	return slices.Contains(strings.Fields(scope), target)
 }

@@ -16,7 +16,6 @@ SELECT COUNT(*) FROM users
 WHERE id IN (/*SLICE:ids*/?)
 `
 
-// FK でも担保されるが、分かりやすいエラーを返すために事前に存在を確認する。
 func (q *Queries) CountUsersByIDs(ctx context.Context, ids []string) (int64, error) {
 	query := countUsersByIDs
 	var queryParams []interface{}

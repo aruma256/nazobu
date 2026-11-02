@@ -8,9 +8,7 @@ option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;n
 service EventService {
   // ListEvents は登録済み event を新しい順で返す。各 event には紐づく ticket を含める。
   rpc ListEvents(ListEventsRequest) returns (ListEventsResponse);
-  // GetEvent は 1 件の event を返す。
   rpc GetEvent(GetEventRequest) returns (GetEventResponse);
-  // CreateEvent は新規 event を 1 件登録する。
   rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse);
   // UpdateEvent は event の title / url / catchphrase / 開場・締切オフセットを更新する。admin のみ実行可能。
   rpc UpdateEvent(UpdateEventRequest) returns (UpdateEventResponse);
@@ -44,7 +42,7 @@ message Event {
   string image_url = 7;
   // 想定所要時間（分）。1 以上。
   int32 expected_duration_minutes = 8;
-  // 公演のキャッチコピー（手動入力）。未設定なら空文字。
+  // 公演のキャッチコピー。入力が空なら og:description で補完することがある。未設定なら空文字。
   string catchphrase = 9;
   // ネタバレチャンネルが紐づけ済みか。
   bool has_spoiler_channel = 10;

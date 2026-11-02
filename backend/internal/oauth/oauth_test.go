@@ -17,7 +17,6 @@ func testTime(t *testing.T) time.Time {
 	return time.Date(2026, 7, 10, 12, 0, 0, 0, time.FixedZone("Asia/Tokyo", 9*60*60))
 }
 
-// testChallenge は verifier に対応する S256 チャレンジを作る。
 func testChallenge(verifier string) string {
 	sum := sha256.Sum256([]byte(verifier))
 	return base64.RawURLEncoding.EncodeToString(sum[:])
@@ -131,8 +130,6 @@ func TestMetadataHandlers(t *testing.T) {
 		if err := json.Unmarshal(rec.Body.Bytes(), &m); err != nil {
 			t.Fatalf("JSON parse: %v", err)
 		}
-		// Claude が CIMD 方式を選ぶ条件: client_id_metadata_document_supported と
-		// token_endpoint_auth_methods_supported の "none" の両方が必要。
 		if m["client_id_metadata_document_supported"] != true {
 			t.Error("client_id_metadata_document_supported が true でない")
 		}

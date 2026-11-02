@@ -45,18 +45,15 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 
 	mux := http.NewServeMux()
 
-	// liveness 用
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = fmt.Fprintln(w, "ok")
 	})
 
-	// 認証
 	mux.HandleFunc("GET /auth/discord/login", srv.handleDiscordLogin)
 	mux.HandleFunc("GET /auth/discord/callback", srv.handleDiscordCallback)
 	mux.HandleFunc("POST /auth/logout", srv.handleLogout)
 
-	// Connect RPC
 	userService := newUserService(dbc)
 	userPath, userHandler := nazobuv1connect.NewUserServiceHandler(userService)
 	mux.Handle(userPath, userHandler)

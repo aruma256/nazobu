@@ -4,17 +4,8 @@ import type { NextRequest } from "next/server";
 // backend の auth.SessionCookieName と一致させる。
 const SESSION_COOKIE = "nazobu_session";
 
-// ログイン不要パス。matcher で除外しているのと別に、念のため関数内でも除外する。
-// /oauth・/mcp・/.well-known は MCP 連携（Claude connector）用で、backend 側が
-// 認証（OAuth の Bearer / 認可画面のログインリダイレクト）を担うためここでは素通しする。
-const PUBLIC_PATHS = ["/login", "/oauth", "/mcp", "/.well-known"];
-
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
-
-  if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
-    return NextResponse.next();
-  }
 
   if (request.cookies.has(SESSION_COOKIE)) {
     return NextResponse.next();
@@ -26,6 +17,8 @@ export function proxy(request: NextRequest) {
 }
 
 // session cookie の有無だけ見るので RPC, 認証エンドポイント, Next 内部, 静的ファイルは除外する。
+// /oauth・/mcp・/.well-known は MCP 連携（Claude connector）用で、backend 側が
+// 認証（OAuth の Bearer / 認可画面のログインリダイレクト）を担う。
 // 静的ファイルは拡張子付きパス（`.*\..*`）でまとめて除外する。ここには
 // manifest.webmanifest / sw.js / icon-*.png / offline.html / favicon.ico が含まれる。
 // manifest とそのアイコンはブラウザが Cookie なしで取りに来るため、除外しないと

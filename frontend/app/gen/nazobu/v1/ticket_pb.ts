@@ -134,14 +134,14 @@ export type Ticket = Message<"nazobu.v1.Ticket"> & {
   eventExpectedDurationMinutes: number;
 
   /**
-   * 公演のキャッチコピー（手動入力）。未設定なら空文字。
+   * 公演のキャッチコピー。入力が空なら og:description で補完することがある。未設定なら空文字。
    *
    * @generated from field: string event_catchphrase = 15;
    */
   eventCatchphrase: string;
 
   /**
-   * 開場時間が開演時刻（start_at）の何分前か。0 以上。未設定なら未指定。
+   * 開場時間が開演時刻（start_at）の何分前か。0 以上。任意。
    *
    * @generated from field: optional int32 event_doors_open_minutes_before = 16;
    */
@@ -228,8 +228,6 @@ export type TicketParticipant = Message<"nazobu.v1.TicketParticipant"> & {
   userId: string;
 
   /**
-   * 表示名。
-   *
    * @generated from field: string name = 2;
    */
   name: string;
@@ -287,7 +285,7 @@ export type CreateTicketRequest = Message<"nazobu.v1.CreateTicketRequest"> & {
   meetingPlace: string;
 
   /**
-   * 参加者（割り勘元）の user id。立替者（= ログイン中の user）を含めても構わない。1 件以上。
+   * 参加者の user id。立替者（= ログイン中の user）を含めても構わない。1 件以上。
    * 立替者は session の user で固定するため、ここでは指定しない。
    *
    * @generated from field: repeated string participant_user_ids = 6;
@@ -499,7 +497,7 @@ export type CreateTicketWithEventRequest = Message<"nazobu.v1.CreateTicketWithEv
   meetingPlace: string;
 
   /**
-   * 参加者（割り勘元）の user id。1 件以上。
+   * 参加者の user id。1 件以上。
    *
    * @generated from field: repeated string participant_user_ids = 11;
    */
@@ -866,7 +864,7 @@ export const TicketService: GenService<{
     output: typeof GetTicketResponseSchema;
   },
   /**
-   * CreateTicket は新規 ticket を 1 件登録する。参加者（割り勘元）も同時に登録する。
+   * CreateTicket は新規 ticket を 1 件登録する。参加者も同時に登録する。
    *
    * @generated from rpc nazobu.v1.TicketService.CreateTicket
    */

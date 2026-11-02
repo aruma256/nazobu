@@ -15,8 +15,7 @@ import (
 
 // newMCPHandler は Claude connector 向けの MCP（Streamable HTTP）ハンドラを組み立てる。
 // 認証は前段の oauth.Middleware が済ませ、auth.User を context に注入してくる前提。
-// ツール実装は Connect RPC ハンドラを in-process 呼び出しして再利用する
-// （lookupSessionUser が context の user を優先するため cookie なしで通る）。
+// ツール実装は Connect RPC ハンドラを in-process 呼び出しして再利用する。
 func newMCPHandler(
 	mypage nazobuv1connect.MyPageServiceHandler,
 	tickets nazobuv1connect.TicketServiceHandler,
@@ -107,7 +106,6 @@ type mcpTicket struct {
 	ParticipantNames []string `json:"participant_names" jsonschema:"参加メンバーの表示名一覧"`
 }
 
-// toMCPTicket は proto の Ticket を MCP ツール出力用の形に変換する。
 func toMCPTicket(t *nazobuv1.Ticket) mcpTicket {
 	return mcpTicket{
 		EventID:          t.GetEventId(),
@@ -165,7 +163,6 @@ type getTicketInput struct {
 	TicketID string `json:"ticket_id" jsonschema:"チケット ID（必須）"`
 }
 
-// mcpTicketParticipant はチケット詳細に含める参加者 1 人分の情報。
 type mcpTicketParticipant struct {
 	UserID      string `json:"user_id" jsonschema:"参加者の user ID"`
 	Name        string `json:"name" jsonschema:"表示名"`
@@ -347,7 +344,7 @@ func pickOptionalMinutes(cur, in *int32) *int32 {
 
 // updateTicketWithEventTool は全置換の UpdateTicketWithEvent RPC を
 // 「現在値を取得 → 指定フィールドだけ上書き → 全フィールド送信」でラップし、
-// LLM からは部分更新として扱えるようにする（web の編集 form と同じクライアント責務）。
+// LLM からは部分更新として扱えるようにする。
 // 現在値は GetTicket に加え、Ticket メッセージに含まれない
 // entry_deadline のために GetEvent も参照する。
 func updateTicketWithEventTool(tickets nazobuv1connect.TicketServiceHandler, events nazobuv1connect.EventServiceHandler) mcp.ToolHandlerFor[updateTicketWithEventInput, updateTicketWithEventOutput] {

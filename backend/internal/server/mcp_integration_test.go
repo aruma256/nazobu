@@ -24,7 +24,6 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/testdb"
 )
 
-// bearerTransport は全リクエストに Authorization: Bearer を付ける RoundTripper。
 type bearerTransport struct {
 	token string
 	base  http.RoundTripper
@@ -115,7 +114,6 @@ func newMCPTestServer(t *testing.T, db *sql.DB) *httptest.Server {
 	return ts
 }
 
-// newMCPTestSession は Bearer トークン付きで MCP セッションを確立する。
 func newMCPTestSession(t *testing.T, endpoint, accessToken string) *mcp.ClientSession {
 	t.Helper()
 	transport := &mcp.StreamableClientTransport{
@@ -135,7 +133,6 @@ func newMCPTestSession(t *testing.T, endpoint, accessToken string) *mcp.ClientSe
 	return session
 }
 
-// unmarshalStructuredContent は CallTool の StructuredContent を out に詰め直す。
 func unmarshalStructuredContent(t *testing.T, res *mcp.CallToolResult, out any) {
 	t.Helper()
 	raw, err := json.Marshal(res.StructuredContent)

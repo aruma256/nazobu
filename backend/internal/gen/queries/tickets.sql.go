@@ -21,7 +21,6 @@ type CountTicketParticipantParams struct {
 	UserID   string
 }
 
-// 参加者の存在確認。重複登録を避けるためのプリチェック。
 func (q *Queries) CountTicketParticipant(ctx context.Context, arg CountTicketParticipantParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countTicketParticipant, arg.TicketID, arg.UserID)
 	var count int64
@@ -155,7 +154,6 @@ type GetTicketByIDRow struct {
 	PurchaserName                 string
 }
 
-// 立替者の id と表示名も返す。
 func (q *Queries) GetTicketByID(ctx context.Context, id string) (GetTicketByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getTicketByID, id)
 	var i GetTicketByIDRow
@@ -198,7 +196,7 @@ type ListTicketParticipantDiscordIdentitiesRow struct {
 	DiscordSubject sql.NullString
 }
 
-// Discord ネタバレチャンネルの権限付与用。identity の欠落を検出できるよう LEFT JOIN にする。
+// identity の欠落を検出できるよう LEFT JOIN にする。
 func (q *Queries) ListTicketParticipantDiscordIdentities(ctx context.Context, ticketID string) ([]ListTicketParticipantDiscordIdentitiesRow, error) {
 	rows, err := q.db.QueryContext(ctx, listTicketParticipantDiscordIdentities, ticketID)
 	if err != nil {
@@ -236,7 +234,6 @@ type ListTicketParticipantNamesByTicketIDsRow struct {
 	Name     string
 }
 
-// 指定 ticket 群の参加者名をまとめて引く（N+1 回避）。
 func (q *Queries) ListTicketParticipantNamesByTicketIDs(ctx context.Context, ticketIds []string) ([]ListTicketParticipantNamesByTicketIDsRow, error) {
 	query := listTicketParticipantNamesByTicketIDs
 	var queryParams []interface{}
@@ -286,7 +283,6 @@ type ListTicketParticipantsByTicketIDRow struct {
 	SettledAt sql.NullTime
 }
 
-// 参加者の user_id / 名前 / 精算済みフラグを created_at 昇順で返す。
 func (q *Queries) ListTicketParticipantsByTicketID(ctx context.Context, ticketID string) ([]ListTicketParticipantsByTicketIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, listTicketParticipantsByTicketID, ticketID)
 	if err != nil {
@@ -342,7 +338,6 @@ type ListTicketsRow struct {
 	PurchaserName                 string
 }
 
-// event 名と立替者名を join して返す。
 func (q *Queries) ListTickets(ctx context.Context) ([]ListTicketsRow, error) {
 	rows, err := q.db.QueryContext(ctx, listTickets)
 	if err != nil {
@@ -533,9 +528,6 @@ type UpdateTicketParams struct {
 	ID                            string
 }
 
-// ticket 本体の更新。event_id は変更しない。purchased_by の変更は呼び出し側で
-// 新しい立替者が ticket_participants に含まれることを保証する。max_participants は
-// 呼び出し側で参加者数を下回らないことを保証する。
 func (q *Queries) UpdateTicket(ctx context.Context, arg UpdateTicketParams) error {
 	_, err := q.db.ExecContext(ctx, updateTicket,
 		arg.StartAt,

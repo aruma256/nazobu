@@ -193,7 +193,7 @@ type GetOAuthTokenUserByAccessTokenHashRow struct {
 	AccessTokenExpiresAt time.Time
 }
 
-// Bearer トークン検証用。紐づく user も一発で引く。期限判定は呼び出し側で行う。
+// 期限判定は呼び出し側で行う。
 func (q *Queries) GetOAuthTokenUserByAccessTokenHash(ctx context.Context, accessTokenHash string) (GetOAuthTokenUserByAccessTokenHashRow, error) {
 	row := q.db.QueryRowContext(ctx, getOAuthTokenUserByAccessTokenHash, accessTokenHash)
 	var i GetOAuthTokenUserByAccessTokenHashRow
@@ -227,7 +227,6 @@ type RotateOAuthTokenParams struct {
 	ID                    string
 }
 
-// refresh grant 時にアクセストークンとリフレッシュトークンを同時にローテーションする。
 func (q *Queries) RotateOAuthToken(ctx context.Context, arg RotateOAuthTokenParams) error {
 	_, err := q.db.ExecContext(ctx, rotateOAuthToken,
 		arg.AccessTokenHash,

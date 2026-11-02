@@ -26,7 +26,7 @@ const (
 var ErrNoSession = errors.New("session が見つからないか期限切れ")
 
 // ErrUserNotRegistered は LoginWithIdentity で identity が事前登録されていない
-// ことを示す。サービスを招待制にするため、未登録ユーザーのログインを弾く合図。
+// ことを示す。
 var ErrUserNotRegistered = errors.New("ユーザーが事前登録されていない")
 
 type User struct {
@@ -38,8 +38,8 @@ type User struct {
 
 // UserProfile は IdP から取得した、user 表示用プロフィールのスナップショット。
 // ログインのたびに users テーブルへキャッシュ更新される。
-// DisplayName は users.display_name の NOT NULL 制約を満たすよう、呼び出し側が IdP ごとの
-// フォールバック（Discord なら global_name → username）を解決してから渡す。
+// DisplayName は users.display_name の NOT NULL 制約を満たすよう、IdP ごとの
+// フォールバックを解決してから渡す。
 type UserProfile struct {
 	DisplayName string
 	AvatarURL   string
@@ -183,7 +183,6 @@ func LookupSession(ctx context.Context, db *sql.DB, rawToken string) (*User, err
 	}, nil
 }
 
-// DeleteSession は raw token に対応する session を削除する。
 func DeleteSession(ctx context.Context, db *sql.DB, rawToken string) error {
 	return queries.New(db).DeleteSessionByTokenHash(ctx, hashToken(rawToken))
 }

@@ -43,7 +43,6 @@ const (
 type UserServiceClient interface {
 	// GetMe は cookie session から現在の user を返す。未ログインなら unauthenticated。
 	GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error)
-	// ListUsers は登録済み user を返す。
 	ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error)
 }
 
@@ -93,7 +92,6 @@ func (c *userServiceClient) ListUsers(ctx context.Context, req *connect.Request[
 type UserServiceHandler interface {
 	// GetMe は cookie session から現在の user を返す。未ログインなら unauthenticated。
 	GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error)
-	// ListUsers は登録済み user を返す。
 	ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error)
 }
 

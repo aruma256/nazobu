@@ -53,9 +53,6 @@ type DiscordUser struct {
 }
 
 // ToProfile は Discord の identity を IdP 非依存の UserProfile に変換する。
-// avatar はハッシュなので Discord CDN の URL を組み立てる。
-// "a_" 接頭辞付きハッシュはアニメーションアバターなので gif、それ以外は png。
-// DisplayName は Discord の global_name が空のときは username にフォールバックする。
 func (du *DiscordUser) ToProfile() UserProfile {
 	displayName := du.DisplayName
 	if displayName == "" {
@@ -66,6 +63,7 @@ func (du *DiscordUser) ToProfile() UserProfile {
 	}
 	if du.Avatar != "" {
 		ext := "png"
+		// "a_" 接頭辞付きハッシュはアニメーションアバター。
 		if strings.HasPrefix(du.Avatar, "a_") {
 			ext = "gif"
 		}
@@ -74,7 +72,6 @@ func (du *DiscordUser) ToProfile() UserProfile {
 	return p
 }
 
-// Discord の /users/@me を access token 付きで叩いて identity を取得する。
 func FetchDiscordUser(ctx context.Context, client *http.Client, token *oauth2.Token) (*DiscordUser, error) {
 	if client == nil {
 		client = http.DefaultClient

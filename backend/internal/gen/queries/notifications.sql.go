@@ -28,9 +28,7 @@ type ListNotifiableDiscordSubjectsByTicketIDsRow struct {
 	Subject  string
 }
 
-// 指定チケット群の参加者のうち、通知が有効（notifications_enabled = 1）で
-// Discord 連携済みのユーザーの subject（Discord user id）を返す。メンション用。
-// 呼び出し側で ticket_id ごとに振り分ける。
+// subject は Discord user id。
 func (q *Queries) ListNotifiableDiscordSubjectsByTicketIDs(ctx context.Context, ticketIds []string) ([]ListNotifiableDiscordSubjectsByTicketIDsRow, error) {
 	query := listNotifiableDiscordSubjectsByTicketIDs
 	var queryParams []interface{}
@@ -89,9 +87,6 @@ type ListTicketsForDayBeforeNotificationRow struct {
 // 「まだ通知しておらず、開演が未来」のチケットを候補として広めに引くに留める。
 // 引数 ? には Go 側で算出した「現在時刻（JST）」を渡す（driver の loc=Asia/Tokyo に
 // より JST naive な DATETIME 列と素直に比較できる）。
-// 前日リマインドの候補。未送信（day_before_notified_at IS NULL）かつ
-// 開演が未来（start_at > ?）のチケットを start_at 昇順で返す。
-// 同日まとめ・締切（前日 20 時）・猶予窓の判定は呼び出し側。
 func (q *Queries) ListTicketsForDayBeforeNotification(ctx context.Context, startAt time.Time) ([]ListTicketsForDayBeforeNotificationRow, error) {
 	rows, err := q.db.QueryContext(ctx, listTicketsForDayBeforeNotification, startAt)
 	if err != nil {
@@ -140,8 +135,6 @@ type ListTicketsForMeetingNotificationRow struct {
 	EventTitle   string
 }
 
-// 集合 2 時間前リマインドの候補。未送信かつ集合時刻あり、開演が未来のチケット。
-// 締切（meeting_at - 2h）・猶予窓の判定は呼び出し側。
 func (q *Queries) ListTicketsForMeetingNotification(ctx context.Context, startAt time.Time) ([]ListTicketsForMeetingNotificationRow, error) {
 	rows, err := q.db.QueryContext(ctx, listTicketsForMeetingNotification, startAt)
 	if err != nil {
@@ -183,7 +176,7 @@ type MarkTicketMeetingNotifiedParams struct {
 	ID                string
 }
 
-// 集合 2 時間前リマインド送信済みマーク。未送信のものだけを対象にする。
+// 多重送信防止のため未送信のものだけを対象にする。
 func (q *Queries) MarkTicketMeetingNotified(ctx context.Context, arg MarkTicketMeetingNotifiedParams) error {
 	_, err := q.db.ExecContext(ctx, markTicketMeetingNotified, arg.MeetingNotifiedAt, arg.ID)
 	return err
@@ -201,7 +194,6 @@ type MarkTicketsDayBeforeNotifiedParams struct {
 	Ids                 []string
 }
 
-// 前日リマインド送信済みマーク。同日まとめ送信した全チケットに送信時刻（JST）を立てる。
 // 多重送信防止のため未送信のものだけを対象にする。
 func (q *Queries) MarkTicketsDayBeforeNotified(ctx context.Context, arg MarkTicketsDayBeforeNotifiedParams) error {
 	query := markTicketsDayBeforeNotified

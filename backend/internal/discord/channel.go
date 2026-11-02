@@ -54,7 +54,6 @@ func (c *Client) Configured() bool {
 	return c != nil && c.botToken != "" && c.guildID != "" && c.categoryID != ""
 }
 
-// ChannelURL は Discord client でチャンネルを開く URL を返す。
 func (c *Client) ChannelURL(channelID string) string {
 	if !c.Configured() || strings.TrimSpace(channelID) == "" {
 		return ""
@@ -209,7 +208,6 @@ func (c *Client) GrantMembersView(ctx context.Context, channelID string, memberI
 	return nil
 }
 
-// DeleteChannel は指定チャンネルを削除する。
 func (c *Client) DeleteChannel(ctx context.Context, channelID string) error {
 	if !c.Configured() {
 		return fmt.Errorf("Discord ネタバレチャンネル設定が未完了")

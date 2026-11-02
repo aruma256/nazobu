@@ -292,7 +292,6 @@ func stripPort(host string) string {
 	return host
 }
 
-// withAllowedHost は test 期間中だけ allowlist にホストを追加する。
 func withAllowedHost(t *testing.T, host string) {
 	t.Helper()
 	host = strings.ToLower(host)

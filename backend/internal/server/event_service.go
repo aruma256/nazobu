@@ -226,7 +226,6 @@ func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[naz
 	}), nil
 }
 
-// preparedEventFields は event の入力検証 + OG タグ取得 + catchphrase 補完まで済ませた値を保持する。
 type preparedEventFields struct {
 	title            string
 	url              string
@@ -296,8 +295,8 @@ func prepareEventFields(
 	}, nil
 }
 
-// applyOGDescriptionFallback は web 入力のキャッチコピーが空のとき、og:description を採用するか判定して返す。
-// 採用条件は shouldUseOGDescriptionAsCatchphrase に委ねる。長さオーバー時は採用しない（手入力で補ってもらう）。
+// applyOGDescriptionFallback は catchphrase が空のとき、採用条件を満たす og:description で補完する。
+// 長さ上限を超える og:description は採用しない。
 func applyOGDescriptionFallback(catchphrase, host, ogDescription string) string {
 	if catchphrase != "" {
 		return catchphrase
@@ -311,7 +310,6 @@ func applyOGDescriptionFallback(catchphrase, host, ogDescription string) string 
 	return ogDescription
 }
 
-// validateMinutesBefore は任意の「開演時刻の何分前か」を受け取る。0 以上のみ許容し、未指定なら NULL。
 func validateMinutesBefore(v *int32, fieldName string) (sql.NullInt32, error) {
 	if v == nil {
 		return sql.NullInt32{}, nil
@@ -322,7 +320,6 @@ func validateMinutesBefore(v *int32, fieldName string) (sql.NullInt32, error) {
 	return sql.NullInt32{Int32: *v, Valid: true}, nil
 }
 
-// validateExpectedDurationMinutes は想定所要時間（分）を検証する。1 以上が必須。
 func validateExpectedDurationMinutes(v int32) (int32, error) {
 	if v < 1 {
 		return 0, connect.NewError(connect.CodeInvalidArgument, errors.New("expected_duration_minutes は 1 以上"))
@@ -345,7 +342,6 @@ func nullStringToString(v sql.NullString) string {
 	return v.String
 }
 
-// 空文字は NULL にする（DB 側でも意味的に未取得 = NULL を貫く）。
 func stringToNullString(s string) sql.NullString {
 	if s == "" {
 		return sql.NullString{}

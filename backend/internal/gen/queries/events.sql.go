@@ -16,7 +16,6 @@ const countEventByID = `-- name: CountEventByID :one
 SELECT COUNT(*) FROM events WHERE id = ?
 `
 
-// FK でも担保されるが、分かりやすいエラーを返すために事前に存在を確認する。
 func (q *Queries) CountEventByID(ctx context.Context, id string) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countEventByID, id)
 	var count int64
@@ -120,7 +119,6 @@ type ListEventTicketsByEventIDsRow struct {
 	PurchaserName                 string
 }
 
-// 指定 event 群に紐づく ticket をまとめて引く（N+1 回避）。
 func (q *Queries) ListEventTicketsByEventIDs(ctx context.Context, eventIds []string) ([]ListEventTicketsByEventIDsRow, error) {
 	query := listEventTicketsByEventIDs
 	var queryParams []interface{}

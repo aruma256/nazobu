@@ -237,7 +237,7 @@ export function Badge({
   );
 }
 
-// 数字や日付など、桁ズレが嫌なテキスト用。
+// 数字や日付など、桁を揃えて表示したいテキスト用。
 export function Mono({
   className = "",
   children,

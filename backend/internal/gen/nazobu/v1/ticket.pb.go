@@ -127,9 +127,9 @@ type Ticket struct {
 	EventImageUrl string `protobuf:"bytes,13,opt,name=event_image_url,json=eventImageUrl,proto3" json:"event_image_url,omitempty"`
 	// 公演の想定所要時間（分）。1 以上。
 	EventExpectedDurationMinutes int32 `protobuf:"varint,14,opt,name=event_expected_duration_minutes,json=eventExpectedDurationMinutes,proto3" json:"event_expected_duration_minutes,omitempty"`
-	// 公演のキャッチコピー（手動入力）。未設定なら空文字。
+	// 公演のキャッチコピー。入力が空なら og:description で補完することがある。未設定なら空文字。
 	EventCatchphrase string `protobuf:"bytes,15,opt,name=event_catchphrase,json=eventCatchphrase,proto3" json:"event_catchphrase,omitempty"`
-	// 開場時間が開演時刻（start_at）の何分前か。0 以上。未設定なら未指定。
+	// 開場時間が開演時刻（start_at）の何分前か。0 以上。任意。
 	EventDoorsOpenMinutesBefore *int32 `protobuf:"varint,16,opt,name=event_doors_open_minutes_before,json=eventDoorsOpenMinutesBefore,proto3,oneof" json:"event_doors_open_minutes_before,omitempty"`
 	// 本サービスに未登録の同行者の人数。0 以上。
 	// 登録ユーザーの参加者数と合わせて max_participants の枠を消費する。
@@ -398,8 +398,7 @@ func (x *GetTicketResponse) GetDiscordSpoilerChannelUrl() string {
 type TicketParticipant struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	// 表示名。
-	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Name   string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	// 自分の精算が完了しているか。立替者本人なら常に true。
 	Settled bool `protobuf:"varint,3,opt,name=settled,proto3" json:"settled,omitempty"`
 	// 立替者本人かどうか。立替者は精算操作の対象外、また削除もできない。
@@ -475,7 +474,7 @@ type CreateTicketRequest struct {
 	MeetingAt string `protobuf:"bytes,4,opt,name=meeting_at,json=meetingAt,proto3" json:"meeting_at,omitempty"`
 	// 集合場所（空文字なら未設定）。
 	MeetingPlace string `protobuf:"bytes,5,opt,name=meeting_place,json=meetingPlace,proto3" json:"meeting_place,omitempty"`
-	// 参加者（割り勘元）の user id。立替者（= ログイン中の user）を含めても構わない。1 件以上。
+	// 参加者の user id。立替者（= ログイン中の user）を含めても構わない。1 件以上。
 	// 立替者は session の user で固定するため、ここでは指定しない。
 	ParticipantUserIds []string `protobuf:"bytes,6,rep,name=participant_user_ids,json=participantUserIds,proto3" json:"participant_user_ids,omitempty"`
 	// 開演日時（RFC3339, JST）。
@@ -793,7 +792,7 @@ type CreateTicketWithEventRequest struct {
 	MeetingAt string `protobuf:"bytes,9,opt,name=meeting_at,json=meetingAt,proto3" json:"meeting_at,omitempty"`
 	// 集合場所（空文字なら未設定）。
 	MeetingPlace string `protobuf:"bytes,10,opt,name=meeting_place,json=meetingPlace,proto3" json:"meeting_place,omitempty"`
-	// 参加者（割り勘元）の user id。1 件以上。
+	// 参加者の user id。1 件以上。
 	ParticipantUserIds []string `protobuf:"bytes,11,rep,name=participant_user_ids,json=participantUserIds,proto3" json:"participant_user_ids,omitempty"`
 	// このチケット 1 枚で参加できる最大人数。1 以上、
 	// participant_user_ids の件数 + unregistered_participants_count 以上。

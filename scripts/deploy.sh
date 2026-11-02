@@ -4,7 +4,6 @@
 set -e
 cd /volume1/docker/nazobu
 
-# main を fetch & merge
 sudo docker run --rm \
   -v /volume1/docker/nazobu:/repo \
   -w /repo \

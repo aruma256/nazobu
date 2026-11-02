@@ -3,9 +3,9 @@
 -- 親行の削除で関連記録を連鎖削除しない。必要な子行はアプリのトランザクション内で明示的に削除する。
 -- 文字コード: utf8mb4 / エンジン: InnoDB / ID 型: CHAR(36) UUIDv7
 
--- 内部ユーザー。IdP 非依存の anchor。
+-- 内部ユーザー。IdP に依存しない。
 -- 表示用プロフィール（display_name / avatar_url）はログイン時に
--- 連携元 IdP の値で更新するキャッシュ。IdP に依存しない形で持たせる。
+-- 連携元 IdP の値で更新するキャッシュ。
 -- display_name は IdP 側で未設定のことがあるので、ログイン時に handle 名等を
 -- フォールバックとして必ず埋めて NOT NULL を保つ。
 CREATE TABLE users (
@@ -22,7 +22,7 @@ CREATE TABLE users (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- IdP の identity。(provider, subject) でログイン時に user を引く。
--- provider は 'discord' / 'google' 等の識別子、subject は IdP 内のユーザー ID
+-- provider は IdP の識別子、subject は IdP 内のユーザー ID
 -- （OIDC の sub 相当）。1 user に複数 IdP を紐付けられる前提の N:1。
 CREATE TABLE user_identities (
   user_id     CHAR(36)  NOT NULL,
@@ -98,7 +98,7 @@ CREATE TABLE events (
   id          CHAR(36)  NOT NULL,
   title       VARCHAR(255) NOT NULL,
   url         VARCHAR(512) NOT NULL,
-  -- 公演のキャッチコピー（手動入力）。空文字を「未設定」として許容する。
+  -- 公演のキャッチコピー。入力が空なら og:description で補完することがある。空文字を「未設定」として許容する。
   catchphrase VARCHAR(255) NOT NULL DEFAULT '',
   -- 公演 URL から取得した OG 画像の URL。allowlist ドメインのみ取得し、
   -- 取得失敗時は NULL のまま。
@@ -120,7 +120,7 @@ CREATE TABLE events (
 
 -- チケット 1 枚。グループチケットなら 1 枚で複数人が参加でき、参加者で割り勘する。
 -- price_per_person は一人あたりの税込・円（割り勘済み）。purchased_by が立て替え、
--- ticket_participants が割り勘元。
+-- ticket_participants の各参加者が精算する。
 --
 -- 開演日時 / 集合時刻はいずれも JST naive な DATETIME として保持する
 -- （driver は loc=Asia/Tokyo で動かしているため Go の time.Time は JST で出入りする）。

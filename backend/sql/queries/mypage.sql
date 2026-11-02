@@ -1,7 +1,6 @@
 -- name: ListUnsettledTicketsByUserID :many
 -- 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」かつ「開演が現在以前」を取る。
 -- 立替者本人の自己持ち分は精算対象ではないので除外する。
--- 未来分は精算対象として扱わない。
 -- 列は ListTickets と同じ。
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
@@ -23,7 +22,6 @@ ORDER BY t.start_at ASC, t.id ASC;
 -- name: ListUnsettledReceivablesByUserID :many
 -- 自分が立て替えたチケットのうち「自分以外の参加者に未精算が 1 人以上残っている」かつ「開演が現在以前」を取る。
 -- 自分自身の参加分（自己持ち）は精算対象でないため EXISTS の条件から除外する。
--- 未来分は精算対象として扱わない。
 -- 列は ListTickets と同じ。
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
@@ -48,7 +46,7 @@ ORDER BY t.start_at ASC, t.id ASC;
 -- name: ListUpcomingTicketsByUserID :many
 -- 当日 0:00（JST）以降に start_at を持ち、かつ終了予定時刻がまだ過ぎていない自分の参加チケット。
 -- 終了予定時刻は start_at + expected_duration_minutes（どちらも NOT NULL）で算出し、
--- これを過ぎた公演は「今後の予定」から除外する。
+-- これを過ぎた公演は除外する。
 -- today_start による下限は対象を当日以降に絞り idx_tickets_start_at を効かせるため。
 -- 列は ListTickets と同じ。
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
@@ -68,7 +66,7 @@ WHERE tp.user_id  = sqlc.arg('user_id')
 ORDER BY t.start_at ASC, t.id ASC;
 
 -- name: ListMyMonthlyTicketsByUserID :many
--- 当月分（[month_start, next_month_start) 半開区間）の自分の参加チケット。
+-- 指定月（[month_start, next_month_start) 半開区間）の自分の参加チケット。
 -- 立替者本人 or 精算済みなら settled = 1 とみなす。
 -- MySQL に BOOLEAN 型がないため CAST で UNSIGNED に固定し、sqlc に NullBool 推論させずに int64 で受ける。
 SELECT t.id, e.title AS event_title, t.start_at,

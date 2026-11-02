@@ -10,7 +10,7 @@ service TicketService {
   rpc ListTickets(ListTicketsRequest) returns (ListTicketsResponse);
   // GetTicket は 1 件の ticket を詳細表示用の形（参加者の精算状況を含む）で返す。
   rpc GetTicket(GetTicketRequest) returns (GetTicketResponse);
-  // CreateTicket は新規 ticket を 1 件登録する。参加者（割り勘元）も同時に登録する。
+  // CreateTicket は新規 ticket を 1 件登録する。参加者も同時に登録する。
   rpc CreateTicket(CreateTicketRequest) returns (CreateTicketResponse);
   // CreateTicketWithEvent は event と ticket を 1 トランザクションで同時登録する。
   // 1 公演 1 チケットが主流のため、新規作成はこの統合 RPC を主動線にする。admin のみ実行可能。
@@ -72,9 +72,9 @@ message Ticket {
   string event_image_url = 13;
   // 公演の想定所要時間（分）。1 以上。
   int32 event_expected_duration_minutes = 14;
-  // 公演のキャッチコピー（手動入力）。未設定なら空文字。
+  // 公演のキャッチコピー。入力が空なら og:description で補完することがある。未設定なら空文字。
   string event_catchphrase = 15;
-  // 開場時間が開演時刻（start_at）の何分前か。0 以上。未設定なら未指定。
+  // 開場時間が開演時刻（start_at）の何分前か。0 以上。任意。
   optional int32 event_doors_open_minutes_before = 16;
   // 本サービスに未登録の同行者の人数。0 以上。
   // 登録ユーザーの参加者数と合わせて max_participants の枠を消費する。
@@ -97,7 +97,6 @@ message GetTicketResponse {
 
 message TicketParticipant {
   string user_id = 1;
-  // 表示名。
   string name = 2;
   // 自分の精算が完了しているか。立替者本人なら常に true。
   bool settled = 3;
@@ -114,7 +113,7 @@ message CreateTicketRequest {
   string meeting_at = 4;
   // 集合場所（空文字なら未設定）。
   string meeting_place = 5;
-  // 参加者（割り勘元）の user id。立替者（= ログイン中の user）を含めても構わない。1 件以上。
+  // 参加者の user id。立替者（= ログイン中の user）を含めても構わない。1 件以上。
   // 立替者は session の user で固定するため、ここでは指定しない。
   repeated string participant_user_ids = 6;
   // 開演日時（RFC3339, JST）。
@@ -176,7 +175,7 @@ message CreateTicketWithEventRequest {
   string meeting_at = 9;
   // 集合場所（空文字なら未設定）。
   string meeting_place = 10;
-  // 参加者（割り勘元）の user id。1 件以上。
+  // 参加者の user id。1 件以上。
   repeated string participant_user_ids = 11;
   // このチケット 1 枚で参加できる最大人数。1 以上、
   // participant_user_ids の件数 + unregistered_participants_count 以上。
