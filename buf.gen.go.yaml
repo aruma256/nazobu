@@ -1,0 +1,14 @@
+version: v2
+inputs:
+  - directory: proto
+plugins:
+  # Go の message 型。プラグインのバージョンは backend/go.mod に従う
+  - local: ["go", "run", "-C", "backend", "google.golang.org/protobuf/cmd/protoc-gen-go"]
+    out: backend/internal/gen
+    opt:
+      - paths=source_relative
+  # Connect-Go の service 型。プラグインのバージョンは backend/go.mod に従う
+  - local: ["go", "run", "-C", "backend", "connectrpc.com/connect/cmd/protoc-gen-connect-go"]
+    out: backend/internal/gen
+    opt:
+      - paths=source_relative

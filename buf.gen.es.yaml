@@ -1,0 +1,10 @@
+version: v2
+inputs:
+  - directory: proto
+plugins:
+  # TypeScript の message + service schema。プラグインのバージョンは frontend/package-lock.json に従う
+  - local: frontend/node_modules/.bin/protoc-gen-es
+    out: frontend/app/gen
+    opt:
+      - target=ts
+      - import_extension=none

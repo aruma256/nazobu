@@ -106,6 +106,37 @@ services:
       - edge
       - app
 
+  # proto からのコード生成。通常の `docker compose up` では起動しない（docker compose run で個別に実行する）。
+  # 生成物が root 所有にならないよう --user 付きで実行する想定で、キャッシュは /tmp 配下へ逃がす。
+  codegen-go:
+    image: mirror.gcr.io/golang:1.27
+    profiles:
+      - codegen
+    working_dir: /workspace
+    command: go run github.com/bufbuild/buf/cmd/buf@v1.75.0 generate --template buf.gen.go.yaml
+    environment:
+      HOME: /tmp
+      GOPATH: /tmp/.gopath
+      GOCACHE: /tmp/.gocache
+    volumes:
+      - .:/workspace
+
+  codegen-es:
+    image: mirror.gcr.io/node:26-bookworm-slim
+    profiles:
+      - codegen
+    working_dir: /workspace
+    command: >-
+      sh -c "npm ci --prefix frontend
+      && frontend/node_modules/.bin/buf generate --template buf.gen.es.yaml"
+    environment:
+      HOME: /tmp
+    volumes:
+      - .:/workspace
+    # ホスト側の node_modules を書き換えないよう、コンテナ内だけの tmpfs に入れる
+    tmpfs:
+      - /workspace/frontend/node_modules:exec,mode=1777
+
 # tier ごとに隣接のみ接続する3分割。各 service は隣の tier だけに到達できる。
 networks:
   edge:  # cloudflared ↔ frontend

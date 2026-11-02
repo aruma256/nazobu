@@ -16,6 +16,8 @@
     "react-dom": "19.3.1"
   },
   "devDependencies": {
+    "@bufbuild/buf": "1.75.0",
+    "@bufbuild/protoc-gen-es": "^2.16.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^26",
     "@types/react": "^19",
