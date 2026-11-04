@@ -36,8 +36,11 @@ var addUserCmd = &cobra.Command{
 			Provider: auth.ProviderDiscord,
 			Subject:  addUserDiscordUserID,
 		})
-		isNew := errors.Is(err, sql.ErrNoRows)
-		if err != nil && !isNew {
+		if err == nil {
+			slog.ErrorContext(ctx, "user already registered")
+			return fmt.Errorf("指定された Discord user ID %s のユーザーは登録済み", addUserDiscordUserID)
+		}
+		if !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
 
@@ -47,11 +50,7 @@ var addUserCmd = &cobra.Command{
 			return fmt.Errorf("ユーザー登録に失敗: %w", err)
 		}
 
-		action := "新規登録"
-		if !isNew {
-			action = "既存ユーザーを更新"
-		}
-		slog.InfoContext(ctx, "user upserted", logging.ID("user_id", user.ID), "action", action)
+		slog.InfoContext(ctx, "user added", logging.ID("user_id", user.ID))
 		return nil
 	},
 }
