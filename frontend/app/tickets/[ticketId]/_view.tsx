@@ -455,6 +455,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
 
         <GroupShuffleSection
           participants={detail.participants}
+          unregisteredCount={ticket.unregisteredParticipantsCount}
           myUserId={me.id}
         />
 
@@ -526,20 +527,29 @@ function jstCompactDateTime(ms: number): string {
   return s.replace(/[-:]/g, "").replace(" ", "T");
 }
 
-// 参加者をシャッフルして 1 グループあたり size 人ずつ先頭から詰める。
+// グループ分けの 1 枠。未登録の同行者は userId を持たない。
+type GroupMember = {
+  key: string;
+  userId: string | null;
+  name: string;
+};
+
+// 参加者と未登録の同行者をシャッフルして 1 グループあたり size 人ずつ先頭から詰める。
 // 例: 6 人で size=4 なら A:4 人 / B:2 人、size=3 なら 3/3。永続化はしない。
 function GroupShuffleSection({
   participants,
+  unregisteredCount,
   myUserId,
 }: {
   participants: TicketParticipant[];
+  unregisteredCount: number;
   myUserId: string;
 }) {
-  const total = participants.length;
+  const total = participants.length + unregisteredCount;
   const [sizeText, setSizeText] = useState("4");
-  const [groups, setGroups] = useState<TicketParticipant[][] | null>(null);
+  const [groups, setGroups] = useState<GroupMember[][] | null>(null);
 
-  // 参加者の顔ぶれが変わったら古い分け方は破棄する（古い参加者が残らないように）。
+  // 参加者の顔ぶれや未登録の人数が変わったら古い分け方は破棄する（古い参加者が残らないように）。
   const idsKey = useMemo(
     () =>
       participants
@@ -550,7 +560,7 @@ function GroupShuffleSection({
   );
   useEffect(() => {
     setGroups(null);
-  }, [idsKey]);
+  }, [idsKey, unregisteredCount]);
 
   if (total < 2) return null;
 
@@ -558,13 +568,24 @@ function GroupShuffleSection({
   const groupCount = Math.ceil(total / size);
 
   const shuffle = () => {
-    const shuffled = [...participants];
+    const shuffled: GroupMember[] = [
+      ...participants.map((p) => ({
+        key: p.userId,
+        userId: p.userId,
+        name: p.name,
+      })),
+      ...Array.from({ length: unregisteredCount }, (_, i) => ({
+        key: `unregistered-${i}`,
+        userId: null,
+        name: "（未登録ユーザー）",
+      })),
+    ];
     // Fisher–Yates でその場シャッフル
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    const result: TicketParticipant[][] = [];
+    const result: GroupMember[][] = [];
     for (let i = 0; i < shuffled.length; i += size) {
       result.push(shuffled.slice(i, i + size));
     }
@@ -617,16 +638,18 @@ function GroupShuffleSection({
                   </span>
                 </div>
                 <ul className="divide-y divide-zinc-100">
-                  {group.map((p) => (
+                  {group.map((m) => (
                     <li
-                      key={p.userId}
+                      key={m.key}
                       className={
-                        p.userId === myUserId
-                          ? "px-3 py-2 text-sm font-semibold text-emerald-700"
-                          : "px-3 py-2 text-sm text-zinc-900"
+                        m.userId === null
+                          ? "px-3 py-2 text-sm text-zinc-500"
+                          : m.userId === myUserId
+                            ? "px-3 py-2 text-sm font-semibold text-emerald-700"
+                            : "px-3 py-2 text-sm text-zinc-900"
                       }
                     >
-                      {p.name}
+                      {m.name}
                     </li>
                   ))}
                 </ul>
