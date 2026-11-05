@@ -29,6 +29,9 @@ var ErrNoSession = errors.New("session が見つからないか期限切れ")
 // ことを示す。
 var ErrUserNotRegistered = errors.New("ユーザーが事前登録されていない")
 
+// ErrUserAlreadyRegistered は RegisterUser で identity が登録済みであることを示す。
+var ErrUserAlreadyRegistered = errors.New("ユーザーが登録済み")
+
 type User struct {
 	ID          string
 	DisplayName string
@@ -109,8 +112,24 @@ func UpsertUserFromIdentity(ctx context.Context, db *sql.DB, provider, subject s
 	}
 }
 
+// RegisterUser は (provider, subject) で識別される IdP identity のユーザーを事前登録する。
+// 登録済みの identity に対しては既存ユーザーを更新せず ErrUserAlreadyRegistered を返す。
+func RegisterUser(ctx context.Context, db *sql.DB, provider, subject string, profile UserProfile) (*User, error) {
+	_, err := queries.New(db).GetUserIDByIdentity(ctx, queries.GetUserIDByIdentityParams{
+		Provider: provider,
+		Subject:  subject,
+	})
+	if err == nil {
+		return nil, ErrUserAlreadyRegistered
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+	return UpsertUserFromIdentity(ctx, db, provider, subject, profile)
+}
+
 // LoginWithIdentity は (provider, subject) で識別される IdP identity に紐づく
-// 既存ユーザーを取得しプロフィールを最新化する。事前登録（register-user CLI）が
+// 既存ユーザーを取得しプロフィールを最新化する。事前登録（RegisterUser）が
 // 行われていない identity に対しては ErrUserNotRegistered を返し、新規ユーザーを
 // 作成しない。サービスを招待制に保つためのログインゲート。
 func LoginWithIdentity(ctx context.Context, db *sql.DB, provider, subject string, profile UserProfile) (*User, error) {

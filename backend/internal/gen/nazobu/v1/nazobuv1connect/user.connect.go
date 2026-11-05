@@ -37,6 +37,9 @@ const (
 	UserServiceGetMeProcedure = "/nazobu.v1.UserService/GetMe"
 	// UserServiceListUsersProcedure is the fully-qualified name of the UserService's ListUsers RPC.
 	UserServiceListUsersProcedure = "/nazobu.v1.UserService/ListUsers"
+	// UserServiceRegisterUserProcedure is the fully-qualified name of the UserService's RegisterUser
+	// RPC.
+	UserServiceRegisterUserProcedure = "/nazobu.v1.UserService/RegisterUser"
 )
 
 // UserServiceClient is a client for the nazobu.v1.UserService service.
@@ -44,6 +47,9 @@ type UserServiceClient interface {
 	// GetMe は cookie session から現在の user を返す。未ログインなら unauthenticated。
 	GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error)
 	ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error)
+	// RegisterUser は Discord ユーザーを事前登録する（ログインの許可と、ログイン前のメンションを可能にするため）。admin のみ。
+	// 登録済みなら already_exists を返し、既存ユーザーは更新しない。
+	RegisterUser(context.Context, *connect.Request[v1.RegisterUserRequest]) (*connect.Response[v1.RegisterUserResponse], error)
 }
 
 // NewUserServiceClient constructs a client for the nazobu.v1.UserService service. By default, it
@@ -69,13 +75,20 @@ func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(userServiceMethods.ByName("ListUsers")),
 			connect.WithClientOptions(opts...),
 		),
+		registerUser: connect.NewClient[v1.RegisterUserRequest, v1.RegisterUserResponse](
+			httpClient,
+			baseURL+UserServiceRegisterUserProcedure,
+			connect.WithSchema(userServiceMethods.ByName("RegisterUser")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
-	getMe     *connect.Client[v1.GetMeRequest, v1.GetMeResponse]
-	listUsers *connect.Client[v1.ListUsersRequest, v1.ListUsersResponse]
+	getMe        *connect.Client[v1.GetMeRequest, v1.GetMeResponse]
+	listUsers    *connect.Client[v1.ListUsersRequest, v1.ListUsersResponse]
+	registerUser *connect.Client[v1.RegisterUserRequest, v1.RegisterUserResponse]
 }
 
 // GetMe calls nazobu.v1.UserService.GetMe.
@@ -88,11 +101,19 @@ func (c *userServiceClient) ListUsers(ctx context.Context, req *connect.Request[
 	return c.listUsers.CallUnary(ctx, req)
 }
 
+// RegisterUser calls nazobu.v1.UserService.RegisterUser.
+func (c *userServiceClient) RegisterUser(ctx context.Context, req *connect.Request[v1.RegisterUserRequest]) (*connect.Response[v1.RegisterUserResponse], error) {
+	return c.registerUser.CallUnary(ctx, req)
+}
+
 // UserServiceHandler is an implementation of the nazobu.v1.UserService service.
 type UserServiceHandler interface {
 	// GetMe は cookie session から現在の user を返す。未ログインなら unauthenticated。
 	GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error)
 	ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error)
+	// RegisterUser は Discord ユーザーを事前登録する（ログインの許可と、ログイン前のメンションを可能にするため）。admin のみ。
+	// 登録済みなら already_exists を返し、既存ユーザーは更新しない。
+	RegisterUser(context.Context, *connect.Request[v1.RegisterUserRequest]) (*connect.Response[v1.RegisterUserResponse], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -114,12 +135,20 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(userServiceMethods.ByName("ListUsers")),
 		connect.WithHandlerOptions(opts...),
 	)
+	userServiceRegisterUserHandler := connect.NewUnaryHandler(
+		UserServiceRegisterUserProcedure,
+		svc.RegisterUser,
+		connect.WithSchema(userServiceMethods.ByName("RegisterUser")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/nazobu.v1.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case UserServiceGetMeProcedure:
 			userServiceGetMeHandler.ServeHTTP(w, r)
 		case UserServiceListUsersProcedure:
 			userServiceListUsersHandler.ServeHTTP(w, r)
+		case UserServiceRegisterUserProcedure:
+			userServiceRegisterUserHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -135,4 +164,8 @@ func (UnimplementedUserServiceHandler) GetMe(context.Context, *connect.Request[v
 
 func (UnimplementedUserServiceHandler) ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.UserService.ListUsers is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) RegisterUser(context.Context, *connect.Request[v1.RegisterUserRequest]) (*connect.Response[v1.RegisterUserResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("nazobu.v1.UserService.RegisterUser is not implemented"))
 }

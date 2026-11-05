@@ -10,8 +10,10 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -358,6 +360,119 @@ func TestIntegrationMCPListUsers(t *testing.T) {
 	}
 	if out.Users[0].UserID != userID || out.Users[0].DisplayName != "mcp-test-user" {
 		t.Errorf("users[0] = %+v", out.Users[0])
+	}
+}
+
+func TestIntegrationMCPRegisterUser(t *testing.T) {
+	db := testdb.Open(t)
+	ctx := context.Background()
+	adminID := createTestUser(t, db, "mcp-admin", auth.RoleAdmin)
+	memberID := createTestUser(t, db, "mcp-member", auth.RoleMember)
+	ts := newMCPTestServer(t, db)
+
+	const discordUserID = "123456789012345678"
+	const otherDiscordUserID = "123456789012345679"
+	adminSession := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, adminID, "read write"))
+	callRegisterUser := func(t *testing.T, session *mcp.ClientSession, discordUserID, displayName string) *mcp.CallToolResult {
+		t.Helper()
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name: "register_user",
+			Arguments: map[string]any{
+				"discord_user_id": discordUserID,
+				"display_name":    displayName,
+			},
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		return res
+	}
+
+	t.Run("admin が事前登録すると member として作成されログイン可能になる", func(t *testing.T) {
+		res := callRegisterUser(t, adminSession, discordUserID, "招待メンバー")
+		if res.IsError {
+			t.Fatalf("ツールがエラーを返した: %+v", res.Content)
+		}
+		var out struct {
+			User struct {
+				UserID      string `json:"user_id"`
+				DisplayName string `json:"display_name"`
+			} `json:"user"`
+		}
+		unmarshalStructuredContent(t, res, &out)
+		if out.User.UserID == "" || out.User.DisplayName != "招待メンバー" {
+			t.Errorf("user = %+v", out.User)
+		}
+
+		user, err := auth.LoginWithIdentity(ctx, db, auth.ProviderDiscord, discordUserID, auth.UserProfile{DisplayName: "Discord の表示名"})
+		if err != nil {
+			t.Fatalf("登録後にログインできない: %v", err)
+		}
+		if user.ID != out.User.UserID {
+			t.Errorf("login user id = %q, want %q", user.ID, out.User.UserID)
+		}
+		var role string
+		if err := db.QueryRowContext(ctx, "SELECT role FROM users WHERE id = ?", out.User.UserID).Scan(&role); err != nil {
+			t.Fatalf("role の取得に失敗: %v", err)
+		}
+		if role != auth.RoleMember {
+			t.Errorf("role = %q, want %q", role, auth.RoleMember)
+		}
+	})
+
+	t.Run("登録済みならエラーで既存ユーザーを更新しない", func(t *testing.T) {
+		res := callRegisterUser(t, adminSession, discordUserID, "上書きされない名前")
+		if !res.IsError {
+			t.Fatal("登録済みユーザーの再登録が成功してしまった")
+		}
+		var count int
+		if err := db.QueryRowContext(ctx, "SELECT COUNT(*) FROM users WHERE display_name = ?", "上書きされない名前").Scan(&count); err != nil {
+			t.Fatalf("user の検索に失敗: %v", err)
+		}
+		if count != 0 {
+			t.Error("既存ユーザーの表示名が更新された")
+		}
+	})
+
+	t.Run("不正な入力はエラー", func(t *testing.T) {
+		for name, args := range map[string][2]string{
+			"Snowflake でない ID": {"aruma256", "招待メンバー"},
+			"空の ID":            {"", "招待メンバー"},
+			"空の表示名":            {otherDiscordUserID, "  "},
+			"長すぎる表示名":          {otherDiscordUserID, strings.Repeat("あ", 256)},
+		} {
+			if res := callRegisterUser(t, adminSession, args[0], args[1]); !res.IsError {
+				t.Errorf("%s: 成功してしまった", name)
+			}
+		}
+		assertNotRegistered(t, db, otherDiscordUserID)
+	})
+
+	t.Run("read のみのトークンでは write スコープ不足でエラー", func(t *testing.T) {
+		session := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, adminID, "read"))
+		if res := callRegisterUser(t, session, otherDiscordUserID, "招待メンバー"); !res.IsError {
+			t.Fatal("write スコープ無しで成功してしまった")
+		}
+		assertNotRegistered(t, db, otherDiscordUserID)
+	})
+
+	t.Run("member ロールでは権限エラー", func(t *testing.T) {
+		session := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, memberID, "read write"))
+		if res := callRegisterUser(t, session, otherDiscordUserID, "招待メンバー"); !res.IsError {
+			t.Fatal("member ロールで成功してしまった")
+		}
+		assertNotRegistered(t, db, otherDiscordUserID)
+	})
+}
+
+func assertNotRegistered(t *testing.T, db *sql.DB, discordUserID string) {
+	t.Helper()
+	_, err := queries.New(db).GetUserIDByIdentity(context.Background(), queries.GetUserIDByIdentityParams{
+		Provider: auth.ProviderDiscord,
+		Subject:  discordUserID,
+	})
+	if !errors.Is(err, sql.ErrNoRows) {
+		t.Errorf("未登録のはずの identity の検索結果が想定外: %v", err)
 	}
 }
 

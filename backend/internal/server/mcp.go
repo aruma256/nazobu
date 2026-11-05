@@ -59,6 +59,13 @@ func newMCPHandler(
 	}, listUsersTool(users))
 
 	mcp.AddTool(srv, &mcp.Tool{
+		Name: "register_user",
+		Description: "Discord ユーザーを謎部に事前登録する（ログインの許可と、ログイン前のメンションを可能にするため）。" +
+			"登録するとその Discord アカウントでログインできるようになるため、利用者に対象を確認してから実行する。" +
+			"登録済みならエラーになり、既存ユーザーは更新しない。admin ロールと write スコープが必要。",
+	}, registerUserTool(users))
+
+	mcp.AddTool(srv, &mcp.Tool{
 		Name: "create_ticket_with_event",
 		Description: "新しい謎解き公演とそのチケットをまとめて 1 件登録する（web の新規登録と同じ動線）。" +
 			"チケットの立替者（購入者）はログイン中のユーザー自身になる。admin ロールと write スコープが必要。" +
@@ -225,6 +232,36 @@ func listUsersTool(users nazobuv1connect.UserServiceHandler) mcp.ToolHandlerFor[
 				UserID:      u.GetId(),
 				DisplayName: u.GetDisplayName(),
 			})
+		}
+		return nil, out, nil
+	}
+}
+
+type registerUserInput struct {
+	DiscordUserID string `json:"discord_user_id" jsonschema:"Discord ユーザー ID（Snowflake、必須）。ユーザー名ではなく数字の ID を指定する"`
+	DisplayName   string `json:"display_name" jsonschema:"ログインするまでの表示名（必須）。ログイン時に Discord の値で上書きされる"`
+}
+
+type registerUserOutput struct {
+	User mcpUser `json:"user" jsonschema:"登録されたユーザー"`
+}
+
+func registerUserTool(users nazobuv1connect.UserServiceHandler) mcp.ToolHandlerFor[registerUserInput, registerUserOutput] {
+	return func(ctx context.Context, _ *mcp.CallToolRequest, in registerUserInput) (*mcp.CallToolResult, registerUserOutput, error) {
+		var out registerUserOutput
+		if !oauth.HasScope(ctx, oauth.ScopeWrite) {
+			return nil, out, errors.New("このアクセストークンには write スコープがありません。コネクタを再接続して書き込みを許可してください")
+		}
+		res, err := users.RegisterUser(ctx, connect.NewRequest(&nazobuv1.RegisterUserRequest{
+			DiscordUserId: in.DiscordUserID,
+			DisplayName:   in.DisplayName,
+		}))
+		if err != nil {
+			return nil, out, err
+		}
+		out.User = mcpUser{
+			UserID:      res.Msg.GetUser().GetId(),
+			DisplayName: res.Msg.GetUser().GetDisplayName(),
 		}
 		return nil, out, nil
 	}

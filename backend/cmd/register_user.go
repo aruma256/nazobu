@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -9,7 +8,6 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	"github.com/aruma256/nazobu/backend/internal/config"
 	"github.com/aruma256/nazobu/backend/internal/db"
-	"github.com/aruma256/nazobu/backend/internal/gen/queries"
 	"github.com/aruma256/nazobu/backend/internal/logging"
 	"github.com/spf13/cobra"
 )
@@ -32,20 +30,12 @@ var registerUserCmd = &cobra.Command{
 
 		ctx := cmd.Context()
 
-		_, err = queries.New(conn).GetUserIDByIdentity(ctx, queries.GetUserIDByIdentityParams{
-			Provider: auth.ProviderDiscord,
-			Subject:  registerUserDiscordUserID,
-		})
-		if err == nil {
+		profile := auth.UserProfile{DisplayName: registerUserDisplayName}
+		user, err := auth.RegisterUser(ctx, conn, auth.ProviderDiscord, registerUserDiscordUserID, profile)
+		if errors.Is(err, auth.ErrUserAlreadyRegistered) {
 			slog.ErrorContext(ctx, "user already registered")
 			return fmt.Errorf("指定された Discord user ID %s のユーザーは登録済み", registerUserDiscordUserID)
 		}
-		if !errors.Is(err, sql.ErrNoRows) {
-			return err
-		}
-
-		profile := auth.UserProfile{DisplayName: registerUserDisplayName}
-		user, err := auth.UpsertUserFromIdentity(ctx, conn, auth.ProviderDiscord, registerUserDiscordUserID, profile)
 		if err != nil {
 			return fmt.Errorf("ユーザー登録に失敗: %w", err)
 		}

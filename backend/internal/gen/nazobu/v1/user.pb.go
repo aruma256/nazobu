@@ -209,6 +209,104 @@ func (x *ListUsersResponse) GetUsers() []*User {
 	return nil
 }
 
+type RegisterUserRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Discord ユーザー ID（Snowflake）。
+	DiscordUserId string `protobuf:"bytes,1,opt,name=discord_user_id,json=discordUserId,proto3" json:"discord_user_id,omitempty"`
+	// ログインするまでの表示名。ログイン時に Discord の値で上書きされる。
+	DisplayName   string `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterUserRequest) Reset() {
+	*x = RegisterUserRequest{}
+	mi := &file_nazobu_v1_user_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterUserRequest) ProtoMessage() {}
+
+func (x *RegisterUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_user_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterUserRequest.ProtoReflect.Descriptor instead.
+func (*RegisterUserRequest) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_user_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *RegisterUserRequest) GetDiscordUserId() string {
+	if x != nil {
+		return x.DiscordUserId
+	}
+	return ""
+}
+
+func (x *RegisterUserRequest) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+type RegisterUserResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	User          *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterUserResponse) Reset() {
+	*x = RegisterUserResponse{}
+	mi := &file_nazobu_v1_user_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterUserResponse) ProtoMessage() {}
+
+func (x *RegisterUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nazobu_v1_user_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterUserResponse.ProtoReflect.Descriptor instead.
+func (*RegisterUserResponse) Descriptor() ([]byte, []int) {
+	return file_nazobu_v1_user_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *RegisterUserResponse) GetUser() *User {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
 type User struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -220,7 +318,7 @@ type User struct {
 
 func (x *User) Reset() {
 	*x = User{}
-	mi := &file_nazobu_v1_user_proto_msgTypes[4]
+	mi := &file_nazobu_v1_user_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -232,7 +330,7 @@ func (x *User) String() string {
 func (*User) ProtoMessage() {}
 
 func (x *User) ProtoReflect() protoreflect.Message {
-	mi := &file_nazobu_v1_user_proto_msgTypes[4]
+	mi := &file_nazobu_v1_user_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -245,7 +343,7 @@ func (x *User) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use User.ProtoReflect.Descriptor instead.
 func (*User) Descriptor() ([]byte, []int) {
-	return file_nazobu_v1_user_proto_rawDescGZIP(), []int{4}
+	return file_nazobu_v1_user_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *User) GetId() string {
@@ -276,13 +374,19 @@ const file_nazobu_v1_user_proto_rawDesc = "" +
 	"\x04role\x18\x05 \x01(\tR\x04roleJ\x04\b\x02\x10\x03R\busername\"\x12\n" +
 	"\x10ListUsersRequest\":\n" +
 	"\x11ListUsersResponse\x12%\n" +
-	"\x05users\x18\x01 \x03(\v2\x0f.nazobu.v1.UserR\x05users\"I\n" +
+	"\x05users\x18\x01 \x03(\v2\x0f.nazobu.v1.UserR\x05users\"`\n" +
+	"\x13RegisterUserRequest\x12&\n" +
+	"\x0fdiscord_user_id\x18\x01 \x01(\tR\rdiscordUserId\x12!\n" +
+	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\";\n" +
+	"\x14RegisterUserResponse\x12#\n" +
+	"\x04user\x18\x01 \x01(\v2\x0f.nazobu.v1.UserR\x04user\"I\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
-	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayNameJ\x04\b\x02\x10\x03R\busername2\x91\x01\n" +
+	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayNameJ\x04\b\x02\x10\x03R\busername2\xe2\x01\n" +
 	"\vUserService\x12:\n" +
 	"\x05GetMe\x12\x17.nazobu.v1.GetMeRequest\x1a\x18.nazobu.v1.GetMeResponse\x12F\n" +
-	"\tListUsers\x12\x1b.nazobu.v1.ListUsersRequest\x1a\x1c.nazobu.v1.ListUsersResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
+	"\tListUsers\x12\x1b.nazobu.v1.ListUsersRequest\x1a\x1c.nazobu.v1.ListUsersResponse\x12O\n" +
+	"\fRegisterUser\x12\x1e.nazobu.v1.RegisterUserRequest\x1a\x1f.nazobu.v1.RegisterUserResponseBDZBgithub.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1b\x06proto3"
 
 var (
 	file_nazobu_v1_user_proto_rawDescOnce sync.Once
@@ -296,25 +400,30 @@ func file_nazobu_v1_user_proto_rawDescGZIP() []byte {
 	return file_nazobu_v1_user_proto_rawDescData
 }
 
-var file_nazobu_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_nazobu_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_nazobu_v1_user_proto_goTypes = []any{
-	(*GetMeRequest)(nil),      // 0: nazobu.v1.GetMeRequest
-	(*GetMeResponse)(nil),     // 1: nazobu.v1.GetMeResponse
-	(*ListUsersRequest)(nil),  // 2: nazobu.v1.ListUsersRequest
-	(*ListUsersResponse)(nil), // 3: nazobu.v1.ListUsersResponse
-	(*User)(nil),              // 4: nazobu.v1.User
+	(*GetMeRequest)(nil),         // 0: nazobu.v1.GetMeRequest
+	(*GetMeResponse)(nil),        // 1: nazobu.v1.GetMeResponse
+	(*ListUsersRequest)(nil),     // 2: nazobu.v1.ListUsersRequest
+	(*ListUsersResponse)(nil),    // 3: nazobu.v1.ListUsersResponse
+	(*RegisterUserRequest)(nil),  // 4: nazobu.v1.RegisterUserRequest
+	(*RegisterUserResponse)(nil), // 5: nazobu.v1.RegisterUserResponse
+	(*User)(nil),                 // 6: nazobu.v1.User
 }
 var file_nazobu_v1_user_proto_depIdxs = []int32{
-	4, // 0: nazobu.v1.ListUsersResponse.users:type_name -> nazobu.v1.User
-	0, // 1: nazobu.v1.UserService.GetMe:input_type -> nazobu.v1.GetMeRequest
-	2, // 2: nazobu.v1.UserService.ListUsers:input_type -> nazobu.v1.ListUsersRequest
-	1, // 3: nazobu.v1.UserService.GetMe:output_type -> nazobu.v1.GetMeResponse
-	3, // 4: nazobu.v1.UserService.ListUsers:output_type -> nazobu.v1.ListUsersResponse
-	3, // [3:5] is the sub-list for method output_type
-	1, // [1:3] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	6, // 0: nazobu.v1.ListUsersResponse.users:type_name -> nazobu.v1.User
+	6, // 1: nazobu.v1.RegisterUserResponse.user:type_name -> nazobu.v1.User
+	0, // 2: nazobu.v1.UserService.GetMe:input_type -> nazobu.v1.GetMeRequest
+	2, // 3: nazobu.v1.UserService.ListUsers:input_type -> nazobu.v1.ListUsersRequest
+	4, // 4: nazobu.v1.UserService.RegisterUser:input_type -> nazobu.v1.RegisterUserRequest
+	1, // 5: nazobu.v1.UserService.GetMe:output_type -> nazobu.v1.GetMeResponse
+	3, // 6: nazobu.v1.UserService.ListUsers:output_type -> nazobu.v1.ListUsersResponse
+	5, // 7: nazobu.v1.UserService.RegisterUser:output_type -> nazobu.v1.RegisterUserResponse
+	5, // [5:8] is the sub-list for method output_type
+	2, // [2:5] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_nazobu_v1_user_proto_init() }
@@ -328,7 +437,7 @@ func file_nazobu_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_nazobu_v1_user_proto_rawDesc), len(file_nazobu_v1_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

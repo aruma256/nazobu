@@ -3,14 +3,23 @@ package server
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"log/slog"
+	"strings"
+	"unicode/utf8"
 
 	"connectrpc.com/connect"
 
+	"github.com/aruma256/nazobu/backend/internal/auth"
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
 	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
+	"github.com/aruma256/nazobu/backend/internal/logging"
 )
+
+// users.display_name の VARCHAR(255) と同期させる。
+const maxDisplayNameLength = 255
 
 type userService struct {
 	db *sql.DB
@@ -54,4 +63,39 @@ func (s *userService) ListUsers(ctx context.Context, req *connect.Request[nazobu
 		})
 	}
 	return connect.NewResponse(&nazobuv1.ListUsersResponse{Users: users}), nil
+}
+
+func (s *userService) RegisterUser(ctx context.Context, req *connect.Request[nazobuv1.RegisterUserRequest]) (response *connect.Response[nazobuv1.RegisterUserResponse], returnErr error) {
+	defer logRPCFailure(ctx, "RegisterUser", &returnErr)
+	actor, err := lookupSessionUser(ctx, s.db, req.Header())
+	if err != nil {
+		return nil, err
+	}
+	if actor.Role != auth.RoleAdmin {
+		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("ユーザーの事前登録は admin のみ"))
+	}
+
+	discordUserID := strings.TrimSpace(req.Msg.GetDiscordUserId())
+	if !validDiscordSnowflake(discordUserID) {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("discord_user_id は Discord のユーザー ID（Snowflake）で指定する"))
+	}
+	displayName := strings.TrimSpace(req.Msg.GetDisplayName())
+	if displayName == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("display_name は必須"))
+	}
+	if utf8.RuneCountInString(displayName) > maxDisplayNameLength {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("display_name は %d 文字以内", maxDisplayNameLength))
+	}
+
+	user, err := auth.RegisterUser(ctx, s.db, auth.ProviderDiscord, discordUserID, auth.UserProfile{DisplayName: displayName})
+	if errors.Is(err, auth.ErrUserAlreadyRegistered) {
+		return nil, connect.NewError(connect.CodeAlreadyExists, errors.New("指定された Discord ユーザーは登録済み"))
+	}
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ユーザー登録に失敗: %w", err))
+	}
+	slog.InfoContext(ctx, "user registered", logging.ID("user_id", user.ID), logging.ID("actor_user_id", actor.ID))
+	return connect.NewResponse(&nazobuv1.RegisterUserResponse{
+		User: &nazobuv1.User{Id: user.ID, DisplayName: user.DisplayName},
+	}), nil
 }

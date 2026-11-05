@@ -4,11 +4,14 @@ package nazobu.v1;
 
 option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1";
 
-// UserService は現在ログイン中の user に関する RPC、および user 一覧の参照 RPC を提供する。
+// UserService は現在ログイン中の user に関する RPC、user 一覧の参照 RPC、および user の事前登録 RPC を提供する。
 service UserService {
   // GetMe は cookie session から現在の user を返す。未ログインなら unauthenticated。
   rpc GetMe(GetMeRequest) returns (GetMeResponse);
   rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+  // RegisterUser は Discord ユーザーを事前登録する（ログインの許可と、ログイン前のメンションを可能にするため）。admin のみ。
+  // 登録済みなら already_exists を返し、既存ユーザーは更新しない。
+  rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse);
 }
 
 message GetMeRequest {}
@@ -31,6 +34,17 @@ message ListUsersRequest {}
 message ListUsersResponse {
   // users は display_name 昇順。
   repeated User users = 1;
+}
+
+message RegisterUserRequest {
+  // Discord ユーザー ID（Snowflake）。
+  string discord_user_id = 1;
+  // ログインするまでの表示名。ログイン時に Discord の値で上書きされる。
+  string display_name = 2;
+}
+
+message RegisterUserResponse {
+  User user = 1;
 }
 
 message User {

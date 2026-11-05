@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file nazobu/v1/user.proto.
  */
 export const file_nazobu_v1_user: GenFile = /*@__PURE__*/
-  fileDesc("ChRuYXpvYnUvdjEvdXNlci5wcm90bxIJbmF6b2J1LnYxIg4KDEdldE1lUmVxdWVzdCJjCg1HZXRNZVJlc3BvbnNlEgoKAmlkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCRISCgphdmF0YXJfdXJsGAQgASgJEgwKBHJvbGUYBSABKAlKBAgCEANSCHVzZXJuYW1lIhIKEExpc3RVc2Vyc1JlcXVlc3QiMwoRTGlzdFVzZXJzUmVzcG9uc2USHgoFdXNlcnMYASADKAsyDy5uYXpvYnUudjEuVXNlciI4CgRVc2VyEgoKAmlkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCUoECAIQA1IIdXNlcm5hbWUykQEKC1VzZXJTZXJ2aWNlEjoKBUdldE1lEhcubmF6b2J1LnYxLkdldE1lUmVxdWVzdBoYLm5hem9idS52MS5HZXRNZVJlc3BvbnNlEkYKCUxpc3RVc2VycxIbLm5hem9idS52MS5MaXN0VXNlcnNSZXF1ZXN0GhwubmF6b2J1LnYxLkxpc3RVc2Vyc1Jlc3BvbnNlQkRaQmdpdGh1Yi5jb20vYXJ1bWEyNTYvbmF6b2J1L2JhY2tlbmQvaW50ZXJuYWwvZ2VuL25hem9idS92MTtuYXpvYnV2MWIGcHJvdG8z");
+  fileDesc("ChRuYXpvYnUvdjEvdXNlci5wcm90bxIJbmF6b2J1LnYxIg4KDEdldE1lUmVxdWVzdCJjCg1HZXRNZVJlc3BvbnNlEgoKAmlkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCRISCgphdmF0YXJfdXJsGAQgASgJEgwKBHJvbGUYBSABKAlKBAgCEANSCHVzZXJuYW1lIhIKEExpc3RVc2Vyc1JlcXVlc3QiMwoRTGlzdFVzZXJzUmVzcG9uc2USHgoFdXNlcnMYASADKAsyDy5uYXpvYnUudjEuVXNlciJEChNSZWdpc3RlclVzZXJSZXF1ZXN0EhcKD2Rpc2NvcmRfdXNlcl9pZBgBIAEoCRIUCgxkaXNwbGF5X25hbWUYAiABKAkiNQoUUmVnaXN0ZXJVc2VyUmVzcG9uc2USHQoEdXNlchgBIAEoCzIPLm5hem9idS52MS5Vc2VyIjgKBFVzZXISCgoCaWQYASABKAkSFAoMZGlzcGxheV9uYW1lGAMgASgJSgQIAhADUgh1c2VybmFtZTLiAQoLVXNlclNlcnZpY2USOgoFR2V0TWUSFy5uYXpvYnUudjEuR2V0TWVSZXF1ZXN0GhgubmF6b2J1LnYxLkdldE1lUmVzcG9uc2USRgoJTGlzdFVzZXJzEhsubmF6b2J1LnYxLkxpc3RVc2Vyc1JlcXVlc3QaHC5uYXpvYnUudjEuTGlzdFVzZXJzUmVzcG9uc2USTwoMUmVnaXN0ZXJVc2VyEh4ubmF6b2J1LnYxLlJlZ2lzdGVyVXNlclJlcXVlc3QaHy5uYXpvYnUudjEuUmVnaXN0ZXJVc2VyUmVzcG9uc2VCRFpCZ2l0aHViLmNvbS9hcnVtYTI1Ni9uYXpvYnUvYmFja2VuZC9pbnRlcm5hbC9nZW4vbmF6b2J1L3YxO25hem9idXYxYgZwcm90bzM");
 
 /**
  * @generated from message nazobu.v1.GetMeRequest
@@ -96,6 +96,49 @@ export const ListUsersResponseSchema: GenMessage<ListUsersResponse> = /*@__PURE_
   messageDesc(file_nazobu_v1_user, 3);
 
 /**
+ * @generated from message nazobu.v1.RegisterUserRequest
+ */
+export type RegisterUserRequest = Message<"nazobu.v1.RegisterUserRequest"> & {
+  /**
+   * Discord ユーザー ID（Snowflake）。
+   *
+   * @generated from field: string discord_user_id = 1;
+   */
+  discordUserId: string;
+
+  /**
+   * ログインするまでの表示名。ログイン時に Discord の値で上書きされる。
+   *
+   * @generated from field: string display_name = 2;
+   */
+  displayName: string;
+};
+
+/**
+ * Describes the message nazobu.v1.RegisterUserRequest.
+ * Use `create(RegisterUserRequestSchema)` to create a new message.
+ */
+export const RegisterUserRequestSchema: GenMessage<RegisterUserRequest> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_user, 4);
+
+/**
+ * @generated from message nazobu.v1.RegisterUserResponse
+ */
+export type RegisterUserResponse = Message<"nazobu.v1.RegisterUserResponse"> & {
+  /**
+   * @generated from field: nazobu.v1.User user = 1;
+   */
+  user?: User | undefined;
+};
+
+/**
+ * Describes the message nazobu.v1.RegisterUserResponse.
+ * Use `create(RegisterUserResponseSchema)` to create a new message.
+ */
+export const RegisterUserResponseSchema: GenMessage<RegisterUserResponse> = /*@__PURE__*/
+  messageDesc(file_nazobu_v1_user, 5);
+
+/**
  * @generated from message nazobu.v1.User
  */
 export type User = Message<"nazobu.v1.User"> & {
@@ -117,10 +160,10 @@ export type User = Message<"nazobu.v1.User"> & {
  * Use `create(UserSchema)` to create a new message.
  */
 export const UserSchema: GenMessage<User> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_user, 4);
+  messageDesc(file_nazobu_v1_user, 6);
 
 /**
- * UserService は現在ログイン中の user に関する RPC、および user 一覧の参照 RPC を提供する。
+ * UserService は現在ログイン中の user に関する RPC、user 一覧の参照 RPC、および user の事前登録 RPC を提供する。
  *
  * @generated from service nazobu.v1.UserService
  */
@@ -142,6 +185,17 @@ export const UserService: GenService<{
     methodKind: "unary";
     input: typeof ListUsersRequestSchema;
     output: typeof ListUsersResponseSchema;
+  },
+  /**
+   * RegisterUser は Discord ユーザーを事前登録する（ログインの許可と、ログイン前のメンションを可能にするため）。admin のみ。
+   * 登録済みなら already_exists を返し、既存ユーザーは更新しない。
+   *
+   * @generated from rpc nazobu.v1.UserService.RegisterUser
+   */
+  registerUser: {
+    methodKind: "unary";
+    input: typeof RegisterUserRequestSchema;
+    output: typeof RegisterUserResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_nazobu_v1_user, 0);
