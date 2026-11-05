@@ -12,7 +12,7 @@
 
 | ツール | 必要 scope | 内容 |
 |---|---|---|
-| `list_my_upcoming_tickets` | - | 自分の今後参加予定のチケット一覧（開演日時・集合時刻・場所・同行者・参加費） |
+| `list_my_upcoming_tickets` | - | 自分の今後参加予定のチケット一覧（開演日時・集合時刻・場所・メモ・同行者・参加費） |
 | `list_tickets` | - | 登録済みの全チケット一覧（過去の公演も含む、開演日時の降順） |
 | `get_ticket` | - | チケット 1 件の詳細。参加者ごとの精算状況（精算済みか・立替者か）を含む |
 | `list_users` | - | 登録メンバー一覧（`user_id` と表示名）。参加者指定の前に ID を引く用途 |
@@ -32,7 +32,7 @@
 `UpdateTicketWithEvent` RPC は全置換だが、MCP ツール側で「現在値を取得（`GetTicket` + `GetEvent`）→ 指定フィールドだけ上書き → 全フィールド送信」するラッパーにしている。web の編集 form が現在値をロードしてから全送信するのと同じクライアント責務で、置換セマンティクス・バリデーション・権限は RPC 側に集約されたまま。
 
 - 省略（null）したフィールドは現在値を維持
-- `meeting_at` / `meeting_place` / `event_catchphrase` は空文字で未設定に戻す
+- `meeting_at` / `meeting_place` / `memo` / `event_catchphrase` は空文字で未設定に戻す
 - `event_doors_open_minutes_before` / `event_entry_deadline_minutes_before` は `-1` で未設定に戻す
 
 ### scope

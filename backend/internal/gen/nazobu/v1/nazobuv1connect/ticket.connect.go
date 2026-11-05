@@ -78,7 +78,7 @@ type TicketServiceClient interface {
 	// CreateTicketWithEvent は event と ticket を 1 トランザクションで同時登録する。
 	// 1 公演 1 チケットが主流のため、新規作成はこの統合 RPC を主動線にする。admin のみ実行可能。
 	CreateTicketWithEvent(context.Context, *connect.Request[v1.CreateTicketWithEventRequest]) (*connect.Response[v1.CreateTicketWithEventResponse], error)
-	// UpdateTicket は ticket 本体（start_at / meeting_at / price_per_person / max_participants / meeting_place / purchased_by_user_id）を更新する。
+	// UpdateTicket は ticket 本体（start_at / meeting_at / price_per_person / max_participants / meeting_place / memo / purchased_by_user_id）を更新する。
 	// admin もしくは立替者のみ実行可能。新しい立替者は ticket の参加者の中から選ぶ。
 	UpdateTicket(context.Context, *connect.Request[v1.UpdateTicketRequest]) (*connect.Response[v1.UpdateTicketResponse], error)
 	// UpdateTicketWithEvent は ticket と紐づく event を 1 トランザクションで同時更新する。
@@ -264,7 +264,7 @@ type TicketServiceHandler interface {
 	// CreateTicketWithEvent は event と ticket を 1 トランザクションで同時登録する。
 	// 1 公演 1 チケットが主流のため、新規作成はこの統合 RPC を主動線にする。admin のみ実行可能。
 	CreateTicketWithEvent(context.Context, *connect.Request[v1.CreateTicketWithEventRequest]) (*connect.Response[v1.CreateTicketWithEventResponse], error)
-	// UpdateTicket は ticket 本体（start_at / meeting_at / price_per_person / max_participants / meeting_place / purchased_by_user_id）を更新する。
+	// UpdateTicket は ticket 本体（start_at / meeting_at / price_per_person / max_participants / meeting_place / memo / purchased_by_user_id）を更新する。
 	// admin もしくは立替者のみ実行可能。新しい立替者は ticket の参加者の中から選ぶ。
 	UpdateTicket(context.Context, *connect.Request[v1.UpdateTicketRequest]) (*connect.Response[v1.UpdateTicketResponse], error)
 	// UpdateTicketWithEvent は ticket と紐づく event を 1 トランザクションで同時更新する。

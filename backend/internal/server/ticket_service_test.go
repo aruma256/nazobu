@@ -29,6 +29,39 @@ func TestCanEditTicket(t *testing.T) {
 	}
 }
 
+func TestNormalizeTicketMemo(t *testing.T) {
+	cases := []struct {
+		name     string
+		raw      string
+		want     string
+		wantCode connect.Code // 0 ならエラーなし
+	}{
+		{"空文字", "", "", 0},
+		{"空白のみは未設定扱い", " \n\t ", "", 0},
+		{"前後の空白は除き、内部の改行は保つ", "  持ち物\nペン  \n", "持ち物\nペン", 0},
+		{"上限ちょうどは文字数で判定して許可", strings.Repeat("謎", ticketMemoMaxChars), strings.Repeat("謎", ticketMemoMaxChars), 0},
+		{"上限超過は拒否", strings.Repeat("謎", ticketMemoMaxChars+1), "", connect.CodeInvalidArgument},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got, err := normalizeTicketMemo(c.raw)
+			if c.wantCode != 0 {
+				var cerr *connect.Error
+				if !errors.As(err, &cerr) || cerr.Code() != c.wantCode {
+					t.Fatalf("err = %v, want code %v", err, c.wantCode)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("予期しないエラー: %v", err)
+			}
+			if got != c.want {
+				t.Errorf("got %q, want %q", got, c.want)
+			}
+		})
+	}
+}
+
 func TestValidateTicketCapacityInput(t *testing.T) {
 	cases := []struct {
 		name              string

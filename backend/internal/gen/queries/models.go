@@ -66,6 +66,7 @@ type Ticket struct {
 	UnregisteredParticipantsCount int32
 	PurchasedBy                   string
 	MeetingPlace                  string
+	Memo                          string
 	DayBeforeNotifiedAt           sql.NullTime
 	MeetingNotifiedAt             sql.NullTime
 	CreatedAt                     time.Time

@@ -492,6 +492,7 @@ func TestIntegrationMCPCreateTicketWithEvent(t *testing.T) {
 			"start_at":                        "2026-09-01T14:00:00+09:00",
 			"meeting_at":                      "2026-09-01T13:30:00+09:00",
 			"meeting_place":                   "新宿駅東口",
+			"memo":                            "持ち物: ペン",
 			"price_per_person":                3800,
 			"max_participants":                4,
 			"unregistered_participants_count": 1,
@@ -519,6 +520,7 @@ func TestIntegrationMCPCreateTicketWithEvent(t *testing.T) {
 				EventTitle       string   `json:"event_title"`
 				StartAt          string   `json:"start_at"`
 				MeetingPlace     string   `json:"meeting_place"`
+				Memo             string   `json:"memo"`
 				PricePerPerson   int32    `json:"price_per_person"`
 				PurchaserName    string   `json:"purchaser_name"`
 				ParticipantNames []string `json:"participant_names"`
@@ -528,6 +530,9 @@ func TestIntegrationMCPCreateTicketWithEvent(t *testing.T) {
 		unmarshalStructuredContent(t, res, &out)
 		if out.EventID == "" || out.Ticket.TicketID == "" {
 			t.Fatalf("event_id / ticket_id が空: %+v", out)
+		}
+		if out.Ticket.Memo != "持ち物: ペン" {
+			t.Errorf("memo = %q", out.Ticket.Memo)
 		}
 		if out.Ticket.EventTitle != "新作脱出公演" {
 			t.Errorf("event_title = %q", out.Ticket.EventTitle)
@@ -692,6 +697,40 @@ func TestIntegrationMCPUpdateTicketWithEvent(t *testing.T) {
 		}
 		if ev.EntryDeadlineMinutesBefore.Valid {
 			t.Errorf("entry_deadline_minutes_before が未設定に戻っていない: %+v", ev.EntryDeadlineMinutesBefore)
+		}
+	})
+
+	t.Run("memo を設定でき、省略で維持し、空文字で未設定に戻せる", func(t *testing.T) {
+		update := func(args map[string]any) string {
+			t.Helper()
+			args["ticket_id"] = ticketID
+			res, err := session.CallTool(ctx, &mcp.CallToolParams{
+				Name:      "update_ticket_with_event",
+				Arguments: args,
+			})
+			if err != nil {
+				t.Fatalf("CallTool に失敗: %v", err)
+			}
+			if res.IsError {
+				t.Fatalf("ツールがエラーを返した: %+v", res.Content)
+			}
+			var out struct {
+				Ticket struct {
+					Memo string `json:"memo"`
+				} `json:"ticket"`
+			}
+			unmarshalStructuredContent(t, res, &out)
+			return out.Ticket.Memo
+		}
+
+		if got := update(map[string]any{"memo": "持ち物: ペン"}); got != "持ち物: ペン" {
+			t.Errorf("設定後の memo = %q", got)
+		}
+		if got := update(map[string]any{"price_per_person": 5100}); got != "持ち物: ペン" {
+			t.Errorf("memo を省略した更新で値が維持されなかった: %q", got)
+		}
+		if got := update(map[string]any{"memo": ""}); got != "" {
+			t.Errorf("memo = %q, want 空", got)
 		}
 	})
 

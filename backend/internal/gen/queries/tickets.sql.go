@@ -40,8 +40,8 @@ func (q *Queries) CountTicketParticipantsByTicketID(ctx context.Context, ticketI
 }
 
 const createTicket = `-- name: CreateTicket :exec
-INSERT INTO tickets (id, event_id, start_at, meeting_at, price_per_person, max_participants, unregistered_participants_count, purchased_by, meeting_place, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6))
+INSERT INTO tickets (id, event_id, start_at, meeting_at, price_per_person, max_participants, unregistered_participants_count, purchased_by, meeting_place, memo, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6))
 `
 
 type CreateTicketParams struct {
@@ -54,6 +54,7 @@ type CreateTicketParams struct {
 	UnregisteredParticipantsCount int32
 	PurchasedBy                   string
 	MeetingPlace                  string
+	Memo                          string
 }
 
 func (q *Queries) CreateTicket(ctx context.Context, arg CreateTicketParams) error {
@@ -67,6 +68,7 @@ func (q *Queries) CreateTicket(ctx context.Context, arg CreateTicketParams) erro
 		arg.UnregisteredParticipantsCount,
 		arg.PurchasedBy,
 		arg.MeetingPlace,
+		arg.Memo,
 	)
 	return err
 }
@@ -126,6 +128,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.unregistered_participants_count,
        t.meeting_place,
+       t.memo,
        t.purchased_by,
        pu.display_name AS purchaser_name
 FROM tickets t
@@ -150,6 +153,7 @@ type GetTicketByIDRow struct {
 	MaxParticipants               int32
 	UnregisteredParticipantsCount int32
 	MeetingPlace                  string
+	Memo                          string
 	PurchasedBy                   string
 	PurchaserName                 string
 }
@@ -173,6 +177,7 @@ func (q *Queries) GetTicketByID(ctx context.Context, id string) (GetTicketByIDRo
 		&i.MaxParticipants,
 		&i.UnregisteredParticipantsCount,
 		&i.MeetingPlace,
+		&i.Memo,
 		&i.PurchasedBy,
 		&i.PurchaserName,
 	)
@@ -313,6 +318,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.unregistered_participants_count,
        t.meeting_place,
+       t.memo,
        pu.display_name AS purchaser_name
 FROM tickets t
 JOIN events e  ON e.id  = t.event_id
@@ -335,6 +341,7 @@ type ListTicketsRow struct {
 	MaxParticipants               int32
 	UnregisteredParticipantsCount int32
 	MeetingPlace                  string
+	Memo                          string
 	PurchaserName                 string
 }
 
@@ -362,6 +369,7 @@ func (q *Queries) ListTickets(ctx context.Context) ([]ListTicketsRow, error) {
 			&i.MaxParticipants,
 			&i.UnregisteredParticipantsCount,
 			&i.MeetingPlace,
+			&i.Memo,
 			&i.PurchaserName,
 		); err != nil {
 			return nil, err
@@ -384,6 +392,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.unregistered_participants_count,
        t.meeting_place,
+       t.memo,
        pu.display_name AS purchaser_name
 FROM tickets t
 JOIN events e  ON e.id  = t.event_id
@@ -407,6 +416,7 @@ type ListTicketsByIDsRow struct {
 	MaxParticipants               int32
 	UnregisteredParticipantsCount int32
 	MeetingPlace                  string
+	Memo                          string
 	PurchaserName                 string
 }
 
@@ -445,6 +455,7 @@ func (q *Queries) ListTicketsByIDs(ctx context.Context, ids []string) ([]ListTic
 			&i.MaxParticipants,
 			&i.UnregisteredParticipantsCount,
 			&i.MeetingPlace,
+			&i.Memo,
 			&i.PurchaserName,
 		); err != nil {
 			return nil, err
@@ -512,6 +523,7 @@ SET start_at         = ?,
     max_participants = ?,
     unregistered_participants_count = ?,
     meeting_place    = ?,
+    memo             = ?,
     purchased_by     = ?,
     updated_at       = NOW(6)
 WHERE id = ?
@@ -524,6 +536,7 @@ type UpdateTicketParams struct {
 	MaxParticipants               int32
 	UnregisteredParticipantsCount int32
 	MeetingPlace                  string
+	Memo                          string
 	PurchasedBy                   string
 	ID                            string
 }
@@ -536,6 +549,7 @@ func (q *Queries) UpdateTicket(ctx context.Context, arg UpdateTicketParams) erro
 		arg.MaxParticipants,
 		arg.UnregisteredParticipantsCount,
 		arg.MeetingPlace,
+		arg.Memo,
 		arg.PurchasedBy,
 		arg.ID,
 	)

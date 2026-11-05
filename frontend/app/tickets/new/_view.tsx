@@ -102,6 +102,7 @@ function Form({
   const [startTime, setStartTime] = useState("");
   const [meetingTime, setMeetingTime] = useState("");
   const [meetingPlace, setMeetingPlace] = useState("");
+  const [memo, setMemo] = useState("");
   const [pricePerPerson, setPricePerPerson] = useState("");
   const [maxParticipants, setMaxParticipants] = useState("");
   const [unregisteredCount, setUnregisteredCount] = useState("");
@@ -203,6 +204,7 @@ function Form({
         startAt,
         meetingAt,
         meetingPlace: trimmedPlace,
+        memo: memo.trim(),
         pricePerPerson: priceNum,
         maxParticipants: maxNum,
         participantUserIds: participantIds,
@@ -445,6 +447,21 @@ function Form({
                 </div>
                 <p className="mt-1 text-xs text-zinc-500">
                   謎部に未登録の人が一緒に参加する場合の人数。参加者と合わせて定員の枠を使います。
+                </p>
+              </Field>
+
+              <Field label="メモ（任意）" htmlFor="ticket-memo">
+                <textarea
+                  id="ticket-memo"
+                  rows={4}
+                  maxLength={2000}
+                  value={memo}
+                  onChange={(e) => setMemo(e.target.value)}
+                  disabled={submitting}
+                  className="block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+                />
+                <p className="mt-1 text-xs text-zinc-500">
+                  2000 文字以内。ログイン中のメンバー全員に表示されます。
                 </p>
               </Field>
 

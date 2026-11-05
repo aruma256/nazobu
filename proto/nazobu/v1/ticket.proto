@@ -15,7 +15,7 @@ service TicketService {
   // CreateTicketWithEvent は event と ticket を 1 トランザクションで同時登録する。
   // 1 公演 1 チケットが主流のため、新規作成はこの統合 RPC を主動線にする。admin のみ実行可能。
   rpc CreateTicketWithEvent(CreateTicketWithEventRequest) returns (CreateTicketWithEventResponse);
-  // UpdateTicket は ticket 本体（start_at / meeting_at / price_per_person / max_participants / meeting_place / purchased_by_user_id）を更新する。
+  // UpdateTicket は ticket 本体（start_at / meeting_at / price_per_person / max_participants / meeting_place / memo / purchased_by_user_id）を更新する。
   // admin もしくは立替者のみ実行可能。新しい立替者は ticket の参加者の中から選ぶ。
   rpc UpdateTicket(UpdateTicketRequest) returns (UpdateTicketResponse);
   // UpdateTicketWithEvent は ticket と紐づく event を 1 トランザクションで同時更新する。
@@ -79,6 +79,8 @@ message Ticket {
   // 本サービスに未登録の同行者の人数。0 以上。
   // 登録ユーザーの参加者数と合わせて max_participants の枠を消費する。
   int32 unregistered_participants_count = 17;
+  // チケットの共有メモ（空文字なら未設定）。
+  string memo = 18;
 }
 
 message GetTicketRequest {
@@ -123,6 +125,8 @@ message CreateTicketRequest {
   int32 max_participants = 8;
   // 本サービスに未登録の同行者の人数。0 以上（省略時 0）。
   int32 unregistered_participants_count = 9;
+  // チケットの共有メモ（空文字なら未設定）。2000 文字以内。
+  string memo = 10;
 }
 
 message CreateTicketResponse {
@@ -147,6 +151,8 @@ message UpdateTicketRequest {
   int32 max_participants = 8;
   // 本サービスに未登録の同行者の人数。0 以上（省略時 0）。
   int32 unregistered_participants_count = 9;
+  // チケットの共有メモ（空文字なら未設定）。2000 文字以内。
+  string memo = 10;
 }
 
 message UpdateTicketResponse {
@@ -182,6 +188,8 @@ message CreateTicketWithEventRequest {
   int32 max_participants = 12;
   // 本サービスに未登録の同行者の人数。0 以上（省略時 0）。
   int32 unregistered_participants_count = 13;
+  // チケットの共有メモ（空文字なら未設定）。2000 文字以内。
+  string memo = 14;
 }
 
 message CreateTicketWithEventResponse {
@@ -210,6 +218,8 @@ message UpdateTicketWithEventRequest {
   int32 max_participants = 13;
   // 本サービスに未登録の同行者の人数。0 以上（省略時 0）。
   int32 unregistered_participants_count = 14;
+  // チケットの共有メモ（空文字なら未設定）。2000 文字以内。
+  string memo = 15;
 }
 
 message UpdateTicketWithEventResponse {

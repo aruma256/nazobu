@@ -303,6 +303,15 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
               </dd>
             </dl>
 
+            {ticket.memo !== "" && (
+              <div className="border-t border-zinc-200 px-4 py-3">
+                <h4 className="text-xs font-semibold text-zinc-500">メモ</h4>
+                <p className="mt-1 text-sm break-words whitespace-pre-wrap text-zinc-900">
+                  {ticket.memo}
+                </p>
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-2 border-t border-zinc-200 px-4 py-3">
               <a
                 href={buildGoogleCalendarUrl(ticket)}

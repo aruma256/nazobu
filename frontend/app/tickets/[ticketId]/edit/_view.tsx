@@ -213,6 +213,7 @@ function Form({
     meetingAtDate !== null ? toTimeInputValue(meetingAtDate) : "",
   );
   const [meetingPlace, setMeetingPlace] = useState(ticket.meetingPlace);
+  const [memo, setMemo] = useState(ticket.memo);
   const [pricePerPerson, setPricePerPerson] = useState(
     String(ticket.pricePerPerson),
   );
@@ -321,6 +322,7 @@ function Form({
         startAt,
         meetingAt,
         meetingPlace: trimmedPlace,
+        memo: memo.trim(),
         pricePerPerson: priceNum,
         maxParticipants: maxNum,
         purchasedByUserId,
@@ -588,6 +590,21 @@ function Form({
                 </select>
                 <p className="mt-1 text-xs text-zinc-500">
                   立替者は参加者の中から選びます。
+                </p>
+              </Field>
+
+              <Field label="メモ（任意）" htmlFor="ticket-memo">
+                <textarea
+                  id="ticket-memo"
+                  rows={4}
+                  maxLength={2000}
+                  value={memo}
+                  onChange={(e) => setMemo(e.target.value)}
+                  disabled={submitting}
+                  className="block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base text-zinc-900 placeholder-zinc-400 focus:border-emerald-700 focus:outline-none disabled:bg-zinc-100"
+                />
+                <p className="mt-1 text-xs text-zinc-500">
+                  2000 文字以内。ログイン中のメンバー全員に表示されます。
                 </p>
               </Field>
             </fieldset>

@@ -8,6 +8,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.unregistered_participants_count,
        t.meeting_place,
+       t.memo,
        pu.display_name AS purchaser_name
 FROM ticket_participants tp
 JOIN tickets t  ON t.id  = tp.ticket_id
@@ -29,6 +30,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.unregistered_participants_count,
        t.meeting_place,
+       t.memo,
        pu.display_name AS purchaser_name
 FROM tickets t
 JOIN events e  ON e.id = t.event_id
@@ -55,6 +57,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.unregistered_participants_count,
        t.meeting_place,
+       t.memo,
        pu.display_name AS purchaser_name
 FROM ticket_participants tp
 JOIN tickets t ON t.id = tp.ticket_id

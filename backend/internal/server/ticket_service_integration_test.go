@@ -9,8 +9,10 @@ import (
 	"database/sql"
 	"errors"
 	"slices"
+	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"connectrpc.com/connect"
 
@@ -220,6 +222,106 @@ func TestIntegrationCreateTicketAuthorization(t *testing.T) {
 			t.Errorf("code = %v, want %v", got, connect.CodePermissionDenied)
 		}
 	})
+}
+
+func TestIntegrationTicketMemo(t *testing.T) {
+	db := testdb.Open(t)
+	ctx := context.Background()
+	svc := newTicketService(db)
+
+	adminID := createTestUser(t, db, "admin-user", auth.RoleAdmin)
+	memberID := createTestUser(t, db, "member-user", auth.RoleMember)
+	eventID := createTestEvent(t, db, "テスト公演")
+
+	createReq := connect.NewRequest(&nazobuv1.CreateTicketRequest{
+		EventId:            eventID,
+		StartAt:            "2026-08-01T14:00:00+09:00",
+		PricePerPerson:     3000,
+		MaxParticipants:    2,
+		ParticipantUserIds: []string{adminID, memberID},
+		Memo:               "  持ち物: ペン\n集合は改札前  ",
+	})
+	setSessionCookie(t, db, createReq, adminID)
+	createRes, err := svc.CreateTicket(ctx, createReq)
+	if err != nil {
+		t.Fatalf("CreateTicket に失敗: %v", err)
+	}
+	const wantMemo = "持ち物: ペン\n集合は改札前"
+	if got := createRes.Msg.Ticket.Memo; got != wantMemo {
+		t.Errorf("CreateTicket の memo = %q, want %q", got, wantMemo)
+	}
+	ticketID := createRes.Msg.Ticket.Id
+
+	// 立替者でも admin でもない参加者も閲覧できること
+	getReq := connect.NewRequest(&nazobuv1.GetTicketRequest{TicketId: ticketID})
+	setSessionCookie(t, db, getReq, memberID)
+	getRes, err := svc.GetTicket(ctx, getReq)
+	if err != nil {
+		t.Fatalf("GetTicket に失敗: %v", err)
+	}
+	if got := getRes.Msg.Ticket.Memo; got != wantMemo {
+		t.Errorf("GetTicket の memo = %q, want %q", got, wantMemo)
+	}
+
+	listReq := connect.NewRequest(&nazobuv1.ListTicketsRequest{})
+	setSessionCookie(t, db, listReq, memberID)
+	listRes, err := svc.ListTickets(ctx, listReq)
+	if err != nil {
+		t.Fatalf("ListTickets に失敗: %v", err)
+	}
+	if got := listRes.Msg.Tickets[0].Memo; got != wantMemo {
+		t.Errorf("ListTickets の memo = %q, want %q", got, wantMemo)
+	}
+
+	updateRequest := func(memo string) *nazobuv1.UpdateTicketRequest {
+		return &nazobuv1.UpdateTicketRequest{
+			TicketId:          ticketID,
+			StartAt:           "2026-08-01T14:00:00+09:00",
+			PricePerPerson:    3000,
+			MaxParticipants:   2,
+			PurchasedByUserId: adminID,
+			Memo:              memo,
+		}
+	}
+
+	// 編集権限の無い参加者は更新できないこと
+	forbiddenReq := connect.NewRequest(updateRequest("書き換え"))
+	setSessionCookie(t, db, forbiddenReq, memberID)
+	_, err = svc.UpdateTicket(ctx, forbiddenReq)
+	if got := connectCode(t, err); got != connect.CodePermissionDenied {
+		t.Errorf("code = %v, want %v", got, connect.CodePermissionDenied)
+	}
+
+	// 上限を超えるメモは拒否されること
+	tooLongReq := connect.NewRequest(updateRequest(strings.Repeat("謎", ticketMemoMaxChars+1)))
+	setSessionCookie(t, db, tooLongReq, adminID)
+	_, err = svc.UpdateTicket(ctx, tooLongReq)
+	if got := connectCode(t, err); got != connect.CodeInvalidArgument {
+		t.Errorf("code = %v, want %v", got, connect.CodeInvalidArgument)
+	}
+
+	// 上限ちょうどのマルチバイト文字列を DB に保存できること
+	maxMemo := strings.Repeat("謎", ticketMemoMaxChars)
+	maxReq := connect.NewRequest(updateRequest(maxMemo))
+	setSessionCookie(t, db, maxReq, adminID)
+	maxRes, err := svc.UpdateTicket(ctx, maxReq)
+	if err != nil {
+		t.Fatalf("上限ちょうどの UpdateTicket に失敗: %v", err)
+	}
+	if got := maxRes.Msg.Ticket.Memo; got != maxMemo {
+		t.Errorf("UpdateTicket 後の memo の文字数 = %d, want %d", utf8.RuneCountInString(got), ticketMemoMaxChars)
+	}
+
+	// 空文字で未設定に戻せること
+	clearReq := connect.NewRequest(updateRequest(""))
+	setSessionCookie(t, db, clearReq, adminID)
+	clearRes, err := svc.UpdateTicket(ctx, clearReq)
+	if err != nil {
+		t.Fatalf("空文字の UpdateTicket に失敗: %v", err)
+	}
+	if got := clearRes.Msg.Ticket.Memo; got != "" {
+		t.Errorf("memo = %q, want 空", got)
+	}
 }
 
 func TestIntegrationUpdateTicketMaxParticipantsLowerBound(t *testing.T) {

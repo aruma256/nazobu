@@ -141,6 +141,8 @@ CREATE TABLE tickets (
   purchased_by      CHAR(36)  NOT NULL,
   -- 集合場所。空文字を「未設定」として許容する。
   meeting_place     VARCHAR(255) NOT NULL,
+  -- チケットの共有メモ。空文字を「未設定」として許容する。
+  memo              VARCHAR(2000) NOT NULL DEFAULT '',
   -- 前日リマインド通知にこのチケットを含めて送信した時刻（JST）。NULL = 未送信。
   -- 同日に複数チケットがある場合は 1 通にまとめて送り、含めた全チケットにこの時刻を立てる。
   day_before_notified_at  DATETIME(6) NULL DEFAULT NULL,

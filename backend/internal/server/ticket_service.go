@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"connectrpc.com/connect"
 
@@ -39,7 +40,11 @@ func newTicketServiceWithDiscord(db *sql.DB, manager discordSpoilerChannelManage
 	}
 }
 
-const meetingPlaceMaxLen = 255
+const (
+	meetingPlaceMaxLen = 255
+	// tickets.memo の VARCHAR(2000) に合わせる。
+	ticketMemoMaxChars = 2000
+)
 
 func (s *ticketService) ListTickets(ctx context.Context, req *connect.Request[nazobuv1.ListTicketsRequest]) (response *connect.Response[nazobuv1.ListTicketsResponse], returnErr error) {
 	defer logRPCFailure(ctx, "ListTickets", &returnErr)
@@ -67,6 +72,7 @@ func (s *ticketService) ListTickets(ctx context.Context, req *connect.Request[na
 			PricePerPerson:                r.PricePerPerson,
 			MaxParticipants:               r.MaxParticipants,
 			MeetingPlace:                  r.MeetingPlace,
+			Memo:                          r.Memo,
 			PurchaserName:                 r.PurchaserName,
 			UnregisteredParticipantsCount: r.UnregisteredParticipantsCount,
 			ParticipantNames:              []string{},
@@ -132,6 +138,7 @@ func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazo
 		PricePerPerson:                row.PricePerPerson,
 		MaxParticipants:               row.MaxParticipants,
 		MeetingPlace:                  row.MeetingPlace,
+		Memo:                          row.Memo,
 		PurchaserName:                 row.PurchaserName,
 		UnregisteredParticipantsCount: row.UnregisteredParticipantsCount,
 		ParticipantNames:              participantNames,
@@ -185,6 +192,10 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 	if len(meetingPlace) > meetingPlaceMaxLen {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("meeting_place は %d 文字以内", meetingPlaceMaxLen))
 	}
+	memo, err := normalizeTicketMemo(msg.GetMemo())
+	if err != nil {
+		return nil, err
+	}
 	if price < 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("price_per_person は 0 以上"))
 	}
@@ -226,6 +237,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 		UnregisteredParticipantsCount: unregisteredCount,
 		PurchasedBy:                   purchasedBy,
 		MeetingPlace:                  meetingPlace,
+		Memo:                          memo,
 	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket の登録に失敗: %w", err))
 	}
@@ -262,6 +274,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 		PricePerPerson:                r.PricePerPerson,
 		MaxParticipants:               r.MaxParticipants,
 		MeetingPlace:                  r.MeetingPlace,
+		Memo:                          r.Memo,
 		PurchaserName:                 r.PurchaserName,
 		UnregisteredParticipantsCount: r.UnregisteredParticipantsCount,
 		ParticipantNames:              []string{},
@@ -313,6 +326,10 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 	if len(meetingPlace) > meetingPlaceMaxLen {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("meeting_place は %d 文字以内", meetingPlaceMaxLen))
 	}
+	memo, err := normalizeTicketMemo(msg.GetMemo())
+	if err != nil {
+		return nil, err
+	}
 	if price < 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("price_per_person は 0 以上"))
 	}
@@ -352,6 +369,7 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 		MaxParticipants:               maxParticipants,
 		UnregisteredParticipantsCount: unregisteredCount,
 		MeetingPlace:                  meetingPlace,
+		Memo:                          memo,
 		PurchasedBy:                   purchasedBy,
 	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket の更新に失敗: %w", err))
@@ -377,6 +395,7 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 		PricePerPerson:                r.PricePerPerson,
 		MaxParticipants:               r.MaxParticipants,
 		MeetingPlace:                  r.MeetingPlace,
+		Memo:                          r.Memo,
 		PurchaserName:                 r.PurchaserName,
 		UnregisteredParticipantsCount: r.UnregisteredParticipantsCount,
 		ParticipantNames:              []string{},
@@ -425,6 +444,10 @@ func (s *ticketService) CreateTicketWithEvent(ctx context.Context, req *connect.
 	}
 	if len(meetingPlace) > meetingPlaceMaxLen {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("meeting_place は %d 文字以内", meetingPlaceMaxLen))
+	}
+	memo, err := normalizeTicketMemo(msg.GetMemo())
+	if err != nil {
+		return nil, err
 	}
 	if price < 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("price_per_person は 0 以上"))
@@ -475,6 +498,7 @@ func (s *ticketService) CreateTicketWithEvent(ctx context.Context, req *connect.
 		UnregisteredParticipantsCount: unregisteredCount,
 		PurchasedBy:                   purchasedBy,
 		MeetingPlace:                  meetingPlace,
+		Memo:                          memo,
 	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket の登録に失敗: %w", err))
 	}
@@ -551,6 +575,10 @@ func (s *ticketService) UpdateTicketWithEvent(ctx context.Context, req *connect.
 	if len(meetingPlace) > meetingPlaceMaxLen {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("meeting_place は %d 文字以内", meetingPlaceMaxLen))
 	}
+	memo, err := normalizeTicketMemo(msg.GetMemo())
+	if err != nil {
+		return nil, err
+	}
 	if price < 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("price_per_person は 0 以上"))
 	}
@@ -607,6 +635,7 @@ func (s *ticketService) UpdateTicketWithEvent(ctx context.Context, req *connect.
 		MaxParticipants:               maxParticipants,
 		UnregisteredParticipantsCount: unregisteredCount,
 		MeetingPlace:                  meetingPlace,
+		Memo:                          memo,
 		PurchasedBy:                   purchasedBy,
 	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket の更新に失敗: %w", err))
@@ -646,6 +675,7 @@ func (s *ticketService) buildTicketResponse(ctx context.Context, ticketID string
 		PricePerPerson:                r.PricePerPerson,
 		MaxParticipants:               r.MaxParticipants,
 		MeetingPlace:                  r.MeetingPlace,
+		Memo:                          r.Memo,
 		PurchaserName:                 r.PurchaserName,
 		UnregisteredParticipantsCount: r.UnregisteredParticipantsCount,
 		ParticipantNames:              []string{},
@@ -838,6 +868,16 @@ func (s *ticketService) UpdateTicketParticipantSettlement(ctx context.Context, r
 
 func canEditTicket(user *auth.User, purchasedBy string) bool {
 	return user.Role == auth.RoleAdmin || user.ID == purchasedBy
+}
+
+// normalizeTicketMemo は前後の空白を除いたメモを返す。
+// 日本語が主なので、バイト数ではなく文字数で上限を判定する。
+func normalizeTicketMemo(raw string) (string, error) {
+	memo := strings.TrimSpace(raw)
+	if utf8.RuneCountInString(memo) > ticketMemoMaxChars {
+		return "", connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("memo は %d 文字以内", ticketMemoMaxChars))
+	}
+	return memo, nil
 }
 
 // validateTicketCapacityInput は定員関連のリクエスト値そのものの下限を検証する。

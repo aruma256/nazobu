@@ -108,6 +108,7 @@ type mcpTicket struct {
 	StartAt          string   `json:"start_at" jsonschema:"開演日時（JST, RFC3339）"`
 	MeetingAt        string   `json:"meeting_at,omitempty" jsonschema:"集合日時（JST, RFC3339）。未定なら空"`
 	MeetingPlace     string   `json:"meeting_place,omitempty" jsonschema:"集合場所。未設定なら空"`
+	Memo             string   `json:"memo,omitempty" jsonschema:"チケットの共有メモ。未設定なら空"`
 	PricePerPerson   int32    `json:"price_per_person" jsonschema:"一人あたりの参加費（税込・円）"`
 	PurchaserName    string   `json:"purchaser_name" jsonschema:"チケットを立て替え購入したメンバーの表示名"`
 	ParticipantNames []string `json:"participant_names" jsonschema:"参加メンバーの表示名一覧"`
@@ -122,6 +123,7 @@ func toMCPTicket(t *nazobuv1.Ticket) mcpTicket {
 		StartAt:          t.GetStartAt(),
 		MeetingAt:        t.GetMeetingAt(),
 		MeetingPlace:     t.GetMeetingPlace(),
+		Memo:             t.GetMemo(),
 		PricePerPerson:   t.GetPricePerPerson(),
 		PurchaserName:    t.GetPurchaserName(),
 		ParticipantNames: t.GetParticipantNames(),
@@ -279,6 +281,7 @@ type createTicketWithEventInput struct {
 	StartAt                         string   `json:"start_at" jsonschema:"開演日時（JST, RFC3339、必須）"`
 	MeetingAt                       string   `json:"meeting_at,omitempty" jsonschema:"集合日時（JST, RFC3339）。未定なら省略"`
 	MeetingPlace                    string   `json:"meeting_place,omitempty" jsonschema:"集合場所。未定なら省略"`
+	Memo                            string   `json:"memo,omitempty" jsonschema:"チケットの共有メモ（2000 文字以内）。ログイン中のメンバー全員に表示される。不要なら省略"`
 	PricePerPerson                  int32    `json:"price_per_person" jsonschema:"一人あたりの参加費（税込・円、0 以上）"`
 	MaxParticipants                 int32    `json:"max_participants" jsonschema:"このチケット 1 枚で参加できる最大人数（1 以上、必須）"`
 	UnregisteredParticipantsCount   int32    `json:"unregistered_participants_count,omitempty" jsonschema:"謎部に未登録の同行者の人数（0 以上、省略時 0）。定員の枠を消費する"`
@@ -311,6 +314,7 @@ func createTicketWithEventTool(tickets nazobuv1connect.TicketServiceHandler) mcp
 			StartAt:                         in.StartAt,
 			MeetingAt:                       in.MeetingAt,
 			MeetingPlace:                    in.MeetingPlace,
+			Memo:                            in.Memo,
 			ParticipantUserIds:              in.ParticipantUserIDs,
 			MaxParticipants:                 in.MaxParticipants,
 			UnregisteredParticipantsCount:   in.UnregisteredParticipantsCount,
@@ -340,6 +344,7 @@ type updateTicketWithEventInput struct {
 	StartAt                         *string `json:"start_at,omitempty" jsonschema:"開演日時（JST, RFC3339）。省略時は変更しない"`
 	MeetingAt                       *string `json:"meeting_at,omitempty" jsonschema:"集合日時（JST, RFC3339）。省略時は変更しない。空文字で未設定に戻す"`
 	MeetingPlace                    *string `json:"meeting_place,omitempty" jsonschema:"集合場所。省略時は変更しない。空文字で未設定に戻す"`
+	Memo                            *string `json:"memo,omitempty" jsonschema:"チケットの共有メモ（2000 文字以内）。ログイン中のメンバー全員に表示される。省略時は変更しない。空文字で未設定に戻す"`
 	PricePerPerson                  *int32  `json:"price_per_person,omitempty" jsonschema:"一人あたりの参加費（税込・円、0 以上）。省略時は変更しない"`
 	MaxParticipants                 *int32  `json:"max_participants,omitempty" jsonschema:"このチケット 1 枚で参加できる最大人数（1 以上）。省略時は変更しない"`
 	UnregisteredParticipantsCount   *int32  `json:"unregistered_participants_count,omitempty" jsonschema:"謎部に未登録の同行者の人数（0 以上）。省略時は変更しない"`
@@ -423,6 +428,7 @@ func updateTicketWithEventTool(tickets nazobuv1connect.TicketServiceHandler, eve
 			PricePerPerson:                  pickInt32(t.GetPricePerPerson(), in.PricePerPerson),
 			MeetingAt:                       pickString(t.GetMeetingAt(), in.MeetingAt),
 			MeetingPlace:                    pickString(t.GetMeetingPlace(), in.MeetingPlace),
+			Memo:                            pickString(t.GetMemo(), in.Memo),
 			StartAt:                         pickString(t.GetStartAt(), in.StartAt),
 			PurchasedByUserId:               pickString(curPurchasedBy, in.PurchasedByUserID),
 			MaxParticipants:                 pickInt32(t.GetMaxParticipants(), in.MaxParticipants),

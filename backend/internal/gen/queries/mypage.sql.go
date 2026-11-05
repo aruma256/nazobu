@@ -74,6 +74,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.unregistered_participants_count,
        t.meeting_place,
+       t.memo,
        pu.display_name AS purchaser_name
 FROM tickets t
 JOIN events e  ON e.id = t.event_id
@@ -109,6 +110,7 @@ type ListUnsettledReceivablesByUserIDRow struct {
 	MaxParticipants               int32
 	UnregisteredParticipantsCount int32
 	MeetingPlace                  string
+	Memo                          string
 	PurchaserName                 string
 }
 
@@ -139,6 +141,7 @@ func (q *Queries) ListUnsettledReceivablesByUserID(ctx context.Context, arg List
 			&i.MaxParticipants,
 			&i.UnregisteredParticipantsCount,
 			&i.MeetingPlace,
+			&i.Memo,
 			&i.PurchaserName,
 		); err != nil {
 			return nil, err
@@ -161,6 +164,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.unregistered_participants_count,
        t.meeting_place,
+       t.memo,
        pu.display_name AS purchaser_name
 FROM ticket_participants tp
 JOIN tickets t  ON t.id  = tp.ticket_id
@@ -193,6 +197,7 @@ type ListUnsettledTicketsByUserIDRow struct {
 	MaxParticipants               int32
 	UnregisteredParticipantsCount int32
 	MeetingPlace                  string
+	Memo                          string
 	PurchaserName                 string
 }
 
@@ -223,6 +228,7 @@ func (q *Queries) ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnse
 			&i.MaxParticipants,
 			&i.UnregisteredParticipantsCount,
 			&i.MeetingPlace,
+			&i.Memo,
 			&i.PurchaserName,
 		); err != nil {
 			return nil, err
@@ -245,6 +251,7 @@ SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphra
        t.start_at, t.meeting_at, t.price_per_person, t.max_participants,
        t.unregistered_participants_count,
        t.meeting_place,
+       t.memo,
        pu.display_name AS purchaser_name
 FROM ticket_participants tp
 JOIN tickets t ON t.id = tp.ticket_id
@@ -277,6 +284,7 @@ type ListUpcomingTicketsByUserIDRow struct {
 	MaxParticipants               int32
 	UnregisteredParticipantsCount int32
 	MeetingPlace                  string
+	Memo                          string
 	PurchaserName                 string
 }
 
@@ -309,6 +317,7 @@ func (q *Queries) ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcom
 			&i.MaxParticipants,
 			&i.UnregisteredParticipantsCount,
 			&i.MeetingPlace,
+			&i.Memo,
 			&i.PurchaserName,
 		); err != nil {
 			return nil, err
