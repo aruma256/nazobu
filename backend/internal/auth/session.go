@@ -110,7 +110,7 @@ func UpsertUserFromIdentity(ctx context.Context, db *sql.DB, provider, subject s
 }
 
 // LoginWithIdentity は (provider, subject) で識別される IdP identity に紐づく
-// 既存ユーザーを取得しプロフィールを最新化する。事前登録（add-user CLI）が
+// 既存ユーザーを取得しプロフィールを最新化する。事前登録（register-user CLI）が
 // 行われていない identity に対しては ErrUserNotRegistered を返し、新規ユーザーを
 // 作成しない。サービスを招待制に保つためのログインゲート。
 func LoginWithIdentity(ctx context.Context, db *sql.DB, provider, subject string, profile UserProfile) (*User, error) {

@@ -29,6 +29,6 @@ func Execute() {
 func init() {
 	rootCmd.AddCommand(migrateCmd)
 	rootCmd.AddCommand(startCmd)
-	rootCmd.AddCommand(addUserCmd)
+	rootCmd.AddCommand(registerUserCmd)
 	rootCmd.AddCommand(setRoleCmd)
 }

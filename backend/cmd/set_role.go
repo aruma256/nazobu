@@ -44,7 +44,7 @@ var setRoleCmd = &cobra.Command{
 			Subject:  setRoleDiscordUserID,
 		})
 		if errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("指定された Discord user ID %s に対応するユーザーが未登録（先に add-user で登録するか、本人に一度ログインしてもらう必要がある）", setRoleDiscordUserID)
+			return fmt.Errorf("指定された Discord user ID %s に対応するユーザーが未登録（先に register-user で登録する必要がある）", setRoleDiscordUserID)
 		}
 		if err != nil {
 			return err
