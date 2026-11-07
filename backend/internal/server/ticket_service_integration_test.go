@@ -740,8 +740,8 @@ func TestIntegrationGrantTicketSpoilerChannelAccess(t *testing.T) {
 	if err != nil {
 		t.Fatalf("member の GetTicket に失敗: %v", err)
 	}
-	if memberGetRes.Msg.DiscordSpoilerChannelUrl != "" {
-		t.Errorf("member に DiscordSpoilerChannelUrl が公開された: %q", memberGetRes.Msg.DiscordSpoilerChannelUrl)
+	if memberGetRes.Msg.DiscordSpoilerChannelUrl != "https://discord.example/channels/discord-channel-1" {
+		t.Errorf("member の DiscordSpoilerChannelUrl = %q", memberGetRes.Msg.DiscordSpoilerChannelUrl)
 	}
 
 	// 同じ event の別日 ticket は既存 channel へその ticket の参加者だけ追加する。

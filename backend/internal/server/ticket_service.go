@@ -145,16 +145,11 @@ func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazo
 	}
 
 	canEdit := canEditTicket(user, row.PurchasedBy)
-	discordSpoilerChannelURL := ""
-	if user.Role == auth.RoleAdmin {
-		discordSpoilerChannelURL = s.discordSpoilerChannelURL(row.DiscordSpoilerChannelID)
-	}
-
 	return connect.NewResponse(&nazobuv1.GetTicketResponse{
 		Ticket:                   ticket,
 		Participants:             participants,
 		CanEdit:                  canEdit,
-		DiscordSpoilerChannelUrl: discordSpoilerChannelURL,
+		DiscordSpoilerChannelUrl: s.discordSpoilerChannelURL(row.DiscordSpoilerChannelID),
 	}), nil
 }
 

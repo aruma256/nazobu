@@ -28,6 +28,7 @@ import {
   parseDateTime,
 } from "@/app/_format";
 import { redirectToLogin } from "@/app/lib/auth";
+import { SpoilerChannelJoin } from "@/app/_spoiler_channel_join";
 
 type LoadState =
   | { kind: "loading" }
@@ -374,6 +375,15 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
                 </a>
               )}
             </div>
+            {!isAdmin && discordSpoilerChannelExists && (
+              <div className="space-y-3 border-t border-zinc-200 px-4 py-3">
+                <SpoilerChannelJoin
+                  eventId={ticket.eventId}
+                  eventTitle={ticket.eventTitle}
+                  loginRedirectPath={`/tickets/${ticket.id}`}
+                />
+              </div>
+            )}
             {isAdmin && !discordSpoilerChannelExists && (
               <form
                 className="space-y-3 border-t border-zinc-200 px-4 py-3"
