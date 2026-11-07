@@ -5,19 +5,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"connectrpc.com/connect"
 
-	"github.com/aruma256/nazobu/backend/internal/auth"
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
 	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
 	"github.com/aruma256/nazobu/backend/internal/gen/queries"
-	"github.com/aruma256/nazobu/backend/internal/id"
-	"github.com/aruma256/nazobu/backend/internal/logging"
 )
 
 type existingDiscordChannelManager interface {
@@ -80,8 +76,7 @@ func (s *eventService) ListEvents(ctx context.Context, req *connect.Request[nazo
 
 func (s *eventService) GetEvent(ctx context.Context, req *connect.Request[nazobuv1.GetEventRequest]) (response *connect.Response[nazobuv1.GetEventResponse], returnErr error) {
 	defer logRPCFailure(ctx, "GetEvent", &returnErr)
-	user, err := lookupSessionUser(ctx, s.db, req.Header())
-	if err != nil {
+	if _, err := lookupSessionUser(ctx, s.db, req.Header()); err != nil {
 		return nil, err
 	}
 
@@ -109,114 +104,6 @@ func (s *eventService) GetEvent(ctx context.Context, req *connect.Request[nazobu
 			DoorsOpenMinutesBefore:     nullInt32ToPtr(row.DoorsOpenMinutesBefore),
 			EntryDeadlineMinutesBefore: nullInt32ToPtr(row.EntryDeadlineMinutesBefore),
 			ExpectedDurationMinutes:    row.ExpectedDurationMinutes,
-			Tickets:                    []*nazobuv1.EventTicket{},
-		},
-		CanEdit: user.Role == auth.RoleAdmin,
-	}), nil
-}
-
-func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[nazobuv1.CreateEventRequest]) (response *connect.Response[nazobuv1.CreateEventResponse], returnErr error) {
-	defer logRPCFailure(ctx, "CreateEvent", &returnErr)
-	user, err := lookupSessionUser(ctx, s.db, req.Header())
-	if err != nil {
-		return nil, err
-	}
-	msg := req.Msg
-	prepared, err := prepareEventFields(
-		ctx, s.httpClient,
-		msg.GetTitle(), msg.GetUrl(), msg.GetCatchphrase(),
-		msg.DoorsOpenMinutesBefore, msg.EntryDeadlineMinutesBefore,
-		msg.GetExpectedDurationMinutes(),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	eventID := id.New()
-	if err := s.q.CreateEvent(ctx, queries.CreateEventParams{
-		ID:                         eventID,
-		Title:                      prepared.title,
-		Url:                        prepared.url,
-		Catchphrase:                prepared.catchphrase,
-		ImageUrl:                   prepared.imageURL,
-		DoorsOpenMinutesBefore:     prepared.doorsOpen,
-		EntryDeadlineMinutesBefore: prepared.entryDeadline,
-		ExpectedDurationMinutes:    prepared.expectedDuration,
-	}); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の登録に失敗: %w", err))
-	}
-
-	slog.InfoContext(ctx, "event created", logging.ID("event_id", eventID), logging.ID("actor_user_id", user.ID))
-	return connect.NewResponse(&nazobuv1.CreateEventResponse{
-		Event: &nazobuv1.Event{
-			Id:                         eventID,
-			Title:                      prepared.title,
-			Url:                        prepared.url,
-			Catchphrase:                prepared.catchphrase,
-			ImageUrl:                   nullStringToString(prepared.imageURL),
-			DoorsOpenMinutesBefore:     nullInt32ToPtr(prepared.doorsOpen),
-			EntryDeadlineMinutesBefore: nullInt32ToPtr(prepared.entryDeadline),
-			ExpectedDurationMinutes:    prepared.expectedDuration,
-			Tickets:                    []*nazobuv1.EventTicket{},
-		},
-	}), nil
-}
-
-func (s *eventService) UpdateEvent(ctx context.Context, req *connect.Request[nazobuv1.UpdateEventRequest]) (response *connect.Response[nazobuv1.UpdateEventResponse], returnErr error) {
-	defer logRPCFailure(ctx, "UpdateEvent", &returnErr)
-	user, err := lookupSessionUser(ctx, s.db, req.Header())
-	if err != nil {
-		return nil, err
-	}
-	if user.Role != auth.RoleAdmin {
-		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("event の編集は admin のみ"))
-	}
-
-	msg := req.Msg
-	eventID := strings.TrimSpace(msg.GetEventId())
-	if eventID == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("event_id は必須"))
-	}
-	prepared, err := prepareEventFields(
-		ctx, s.httpClient,
-		msg.GetTitle(), msg.GetUrl(), msg.GetCatchphrase(),
-		msg.DoorsOpenMinutesBefore, msg.EntryDeadlineMinutesBefore,
-		msg.GetExpectedDurationMinutes(),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err := s.q.GetEventByID(ctx, eventID); errors.Is(err, sql.ErrNoRows) {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("指定された event は存在しない"))
-	} else if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の取得に失敗: %w", err))
-	}
-
-	if err := s.q.UpdateEvent(ctx, queries.UpdateEventParams{
-		ID:                         eventID,
-		Title:                      prepared.title,
-		Url:                        prepared.url,
-		Catchphrase:                prepared.catchphrase,
-		ImageUrl:                   prepared.imageURL,
-		DoorsOpenMinutesBefore:     prepared.doorsOpen,
-		EntryDeadlineMinutesBefore: prepared.entryDeadline,
-		ExpectedDurationMinutes:    prepared.expectedDuration,
-	}); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の更新に失敗: %w", err))
-	}
-
-	slog.InfoContext(ctx, "event updated", logging.ID("event_id", eventID), logging.ID("actor_user_id", user.ID))
-	return connect.NewResponse(&nazobuv1.UpdateEventResponse{
-		Event: &nazobuv1.Event{
-			Id:                         eventID,
-			Title:                      prepared.title,
-			Url:                        prepared.url,
-			Catchphrase:                prepared.catchphrase,
-			ImageUrl:                   nullStringToString(prepared.imageURL),
-			DoorsOpenMinutesBefore:     nullInt32ToPtr(prepared.doorsOpen),
-			EntryDeadlineMinutesBefore: nullInt32ToPtr(prepared.entryDeadline),
-			ExpectedDurationMinutes:    prepared.expectedDuration,
 			Tickets:                    []*nazobuv1.EventTicket{},
 		},
 	}), nil

@@ -4,15 +4,11 @@ package nazobu.v1;
 
 option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1";
 
-// EventService は event（公演）の参照・登録・更新・削除 RPC を提供する。
+// EventService は event（公演）の参照・削除 RPC を提供する。
 service EventService {
   // ListEvents は登録済み event を新しい順で返す。各 event には紐づく ticket を含める。
   rpc ListEvents(ListEventsRequest) returns (ListEventsResponse);
   rpc GetEvent(GetEventRequest) returns (GetEventResponse);
-  // CreateEvent は event を 1 件登録する。ログインユーザーなら誰でも実行可能。
-  rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse);
-  // UpdateEvent は event の title / url / catchphrase / 開場・締切オフセットを更新する。admin のみ実行可能。
-  rpc UpdateEvent(UpdateEventRequest) returns (UpdateEventResponse);
   // LinkEventSpoilerChannel は既存の Discord チャンネルを未紐づけの公演に紐づける。admin のみ。
   rpc LinkEventSpoilerChannel(LinkEventSpoilerChannelRequest) returns (LinkEventSpoilerChannelResponse);
   // JoinEventSpoilerChannel は紐づけ済みチャンネルの閲覧権限を本人に付与する。
@@ -63,48 +59,11 @@ message EventTicket {
   int32 unregistered_participants_count = 6;
 }
 
-message CreateEventRequest {
-  string title = 1;
-  string url = 2;
-  // 開場時間が開演時刻の何分前か。任意。
-  optional int32 doors_open_minutes_before = 3;
-  // 入場締切が開演時刻の何分前か。任意。
-  optional int32 entry_deadline_minutes_before = 4;
-  // 想定所要時間（分）。1 以上。
-  int32 expected_duration_minutes = 5;
-  // キャッチコピー（任意）。未設定なら空文字。
-  string catchphrase = 6;
-}
-
-message CreateEventResponse {
-  Event event = 1;
-}
-
 message GetEventRequest {
   string event_id = 1;
 }
 
 message GetEventResponse {
-  Event event = 1;
-  // 現在ログイン中の user が編集権限を持つか（admin のみ）。
-  bool can_edit = 2;
-}
-
-message UpdateEventRequest {
-  string event_id = 1;
-  string title = 2;
-  string url = 3;
-  // 開場時間が開演時刻の何分前か。任意。
-  optional int32 doors_open_minutes_before = 4;
-  // 入場締切が開演時刻の何分前か。任意。
-  optional int32 entry_deadline_minutes_before = 5;
-  // 想定所要時間（分）。1 以上。
-  int32 expected_duration_minutes = 6;
-  // キャッチコピー（任意）。未設定なら空文字。
-  string catchphrase = 7;
-}
-
-message UpdateEventResponse {
   Event event = 1;
 }
 

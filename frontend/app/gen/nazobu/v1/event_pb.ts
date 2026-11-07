@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file nazobu/v1/event.proto.
  */
 export const file_nazobu_v1_event: GenFile = /*@__PURE__*/
-  fileDesc("ChVuYXpvYnUvdjEvZXZlbnQucHJvdG8SCW5hem9idS52MSITChFMaXN0RXZlbnRzUmVxdWVzdCI2ChJMaXN0RXZlbnRzUmVzcG9uc2USIAoGZXZlbnRzGAEgAygLMhAubmF6b2J1LnYxLkV2ZW50ItQCCgVFdmVudBIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRILCgN1cmwYAyABKAkSJwoHdGlja2V0cxgEIAMoCzIWLm5hem9idS52MS5FdmVudFRpY2tldBImChlkb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlGAUgASgFSACIAQESKgodZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUYBiABKAVIAYgBARIRCglpbWFnZV91cmwYByABKAkSIQoZZXhwZWN0ZWRfZHVyYXRpb25fbWludXRlcxgIIAEoBRITCgtjYXRjaHBocmFzZRgJIAEoCRIbChNoYXNfc3BvaWxlcl9jaGFubmVsGAogASgIQhwKGl9kb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlQiAKHl9lbnRyeV9kZWFkbGluZV9taW51dGVzX2JlZm9yZSKhAQoLRXZlbnRUaWNrZXQSCgoCaWQYASABKAkSEAoIc3RhcnRfYXQYAiABKAkSGAoQcHJpY2VfcGVyX3BlcnNvbhgDIAEoBRIWCg5wdXJjaGFzZXJfbmFtZRgEIAEoCRIZChFwYXJ0aWNpcGFudF9uYW1lcxgFIAMoCRInCh91bnJlZ2lzdGVyZWRfcGFydGljaXBhbnRzX2NvdW50GAYgASgFIvwBChJDcmVhdGVFdmVudFJlcXVlc3QSDQoFdGl0bGUYASABKAkSCwoDdXJsGAIgASgJEiYKGWRvb3JzX29wZW5fbWludXRlc19iZWZvcmUYAyABKAVIAIgBARIqCh1lbnRyeV9kZWFkbGluZV9taW51dGVzX2JlZm9yZRgEIAEoBUgBiAEBEiEKGWV4cGVjdGVkX2R1cmF0aW9uX21pbnV0ZXMYBSABKAUSEwoLY2F0Y2hwaHJhc2UYBiABKAlCHAoaX2Rvb3JzX29wZW5fbWludXRlc19iZWZvcmVCIAoeX2VudHJ5X2RlYWRsaW5lX21pbnV0ZXNfYmVmb3JlIjYKE0NyZWF0ZUV2ZW50UmVzcG9uc2USHwoFZXZlbnQYASABKAsyEC5uYXpvYnUudjEuRXZlbnQiIwoPR2V0RXZlbnRSZXF1ZXN0EhAKCGV2ZW50X2lkGAEgASgJIkUKEEdldEV2ZW50UmVzcG9uc2USHwoFZXZlbnQYASABKAsyEC5uYXpvYnUudjEuRXZlbnQSEAoIY2FuX2VkaXQYAiABKAgijgIKElVwZGF0ZUV2ZW50UmVxdWVzdBIQCghldmVudF9pZBgBIAEoCRINCgV0aXRsZRgCIAEoCRILCgN1cmwYAyABKAkSJgoZZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZRgEIAEoBUgAiAEBEioKHWVudHJ5X2RlYWRsaW5lX21pbnV0ZXNfYmVmb3JlGAUgASgFSAGIAQESIQoZZXhwZWN0ZWRfZHVyYXRpb25fbWludXRlcxgGIAEoBRITCgtjYXRjaHBocmFzZRgHIAEoCUIcChpfZG9vcnNfb3Blbl9taW51dGVzX2JlZm9yZUIgCh5fZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUiNgoTVXBkYXRlRXZlbnRSZXNwb25zZRIfCgVldmVudBgBIAEoCzIQLm5hem9idS52MS5FdmVudCImChJEZWxldGVFdmVudFJlcXVlc3QSEAoIZXZlbnRfaWQYASABKAkiFQoTRGVsZXRlRXZlbnRSZXNwb25zZSJLCh5MaW5rRXZlbnRTcG9pbGVyQ2hhbm5lbFJlcXVlc3QSEAoIZXZlbnRfaWQYASABKAkSFwoPZGlzY29yZF9jaGFubmVsGAIgASgJIj4KH0xpbmtFdmVudFNwb2lsZXJDaGFubmVsUmVzcG9uc2USGwoTZGlzY29yZF9jaGFubmVsX3VybBgBIAEoCSIyCh5Kb2luRXZlbnRTcG9pbGVyQ2hhbm5lbFJlcXVlc3QSEAoIZXZlbnRfaWQYASABKAkiPgofSm9pbkV2ZW50U3BvaWxlckNoYW5uZWxSZXNwb25zZRIbChNkaXNjb3JkX2NoYW5uZWxfdXJsGAEgASgJMuwECgxFdmVudFNlcnZpY2USSQoKTGlzdEV2ZW50cxIcLm5hem9idS52MS5MaXN0RXZlbnRzUmVxdWVzdBodLm5hem9idS52MS5MaXN0RXZlbnRzUmVzcG9uc2USQwoIR2V0RXZlbnQSGi5uYXpvYnUudjEuR2V0RXZlbnRSZXF1ZXN0GhsubmF6b2J1LnYxLkdldEV2ZW50UmVzcG9uc2USTAoLQ3JlYXRlRXZlbnQSHS5uYXpvYnUudjEuQ3JlYXRlRXZlbnRSZXF1ZXN0Gh4ubmF6b2J1LnYxLkNyZWF0ZUV2ZW50UmVzcG9uc2USTAoLVXBkYXRlRXZlbnQSHS5uYXpvYnUudjEuVXBkYXRlRXZlbnRSZXF1ZXN0Gh4ubmF6b2J1LnYxLlVwZGF0ZUV2ZW50UmVzcG9uc2UScAoXTGlua0V2ZW50U3BvaWxlckNoYW5uZWwSKS5uYXpvYnUudjEuTGlua0V2ZW50U3BvaWxlckNoYW5uZWxSZXF1ZXN0GioubmF6b2J1LnYxLkxpbmtFdmVudFNwb2lsZXJDaGFubmVsUmVzcG9uc2UScAoXSm9pbkV2ZW50U3BvaWxlckNoYW5uZWwSKS5uYXpvYnUudjEuSm9pbkV2ZW50U3BvaWxlckNoYW5uZWxSZXF1ZXN0GioubmF6b2J1LnYxLkpvaW5FdmVudFNwb2lsZXJDaGFubmVsUmVzcG9uc2USTAoLRGVsZXRlRXZlbnQSHS5uYXpvYnUudjEuRGVsZXRlRXZlbnRSZXF1ZXN0Gh4ubmF6b2J1LnYxLkRlbGV0ZUV2ZW50UmVzcG9uc2VCRFpCZ2l0aHViLmNvbS9hcnVtYTI1Ni9uYXpvYnUvYmFja2VuZC9pbnRlcm5hbC9nZW4vbmF6b2J1L3YxO25hem9idXYxYgZwcm90bzM");
+  fileDesc("ChVuYXpvYnUvdjEvZXZlbnQucHJvdG8SCW5hem9idS52MSITChFMaXN0RXZlbnRzUmVxdWVzdCI2ChJMaXN0RXZlbnRzUmVzcG9uc2USIAoGZXZlbnRzGAEgAygLMhAubmF6b2J1LnYxLkV2ZW50ItQCCgVFdmVudBIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRILCgN1cmwYAyABKAkSJwoHdGlja2V0cxgEIAMoCzIWLm5hem9idS52MS5FdmVudFRpY2tldBImChlkb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlGAUgASgFSACIAQESKgodZW50cnlfZGVhZGxpbmVfbWludXRlc19iZWZvcmUYBiABKAVIAYgBARIRCglpbWFnZV91cmwYByABKAkSIQoZZXhwZWN0ZWRfZHVyYXRpb25fbWludXRlcxgIIAEoBRITCgtjYXRjaHBocmFzZRgJIAEoCRIbChNoYXNfc3BvaWxlcl9jaGFubmVsGAogASgIQhwKGl9kb29yc19vcGVuX21pbnV0ZXNfYmVmb3JlQiAKHl9lbnRyeV9kZWFkbGluZV9taW51dGVzX2JlZm9yZSKhAQoLRXZlbnRUaWNrZXQSCgoCaWQYASABKAkSEAoIc3RhcnRfYXQYAiABKAkSGAoQcHJpY2VfcGVyX3BlcnNvbhgDIAEoBRIWCg5wdXJjaGFzZXJfbmFtZRgEIAEoCRIZChFwYXJ0aWNpcGFudF9uYW1lcxgFIAMoCRInCh91bnJlZ2lzdGVyZWRfcGFydGljaXBhbnRzX2NvdW50GAYgASgFIiMKD0dldEV2ZW50UmVxdWVzdBIQCghldmVudF9pZBgBIAEoCSIzChBHZXRFdmVudFJlc3BvbnNlEh8KBWV2ZW50GAEgASgLMhAubmF6b2J1LnYxLkV2ZW50IiYKEkRlbGV0ZUV2ZW50UmVxdWVzdBIQCghldmVudF9pZBgBIAEoCSIVChNEZWxldGVFdmVudFJlc3BvbnNlIksKHkxpbmtFdmVudFNwb2lsZXJDaGFubmVsUmVxdWVzdBIQCghldmVudF9pZBgBIAEoCRIXCg9kaXNjb3JkX2NoYW5uZWwYAiABKAkiPgofTGlua0V2ZW50U3BvaWxlckNoYW5uZWxSZXNwb25zZRIbChNkaXNjb3JkX2NoYW5uZWxfdXJsGAEgASgJIjIKHkpvaW5FdmVudFNwb2lsZXJDaGFubmVsUmVxdWVzdBIQCghldmVudF9pZBgBIAEoCSI+Ch9Kb2luRXZlbnRTcG9pbGVyQ2hhbm5lbFJlc3BvbnNlEhsKE2Rpc2NvcmRfY2hhbm5lbF91cmwYASABKAky0AMKDEV2ZW50U2VydmljZRJJCgpMaXN0RXZlbnRzEhwubmF6b2J1LnYxLkxpc3RFdmVudHNSZXF1ZXN0Gh0ubmF6b2J1LnYxLkxpc3RFdmVudHNSZXNwb25zZRJDCghHZXRFdmVudBIaLm5hem9idS52MS5HZXRFdmVudFJlcXVlc3QaGy5uYXpvYnUudjEuR2V0RXZlbnRSZXNwb25zZRJwChdMaW5rRXZlbnRTcG9pbGVyQ2hhbm5lbBIpLm5hem9idS52MS5MaW5rRXZlbnRTcG9pbGVyQ2hhbm5lbFJlcXVlc3QaKi5uYXpvYnUudjEuTGlua0V2ZW50U3BvaWxlckNoYW5uZWxSZXNwb25zZRJwChdKb2luRXZlbnRTcG9pbGVyQ2hhbm5lbBIpLm5hem9idS52MS5Kb2luRXZlbnRTcG9pbGVyQ2hhbm5lbFJlcXVlc3QaKi5uYXpvYnUudjEuSm9pbkV2ZW50U3BvaWxlckNoYW5uZWxSZXNwb25zZRJMCgtEZWxldGVFdmVudBIdLm5hem9idS52MS5EZWxldGVFdmVudFJlcXVlc3QaHi5uYXpvYnUudjEuRGVsZXRlRXZlbnRSZXNwb25zZUJEWkJnaXRodWIuY29tL2FydW1hMjU2L25hem9idS9iYWNrZW5kL2ludGVybmFsL2dlbi9uYXpvYnUvdjE7bmF6b2J1djFiBnByb3RvMw");
 
 /**
  * @generated from message nazobu.v1.ListEventsRequest
@@ -173,73 +173,6 @@ export const EventTicketSchema: GenMessage<EventTicket> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_event, 3);
 
 /**
- * @generated from message nazobu.v1.CreateEventRequest
- */
-export type CreateEventRequest = Message<"nazobu.v1.CreateEventRequest"> & {
-  /**
-   * @generated from field: string title = 1;
-   */
-  title: string;
-
-  /**
-   * @generated from field: string url = 2;
-   */
-  url: string;
-
-  /**
-   * 開場時間が開演時刻の何分前か。任意。
-   *
-   * @generated from field: optional int32 doors_open_minutes_before = 3;
-   */
-  doorsOpenMinutesBefore?: number | undefined;
-
-  /**
-   * 入場締切が開演時刻の何分前か。任意。
-   *
-   * @generated from field: optional int32 entry_deadline_minutes_before = 4;
-   */
-  entryDeadlineMinutesBefore?: number | undefined;
-
-  /**
-   * 想定所要時間（分）。1 以上。
-   *
-   * @generated from field: int32 expected_duration_minutes = 5;
-   */
-  expectedDurationMinutes: number;
-
-  /**
-   * キャッチコピー（任意）。未設定なら空文字。
-   *
-   * @generated from field: string catchphrase = 6;
-   */
-  catchphrase: string;
-};
-
-/**
- * Describes the message nazobu.v1.CreateEventRequest.
- * Use `create(CreateEventRequestSchema)` to create a new message.
- */
-export const CreateEventRequestSchema: GenMessage<CreateEventRequest> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_event, 4);
-
-/**
- * @generated from message nazobu.v1.CreateEventResponse
- */
-export type CreateEventResponse = Message<"nazobu.v1.CreateEventResponse"> & {
-  /**
-   * @generated from field: nazobu.v1.Event event = 1;
-   */
-  event?: Event | undefined;
-};
-
-/**
- * Describes the message nazobu.v1.CreateEventResponse.
- * Use `create(CreateEventResponseSchema)` to create a new message.
- */
-export const CreateEventResponseSchema: GenMessage<CreateEventResponse> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_event, 5);
-
-/**
  * @generated from message nazobu.v1.GetEventRequest
  */
 export type GetEventRequest = Message<"nazobu.v1.GetEventRequest"> & {
@@ -254,7 +187,7 @@ export type GetEventRequest = Message<"nazobu.v1.GetEventRequest"> & {
  * Use `create(GetEventRequestSchema)` to create a new message.
  */
 export const GetEventRequestSchema: GenMessage<GetEventRequest> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_event, 6);
+  messageDesc(file_nazobu_v1_event, 4);
 
 /**
  * @generated from message nazobu.v1.GetEventResponse
@@ -264,13 +197,6 @@ export type GetEventResponse = Message<"nazobu.v1.GetEventResponse"> & {
    * @generated from field: nazobu.v1.Event event = 1;
    */
   event?: Event | undefined;
-
-  /**
-   * 現在ログイン中の user が編集権限を持つか（admin のみ）。
-   *
-   * @generated from field: bool can_edit = 2;
-   */
-  canEdit: boolean;
 };
 
 /**
@@ -278,79 +204,7 @@ export type GetEventResponse = Message<"nazobu.v1.GetEventResponse"> & {
  * Use `create(GetEventResponseSchema)` to create a new message.
  */
 export const GetEventResponseSchema: GenMessage<GetEventResponse> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_event, 7);
-
-/**
- * @generated from message nazobu.v1.UpdateEventRequest
- */
-export type UpdateEventRequest = Message<"nazobu.v1.UpdateEventRequest"> & {
-  /**
-   * @generated from field: string event_id = 1;
-   */
-  eventId: string;
-
-  /**
-   * @generated from field: string title = 2;
-   */
-  title: string;
-
-  /**
-   * @generated from field: string url = 3;
-   */
-  url: string;
-
-  /**
-   * 開場時間が開演時刻の何分前か。任意。
-   *
-   * @generated from field: optional int32 doors_open_minutes_before = 4;
-   */
-  doorsOpenMinutesBefore?: number | undefined;
-
-  /**
-   * 入場締切が開演時刻の何分前か。任意。
-   *
-   * @generated from field: optional int32 entry_deadline_minutes_before = 5;
-   */
-  entryDeadlineMinutesBefore?: number | undefined;
-
-  /**
-   * 想定所要時間（分）。1 以上。
-   *
-   * @generated from field: int32 expected_duration_minutes = 6;
-   */
-  expectedDurationMinutes: number;
-
-  /**
-   * キャッチコピー（任意）。未設定なら空文字。
-   *
-   * @generated from field: string catchphrase = 7;
-   */
-  catchphrase: string;
-};
-
-/**
- * Describes the message nazobu.v1.UpdateEventRequest.
- * Use `create(UpdateEventRequestSchema)` to create a new message.
- */
-export const UpdateEventRequestSchema: GenMessage<UpdateEventRequest> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_event, 8);
-
-/**
- * @generated from message nazobu.v1.UpdateEventResponse
- */
-export type UpdateEventResponse = Message<"nazobu.v1.UpdateEventResponse"> & {
-  /**
-   * @generated from field: nazobu.v1.Event event = 1;
-   */
-  event?: Event | undefined;
-};
-
-/**
- * Describes the message nazobu.v1.UpdateEventResponse.
- * Use `create(UpdateEventResponseSchema)` to create a new message.
- */
-export const UpdateEventResponseSchema: GenMessage<UpdateEventResponse> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_event, 9);
+  messageDesc(file_nazobu_v1_event, 5);
 
 /**
  * @generated from message nazobu.v1.DeleteEventRequest
@@ -367,7 +221,7 @@ export type DeleteEventRequest = Message<"nazobu.v1.DeleteEventRequest"> & {
  * Use `create(DeleteEventRequestSchema)` to create a new message.
  */
 export const DeleteEventRequestSchema: GenMessage<DeleteEventRequest> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_event, 10);
+  messageDesc(file_nazobu_v1_event, 6);
 
 /**
  * @generated from message nazobu.v1.DeleteEventResponse
@@ -380,7 +234,7 @@ export type DeleteEventResponse = Message<"nazobu.v1.DeleteEventResponse"> & {
  * Use `create(DeleteEventResponseSchema)` to create a new message.
  */
 export const DeleteEventResponseSchema: GenMessage<DeleteEventResponse> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_event, 11);
+  messageDesc(file_nazobu_v1_event, 7);
 
 /**
  * @generated from message nazobu.v1.LinkEventSpoilerChannelRequest
@@ -404,7 +258,7 @@ export type LinkEventSpoilerChannelRequest = Message<"nazobu.v1.LinkEventSpoiler
  * Use `create(LinkEventSpoilerChannelRequestSchema)` to create a new message.
  */
 export const LinkEventSpoilerChannelRequestSchema: GenMessage<LinkEventSpoilerChannelRequest> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_event, 12);
+  messageDesc(file_nazobu_v1_event, 8);
 
 /**
  * @generated from message nazobu.v1.LinkEventSpoilerChannelResponse
@@ -421,7 +275,7 @@ export type LinkEventSpoilerChannelResponse = Message<"nazobu.v1.LinkEventSpoile
  * Use `create(LinkEventSpoilerChannelResponseSchema)` to create a new message.
  */
 export const LinkEventSpoilerChannelResponseSchema: GenMessage<LinkEventSpoilerChannelResponse> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_event, 13);
+  messageDesc(file_nazobu_v1_event, 9);
 
 /**
  * @generated from message nazobu.v1.JoinEventSpoilerChannelRequest
@@ -438,7 +292,7 @@ export type JoinEventSpoilerChannelRequest = Message<"nazobu.v1.JoinEventSpoiler
  * Use `create(JoinEventSpoilerChannelRequestSchema)` to create a new message.
  */
 export const JoinEventSpoilerChannelRequestSchema: GenMessage<JoinEventSpoilerChannelRequest> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_event, 14);
+  messageDesc(file_nazobu_v1_event, 10);
 
 /**
  * @generated from message nazobu.v1.JoinEventSpoilerChannelResponse
@@ -455,10 +309,10 @@ export type JoinEventSpoilerChannelResponse = Message<"nazobu.v1.JoinEventSpoile
  * Use `create(JoinEventSpoilerChannelResponseSchema)` to create a new message.
  */
 export const JoinEventSpoilerChannelResponseSchema: GenMessage<JoinEventSpoilerChannelResponse> = /*@__PURE__*/
-  messageDesc(file_nazobu_v1_event, 15);
+  messageDesc(file_nazobu_v1_event, 11);
 
 /**
- * EventService は event（公演）の参照・登録・更新・削除 RPC を提供する。
+ * EventService は event（公演）の参照・削除 RPC を提供する。
  *
  * @generated from service nazobu.v1.EventService
  */
@@ -480,26 +334,6 @@ export const EventService: GenService<{
     methodKind: "unary";
     input: typeof GetEventRequestSchema;
     output: typeof GetEventResponseSchema;
-  },
-  /**
-   * CreateEvent は event を 1 件登録する。ログインユーザーなら誰でも実行可能。
-   *
-   * @generated from rpc nazobu.v1.EventService.CreateEvent
-   */
-  createEvent: {
-    methodKind: "unary";
-    input: typeof CreateEventRequestSchema;
-    output: typeof CreateEventResponseSchema;
-  },
-  /**
-   * UpdateEvent は event の title / url / catchphrase / 開場・締切オフセットを更新する。admin のみ実行可能。
-   *
-   * @generated from rpc nazobu.v1.EventService.UpdateEvent
-   */
-  updateEvent: {
-    methodKind: "unary";
-    input: typeof UpdateEventRequestSchema;
-    output: typeof UpdateEventResponseSchema;
   },
   /**
    * LinkEventSpoilerChannel は既存の Discord チャンネルを未紐づけの公演に紐づける。admin のみ。
