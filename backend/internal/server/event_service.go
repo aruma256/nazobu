@@ -121,10 +121,6 @@ func (s *eventService) CreateEvent(ctx context.Context, req *connect.Request[naz
 	if err != nil {
 		return nil, err
 	}
-	if user.Role != auth.RoleAdmin {
-		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("event の登録は admin のみ"))
-	}
-
 	msg := req.Msg
 	prepared, err := prepareEventFields(
 		ctx, s.httpClient,

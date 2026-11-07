@@ -68,7 +68,7 @@ func newMCPHandler(
 	mcp.AddTool(srv, &mcp.Tool{
 		Name: "create_ticket_with_event",
 		Description: "新しい謎解き公演とそのチケットをまとめて 1 件登録する（web の新規登録と同じ動線）。" +
-			"チケットの立替者（購入者）はログイン中のユーザー自身になる。admin ロールと write スコープが必要。" +
+			"チケットの立替者（購入者）はログイン中のユーザー自身になる。write スコープが必要。" +
 			"日時は JST の RFC3339 形式（例 2026-08-01T14:00:00+09:00）で指定する。",
 	}, createTicketWithEventTool(tickets))
 

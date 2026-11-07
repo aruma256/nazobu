@@ -9,6 +9,7 @@ service EventService {
   // ListEvents は登録済み event を新しい順で返す。各 event には紐づく ticket を含める。
   rpc ListEvents(ListEventsRequest) returns (ListEventsResponse);
   rpc GetEvent(GetEventRequest) returns (GetEventResponse);
+  // CreateEvent は event を 1 件登録する。ログインユーザーなら誰でも実行可能。
   rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse);
   // UpdateEvent は event の title / url / catchphrase / 開場・締切オフセットを更新する。admin のみ実行可能。
   rpc UpdateEvent(UpdateEventRequest) returns (UpdateEventResponse);

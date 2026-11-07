@@ -482,6 +482,8 @@ export const EventService: GenService<{
     output: typeof GetEventResponseSchema;
   },
   /**
+   * CreateEvent は event を 1 件登録する。ログインユーザーなら誰でも実行可能。
+   *
    * @generated from rpc nazobu.v1.EventService.CreateEvent
    */
   createEvent: {

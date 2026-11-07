@@ -214,12 +214,19 @@ func TestIntegrationCreateTicketAuthorization(t *testing.T) {
 		}
 	})
 
-	t.Run("member の登録は PermissionDenied", func(t *testing.T) {
+	t.Run("member も登録でき、立替者は member 本人になる", func(t *testing.T) {
 		req := newCreateReq()
 		setSessionCookie(t, db, req, memberID)
-		_, err := svc.CreateTicket(ctx, req)
-		if got := connectCode(t, err); got != connect.CodePermissionDenied {
-			t.Errorf("code = %v, want %v", got, connect.CodePermissionDenied)
+		res, err := svc.CreateTicket(ctx, req)
+		if err != nil {
+			t.Fatalf("CreateTicket に失敗: %v", err)
+		}
+		row, err := queries.New(db).GetTicketByID(ctx, res.Msg.Ticket.Id)
+		if err != nil {
+			t.Fatalf("ticket の取得に失敗: %v", err)
+		}
+		if row.PurchasedBy != memberID {
+			t.Errorf("purchased_by = %q, want %q", row.PurchasedBy, memberID)
 		}
 	})
 }

@@ -132,16 +132,14 @@ export function EventsView() {
           unsettledCount={unsettledCount}
           receivablesCount={receivablesCount}
         />
-        {me.role === "admin" && (
-          <Section>
-            <Link
-              href="/tickets/new"
-              className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 active:bg-emerald-900"
-            >
-              公演と参加チケットを登録
-            </Link>
-          </Section>
-        )}
+        <Section>
+          <Link
+            href="/tickets/new"
+            className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-800 active:bg-emerald-900"
+          >
+            公演と参加チケットを登録
+          </Link>
+        </Section>
 
         <Section>
           <SectionTitle count={events.length}>公演一覧</SectionTitle>
@@ -273,14 +271,14 @@ function EventCard({
           </button>
         ))}
         {joinError && <p role="alert" className="text-sm text-red-700">{joinError}</p>}
+        <Link
+          href={`/events/${event.id}/tickets/new`}
+          className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-emerald-700 hover:bg-zinc-50"
+        >
+          この公演にチケットを追加
+        </Link>
         {isAdmin && (
           <>
-            <Link
-              href={`/events/${event.id}/tickets/new`}
-              className="inline-flex h-11 w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-emerald-700 hover:bg-zinc-50"
-            >
-              この公演にチケットを追加
-            </Link>
             <button
               type="button"
               onClick={onDelete}

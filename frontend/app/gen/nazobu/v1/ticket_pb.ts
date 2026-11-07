@@ -899,7 +899,7 @@ export const TicketService: GenService<{
     output: typeof GetTicketResponseSchema;
   },
   /**
-   * CreateTicket は新規 ticket を 1 件登録する。参加者も同時に登録する。
+   * CreateTicket は新規 ticket を 1 件登録する。参加者も同時に登録する。ログインユーザーなら誰でも実行でき、立替者は実行者になる。
    *
    * @generated from rpc nazobu.v1.TicketService.CreateTicket
    */
@@ -910,7 +910,7 @@ export const TicketService: GenService<{
   },
   /**
    * CreateTicketWithEvent は event と ticket を 1 トランザクションで同時登録する。
-   * 1 公演 1 チケットが主流のため、新規作成はこの統合 RPC を主動線にする。admin のみ実行可能。
+   * 1 公演 1 チケットが主流のため、新規作成はこの統合 RPC を主動線にする。ログインユーザーなら誰でも実行でき、立替者は実行者になる。
    *
    * @generated from rpc nazobu.v1.TicketService.CreateTicketWithEvent
    */

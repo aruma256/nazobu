@@ -578,7 +578,7 @@ func TestIntegrationMCPCreateTicketWithEvent(t *testing.T) {
 		}
 	})
 
-	t.Run("member ロールでは権限エラー", func(t *testing.T) {
+	t.Run("member ロールでも登録でき、立替者は member 本人になる", func(t *testing.T) {
 		session := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, memberID, "read write"))
 		res, err := session.CallTool(ctx, &mcp.CallToolParams{
 			Name:      "create_ticket_with_event",
@@ -587,8 +587,17 @@ func TestIntegrationMCPCreateTicketWithEvent(t *testing.T) {
 		if err != nil {
 			t.Fatalf("CallTool に失敗: %v", err)
 		}
-		if !res.IsError {
-			t.Fatal("member ロールで成功してしまった")
+		if res.IsError {
+			t.Fatalf("ツールがエラーを返した: %+v", res.Content)
+		}
+		var out struct {
+			Ticket struct {
+				PurchaserName string `json:"purchaser_name"`
+			} `json:"ticket"`
+		}
+		unmarshalStructuredContent(t, res, &out)
+		if out.Ticket.PurchaserName != "mcp-member" {
+			t.Errorf("purchaser_name = %q", out.Ticket.PurchaserName)
 		}
 	})
 }

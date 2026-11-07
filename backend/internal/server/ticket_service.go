@@ -164,9 +164,6 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 	if err != nil {
 		return nil, err
 	}
-	if user.Role != auth.RoleAdmin {
-		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("ticket の登録は admin のみ"))
-	}
 	// 立替者は常にログイン中の user。クライアントから受け取らない。
 	purchasedBy := user.ID
 
@@ -412,9 +409,7 @@ func (s *ticketService) CreateTicketWithEvent(ctx context.Context, req *connect.
 	if err != nil {
 		return nil, err
 	}
-	if user.Role != auth.RoleAdmin {
-		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("公演と ticket の登録は admin のみ"))
-	}
+	// 立替者は常にログイン中の user。クライアントから受け取らない。
 	purchasedBy := user.ID
 
 	msg := req.Msg
