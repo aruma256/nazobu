@@ -580,9 +580,11 @@ func TestIntegrationMCPCreateTicketWithEvent(t *testing.T) {
 
 	t.Run("member ロールでも登録でき、立替者は member 本人になる", func(t *testing.T) {
 		session := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, memberID, "read write"))
+		args := createArgs()
+		args["event_url"] = "https://example.com/another-event"
 		res, err := session.CallTool(ctx, &mcp.CallToolParams{
 			Name:      "create_ticket_with_event",
-			Arguments: createArgs(),
+			Arguments: args,
 		})
 		if err != nil {
 			t.Fatalf("CallTool に失敗: %v", err)
@@ -598,6 +600,31 @@ func TestIntegrationMCPCreateTicketWithEvent(t *testing.T) {
 		unmarshalStructuredContent(t, res, &out)
 		if out.Ticket.PurchaserName != "mcp-member" {
 			t.Errorf("purchaser_name = %q", out.Ticket.PurchaserName)
+		}
+	})
+
+	t.Run("登録済みの公演と同じ URL では公演を登録できない", func(t *testing.T) {
+		session := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, adminID, "read write"))
+		before, err := queries.New(db).ListEvents(ctx)
+		if err != nil {
+			t.Fatalf("event 一覧の取得に失敗: %v", err)
+		}
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "create_ticket_with_event",
+			Arguments: createArgs(),
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if !res.IsError {
+			t.Fatal("同じ URL の公演を重複登録できてしまった")
+		}
+		after, err := queries.New(db).ListEvents(ctx)
+		if err != nil {
+			t.Fatalf("event 一覧の取得に失敗: %v", err)
+		}
+		if len(after) != len(before) {
+			t.Errorf("event 数が %d → %d に変化した", len(before), len(after))
 		}
 	})
 }

@@ -481,6 +481,9 @@ func (s *ticketService) CreateTicketWithEvent(ctx context.Context, req *connect.
 		EntryDeadlineMinutesBefore: event.entryDeadline,
 		ExpectedDurationMinutes:    event.expectedDuration,
 	}); err != nil {
+		if cerr := eventURLConflictError(err); cerr != nil {
+			return nil, cerr
+		}
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の登録に失敗: %w", err))
 	}
 	if err := qtx.CreateTicket(ctx, queries.CreateTicketParams{
@@ -620,6 +623,9 @@ func (s *ticketService) UpdateTicketWithEvent(ctx context.Context, req *connect.
 		EntryDeadlineMinutesBefore: event.entryDeadline,
 		ExpectedDurationMinutes:    event.expectedDuration,
 	}); err != nil {
+		if cerr := eventURLConflictError(err); cerr != nil {
+			return nil, cerr
+		}
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の更新に失敗: %w", err))
 	}
 	if err := qtx.UpdateTicket(ctx, queries.UpdateTicketParams{

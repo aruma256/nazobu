@@ -115,6 +115,8 @@ CREATE TABLE events (
   created_at  DATETIME(6)  NOT NULL,
   updated_at  DATETIME(6)  NOT NULL,
   PRIMARY KEY (id),
+  -- 同じ公演の二重登録を防ぐため、URL は公演ごとに一意とする。
+  UNIQUE KEY uq_events_url (url),
   UNIQUE KEY uq_events_discord_spoiler_channel_id (discord_spoiler_channel_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 

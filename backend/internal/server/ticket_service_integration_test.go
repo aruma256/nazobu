@@ -89,7 +89,7 @@ func createTestEvent(t *testing.T, db *sql.DB, title string) string {
 	if err := queries.New(db).CreateEvent(context.Background(), queries.CreateEventParams{
 		ID:                      eventID,
 		Title:                   title,
-		Url:                     "https://example.com/event",
+		Url:                     "https://example.com/events/" + eventID,
 		ExpectedDurationMinutes: 120,
 	}); err != nil {
 		t.Fatalf("event 作成に失敗: %v", err)
@@ -731,4 +731,78 @@ func createTestTicket(t *testing.T, db *sql.DB, eventID, purchasedBy string) str
 		t.Fatalf("ticket 作成に失敗: %v", err)
 	}
 	return ticketID
+}
+
+func TestIntegrationEventURLMustBeUnique(t *testing.T) {
+	db := testdb.Open(t)
+	ctx := context.Background()
+	svc := newTicketService(db)
+
+	adminID := createTestUser(t, db, "admin-user", auth.RoleAdmin)
+
+	// URL の host は OG 取得の allowlist 外なので、テスト中に外部アクセスは発生しない。
+	createWithURL := func(eventURL string) (*connect.Response[nazobuv1.CreateTicketWithEventResponse], error) {
+		req := connect.NewRequest(&nazobuv1.CreateTicketWithEventRequest{
+			EventTitle:                   "公演",
+			EventUrl:                     eventURL,
+			EventExpectedDurationMinutes: 120,
+			StartAt:                      "2026-08-01T14:00:00+09:00",
+			PricePerPerson:               3000,
+			MaxParticipants:              1,
+			ParticipantUserIds:           []string{adminID},
+		})
+		setSessionCookie(t, db, req, adminID)
+		return svc.CreateTicketWithEvent(ctx, req)
+	}
+	updateWithURL := func(ticketID, eventURL string) error {
+		req := connect.NewRequest(&nazobuv1.UpdateTicketWithEventRequest{
+			TicketId:                     ticketID,
+			EventTitle:                   "公演",
+			EventUrl:                     eventURL,
+			EventExpectedDurationMinutes: 120,
+			StartAt:                      "2026-08-01T14:00:00+09:00",
+			PricePerPerson:               3000,
+			MaxParticipants:              1,
+			PurchasedByUserId:            adminID,
+		})
+		setSessionCookie(t, db, req, adminID)
+		_, err := svc.UpdateTicketWithEvent(ctx, req)
+		return err
+	}
+
+	first, err := createWithURL("https://example.com/events/a")
+	if err != nil {
+		t.Fatalf("1 件目の登録に失敗: %v", err)
+	}
+	second, err := createWithURL("https://example.com/events/b")
+	if err != nil {
+		t.Fatalf("2 件目の登録に失敗: %v", err)
+	}
+
+	t.Run("同じ URL の公演は新規登録できない", func(t *testing.T) {
+		_, err := createWithURL("https://example.com/events/a")
+		if got := connectCode(t, err); got != connect.CodeAlreadyExists {
+			t.Errorf("code = %v, want %v", got, connect.CodeAlreadyExists)
+		}
+		events, err := queries.New(db).ListEvents(ctx)
+		if err != nil {
+			t.Fatalf("event 一覧の取得に失敗: %v", err)
+		}
+		if len(events) != 2 {
+			t.Errorf("event 数 = %d, want 2", len(events))
+		}
+	})
+
+	t.Run("他の公演と同じ URL には更新できない", func(t *testing.T) {
+		err := updateWithURL(second.Msg.Ticket.Id, "https://example.com/events/a")
+		if got := connectCode(t, err); got != connect.CodeAlreadyExists {
+			t.Errorf("code = %v, want %v", got, connect.CodeAlreadyExists)
+		}
+	})
+
+	t.Run("URL を変えずに自分自身を更新するのは問題ない", func(t *testing.T) {
+		if err := updateWithURL(first.Msg.Ticket.Id, "https://example.com/events/a"); err != nil {
+			t.Errorf("更新に失敗: %v", err)
+		}
+	})
 }

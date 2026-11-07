@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
+	"github.com/go-sql-driver/mysql"
 
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
 	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
@@ -176,6 +177,16 @@ func prepareEventFields(
 		entryDeadline:    entryDeadline,
 		expectedDuration: expectedDuration,
 	}, nil
+}
+
+// eventURLConflictError は events.url の UNIQUE 制約違反を AlreadyExists に変換する。
+// 該当しないエラーなら nil を返す。
+func eventURLConflictError(err error) error {
+	var mysqlErr *mysql.MySQLError
+	if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 && strings.Contains(mysqlErr.Message, "uq_events_url") {
+		return connect.NewError(connect.CodeAlreadyExists, errors.New("同じ URL の公演がすでに登録されています。既存の公演にチケットを追加してください"))
+	}
+	return nil
 }
 
 // applyOGDescriptionFallback は catchphrase が空のとき、採用条件を満たす og:description で補完する。
