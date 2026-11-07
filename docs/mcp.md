@@ -17,7 +17,8 @@
 | `get_ticket` | - | チケット 1 件の詳細。参加者ごとの精算状況（精算済みか・立替者か）を含む |
 | `list_users` | - | 登録メンバー一覧（`user_id` と表示名）。参加者指定の前に ID を引く用途 |
 | `register_user` | `write` | Discord ユーザーの事前登録（CLI の `register-user` と同じ処理）。登録済みならエラーで、既存ユーザーは更新しない。admin ロールが必要 |
-| `create_ticket_with_event` | `write` | 公演とチケットの同時登録（web の新規登録と同じ `CreateTicketWithEvent` RPC を再利用）。立替者は自分になる。admin ロールが必要 |
+| `create_ticket_with_event` | `write` | 公演とチケットの同時登録（web の新規登録と同じ `CreateTicketWithEvent` RPC を再利用）。立替者は自分になる |
+| `create_ticket` | `write` | 既存の公演へのチケット追加（web の公演ページからの追加と同じ `CreateTicket` RPC を再利用）。立替者は自分になる |
 | `link_event_spoiler_channel` | `write` | 既存の Discord ネタバレチャンネルを公演に紐づける。admin のみ |
 | `update_ticket_with_event` | `write` | チケットと紐づく公演の部分更新。admin もしくは立替者のみ |
 

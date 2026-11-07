@@ -602,6 +602,128 @@ func TestIntegrationMCPCreateTicketWithEvent(t *testing.T) {
 	})
 }
 
+func TestIntegrationMCPCreateTicket(t *testing.T) {
+	db := testdb.Open(t)
+	_, existingTicketID, _ := setupMCPTestData(t, db)
+	memberID := createTestUser(t, db, "mcp-member", auth.RoleMember)
+	ts := newMCPTestServer(t, db)
+	ctx := context.Background()
+
+	existing, err := queries.New(db).GetTicketByID(ctx, existingTicketID)
+	if err != nil {
+		t.Fatalf("既存 ticket の取得に失敗: %v", err)
+	}
+	eventID := existing.EventID
+
+	createArgs := func() map[string]any {
+		return map[string]any{
+			"event_id":                        eventID,
+			"start_at":                        "2026-09-02T18:00:00+09:00",
+			"meeting_place":                   "池袋駅西口",
+			"memo":                            "2 回目",
+			"price_per_person":                4000,
+			"max_participants":                3,
+			"unregistered_participants_count": 1,
+			"participant_user_ids":            []string{memberID},
+		}
+	}
+
+	t.Run("write スコープの member は既存公演にチケットを追加でき、立替者は本人になる", func(t *testing.T) {
+		session := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, memberID, "read write"))
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "create_ticket",
+			Arguments: createArgs(),
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if res.IsError {
+			t.Fatalf("ツールがエラーを返した: %+v", res.Content)
+		}
+
+		var out struct {
+			Ticket struct {
+				EventID          string   `json:"event_id"`
+				TicketID         string   `json:"ticket_id"`
+				EventTitle       string   `json:"event_title"`
+				StartAt          string   `json:"start_at"`
+				Memo             string   `json:"memo"`
+				PricePerPerson   int32    `json:"price_per_person"`
+				PurchaserName    string   `json:"purchaser_name"`
+				ParticipantNames []string `json:"participant_names"`
+			} `json:"ticket"`
+			MaxParticipants               int32 `json:"max_participants"`
+			UnregisteredParticipantsCount int32 `json:"unregistered_participants_count"`
+		}
+		unmarshalStructuredContent(t, res, &out)
+		if out.Ticket.TicketID == "" || out.Ticket.TicketID == existingTicketID {
+			t.Fatalf("新しい ticket_id が返っていない: %+v", out)
+		}
+		if out.Ticket.EventID != eventID {
+			t.Errorf("event_id = %q, want %q", out.Ticket.EventID, eventID)
+		}
+		if out.Ticket.EventTitle != "テスト脱出公演" {
+			t.Errorf("event_title = %q", out.Ticket.EventTitle)
+		}
+		if out.Ticket.StartAt != "2026-09-02T18:00:00+09:00" {
+			t.Errorf("start_at = %q", out.Ticket.StartAt)
+		}
+		if out.Ticket.Memo != "2 回目" {
+			t.Errorf("memo = %q", out.Ticket.Memo)
+		}
+		if out.Ticket.PricePerPerson != 4000 {
+			t.Errorf("price_per_person = %d", out.Ticket.PricePerPerson)
+		}
+		if out.Ticket.PurchaserName != "mcp-member" {
+			t.Errorf("purchaser_name = %q", out.Ticket.PurchaserName)
+		}
+		if len(out.Ticket.ParticipantNames) != 1 {
+			t.Errorf("participant_names = %v", out.Ticket.ParticipantNames)
+		}
+		if out.MaxParticipants != 3 || out.UnregisteredParticipantsCount != 1 {
+			t.Errorf("max_participants = %d, unregistered = %d", out.MaxParticipants, out.UnregisteredParticipantsCount)
+		}
+
+		got, err := queries.New(db).GetTicketByID(ctx, out.Ticket.TicketID)
+		if err != nil {
+			t.Fatalf("登録後の ticket が取得できない: %v", err)
+		}
+		if got.EventID != eventID {
+			t.Errorf("DB 上の event_id = %q, want %q", got.EventID, eventID)
+		}
+	})
+
+	t.Run("read のみのトークンでは write スコープ不足でエラー", func(t *testing.T) {
+		session := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, memberID, "read"))
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "create_ticket",
+			Arguments: createArgs(),
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if !res.IsError {
+			t.Fatal("write スコープ無しで成功してしまった")
+		}
+	})
+
+	t.Run("存在しない event_id ではエラー", func(t *testing.T) {
+		session := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, memberID, "read write"))
+		args := createArgs()
+		args["event_id"] = id.New()
+		res, err := session.CallTool(ctx, &mcp.CallToolParams{
+			Name:      "create_ticket",
+			Arguments: args,
+		})
+		if err != nil {
+			t.Fatalf("CallTool に失敗: %v", err)
+		}
+		if !res.IsError {
+			t.Fatal("存在しない公演へのチケット追加が成功してしまった")
+		}
+	})
+}
+
 func TestIntegrationMCPUpdateTicketWithEvent(t *testing.T) {
 	db := testdb.Open(t)
 	userID, ticketID, readOnlyToken := setupMCPTestData(t, db)

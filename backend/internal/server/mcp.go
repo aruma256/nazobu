@@ -55,7 +55,7 @@ func newMCPHandler(
 	mcp.AddTool(srv, &mcp.Tool{
 		Name: "list_users",
 		Description: "謎部の登録メンバー一覧（user_id と表示名）を取得する。" +
-			"create_ticket_with_event の participant_user_ids を指定する前に、このツールで ID を確認する。",
+			"create_ticket_with_event / create_ticket の participant_user_ids を指定する前に、このツールで ID を確認する。",
 	}, listUsersTool(users))
 
 	mcp.AddTool(srv, &mcp.Tool{
@@ -71,6 +71,14 @@ func newMCPHandler(
 			"チケットの立替者（購入者）はログイン中のユーザー自身になる。write スコープが必要。" +
 			"日時は JST の RFC3339 形式（例 2026-08-01T14:00:00+09:00）で指定する。",
 	}, createTicketWithEventTool(tickets))
+
+	mcp.AddTool(srv, &mcp.Tool{
+		Name: "create_ticket",
+		Description: "既存の謎解き公演に新しいチケットを 1 件追加登録する（web の公演ページからのチケット追加と同じ動線）。" +
+			"event_id は list_tickets / get_ticket で確認する。公演自体が未登録なら create_ticket_with_event を使う。" +
+			"チケットの立替者（購入者）はログイン中のユーザー自身になる。write スコープが必要。" +
+			"日時は JST の RFC3339 形式（例 2026-08-01T14:00:00+09:00）で指定する。",
+	}, createTicketTool(tickets))
 
 	mcp.AddTool(srv, &mcp.Tool{
 		Name: "update_ticket_with_event",
@@ -324,6 +332,54 @@ func createTicketWithEventTool(tickets nazobuv1connect.TicketServiceHandler) mcp
 		}
 		t := res.Msg.GetTicket()
 		out.EventID = t.GetEventId()
+		out.Ticket = toMCPTicket(t)
+		out.MaxParticipants = t.GetMaxParticipants()
+		out.UnregisteredParticipantsCount = t.GetUnregisteredParticipantsCount()
+		return nil, out, nil
+	}
+}
+
+// createTicketInput は CreateTicketRequest の MCP 向けミラー。
+// バリデーション（必須・上限・整合性）は RPC ハンドラ側に集約されているため、ここでは行わない。
+type createTicketInput struct {
+	EventID                       string   `json:"event_id" jsonschema:"チケットを追加する公演の ID（必須）。list_tickets / get_ticket で確認する"`
+	StartAt                       string   `json:"start_at" jsonschema:"開演日時（JST, RFC3339、必須）"`
+	MeetingAt                     string   `json:"meeting_at,omitempty" jsonschema:"集合日時（JST, RFC3339）。未定なら省略"`
+	MeetingPlace                  string   `json:"meeting_place,omitempty" jsonschema:"集合場所。未定なら省略"`
+	Memo                          string   `json:"memo,omitempty" jsonschema:"チケットの共有メモ（2000 文字以内）。ログイン中のメンバー全員に表示される。不要なら省略"`
+	PricePerPerson                int32    `json:"price_per_person" jsonschema:"一人あたりの参加費（税込・円、0 以上）"`
+	MaxParticipants               int32    `json:"max_participants" jsonschema:"このチケット 1 枚で参加できる最大人数（1 以上、必須）"`
+	UnregisteredParticipantsCount int32    `json:"unregistered_participants_count,omitempty" jsonschema:"謎部に未登録の同行者の人数（0 以上、省略時 0）。定員の枠を消費する"`
+	ParticipantUserIDs            []string `json:"participant_user_ids" jsonschema:"参加メンバーの user_id（1 件以上）。list_users で確認した ID を使う。立替者（自分）も参加するなら含める"`
+}
+
+type createTicketOutput struct {
+	Ticket                        mcpTicket `json:"ticket" jsonschema:"登録されたチケット"`
+	MaxParticipants               int32     `json:"max_participants" jsonschema:"チケットの最大参加人数"`
+	UnregisteredParticipantsCount int32     `json:"unregistered_participants_count" jsonschema:"未登録の同行者の人数"`
+}
+
+func createTicketTool(tickets nazobuv1connect.TicketServiceHandler) mcp.ToolHandlerFor[createTicketInput, createTicketOutput] {
+	return func(ctx context.Context, _ *mcp.CallToolRequest, in createTicketInput) (*mcp.CallToolResult, createTicketOutput, error) {
+		var out createTicketOutput
+		if !oauth.HasScope(ctx, oauth.ScopeWrite) {
+			return nil, out, errors.New("このアクセストークンには write スコープが無い。Claude のコネクタを一度削除して接続し直し、書き込みを許可してほしい")
+		}
+		res, err := tickets.CreateTicket(ctx, connect.NewRequest(&nazobuv1.CreateTicketRequest{
+			EventId:                       in.EventID,
+			PricePerPerson:                in.PricePerPerson,
+			StartAt:                       in.StartAt,
+			MeetingAt:                     in.MeetingAt,
+			MeetingPlace:                  in.MeetingPlace,
+			Memo:                          in.Memo,
+			ParticipantUserIds:            in.ParticipantUserIDs,
+			MaxParticipants:               in.MaxParticipants,
+			UnregisteredParticipantsCount: in.UnregisteredParticipantsCount,
+		}))
+		if err != nil {
+			return nil, out, err
+		}
+		t := res.Msg.GetTicket()
 		out.Ticket = toMCPTicket(t)
 		out.MaxParticipants = t.GetMaxParticipants()
 		out.UnregisteredParticipantsCount = t.GetUnregisteredParticipantsCount()
