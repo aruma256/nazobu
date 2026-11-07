@@ -89,7 +89,7 @@ func createTestEvent(t *testing.T, db *sql.DB, title string) string {
 	if err := queries.New(db).CreateEvent(context.Background(), queries.CreateEventParams{
 		ID:                      eventID,
 		Title:                   title,
-		Url:                     "https://example.com/event",
+		Url:                     "https://example.com/events/" + eventID,
 		ExpectedDurationMinutes: 120,
 	}); err != nil {
 		t.Fatalf("event 作成に失敗: %v", err)
@@ -502,6 +502,74 @@ func TestIntegrationCreateTicketUnregisteredValidation(t *testing.T) {
 	t.Run("定員ちょうどなら登録できる", func(t *testing.T) {
 		if _, err := svc.CreateTicket(ctx, newCreateReq(2, 1)); err != nil {
 			t.Errorf("CreateTicket に失敗: %v", err)
+		}
+	})
+}
+
+func TestIntegrationEventURLUnique(t *testing.T) {
+	db := testdb.Open(t)
+	ctx := context.Background()
+	svc := newTicketService(db)
+
+	adminID := createTestUser(t, db, "admin-user", auth.RoleAdmin)
+	existingEvent, err := queries.New(db).GetEventByID(ctx, createTestEvent(t, db, "既存公演"))
+	if err != nil {
+		t.Fatalf("event の取得に失敗: %v", err)
+	}
+
+	// event の host は OG 取得の allowlist 外なので、テスト中に外部アクセスは発生しない。
+	create := func(eventURL string) (*connect.Response[nazobuv1.CreateTicketWithEventResponse], error) {
+		req := connect.NewRequest(&nazobuv1.CreateTicketWithEventRequest{
+			EventTitle:                   "新規公演",
+			EventUrl:                     eventURL,
+			EventExpectedDurationMinutes: 120,
+			StartAt:                      "2026-08-01T14:00:00+09:00",
+			PricePerPerson:               1000,
+			MaxParticipants:              1,
+			ParticipantUserIds:           []string{adminID},
+		})
+		setSessionCookie(t, db, req, adminID)
+		return svc.CreateTicketWithEvent(ctx, req)
+	}
+	update := func(ticketID, eventURL string) error {
+		req := connect.NewRequest(&nazobuv1.UpdateTicketWithEventRequest{
+			TicketId:                     ticketID,
+			EventTitle:                   "新規公演",
+			EventUrl:                     eventURL,
+			EventExpectedDurationMinutes: 120,
+			StartAt:                      "2026-08-01T14:00:00+09:00",
+			PricePerPerson:               1000,
+			MaxParticipants:              1,
+			PurchasedByUserId:            adminID,
+		})
+		setSessionCookie(t, db, req, adminID)
+		_, err := svc.UpdateTicketWithEvent(ctx, req)
+		return err
+	}
+
+	t.Run("登録済みの URL で公演を新規登録すると AlreadyExists", func(t *testing.T) {
+		_, err := create(existingEvent.Url)
+		if got := connectCode(t, err); got != connect.CodeAlreadyExists {
+			t.Errorf("code = %v, want %v", got, connect.CodeAlreadyExists)
+		}
+	})
+
+	res, err := create("https://example.com/another-event")
+	if err != nil {
+		t.Fatalf("別 URL の公演登録に失敗: %v", err)
+	}
+	ticketID := res.Msg.GetTicket().GetId()
+
+	t.Run("自身の URL のままなら更新できる", func(t *testing.T) {
+		if err := update(ticketID, "https://example.com/another-event"); err != nil {
+			t.Errorf("UpdateTicketWithEvent に失敗: %v", err)
+		}
+	})
+
+	t.Run("他の公演の URL に変更すると AlreadyExists", func(t *testing.T) {
+		err := update(ticketID, existingEvent.Url)
+		if got := connectCode(t, err); got != connect.CodeAlreadyExists {
+			t.Errorf("code = %v, want %v", got, connect.CodeAlreadyExists)
 		}
 	})
 }

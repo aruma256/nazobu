@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
+	"github.com/go-sql-driver/mysql"
 
 	nazobuv1 "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1"
 	"github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1/nazobuv1connect"
@@ -107,6 +108,16 @@ func (s *eventService) GetEvent(ctx context.Context, req *connect.Request[nazobu
 			Tickets:                    []*nazobuv1.EventTicket{},
 		},
 	}), nil
+}
+
+// eventWriteError は events への INSERT / UPDATE のエラーを connect.Error に変換する。
+// URL の UNIQUE 制約違反は AlreadyExists として利用者に伝える。
+func eventWriteError(err error, action string) error {
+	var mysqlErr *mysql.MySQLError
+	if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 && strings.Contains(mysqlErr.Message, "uq_events_url") {
+		return connect.NewError(connect.CodeAlreadyExists, errors.New("同じ URL の公演がすでに登録されています。既存の公演にチケットを追加してください"))
+	}
+	return connect.NewError(connect.CodeInternal, fmt.Errorf("event の%sに失敗: %w", action, err))
 }
 
 type preparedEventFields struct {

@@ -580,9 +580,11 @@ func TestIntegrationMCPCreateTicketWithEvent(t *testing.T) {
 
 	t.Run("member ロールでも登録でき、立替者は member 本人になる", func(t *testing.T) {
 		session := newMCPTestSession(t, ts.URL, issueMCPAccessToken(t, db, memberID, "read write"))
+		args := createArgs()
+		args["event_url"] = "https://example.com/new-event-by-member"
 		res, err := session.CallTool(ctx, &mcp.CallToolParams{
 			Name:      "create_ticket_with_event",
-			Arguments: createArgs(),
+			Arguments: args,
 		})
 		if err != nil {
 			t.Fatalf("CallTool に失敗: %v", err)

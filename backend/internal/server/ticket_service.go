@@ -481,7 +481,7 @@ func (s *ticketService) CreateTicketWithEvent(ctx context.Context, req *connect.
 		EntryDeadlineMinutesBefore: event.entryDeadline,
 		ExpectedDurationMinutes:    event.expectedDuration,
 	}); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の登録に失敗: %w", err))
+		return nil, eventWriteError(err, "登録")
 	}
 	if err := qtx.CreateTicket(ctx, queries.CreateTicketParams{
 		ID:                            ticketID,
@@ -620,7 +620,7 @@ func (s *ticketService) UpdateTicketWithEvent(ctx context.Context, req *connect.
 		EntryDeadlineMinutesBefore: event.entryDeadline,
 		ExpectedDurationMinutes:    event.expectedDuration,
 	}); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の更新に失敗: %w", err))
+		return nil, eventWriteError(err, "更新")
 	}
 	if err := qtx.UpdateTicket(ctx, queries.UpdateTicketParams{
 		ID:                            ticketID,
