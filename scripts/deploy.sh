@@ -10,9 +10,8 @@ sudo docker run --rm \
   mirror.gcr.io/alpine/git \
   -c safe.directory=/repo pull origin main
 
-sudo docker compose -f compose.yaml -f compose.prod.yaml pull cloudflared
-
-# 停止しているサービスがあれば起動 / compose 設定やイメージが変わっていれば反映（初回・cloudflared 等向け）
+# 停止しているサービスがあれば起動 / compose 設定やイメージタグが変わっていれば反映（初回・cloudflared 等向け）。
+# compose のイメージタグはすべてバージョン固定なので、タグが書き換わっていれば未取得のイメージとしてここで pull される。
 sudo docker compose -f compose.yaml -f compose.prod.yaml up -d
 
 # backend / frontend は bind mount のソースが更新されているので強制再作成して再ビルド

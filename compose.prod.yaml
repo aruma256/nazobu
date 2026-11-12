@@ -42,7 +42,9 @@ services:
     restart: unless-stopped
 
   cloudflared:
-    image: mirror.gcr.io/cloudflare/cloudflared:latest
+    # 他のイメージと同様にバージョンを固定する（compose.yaml 先頭のコメント参照）。
+    # Cloudflare のサポート対象は最新リリースから 1 年以内の版なので、放置せず定期的に上げること。
+    image: mirror.gcr.io/cloudflare/cloudflared:2026.10.7
     command: tunnel --no-autoupdate run
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
