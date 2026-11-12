@@ -17,7 +17,8 @@ jobs:
     # command 上書きは不要（service container では command を指定できない）。
     services:
       mysql-test:
-        image: mirror.gcr.io/mysql:8
+        # compose.yaml の mysql イメージのバージョンと揃える
+        image: mirror.gcr.io/mysql:8.4.13
         env:
           MYSQL_ROOT_PASSWORD: test
         ports:

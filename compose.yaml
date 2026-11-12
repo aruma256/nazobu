@@ -1,6 +1,12 @@
+# イメージタグはパッチバージョンまで固定する。浮動タグ（node:26 など）だと NAS 上で最初に pull した
+# イメージが使われ続け、更新が反映されないため。タグを書き換えて deploy すれば `up -d` が新しいタグを取得する。
+# バージョンは CI と揃えること:
+#   node   ↔ .github/workflows/frontend.yml の node-version
+#   golang ↔ backend/go.mod の go ディレクティブ（CI の setup-go が参照）
+#   mysql  ↔ .github/workflows/backend.yml の service container
 services:
   mysql:
-    image: mirror.gcr.io/mysql:8
+    image: mirror.gcr.io/mysql:8.4.13
     command: >-
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_0900_ai_ci
@@ -25,7 +31,7 @@ services:
   # クレデンシャルはテスト専用の固定値で、開発 DB (mysql) とはコンテナも認証情報も別。
   # テストはパッケージごとに DB を CREATE/DROP するため root で接続する（testdb パッケージ参照）。
   mysql-test:
-    image: mirror.gcr.io/mysql:8
+    image: mirror.gcr.io/mysql:8.4.13
     profiles:
       - test
     command: >-
@@ -45,7 +51,7 @@ services:
       start_period: 30s
 
   backend:
-    image: mirror.gcr.io/golang:1.27
+    image: mirror.gcr.io/golang:1.27.4
     working_dir: /app
     command: >-
       sh -c "go install github.com/sqldef/sqldef/v3/cmd/mysqldef@v3.11.26
@@ -89,7 +95,7 @@ services:
       - db
 
   frontend:
-    image: mirror.gcr.io/node:26-bookworm-slim
+    image: mirror.gcr.io/node:26.13.1-bookworm-slim
     working_dir: /app
     command: sh -c "npm install && npm run dev -- --hostname 0.0.0.0"
     environment:
@@ -109,7 +115,7 @@ services:
   # proto からのコード生成。通常の `docker compose up` では起動しない（docker compose run で個別に実行する）。
   # 生成物が root 所有にならないよう --user 付きで実行する想定で、キャッシュは /tmp 配下へ逃がす。
   codegen-go:
-    image: mirror.gcr.io/golang:1.27
+    image: mirror.gcr.io/golang:1.27.4
     profiles:
       - codegen
     working_dir: /workspace
@@ -122,7 +128,7 @@ services:
       - .:/workspace
 
   codegen-es:
-    image: mirror.gcr.io/node:26-bookworm-slim
+    image: mirror.gcr.io/node:26.13.1-bookworm-slim
     profiles:
       - codegen
     working_dir: /workspace
