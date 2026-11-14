@@ -13,7 +13,8 @@ const JST_PARTS = new Intl.DateTimeFormat("en-US", {
   hour: "2-digit",
   minute: "2-digit",
   weekday: "short",
-  hour12: false,
+  // hour12: false は実装によって深夜 0 時を "24" と返すことがあるため h23 を明示する。
+  hourCycle: "h23",
 });
 
 type JSTParts = {

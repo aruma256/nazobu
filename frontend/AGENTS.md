@@ -15,29 +15,27 @@
 - 解決 / 失敗のような成否は **管理しない**（仕様）
 
 ### タイポグラフィ
-- 本文: Noto Sans JP（`next/font/google`、`preload: false`）
-- 数字・日付・金額: Geist Mono（既存 `--font-mono`）+ `tabular-nums` で桁ズレ防止
+- 本文: Noto Sans JP（`next/font/google`、`preload: false`）。Tailwind の既定フォント（`--font-sans`）に割り当て済み
+- 数字・日付・金額: Geist Mono（`--font-mono`）+ `tabular-nums` で桁ズレ防止
 
 ### 共通 UI 部品
-`app/mypage/_components.tsx` にマイページ用部品を集約：
+`app/_components.tsx` に共通部品を集約：
 
 | 部品 | 用途 |
 |---|---|
 | `AppHeader` / `PageShell` / `Section` / `SectionTitle` | レイアウト骨格 |
-| `ListCard` | 角丸・薄ボーダーの白カード（`divide-y` 内蔵） |
-| `AlertCard` / `AlertItem` | 琥珀ベースの警告ブロック |
 | `PrimaryButton` | 深緑塗りボタン |
 | `Badge`（`settled` / `unsettled` / `muted`） | ステータス表示 |
 | `Mono` | 数字・日付用の等幅 + tabular-nums |
-
-他ページから使うようになったら `app/_components/` 等に昇格する。
+| `TicketCard` / `EventCover` | チケット 1 枚分のカード / 公演の OG 画像 |
+| `UnsettledBanner` | 未精算・未回収があるときのダッシュボードへの導線 |
 
 ### Tailwind 運用
 - スタイルの再利用は **React コンポーネント抽出を第一手段**にする（`@apply` でクラスを増やす方針は取らない）
 - ブランドカラーをトークン化したくなったら `globals.css` の `@theme` ブロックに足す（現状は zinc / emerald / amber で足りているので未導入）
 
 ### フォント読み込みのスコープ
-ページグループ単位の `layout.tsx` で `next/font/google` を読み込む。ルートの `app/layout.tsx` には触らない（影響範囲が広すぎるため）。
+全ページ共通のフォント・背景色・文字色はルートの `app/layout.tsx` と `globals.css` で 1 度だけ設定する。ページグループごとの `layout.tsx` に同じ設定を複製しない。
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know

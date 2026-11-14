@@ -37,18 +37,21 @@ export function NewTicketForEventView({ eventId }: { eventId: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([eventClient.listEvents({}), userClient.listUsers({})])
+    Promise.all([eventClient.getEvent({ eventId }), userClient.listUsers({})])
       .then(([ev, us]) => {
         if (cancelled) return;
-        const found = ev.events.find((e) => e.id === eventId);
-        if (!found) {
+        if (!ev.event) {
           setLoad({ kind: "not_found" });
           return;
         }
-        setLoad({ kind: "ready", event: found, users: us.users });
+        setLoad({ kind: "ready", event: ev.event, users: us.users });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
+        if (err instanceof ConnectError && err.code === Code.NotFound) {
+          setLoad({ kind: "not_found" });
+          return;
+        }
         if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
           redirectToLogin(router, `/events/${eventId}/tickets/new`);
           return;
