@@ -21,6 +21,8 @@
 | `create_ticket` | `write` | 既存の公演へのチケット追加（web の公演ページからの追加と同じ `CreateTicket` RPC を再利用）。立替者は自分になる |
 | `link_event_spoiler_channel` | `write` | 既存の Discord ネタバレチャンネルを公演に紐づける。admin のみ |
 | `update_ticket_with_event` | `write` | チケットと紐づく公演の部分更新。admin もしくは立替者のみ |
+| `delete_ticket` | `write` | チケットを参加者・精算情報ごと完全削除。admin もしくは立替者のみ。公演と Discord チャンネルは残る |
+| `delete_event` | `write` | 公演の完全削除。admin のみ。チケットが残っている公演は削除不可 |
 
 ### link_event_spoiler_channel の手動紐づけ
 
