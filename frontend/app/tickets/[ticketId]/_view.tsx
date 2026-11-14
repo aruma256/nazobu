@@ -428,6 +428,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
         </Section>
 
         <ParticipantsSection
+          ticketId={ticket.id}
           participants={detail.participants}
           maxParticipants={ticket.maxParticipants}
           unregisteredCount={ticket.unregisteredParticipantsCount}
@@ -683,6 +684,7 @@ function ParticipantsSection({
   onRemove,
   onToggleSettlement,
 }: {
+  ticketId: string;
   participants: TicketParticipant[];
   maxParticipants: number;
   unregisteredCount: number;

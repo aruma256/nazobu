@@ -22,9 +22,6 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/reminder"
 )
 
-// 外部 HTTP 呼び出し全体の上限。
-const externalHTTPTimeout = 15 * time.Second
-
 type Server struct {
 	cfg          config.Config
 	db           *sql.DB
@@ -43,9 +40,7 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 			cfg.Discord.ClientSecret,
 			cfg.Discord.RedirectURL,
 		),
-		// 外部 API（Discord / OG 取得 / CIMD 取得）がハングしてもリクエストを抱え込まないための上限。
-		// 個別の処理はこれより短い context timeout を別途かけている。
-		httpClient: &http.Client{Timeout: externalHTTPTimeout},
+		httpClient: http.DefaultClient,
 	}
 
 	mux := http.NewServeMux()

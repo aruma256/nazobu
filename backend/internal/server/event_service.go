@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"unicode/utf8"
 
 	"connectrpc.com/connect"
 	"github.com/go-sql-driver/mysql"
@@ -36,7 +35,6 @@ func newEventService(db *sql.DB) nazobuv1connect.EventServiceHandler {
 	return &eventService{db: db, q: queries.New(db), httpClient: http.DefaultClient}
 }
 
-// title / catchphrase は VARCHAR の定義（文字数）に合わせて文字数で判定する。
 const (
 	eventTitleMaxLen       = 255
 	eventURLMaxLen         = 512
@@ -96,22 +94,20 @@ func (s *eventService) GetEvent(ctx context.Context, req *connect.Request[nazobu
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("event の取得に失敗: %w", err))
 	}
 
-	event := &nazobuv1.Event{
-		Id:                         row.ID,
-		HasSpoilerChannel:          row.DiscordSpoilerChannelID.Valid,
-		Title:                      row.Title,
-		Url:                        row.Url,
-		Catchphrase:                row.Catchphrase,
-		ImageUrl:                   nullStringToString(row.ImageUrl),
-		DoorsOpenMinutesBefore:     nullInt32ToPtr(row.DoorsOpenMinutesBefore),
-		EntryDeadlineMinutesBefore: nullInt32ToPtr(row.EntryDeadlineMinutesBefore),
-		ExpectedDurationMinutes:    row.ExpectedDurationMinutes,
-		Tickets:                    []*nazobuv1.EventTicket{},
-	}
-	if err := s.attachTickets(ctx, []*nazobuv1.Event{event}); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket の取得に失敗: %w", err))
-	}
-	return connect.NewResponse(&nazobuv1.GetEventResponse{Event: event}), nil
+	return connect.NewResponse(&nazobuv1.GetEventResponse{
+		Event: &nazobuv1.Event{
+			Id:                         row.ID,
+			HasSpoilerChannel:          row.DiscordSpoilerChannelID.Valid,
+			Title:                      row.Title,
+			Url:                        row.Url,
+			Catchphrase:                row.Catchphrase,
+			ImageUrl:                   nullStringToString(row.ImageUrl),
+			DoorsOpenMinutesBefore:     nullInt32ToPtr(row.DoorsOpenMinutesBefore),
+			EntryDeadlineMinutesBefore: nullInt32ToPtr(row.EntryDeadlineMinutesBefore),
+			ExpectedDurationMinutes:    row.ExpectedDurationMinutes,
+			Tickets:                    []*nazobuv1.EventTicket{},
+		},
+	}), nil
 }
 
 // eventWriteError は events への INSERT / UPDATE のエラーを connect.Error に変換する。
@@ -164,13 +160,13 @@ func prepareEventFields(
 	if rawURL == "" {
 		return preparedEventFields{}, connect.NewError(connect.CodeInvalidArgument, errors.New("url は必須"))
 	}
-	if utf8.RuneCountInString(title) > eventTitleMaxLen {
+	if len(title) > eventTitleMaxLen {
 		return preparedEventFields{}, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("title は %d 文字以内", eventTitleMaxLen))
 	}
 	if len(rawURL) > eventURLMaxLen {
 		return preparedEventFields{}, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("url は %d 文字以内", eventURLMaxLen))
 	}
-	if utf8.RuneCountInString(catchphrase) > eventCatchphraseMaxLen {
+	if len(catchphrase) > eventCatchphraseMaxLen {
 		return preparedEventFields{}, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("catchphrase は %d 文字以内", eventCatchphraseMaxLen))
 	}
 	parsed, err := url.Parse(rawURL)
@@ -202,7 +198,7 @@ func applyOGDescriptionFallback(catchphrase, host, ogDescription string) string 
 	if !shouldUseOGDescriptionAsCatchphrase(host, ogDescription) {
 		return catchphrase
 	}
-	if utf8.RuneCountInString(ogDescription) > eventCatchphraseMaxLen {
+	if len(ogDescription) > eventCatchphraseMaxLen {
 		return catchphrase
 	}
 	return ogDescription

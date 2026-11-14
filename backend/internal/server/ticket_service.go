@@ -40,7 +40,6 @@ func newTicketServiceWithDiscord(db *sql.DB, manager discordSpoilerChannelManage
 	}
 }
 
-// 上限は VARCHAR の定義（文字数）に合わせ、バイト数ではなく文字数で判定する。
 const (
 	meetingPlaceMaxLen = 255
 	// tickets.memo の VARCHAR(2000) に合わせる。
@@ -59,7 +58,25 @@ func (s *ticketService) ListTickets(ctx context.Context, req *connect.Request[na
 	}
 	tickets := make([]*nazobuv1.Ticket, 0, len(rows))
 	for _, r := range rows {
-		tickets = append(tickets, ticketFromRow(r))
+		tickets = append(tickets, &nazobuv1.Ticket{
+			Id:                            r.ID,
+			EventId:                       r.EventID,
+			EventTitle:                    r.EventTitle,
+			EventUrl:                      r.EventUrl,
+			EventCatchphrase:              r.EventCatchphrase,
+			EventImageUrl:                 nullStringToString(r.EventImageUrl),
+			EventExpectedDurationMinutes:  r.EventExpectedDurationMinutes,
+			EventDoorsOpenMinutesBefore:   nullInt32ToPtr(r.EventDoorsOpenMinutesBefore),
+			StartAt:                       formatJSTDateTime(r.StartAt),
+			MeetingAt:                     formatNullableJSTDateTime(r.MeetingAt),
+			PricePerPerson:                r.PricePerPerson,
+			MaxParticipants:               r.MaxParticipants,
+			MeetingPlace:                  r.MeetingPlace,
+			Memo:                          r.Memo,
+			PurchaserName:                 r.PurchaserName,
+			UnregisteredParticipantsCount: r.UnregisteredParticipantsCount,
+			ParticipantNames:              []string{},
+		})
 	}
 	if len(tickets) == 0 {
 		return connect.NewResponse(&nazobuv1.ListTicketsResponse{Tickets: tickets}), nil
@@ -107,25 +124,25 @@ func (s *ticketService) GetTicket(ctx context.Context, req *connect.Request[nazo
 		participantNames = append(participantNames, p.Name)
 	}
 
-	ticket := ticketFromRow(queries.ListTicketsRow{
-		ID:                            row.ID,
-		EventID:                       row.EventID,
+	ticket := &nazobuv1.Ticket{
+		Id:                            row.ID,
+		EventId:                       row.EventID,
 		EventTitle:                    row.EventTitle,
 		EventUrl:                      row.EventUrl,
 		EventCatchphrase:              row.EventCatchphrase,
-		EventImageUrl:                 row.EventImageUrl,
+		EventImageUrl:                 nullStringToString(row.EventImageUrl),
 		EventExpectedDurationMinutes:  row.EventExpectedDurationMinutes,
-		EventDoorsOpenMinutesBefore:   row.EventDoorsOpenMinutesBefore,
-		StartAt:                       row.StartAt,
-		MeetingAt:                     row.MeetingAt,
+		EventDoorsOpenMinutesBefore:   nullInt32ToPtr(row.EventDoorsOpenMinutesBefore),
+		StartAt:                       formatJSTDateTime(row.StartAt),
+		MeetingAt:                     formatNullableJSTDateTime(row.MeetingAt),
 		PricePerPerson:                row.PricePerPerson,
 		MaxParticipants:               row.MaxParticipants,
-		UnregisteredParticipantsCount: row.UnregisteredParticipantsCount,
 		MeetingPlace:                  row.MeetingPlace,
 		Memo:                          row.Memo,
 		PurchaserName:                 row.PurchaserName,
-	})
-	ticket.ParticipantNames = participantNames
+		UnregisteredParticipantsCount: row.UnregisteredParticipantsCount,
+		ParticipantNames:              participantNames,
+	}
 
 	canEdit := canEditTicket(user, row.PurchasedBy)
 	return connect.NewResponse(&nazobuv1.GetTicketResponse{
@@ -164,7 +181,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 	if err != nil {
 		return nil, err
 	}
-	if utf8.RuneCountInString(meetingPlace) > meetingPlaceMaxLen {
+	if len(meetingPlace) > meetingPlaceMaxLen {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("meeting_place は %d 文字以内", meetingPlaceMaxLen))
 	}
 	memo, err := normalizeTicketMemo(msg.GetMemo())
@@ -231,9 +248,31 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 	}
 	slog.InfoContext(ctx, "ticket created", logging.ID("ticket_id", ticketID), logging.ID("actor_user_id", user.ID))
 
-	ticket, err := s.buildTicketResponse(ctx, ticketID)
-	if err != nil {
-		return nil, err
+	rows, err := s.q.ListTicketsByIDs(ctx, []string{ticketID})
+	if err != nil || len(rows) == 0 {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("登録後の ticket 取得に失敗: %w", err))
+	}
+	r := rows[0]
+	ticket := &nazobuv1.Ticket{
+		Id:                            r.ID,
+		EventId:                       r.EventID,
+		EventTitle:                    r.EventTitle,
+		EventUrl:                      r.EventUrl,
+		EventCatchphrase:              r.EventCatchphrase,
+		EventImageUrl:                 nullStringToString(r.EventImageUrl),
+		EventExpectedDurationMinutes:  r.EventExpectedDurationMinutes,
+		StartAt:                       formatJSTDateTime(r.StartAt),
+		MeetingAt:                     formatNullableJSTDateTime(r.MeetingAt),
+		PricePerPerson:                r.PricePerPerson,
+		MaxParticipants:               r.MaxParticipants,
+		MeetingPlace:                  r.MeetingPlace,
+		Memo:                          r.Memo,
+		PurchaserName:                 r.PurchaserName,
+		UnregisteredParticipantsCount: r.UnregisteredParticipantsCount,
+		ParticipantNames:              []string{},
+	}
+	if err := attachTicketParticipantNames(ctx, s.q, []*nazobuv1.Ticket{ticket}); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の取得に失敗: %w", err))
 	}
 	return connect.NewResponse(&nazobuv1.CreateTicketResponse{Ticket: ticket}), nil
 }
@@ -276,7 +315,7 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 	if err != nil {
 		return nil, err
 	}
-	if utf8.RuneCountInString(meetingPlace) > meetingPlaceMaxLen {
+	if len(meetingPlace) > meetingPlaceMaxLen {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("meeting_place は %d 文字以内", meetingPlaceMaxLen))
 	}
 	memo, err := normalizeTicketMemo(msg.GetMemo())
@@ -330,9 +369,31 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 
 	slog.InfoContext(ctx, "ticket updated", logging.ID("ticket_id", ticketID), logging.ID("actor_user_id", user.ID))
 
-	ticket, err := s.buildTicketResponse(ctx, ticketID)
-	if err != nil {
-		return nil, err
+	rows, err := s.q.ListTicketsByIDs(ctx, []string{ticketID})
+	if err != nil || len(rows) == 0 {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("更新後の ticket 取得に失敗: %w", err))
+	}
+	r := rows[0]
+	ticket := &nazobuv1.Ticket{
+		Id:                            r.ID,
+		EventId:                       r.EventID,
+		EventTitle:                    r.EventTitle,
+		EventUrl:                      r.EventUrl,
+		EventCatchphrase:              r.EventCatchphrase,
+		EventImageUrl:                 nullStringToString(r.EventImageUrl),
+		EventExpectedDurationMinutes:  r.EventExpectedDurationMinutes,
+		StartAt:                       formatJSTDateTime(r.StartAt),
+		MeetingAt:                     formatNullableJSTDateTime(r.MeetingAt),
+		PricePerPerson:                r.PricePerPerson,
+		MaxParticipants:               r.MaxParticipants,
+		MeetingPlace:                  r.MeetingPlace,
+		Memo:                          r.Memo,
+		PurchaserName:                 r.PurchaserName,
+		UnregisteredParticipantsCount: r.UnregisteredParticipantsCount,
+		ParticipantNames:              []string{},
+	}
+	if err := attachTicketParticipantNames(ctx, s.q, []*nazobuv1.Ticket{ticket}); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の取得に失敗: %w", err))
 	}
 	return connect.NewResponse(&nazobuv1.UpdateTicketResponse{Ticket: ticket}), nil
 }
@@ -371,7 +432,7 @@ func (s *ticketService) CreateTicketWithEvent(ctx context.Context, req *connect.
 	if err != nil {
 		return nil, err
 	}
-	if utf8.RuneCountInString(meetingPlace) > meetingPlaceMaxLen {
+	if len(meetingPlace) > meetingPlaceMaxLen {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("meeting_place は %d 文字以内", meetingPlaceMaxLen))
 	}
 	memo, err := normalizeTicketMemo(msg.GetMemo())
@@ -501,7 +562,7 @@ func (s *ticketService) UpdateTicketWithEvent(ctx context.Context, req *connect.
 	if err != nil {
 		return nil, err
 	}
-	if utf8.RuneCountInString(meetingPlace) > meetingPlaceMaxLen {
+	if len(meetingPlace) > meetingPlaceMaxLen {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("meeting_place は %d 文字以内", meetingPlaceMaxLen))
 	}
 	memo, err := normalizeTicketMemo(msg.GetMemo())
@@ -583,11 +644,14 @@ func (s *ticketService) UpdateTicketWithEvent(ctx context.Context, req *connect.
 	return connect.NewResponse(&nazobuv1.UpdateTicketWithEventResponse{Ticket: ticket}), nil
 }
 
-// ticketFromRow は一覧系クエリの行を Ticket メッセージに変換する。参加者名は空で返す。
-// ListTickets と同じ列を返すクエリの行は queries.ListTicketsRow(r) と型変換して渡す
-// （列が揃っていないとコンパイルエラーになる）。
-func ticketFromRow(r queries.ListTicketsRow) *nazobuv1.Ticket {
-	return &nazobuv1.Ticket{
+// buildTicketResponse は ticket_id から表示用の Ticket メッセージを組み立てる。
+func (s *ticketService) buildTicketResponse(ctx context.Context, ticketID string) (*nazobuv1.Ticket, error) {
+	rows, err := s.q.ListTicketsByIDs(ctx, []string{ticketID})
+	if err != nil || len(rows) == 0 {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket の取得に失敗: %w", err))
+	}
+	r := rows[0]
+	ticket := &nazobuv1.Ticket{
 		Id:                            r.ID,
 		EventId:                       r.EventID,
 		EventTitle:                    r.EventTitle,
@@ -606,15 +670,6 @@ func ticketFromRow(r queries.ListTicketsRow) *nazobuv1.Ticket {
 		UnregisteredParticipantsCount: r.UnregisteredParticipantsCount,
 		ParticipantNames:              []string{},
 	}
-}
-
-// buildTicketResponse は ticket_id から表示用の Ticket メッセージを組み立てる。
-func (s *ticketService) buildTicketResponse(ctx context.Context, ticketID string) (*nazobuv1.Ticket, error) {
-	rows, err := s.q.ListTicketsByIDs(ctx, []string{ticketID})
-	if err != nil || len(rows) == 0 {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("ticket の取得に失敗: %w", err))
-	}
-	ticket := ticketFromRow(queries.ListTicketsRow(rows[0]))
 	if err := attachTicketParticipantNames(ctx, s.q, []*nazobuv1.Ticket{ticket}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の取得に失敗: %w", err))
 	}

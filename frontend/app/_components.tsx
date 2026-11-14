@@ -163,6 +163,40 @@ export function SectionTitle({
   );
 }
 
+export function ListCard({ children }: { children: ReactNode }) {
+  return (
+    <ul className="mt-3 divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+      {children}
+    </ul>
+  );
+}
+
+export function AlertCard({
+  title,
+  children,
+}: {
+  title: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-amber-300 bg-amber-50">
+      <div className="flex items-center gap-2 px-4 pt-4">
+        <WarnIcon />
+        <h2 className="text-sm font-semibold text-amber-900">{title}</h2>
+      </div>
+      <div className="space-y-3 p-4">{children}</div>
+    </div>
+  );
+}
+
+export function AlertItem({ children }: { children: ReactNode }) {
+  return (
+    <div className="rounded-xl border border-amber-200 bg-white p-4">
+      {children}
+    </div>
+  );
+}
+
 export function PrimaryButton({
   children,
   className = "",
