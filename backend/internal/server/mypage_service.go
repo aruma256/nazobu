@@ -138,25 +138,7 @@ func (s *myPageService) queryUnsettled(ctx context.Context, userID string, now t
 	}
 	out := make([]*nazobuv1.Ticket, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, &nazobuv1.Ticket{
-			Id:                            r.ID,
-			EventId:                       r.EventID,
-			EventTitle:                    r.EventTitle,
-			EventUrl:                      r.EventUrl,
-			EventCatchphrase:              r.EventCatchphrase,
-			EventImageUrl:                 nullStringToString(r.EventImageUrl),
-			EventExpectedDurationMinutes:  r.EventExpectedDurationMinutes,
-			EventDoorsOpenMinutesBefore:   nullInt32ToPtr(r.EventDoorsOpenMinutesBefore),
-			StartAt:                       formatJSTDateTime(r.StartAt),
-			MeetingAt:                     formatNullableJSTDateTime(r.MeetingAt),
-			PricePerPerson:                r.PricePerPerson,
-			MaxParticipants:               r.MaxParticipants,
-			MeetingPlace:                  r.MeetingPlace,
-			Memo:                          r.Memo,
-			PurchaserName:                 r.PurchaserName,
-			UnregisteredParticipantsCount: r.UnregisteredParticipantsCount,
-			ParticipantNames:              []string{},
-		})
+		out = append(out, ticketFromRow(queries.ListTicketsRow(r)))
 	}
 	return out, nil
 }
@@ -171,25 +153,7 @@ func (s *myPageService) queryUnsettledReceivables(ctx context.Context, userID st
 	}
 	out := make([]*nazobuv1.Ticket, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, &nazobuv1.Ticket{
-			Id:                            r.ID,
-			EventId:                       r.EventID,
-			EventTitle:                    r.EventTitle,
-			EventUrl:                      r.EventUrl,
-			EventCatchphrase:              r.EventCatchphrase,
-			EventImageUrl:                 nullStringToString(r.EventImageUrl),
-			EventExpectedDurationMinutes:  r.EventExpectedDurationMinutes,
-			EventDoorsOpenMinutesBefore:   nullInt32ToPtr(r.EventDoorsOpenMinutesBefore),
-			StartAt:                       formatJSTDateTime(r.StartAt),
-			MeetingAt:                     formatNullableJSTDateTime(r.MeetingAt),
-			PricePerPerson:                r.PricePerPerson,
-			MaxParticipants:               r.MaxParticipants,
-			MeetingPlace:                  r.MeetingPlace,
-			Memo:                          r.Memo,
-			PurchaserName:                 r.PurchaserName,
-			UnregisteredParticipantsCount: r.UnregisteredParticipantsCount,
-			ParticipantNames:              []string{},
-		})
+		out = append(out, ticketFromRow(queries.ListTicketsRow(r)))
 	}
 	return out, nil
 }
@@ -205,25 +169,7 @@ func (s *myPageService) queryUpcoming(ctx context.Context, userID string, todayS
 	}
 	out := make([]*nazobuv1.Ticket, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, &nazobuv1.Ticket{
-			Id:                            r.ID,
-			EventId:                       r.EventID,
-			EventTitle:                    r.EventTitle,
-			EventUrl:                      r.EventUrl,
-			EventCatchphrase:              r.EventCatchphrase,
-			EventImageUrl:                 nullStringToString(r.EventImageUrl),
-			EventExpectedDurationMinutes:  r.EventExpectedDurationMinutes,
-			EventDoorsOpenMinutesBefore:   nullInt32ToPtr(r.EventDoorsOpenMinutesBefore),
-			StartAt:                       formatJSTDateTime(r.StartAt),
-			MeetingAt:                     formatNullableJSTDateTime(r.MeetingAt),
-			PricePerPerson:                r.PricePerPerson,
-			MaxParticipants:               r.MaxParticipants,
-			MeetingPlace:                  r.MeetingPlace,
-			Memo:                          r.Memo,
-			PurchaserName:                 r.PurchaserName,
-			UnregisteredParticipantsCount: r.UnregisteredParticipantsCount,
-			ParticipantNames:              []string{},
-		})
+		out = append(out, ticketFromRow(queries.ListTicketsRow(r)))
 	}
 	return out, nil
 }

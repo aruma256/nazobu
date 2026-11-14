@@ -48,74 +48,12 @@ type UserProfile struct {
 	AvatarURL   string
 }
 
-// UpsertUserFromIdentity は (provider, subject) で識別される IdP identity を内部 user に
-// upsert する。既存 identity があれば紐づく user のプロフィールを更新、無ければ users と
-// user_identities を同一トランザクションで作る。
-func UpsertUserFromIdentity(ctx context.Context, db *sql.DB, provider, subject string, profile UserProfile) (*User, error) {
-	avatarURL := nullString(profile.AvatarURL)
-
-	q := queries.New(db)
-	existingUserID, err := q.GetUserIDByIdentity(ctx, queries.GetUserIDByIdentityParams{
-		Provider: provider,
-		Subject:  subject,
-	})
-	switch {
-	case errors.Is(err, sql.ErrNoRows):
-		newUserID := id.New()
-		tx, err := db.BeginTx(ctx, nil)
-		if err != nil {
-			return nil, err
-		}
-		defer func() { _ = tx.Rollback() }()
-
-		qtx := q.WithTx(tx)
-		if err := qtx.CreateUser(ctx, queries.CreateUserParams{
-			ID:          newUserID,
-			DisplayName: profile.DisplayName,
-			AvatarUrl:   avatarURL,
-		}); err != nil {
-			return nil, err
-		}
-		if err := qtx.CreateUserIdentity(ctx, queries.CreateUserIdentityParams{
-			UserID:   newUserID,
-			Provider: provider,
-			Subject:  subject,
-		}); err != nil {
-			return nil, err
-		}
-		if err := tx.Commit(); err != nil {
-			return nil, err
-		}
-		return &User{
-			ID:          newUserID,
-			DisplayName: profile.DisplayName,
-			AvatarURL:   avatarURL,
-			Role:        RoleMember,
-		}, nil
-
-	case err != nil:
-		return nil, err
-
-	default:
-		if err := q.UpdateUserProfile(ctx, queries.UpdateUserProfileParams{
-			DisplayName: profile.DisplayName,
-			AvatarUrl:   avatarURL,
-			ID:          existingUserID,
-		}); err != nil {
-			return nil, err
-		}
-		return &User{
-			ID:          existingUserID,
-			DisplayName: profile.DisplayName,
-			AvatarURL:   avatarURL,
-		}, nil
-	}
-}
-
 // RegisterUser は (provider, subject) で識別される IdP identity のユーザーを事前登録する。
+// users と user_identities を同一トランザクションで作る。
 // 登録済みの identity に対しては既存ユーザーを更新せず ErrUserAlreadyRegistered を返す。
 func RegisterUser(ctx context.Context, db *sql.DB, provider, subject string, profile UserProfile) (*User, error) {
-	_, err := queries.New(db).GetUserIDByIdentity(ctx, queries.GetUserIDByIdentityParams{
+	q := queries.New(db)
+	_, err := q.GetUserIDByIdentity(ctx, queries.GetUserIDByIdentityParams{
 		Provider: provider,
 		Subject:  subject,
 	})
@@ -125,7 +63,39 @@ func RegisterUser(ctx context.Context, db *sql.DB, provider, subject string, pro
 	if !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
-	return UpsertUserFromIdentity(ctx, db, provider, subject, profile)
+
+	avatarURL := nullString(profile.AvatarURL)
+	newUserID := id.New()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	qtx := q.WithTx(tx)
+	if err := qtx.CreateUser(ctx, queries.CreateUserParams{
+		ID:          newUserID,
+		DisplayName: profile.DisplayName,
+		AvatarUrl:   avatarURL,
+	}); err != nil {
+		return nil, err
+	}
+	if err := qtx.CreateUserIdentity(ctx, queries.CreateUserIdentityParams{
+		UserID:   newUserID,
+		Provider: provider,
+		Subject:  subject,
+	}); err != nil {
+		return nil, err
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	return &User{
+		ID:          newUserID,
+		DisplayName: profile.DisplayName,
+		AvatarURL:   avatarURL,
+		Role:        RoleMember,
+	}, nil
 }
 
 // LoginWithIdentity は (provider, subject) で識別される IdP identity に紐づく
