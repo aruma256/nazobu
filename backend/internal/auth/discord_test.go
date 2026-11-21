@@ -2,11 +2,19 @@ package auth
 
 import (
 	"context"
+	"crypto"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
 )
 
@@ -117,4 +125,121 @@ func TestFetchDiscordUser(t *testing.T) {
 			t.Fatal("err = nil, want error")
 		}
 	})
+}
+
+// signTestIDToken は RS256 で署名した ID token を組み立てる。
+func signTestIDToken(t *testing.T, key *rsa.PrivateKey, claims map[string]any) string {
+	t.Helper()
+	enc := func(v any) string {
+		b, err := json.Marshal(v)
+		if err != nil {
+			t.Fatalf("json.Marshal: %v", err)
+		}
+		return base64.RawURLEncoding.EncodeToString(b)
+	}
+	signingInput := enc(map[string]string{"alg": "RS256", "typ": "JWT"}) + "." + enc(claims)
+	digest := sha256.Sum256([]byte(signingInput))
+	sig, err := rsa.SignPKCS1v15(rand.Reader, key, crypto.SHA256, digest[:])
+	if err != nil {
+		t.Fatalf("rsa.SignPKCS1v15: %v", err)
+	}
+	return signingInput + "." + base64.RawURLEncoding.EncodeToString(sig)
+}
+
+func TestVerifyDiscordUser(t *testing.T) {
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("rsa.GenerateKey: %v", err)
+	}
+	otherKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("rsa.GenerateKey: %v", err)
+	}
+	verifier := oidc.NewVerifier(discordIssuer, &oidc.StaticKeySet{PublicKeys: []crypto.PublicKey{&key.PublicKey}}, &oidc.Config{ClientID: "cid"})
+	validClaims := func() map[string]any {
+		now := time.Now()
+		return map[string]any{
+			"iss": discordIssuer,
+			"aud": "cid",
+			"sub": "111",
+			"iat": now.Unix(),
+			"exp": now.Add(time.Hour).Unix(),
+		}
+	}
+	tokenWith := func(idToken string) *oauth2.Token {
+		tok := &oauth2.Token{AccessToken: "tok", TokenType: "Bearer"}
+		if idToken == "" {
+			return tok
+		}
+		return tok.WithExtra(map[string]any{"id_token": idToken})
+	}
+	meAlice := `{"id":"111","username":"alice"}`
+
+	t.Run("ID token が正当で sub が /users/@me の id と一致すれば DiscordUser を返す", func(t *testing.T) {
+		client := fakeDiscordAPI(http.StatusOK, meAlice, nil)
+		u, err := VerifyDiscordUser(context.Background(), client, verifier, tokenWith(signTestIDToken(t, key, validClaims())))
+		if err != nil {
+			t.Fatalf("VerifyDiscordUser: %v", err)
+		}
+		if u.ID != "111" {
+			t.Errorf("ID = %q, want 111", u.ID)
+		}
+	})
+
+	cases := []struct {
+		name    string
+		idToken func() string
+		me      string
+	}{
+		{
+			name:    "id_token が無ければエラー",
+			idToken: func() string { return "" },
+			me:      meAlice,
+		},
+		{
+			name:    "別の鍵で署名されていればエラー",
+			idToken: func() string { return signTestIDToken(t, otherKey, validClaims()) },
+			me:      meAlice,
+		},
+		{
+			name: "aud が自分の client_id でなければエラー",
+			idToken: func() string {
+				c := validClaims()
+				c["aud"] = "other-client"
+				return signTestIDToken(t, key, c)
+			},
+			me: meAlice,
+		},
+		{
+			name: "iss が Discord でなければエラー",
+			idToken: func() string {
+				c := validClaims()
+				c["iss"] = "https://evil.example.com"
+				return signTestIDToken(t, key, c)
+			},
+			me: meAlice,
+		},
+		{
+			name: "期限切れならエラー",
+			idToken: func() string {
+				c := validClaims()
+				c["exp"] = time.Now().Add(-time.Minute).Unix()
+				return signTestIDToken(t, key, c)
+			},
+			me: meAlice,
+		},
+		{
+			name:    "sub と /users/@me の id が食い違えばエラー",
+			idToken: func() string { return signTestIDToken(t, key, validClaims()) },
+			me:      `{"id":"222","username":"bob"}`,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			client := fakeDiscordAPI(http.StatusOK, c.me, nil)
+			if _, err := VerifyDiscordUser(context.Background(), client, verifier, tokenWith(c.idToken())); err == nil {
+				t.Fatal("err = nil, want error")
+			}
+		})
+	}
 }

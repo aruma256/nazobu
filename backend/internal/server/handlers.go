@@ -9,15 +9,17 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/oauth2"
+
 	"github.com/aruma256/nazobu/backend/internal/auth"
 	"github.com/aruma256/nazobu/backend/internal/logging"
 )
 
 const (
-	stateCookieName = "nazobu_oauth_state"
-	stateCookieTTL  = 10 * time.Minute
-	nextCookieName  = "nazobu_oauth_next"
-	nextCookieTTL   = 10 * time.Minute
+	stateCookieName    = "nazobu_oauth_state"
+	pkceCookieName     = "nazobu_oauth_pkce"
+	nextCookieName     = "nazobu_oauth_next"
+	oauthFlowCookieTTL = 10 * time.Minute
 )
 
 func sanitizeNextPath(raw string) string {
@@ -45,29 +47,26 @@ func (s *Server) handleDiscordLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "state の生成に失敗", http.StatusInternalServerError)
 		return
 	}
+	verifier := oauth2.GenerateVerifier()
+	s.setOAuthFlowCookie(w, stateCookieName, state)
+	s.setOAuthFlowCookie(w, pkceCookieName, verifier)
+	if next := sanitizeNextPath(r.URL.Query().Get("next")); next != "" {
+		s.setOAuthFlowCookie(w, nextCookieName, next)
+	}
+
+	http.Redirect(w, r, s.discordOAuth.AuthCodeURL(state, oauth2.S256ChallengeOption(verifier)), http.StatusFound)
+}
+
+func (s *Server) setOAuthFlowCookie(w http.ResponseWriter, name, value string) {
 	http.SetCookie(w, &http.Cookie{
-		Name:     stateCookieName,
-		Value:    state,
+		Name:     name,
+		Value:    value,
 		Path:     "/",
-		MaxAge:   int(stateCookieTTL.Seconds()),
+		MaxAge:   int(oauthFlowCookieTTL.Seconds()),
 		HttpOnly: true,
 		Secure:   s.cfg.CookieSecure,
 		SameSite: http.SameSiteLaxMode,
 	})
-
-	if next := sanitizeNextPath(r.URL.Query().Get("next")); next != "" {
-		http.SetCookie(w, &http.Cookie{
-			Name:     nextCookieName,
-			Value:    next,
-			Path:     "/",
-			MaxAge:   int(nextCookieTTL.Seconds()),
-			HttpOnly: true,
-			Secure:   s.cfg.CookieSecure,
-			SameSite: http.SameSiteLaxMode,
-		})
-	}
-
-	http.Redirect(w, r, s.discordOAuth.AuthCodeURL(state), http.StatusFound)
 }
 
 func (s *Server) handleDiscordCallback(w http.ResponseWriter, r *http.Request) {
@@ -84,22 +83,29 @@ func (s *Server) handleDiscordCallback(w http.ResponseWriter, r *http.Request) {
 	}
 	clearCookie(w, stateCookieName, s.cfg.CookieSecure)
 
+	pkceCookie, err := r.Cookie(pkceCookieName)
+	if err != nil || pkceCookie.Value == "" {
+		http.Error(w, "PKCE cookie が無い", http.StatusBadRequest)
+		return
+	}
+	clearCookie(w, pkceCookieName, s.cfg.CookieSecure)
+
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		http.Error(w, "code が無い", http.StatusBadRequest)
 		return
 	}
 
-	token, err := s.discordOAuth.Exchange(ctx, code)
+	token, err := s.discordOAuth.Exchange(ctx, code, oauth2.VerifierOption(pkceCookie.Value))
 	if err != nil {
 		slog.ErrorContext(r.Context(), "login failed", "stage", "exchange_token")
 		http.Error(w, "token exchange 失敗: "+err.Error(), http.StatusBadGateway)
 		return
 	}
 
-	du, err := auth.FetchDiscordUser(ctx, s.httpClient, token)
+	du, err := auth.VerifyDiscordUser(ctx, s.httpClient, s.discordIDTokenVerifier, token)
 	if err != nil {
-		slog.ErrorContext(r.Context(), "login failed", "stage", "fetch_user")
+		slog.ErrorContext(r.Context(), "login failed", "stage", "verify_user")
 		http.Error(w, "discord user 取得失敗: "+err.Error(), http.StatusBadGateway)
 		return
 	}

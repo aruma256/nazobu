@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
 
 	"github.com/aruma256/nazobu/backend/internal/auth"
@@ -25,14 +26,19 @@ import (
 const externalHTTPTimeout = 15 * time.Second
 
 type Server struct {
-	cfg          config.Config
-	db           *sql.DB
-	discordOAuth *oauth2.Config
-	httpClient   *http.Client
+	cfg                    config.Config
+	db                     *sql.DB
+	discordOAuth           *oauth2.Config
+	discordIDTokenVerifier *oidc.IDTokenVerifier
+	httpClient             *http.Client
 }
 
 func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
-	provider := auth.NewDiscordProvider(ctx)
+	httpClient := &http.Client{Timeout: externalHTTPTimeout}
+	provider, err := auth.NewDiscordProvider(ctx, httpClient)
+	if err != nil {
+		return fmt.Errorf("discord OIDC discovery: %w", err)
+	}
 	srv := &Server{
 		cfg: cfg,
 		db:  dbc,
@@ -42,7 +48,8 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 			cfg.Discord.ClientSecret,
 			cfg.Discord.RedirectURL,
 		),
-		httpClient: &http.Client{Timeout: externalHTTPTimeout},
+		discordIDTokenVerifier: auth.DiscordIDTokenVerifier(provider, cfg.Discord.ClientID),
+		httpClient:             httpClient,
 	}
 
 	mux := http.NewServeMux()

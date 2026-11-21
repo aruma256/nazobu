@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -12,20 +13,17 @@ import (
 )
 
 const (
+	discordIssuer      = "https://discord.com"
 	discordUserInfoURL = "https://discord.com/api/users/@me"
 	discordCDNBase     = "https://cdn.discordapp.com"
 
 	ProviderDiscord = "discord"
 )
 
-func NewDiscordProvider(ctx context.Context) *oidc.Provider {
-	cfg := oidc.ProviderConfig{
-		IssuerURL:   "https://discord.com",
-		AuthURL:     "https://discord.com/api/oauth2/authorize",
-		TokenURL:    "https://discord.com/api/oauth2/token",
-		UserInfoURL: discordUserInfoURL,
-	}
-	return cfg.NewProvider(ctx)
+// NewDiscordProvider は OIDC discovery で Discord の provider 情報を取得する。
+// client は discovery と、以降の JWKS 取得の両方に使われる。
+func NewDiscordProvider(ctx context.Context, client *http.Client) (*oidc.Provider, error) {
+	return oidc.NewProvider(oidc.ClientContext(ctx, client), discordIssuer)
 }
 
 func DiscordOAuthConfig(provider *oidc.Provider, clientID, clientSecret, redirectURL string) *oauth2.Config {
@@ -34,8 +32,33 @@ func DiscordOAuthConfig(provider *oidc.Provider, clientID, clientSecret, redirec
 		ClientSecret: clientSecret,
 		Endpoint:     provider.Endpoint(),
 		RedirectURL:  redirectURL,
-		Scopes:       []string{"identify"},
+		Scopes:       []string{oidc.ScopeOpenID, "identify"},
 	}
+}
+
+func DiscordIDTokenVerifier(provider *oidc.Provider, clientID string) *oidc.IDTokenVerifier {
+	return provider.Verifier(&oidc.Config{ClientID: clientID})
+}
+
+// VerifyDiscordUser は token 応答の ID token を検証したうえで /users/@me を取得し、
+// 両者の subject が一致することを確認する。
+func VerifyDiscordUser(ctx context.Context, client *http.Client, verifier *oidc.IDTokenVerifier, token *oauth2.Token) (*DiscordUser, error) {
+	rawIDToken, ok := token.Extra("id_token").(string)
+	if !ok || rawIDToken == "" {
+		return nil, errors.New("token 応答に id_token が無い")
+	}
+	idToken, err := verifier.Verify(ctx, rawIDToken)
+	if err != nil {
+		return nil, fmt.Errorf("id_token 検証失敗: %w", err)
+	}
+	du, err := FetchDiscordUser(ctx, client, token)
+	if err != nil {
+		return nil, err
+	}
+	if du.ID != idToken.Subject {
+		return nil, errors.New("id_token の sub と /users/@me の id が一致しない")
+	}
+	return du, nil
 }
 
 type DiscordUser struct {

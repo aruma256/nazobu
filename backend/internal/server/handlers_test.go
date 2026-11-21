@@ -76,7 +76,7 @@ func newOAuthTestServer() *Server {
 			ClientID:    "cid",
 			Endpoint:    oauth2.Endpoint{AuthURL: "https://discord.com/api/oauth2/authorize"},
 			RedirectURL: "http://localhost:3000/auth/discord/callback",
-			Scopes:      []string{"identify"},
+			Scopes:      []string{"openid", "identify"},
 		},
 	}
 }
@@ -101,7 +101,7 @@ func TestHandleDiscordLogin(t *testing.T) {
 		}
 	})
 
-	t.Run("state cookie を発行して Discord の認可 URL へリダイレクト", func(t *testing.T) {
+	t.Run("state / PKCE cookie を発行して Discord の認可 URL へリダイレクト", func(t *testing.T) {
 		srv := newOAuthTestServer()
 		rec := httptest.NewRecorder()
 		srv.handleDiscordLogin(rec, httptest.NewRequest(http.MethodGet, "/auth/discord/login", nil))
@@ -119,6 +119,13 @@ func TestHandleDiscordLogin(t *testing.T) {
 		if !state.HttpOnly {
 			t.Errorf("state cookie は HttpOnly であるべき")
 		}
+		pkce := findCookie(t, res, pkceCookieName)
+		if pkce == nil || pkce.Value == "" {
+			t.Fatalf("PKCE cookie が発行されていない: %+v", res.Cookies())
+		}
+		if !pkce.HttpOnly {
+			t.Errorf("PKCE cookie は HttpOnly であるべき")
+		}
 
 		loc, err := url.Parse(res.Header.Get("Location"))
 		if err != nil {
@@ -132,6 +139,15 @@ func TestHandleDiscordLogin(t *testing.T) {
 		}
 		if loc.Query().Get("client_id") != "cid" {
 			t.Errorf("client_id = %q", loc.Query().Get("client_id"))
+		}
+		if got, want := loc.Query().Get("code_challenge"), oauth2.S256ChallengeFromVerifier(pkce.Value); got != want {
+			t.Errorf("code_challenge = %q, want %q", got, want)
+		}
+		if got := loc.Query().Get("code_challenge_method"); got != "S256" {
+			t.Errorf("code_challenge_method = %q, want S256", got)
+		}
+		if got := loc.Query().Get("scope"); got != "openid identify" {
+			t.Errorf("scope = %q, want %q", got, "openid identify")
 		}
 	})
 
@@ -182,10 +198,22 @@ func TestHandleDiscordCallbackBadRequest(t *testing.T) {
 		}
 	})
 
-	t.Run("code が無ければ 400 で state cookie は破棄", func(t *testing.T) {
+	t.Run("PKCE cookie が無ければ 400", func(t *testing.T) {
+		srv := newOAuthTestServer()
+		req := httptest.NewRequest(http.MethodGet, "/auth/discord/callback?state=s1&code=c", nil)
+		req.AddCookie(&http.Cookie{Name: stateCookieName, Value: "s1"})
+		rec := httptest.NewRecorder()
+		srv.handleDiscordCallback(rec, req)
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("status = %d, want 400", rec.Code)
+		}
+	})
+
+	t.Run("code が無ければ 400 で state / PKCE cookie は破棄", func(t *testing.T) {
 		srv := newOAuthTestServer()
 		req := httptest.NewRequest(http.MethodGet, "/auth/discord/callback?state=s1", nil)
 		req.AddCookie(&http.Cookie{Name: stateCookieName, Value: "s1"})
+		req.AddCookie(&http.Cookie{Name: pkceCookieName, Value: "v1"})
 		rec := httptest.NewRecorder()
 		srv.handleDiscordCallback(rec, req)
 
@@ -197,6 +225,10 @@ func TestHandleDiscordCallbackBadRequest(t *testing.T) {
 		state := findCookie(t, res, stateCookieName)
 		if state == nil || state.MaxAge != -1 {
 			t.Errorf("使用済み state cookie が破棄されていない: %+v", state)
+		}
+		pkce := findCookie(t, res, pkceCookieName)
+		if pkce == nil || pkce.MaxAge != -1 {
+			t.Errorf("使用済み PKCE cookie が破棄されていない: %+v", pkce)
 		}
 	})
 }
