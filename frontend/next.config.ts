@@ -3,8 +3,6 @@ import type { NextConfig } from "next";
 const backendURL = process.env.BACKEND_URL ?? "http://localhost:8080";
 
 const nextConfig: NextConfig = {
-  // Service Worker はブラウザに溜め込ませない。キャッシュされると更新が
-  // いつまでも反映されず、古い sw.js が生き残ってしまう。
   async headers() {
     return [
       {
@@ -19,8 +17,6 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Connect RPC (/nazobu.v1.*) と /auth/* は backend に proxy する。
-  // これにより frontend と同一 origin で扱えるので、Cookie まわりがシンプルになる。
   async rewrites() {
     return [
       {
@@ -28,8 +24,6 @@ const nextConfig: NextConfig = {
         destination: `${backendURL}/nazobu.v1.:service/:method`,
       },
       { source: "/auth/:path*", destination: `${backendURL}/auth/:path*` },
-      // Claude connector（remote MCP）連携。OAuth メタデータ / 認可 / トークン / MCP 本体を
-      // backend に proxy して、外部からは frontend と同一 origin に見せる。
       { source: "/mcp", destination: `${backendURL}/mcp` },
       { source: "/oauth/:path*", destination: `${backendURL}/oauth/:path*` },
       {

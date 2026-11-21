@@ -183,7 +183,6 @@ function Form({
   event: NazobuEvent;
   siblingTicketCount: number;
 }) {
-  // 公演（event）
   const [title, setTitle] = useState(event.title);
   const [url, setUrl] = useState(event.url);
   const [catchphrase, setCatchphrase] = useState(event.catchphrase);
@@ -201,7 +200,6 @@ function Form({
     String(event.expectedDurationMinutes),
   );
 
-  // チケット
   const startAtDate = parseDateTime(ticket.startAt);
   const meetingAtDate =
     ticket.meetingAt !== "" ? parseDateTime(ticket.meetingAt) : null;
@@ -238,7 +236,6 @@ function Form({
     e.preventDefault();
     if (submitting) return;
 
-    // 公演
     const trimmedTitle = title.trim();
     const trimmedUrl = url.trim();
     const trimmedCatchphrase = catchphrase.trim();
@@ -266,7 +263,6 @@ function Form({
       return;
     }
 
-    // チケット
     const trimmedPlace = meetingPlace.trim();
     const priceNum = Number(pricePerPerson);
     const maxNum = Number(maxParticipants);

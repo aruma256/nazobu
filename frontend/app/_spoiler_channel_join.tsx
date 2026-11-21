@@ -7,7 +7,6 @@ import { useState } from "react";
 import { redirectToLogin } from "@/app/lib/auth";
 import { eventClient } from "@/app/lib/rpc";
 
-// 公演のネタバレチャンネルに本人だけ参加する。参加後は Discord へのリンクに切り替える。
 export function SpoilerChannelJoin({
   eventId,
   eventTitle,

@@ -25,6 +25,7 @@ import {
   formatDateJa,
   formatTimeHM,
   formatYen,
+  jstCompactDateTime,
   parseDateTime,
 } from "@/app/_format";
 import { redirectToLogin } from "@/app/lib/auth";
@@ -463,6 +464,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
         />
 
         <GroupShuffleSection
+          key={groupRosterKey(detail.participants, ticket.unregisteredParticipantsCount)}
           participants={detail.participants}
           unregisteredCount={ticket.unregisteredParticipantsCount}
           myUserId={me.id}
@@ -493,8 +495,6 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
   );
 }
 
-// Google カレンダーの「予定を作成」プリフィル URL を組み立てる。
-// 開始 = meeting_at（あれば）/ start_at、終了 = start_at + event.expected_duration_minutes。
 function buildGoogleCalendarUrl(ticket: Ticket): string {
   const startAt = parseDateTime(ticket.startAt);
   const startMs =
@@ -526,25 +526,27 @@ function buildGoogleCalendarUrl(ticket: Ticket): string {
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
-// JST の壁時計を "YYYYMMDDTHHMMSS" に整形する。Google カレンダーの dates 引数用。
-// sv-SE ロケールは ISO 8601 形式 ("YYYY-MM-DD HH:MM:SS") を返すため、区切りを除くだけで済む。
-function jstCompactDateTime(ms: number): string {
-  const s = new Date(ms).toLocaleString("sv-SE", {
-    timeZone: "Asia/Tokyo",
-    hour12: false,
-  });
-  return s.replace(/[-:]/g, "").replace(" ", "T");
+function groupRosterKey(
+  participants: TicketParticipant[],
+  unregisteredCount: number,
+): string {
+  const ids = participants.map((p) => p.userId).sort().join(",");
+  return `${ids}/${unregisteredCount}`;
 }
 
-// グループ分けの 1 枠。未登録の同行者は userId を持たない。
+function shuffleInPlace<T>(items: T[]): void {
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+}
+
 type GroupMember = {
   key: string;
   userId: string | null;
   name: string;
 };
 
-// 参加者と未登録の同行者をシャッフルして 1 グループあたり size 人ずつ先頭から詰める。
-// 例: 6 人で size=4 なら A:4 人 / B:2 人、size=3 なら 3/3。永続化はしない。
 function GroupShuffleSection({
   participants,
   unregisteredCount,
@@ -557,19 +559,6 @@ function GroupShuffleSection({
   const total = participants.length + unregisteredCount;
   const [sizeText, setSizeText] = useState("4");
   const [groups, setGroups] = useState<GroupMember[][] | null>(null);
-
-  // 参加者の顔ぶれや未登録の人数が変わったら古い分け方は破棄する（古い参加者が残らないように）。
-  const idsKey = useMemo(
-    () =>
-      participants
-        .map((p) => p.userId)
-        .sort()
-        .join(","),
-    [participants],
-  );
-  useEffect(() => {
-    setGroups(null);
-  }, [idsKey, unregisteredCount]);
 
   if (total < 2) return null;
 
@@ -589,11 +578,7 @@ function GroupShuffleSection({
         name: "（未登録ユーザー）",
       })),
     ];
-    // Fisher–Yates でその場シャッフル
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
+    shuffleInPlace(shuffled);
     const result: GroupMember[][] = [];
     for (let i = 0; i < shuffled.length; i += size) {
       result.push(shuffled.slice(i, i + size));

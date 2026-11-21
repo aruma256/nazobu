@@ -1,6 +1,3 @@
-// 共通の再利用 UI 部品。スタイルはここに集約し、
-// 個別ページからは意味のある単位（Card / Badge / Section など）で組み合わせる。
-
 "use client";
 
 import Link from "next/link";
@@ -91,7 +88,6 @@ function AccountMenu({ user, isAdmin }: { user: string; isAdmin: boolean }) {
     <details ref={detailsRef} className="relative ml-auto shrink-0" onBlur={(event) => {
       // メニュー内の非フォーカス要素を押しても relatedTarget は null になる。
       // その blur 中に閉じるとブラウザがクラッシュするため、移動先が外部の Node のときだけ閉じる。
-      // フォーカス先のない外側のタップは closeOutside で処理する。
       if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget)) {
         event.currentTarget.open = false;
       }
@@ -203,7 +199,6 @@ export function Badge({
   );
 }
 
-// 数字や日付など、桁を揃えて表示したいテキスト用。
 export function Mono({
   className = "",
   children,
@@ -216,10 +211,6 @@ export function Mono({
   );
 }
 
-// EventCover は公演 URL から取得した OG 画像を表示する。
-// variant="top" はカード上部の横幅いっぱいのカバー、
-// variant="side" は flex 行内で左側に並べる縦長サムネイル（高さは行に追従）。
-// 読み込み失敗時は要素ごと隠す（壊れた画像アイコンが残らないように）。
 export function EventCover({
   src,
   alt,
@@ -237,7 +228,6 @@ export function EventCover({
       : "aspect-[1.91/1] w-full overflow-hidden bg-zinc-100";
   return (
     <div className={wrapperClass}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
         alt={alt}
@@ -251,7 +241,6 @@ export function EventCover({
   );
 }
 
-// alert は amber 系の強調トーン。
 export type TicketCardTone = "default" | "alert";
 
 export function TicketCard({
@@ -276,7 +265,6 @@ export function TicketCard({
   const meetingAt =
     ticket.meetingAt !== "" ? parseDateTime(ticket.meetingAt) : null;
   const hasMeeting = meetingAt !== null || ticket.meetingPlace !== "";
-  // 未登録の同行者も定員の枠を消費するため、占有数に含める。
   const occupiedCount =
     ticket.participantNames.length + ticket.unregisteredParticipantsCount;
   const wrapperClass =
@@ -397,7 +385,6 @@ export function TicketCard({
   );
 }
 
-// 未精算 / 未回収のチケットがある場合に上部に出す、ダッシュボードへの 1 行リンクバナー。
 export function UnsettledBanner({
   unsettledCount,
   receivablesCount,

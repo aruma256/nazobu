@@ -89,7 +89,6 @@ function Form({
   router: ReturnType<typeof useRouter>;
   users: User[];
 }) {
-  // 公演（event）
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [catchphrase, setCatchphrase] = useState("");
@@ -97,7 +96,6 @@ function Form({
   const [entryDeadline, setEntryDeadline] = useState("");
   const [expectedDuration, setExpectedDuration] = useState("120");
 
-  // チケット
   const [startDate, setStartDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [meetingTime, setMeetingTime] = useState("");
@@ -121,7 +119,6 @@ function Form({
     e.preventDefault();
     if (submitting) return;
 
-    // 公演
     const trimmedTitle = title.trim();
     const trimmedUrl = url.trim();
     const trimmedCatchphrase = catchphrase.trim();
@@ -149,7 +146,6 @@ function Form({
       return;
     }
 
-    // チケット
     const trimmedPlace = meetingPlace.trim();
     const priceNum = Number(pricePerPerson);
     const maxNum = Number(maxParticipants);

@@ -1,10 +1,5 @@
-// 共通フォーマッタ。
-// バックエンドの start_at / meeting_at は JST オフセット付き RFC3339
-// （例: "2026-04-15T19:00:00+09:00"）。Date オブジェクトに直して渡す。
-
 const WEEKDAYS_JA = ["日", "月", "火", "水", "木", "金", "土"] as const;
 
-// JST 固定の週・月・日付フォーマット。実行環境のローカル TZ に依存させない。
 const JST_PARTS = new Intl.DateTimeFormat("en-US", {
   timeZone: "Asia/Tokyo",
   year: "numeric",
@@ -13,7 +8,6 @@ const JST_PARTS = new Intl.DateTimeFormat("en-US", {
   hour: "2-digit",
   minute: "2-digit",
   weekday: "short",
-  // hour12: false は実装によって深夜 0 時を "24" と返すことがあるため h23 を明示する。
   hourCycle: "h23",
 });
 
@@ -23,7 +17,7 @@ type JSTParts = {
   day: number;
   hour: number;
   minute: number;
-  weekday: number; // 0=Sun..6=Sat
+  weekday: number;
 };
 
 const WEEKDAY_INDEX: Record<string, number> = {
@@ -44,8 +38,6 @@ function jstParts(date: Date): JSTParts {
   };
 }
 
-// RFC3339 文字列を Date に変換する。
-// 受け取り側のローカル TZ に依らず、絶対時刻として解釈される。
 export function parseDateTime(rfc3339: string): Date {
   return new Date(rfc3339);
 }
@@ -69,25 +61,26 @@ export function formatYen(amount: number): string {
   return `¥${amount.toLocaleString("ja-JP")}`;
 }
 
-// 現在の JST 年月を返す。
 export function jstCurrentYearMonth(now: Date = new Date()): { year: number; month: number } {
   const p = jstParts(now);
   return { year: p.year, month: p.month };
 }
 
-// <input type="date"> 用の "YYYY-MM-DD"（JST）。
 export function toDateInputValue(date: Date): string {
   const p = jstParts(date);
   return `${p.year}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
 }
 
-// <input type="time"> 用の "HH:MM"（JST）。
 export function toTimeInputValue(date: Date): string {
   return formatTimeHM(date);
 }
 
-// <input type="date"> + <input type="time"> から JST RFC3339 を組み立てる。
-// どちらかが空文字なら null を返す。
+export function jstCompactDateTime(ms: number): string {
+  const p = jstParts(new Date(ms));
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${p.year}${pad(p.month)}${pad(p.day)}T${pad(p.hour)}${pad(p.minute)}00`;
+}
+
 export function joinJSTDateTime(dateValue: string, timeValue: string): string | null {
   if (dateValue === "" || timeValue === "") return null;
   return `${dateValue}T${timeValue}:00+09:00`;

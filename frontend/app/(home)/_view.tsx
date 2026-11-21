@@ -45,7 +45,6 @@ type MonthView = {
   loading: boolean;
 };
 
-// 基準となる年月から相対的に diff ヶ月ぶんずらした年月を返す。
 function shiftMonth(
   base: { year: number; month: number },
   diff: number,
@@ -61,7 +60,6 @@ export function HomeView() {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [monthView, setMonthView] = useState<MonthView | null>(null);
   const [copyState, setCopyState] = useState<CopyState>("idle");
-  // 現在年月（JST）は月切り替えの上限判定にしか使わないので、クライアント側で算出。
   const currentYM = jstCurrentYearMonth();
 
   useEffect(() => {
@@ -71,7 +69,6 @@ export function HomeView() {
       myPageClient.listMyUnsettledTickets({}),
       myPageClient.listMyUnsettledReceivables({}),
       myPageClient.listMyUpcomingTickets({}),
-      // year/month=0 で既定（前月）。
       myPageClient.listMonthlyTickets({ year: 0, month: 0 }),
     ])
       .then(([me, unsettled, receivables, upcoming, monthly]) => {
@@ -158,7 +155,6 @@ export function HomeView() {
           redirectToLogin(router, "/");
           return;
         }
-        // 失敗時は読み込み中を解除して直前の表示を維持する。
         setMonthView((prev) => (prev ? { ...prev, loading: false } : prev));
       });
   };

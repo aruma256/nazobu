@@ -4,9 +4,7 @@ export const metadata: Metadata = {
   title: "ログイン | 謎部",
 };
 
-// next は内部パス（`/` 始まりかつ `//` で始まらない）のみ許可。
-// 不正値は捨てて `/` 扱いにすることで open redirect の踏み台にしない。
-function sanitizeNext(raw: string | string[] | undefined): string {
+function internalPathOrRoot(raw: string | string[] | undefined): string {
   if (typeof raw !== "string") return "/";
   if (!raw.startsWith("/")) return "/";
   if (raw.startsWith("//")) return "/";
@@ -19,7 +17,7 @@ export default async function LoginPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const params = await searchParams;
-  const next = sanitizeNext(params.next);
+  const next = internalPathOrRoot(params.next);
   const loginHref = `/auth/discord/login?next=${encodeURIComponent(next)}`;
   const notRegistered = params.error === "not_registered";
 

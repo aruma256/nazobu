@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-/* フォントは app/layout.tsx の next/font が CSS 変数として供給する。
-   --font-sans は Tailwind の既定フォント（html に適用）になる。 */
 @theme inline {
   --font-sans: var(--font-noto-sans-jp), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
