@@ -28,7 +28,6 @@ type ListNotifiableDiscordSubjectsByTicketIDsRow struct {
 	Subject  string
 }
 
-// subject は Discord user id。
 func (q *Queries) ListNotifiableDiscordSubjectsByTicketIDs(ctx context.Context, ticketIds []string) ([]ListNotifiableDiscordSubjectsByTicketIDsRow, error) {
 	query := listNotifiableDiscordSubjectsByTicketIDs
 	var queryParams []interface{}
@@ -63,7 +62,6 @@ func (q *Queries) ListNotifiableDiscordSubjectsByTicketIDs(ctx context.Context, 
 }
 
 const listTicketsForDayBeforeNotification = `-- name: ListTicketsForDayBeforeNotification :many
-
 SELECT t.id, t.start_at, t.meeting_at, t.meeting_place,
        e.title AS event_title
 FROM tickets t
@@ -81,12 +79,6 @@ type ListTicketsForDayBeforeNotificationRow struct {
 	EventTitle   string
 }
 
-// リマインド通知ワーカー用のクエリ。
-// 締切（前日 20 時 / 集合 2 時間前）と猶予窓の判定は Go 側で行う。日付や時刻の
-// 演算は JST 基準で組み立てたいが SQL では tz が絡んで間違えやすいため、ここでは
-// 「まだ通知しておらず、開演が未来」のチケットを候補として広めに引くに留める。
-// 引数 ? には Go 側で算出した「現在時刻（JST）」を渡す（driver の loc=Asia/Tokyo に
-// より JST naive な DATETIME 列と素直に比較できる）。
 func (q *Queries) ListTicketsForDayBeforeNotification(ctx context.Context, startAt time.Time) ([]ListTicketsForDayBeforeNotificationRow, error) {
 	rows, err := q.db.QueryContext(ctx, listTicketsForDayBeforeNotification, startAt)
 	if err != nil {
@@ -176,7 +168,6 @@ type MarkTicketMeetingNotifiedParams struct {
 	ID                string
 }
 
-// 多重送信防止のため未送信のものだけを対象にする。
 func (q *Queries) MarkTicketMeetingNotified(ctx context.Context, arg MarkTicketMeetingNotifiedParams) error {
 	_, err := q.db.ExecContext(ctx, markTicketMeetingNotified, arg.MeetingNotifiedAt, arg.ID)
 	return err
@@ -194,7 +185,6 @@ type MarkTicketsDayBeforeNotifiedParams struct {
 	Ids                 []string
 }
 
-// 多重送信防止のため未送信のものだけを対象にする。
 func (q *Queries) MarkTicketsDayBeforeNotified(ctx context.Context, arg MarkTicketsDayBeforeNotifiedParams) error {
 	query := markTicketsDayBeforeNotified
 	var queryParams []interface{}

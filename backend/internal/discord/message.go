@@ -11,7 +11,6 @@ import (
 type allowedMentions struct {
 	// Parse を空配列にすることで @everyone / @here / ロールメンションを許可しない。
 	Parse []string `json:"parse"`
-	// Users に列挙した user ID だけを実際の通知対象にする。
 	Users []string `json:"users"`
 }
 
@@ -25,13 +24,11 @@ type messageResponse struct {
 }
 
 // MessageConfigured は Bot 認証と投稿先チャンネルの設定が揃っているかを返す。
-// guild ID やネタバレカテゴリ ID はメッセージ投稿には不要なので判定に含めない。
 func (c *Client) MessageConfigured(channelID string) bool {
 	return c != nil && c.botToken != "" && strings.TrimSpace(channelID) != ""
 }
 
-// SendMessage は bot として指定チャンネルへメッセージを投稿する。
-// ユーザー入力に紛れた意図しないメンションを防ぐため、通知対象は mentionUserIDs に限定する。
+// SendMessage は bot として channelID へ投稿する。実際に通知されるのは mentionUserIDs だけ。
 func (c *Client) SendMessage(ctx context.Context, channelID, content string, mentionUserIDs []string) error {
 	channelID = strings.TrimSpace(channelID)
 	if !c.MessageConfigured(channelID) {

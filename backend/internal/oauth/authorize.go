@@ -14,12 +14,10 @@ import (
 )
 
 const (
-	// 同意フォームの CSRF 対策用 cookie（double submit cookie 方式）。
 	consentCSRFCookieName = "nazobu_oauth_consent_csrf"
 	consentCSRFCookieTTL  = 10 * time.Minute
 )
 
-// authorizeParams は認可リクエストのうち、クライアント検証後にチェックするパラメータ群。
 type authorizeParams struct {
 	responseType  string
 	scope         string
@@ -33,8 +31,6 @@ type authorizeError struct {
 	description string
 }
 
-// parseAuthorizeParams は response_type / PKCE / scope / resource を検証する。
-// redirect_uri の検証は済んでいる前提（エラーは redirect で返せる段階）。
 func parseAuthorizeParams(v url.Values, resourceURL string) (authorizeParams, *authorizeError) {
 	p := authorizeParams{
 		responseType:  v.Get("response_type"),
@@ -45,7 +41,6 @@ func parseAuthorizeParams(v url.Values, resourceURL string) (authorizeParams, *a
 	if p.responseType != "code" {
 		return p, &authorizeError{"unsupported_response_type", "response_type は code のみ"}
 	}
-	// PKCE S256 を必須にする（OAuth 2.1 / MCP 仕様）。
 	if p.codeChallenge == "" {
 		return p, &authorizeError{"invalid_request", "code_challenge は必須"}
 	}
@@ -55,8 +50,6 @@ func parseAuthorizeParams(v url.Values, resourceURL string) (authorizeParams, *a
 	if m := v.Get("code_challenge_method"); m != "S256" {
 		return p, &authorizeError{"invalid_request", "code_challenge_method は S256 のみ"}
 	}
-	// scope: 未指定なら全 scope を既定にする（scope を送らないクライアントでも
-	// 書き込みツールまで使えるように。付与内容は同意画面に明示する）。未知の scope は拒否する。
 	if p.scope == "" {
 		p.scope = ScopeRead + " " + ScopeWrite
 	}
@@ -65,7 +58,6 @@ func parseAuthorizeParams(v url.Values, resourceURL string) (authorizeParams, *a
 			return p, &authorizeError{"invalid_scope", fmt.Sprintf("未対応の scope: %s", sc)}
 		}
 	}
-	// resource（RFC 8707）: 指定されている場合は本サーバの MCP エンドポイントと一致すること。
 	if res := v.Get("resource"); res != "" {
 		if strings.TrimSuffix(res, "/") != strings.TrimSuffix(resourceURL, "/") {
 			return p, &authorizeError{"invalid_target", "resource が本サーバの MCP エンドポイントと一致しない"}
@@ -74,7 +66,6 @@ func parseAuthorizeParams(v url.Values, resourceURL string) (authorizeParams, *a
 	return p, nil
 }
 
-// sessionUser は web と同じ session cookie からログインユーザーを引く。未ログインは nil。
 func (s *Server) sessionUser(r *http.Request) *auth.User {
 	c, err := r.Cookie(auth.SessionCookieName)
 	if err != nil || c.Value == "" {
@@ -88,7 +79,6 @@ func (s *Server) sessionUser(r *http.Request) *auth.User {
 }
 
 func (s *Server) HandleAuthorizeGet(w http.ResponseWriter, r *http.Request) {
-	// 未ログインなら Discord ログインへ。完了後に同じ認可 URL へ戻す。
 	user := s.sessionUser(r)
 	if user == nil {
 		http.Redirect(w, r, "/auth/discord/login?next="+url.QueryEscape(r.URL.RequestURI()), http.StatusFound)
@@ -126,11 +116,10 @@ func (s *Server) HandleAuthorizeGet(w http.ResponseWriter, r *http.Request) {
 		clientName = meta.ClientID
 	}
 	s.renderTemplate(w, http.StatusOK, consentTemplate, consentView{
-		UserName:    user.DisplayName,
-		ClientName:  clientName,
-		ClientID:    meta.ClientID,
-		RedirectURI: redirectURI,
-		// MCP 仕様の推奨に従い、ループバックへの redirect は同意画面で警告する。
+		UserName:         user.DisplayName,
+		ClientName:       clientName,
+		ClientID:         meta.ClientID,
+		RedirectURI:      redirectURI,
 		LoopbackRedirect: isLoopbackRedirectURI(redirectURI),
 		Scope:            params.scope,
 		ScopeWrite:       scopeContains(params.scope, ScopeWrite),
@@ -151,7 +140,6 @@ func (s *Server) HandleAuthorizePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// CSRF: cookie とフォームの値の一致を要求する。
 	csrfCookie, err := r.Cookie(consentCSRFCookieName)
 	if err != nil || csrfCookie.Value == "" || csrfCookie.Value != r.PostFormValue("csrf_token") {
 		s.renderErrorPage(w, http.StatusBadRequest, "CSRF トークンが一致しない。最初からやり直してほしい")
@@ -159,13 +147,11 @@ func (s *Server) HandleAuthorizePost(w http.ResponseWriter, r *http.Request) {
 	}
 	clearConsentCSRFCookie(w, s.cookieSecure)
 
-	// hidden フィールドの値は改ざんされうるので、GET 時と同じ検証を最初からやり直す。
 	form := r.PostForm
 	_, redirectURI, ok := s.resolveClientAndRedirect(w, r, form.Get("client_id"), form.Get("redirect_uri"))
 	if !ok {
 		return
 	}
-	// フォームには response_type / code_challenge_method を載せないため補完して再検証する。
 	form.Set("response_type", "code")
 	form.Set("code_challenge_method", "S256")
 	params, aerr := parseAuthorizeParams(form, s.ResourceURL())
@@ -206,9 +192,6 @@ func (s *Server) HandleAuthorizePost(w http.ResponseWriter, r *http.Request) {
 	}), http.StatusFound)
 }
 
-// resolveClientAndRedirect は client_id（CIMD）と redirect_uri を検証する。
-// この 2 つが不正な間は redirect でエラーを返してはいけない（open redirect になる）ため、
-// 失敗時はエラーページを描画して ok=false を返す。
 func (s *Server) resolveClientAndRedirect(w http.ResponseWriter, r *http.Request, clientID, redirectURI string) (*ClientMetadata, string, bool) {
 	if clientID == "" {
 		s.renderErrorPage(w, http.StatusBadRequest, "client_id は必須")
@@ -230,7 +213,6 @@ func (s *Server) resolveClientAndRedirect(w http.ResponseWriter, r *http.Request
 	return meta, redirectURI, true
 }
 
-// redirectAuthorizeError は redirect_uri へ error= 付きで戻す。
 // RFC 9207 は成功・エラーどちらの認可レスポンスにも iss を要求する。
 func (s *Server) redirectAuthorizeError(w http.ResponseWriter, r *http.Request, redirectURI, state string, aerr *authorizeError) {
 	v := url.Values{"error": {aerr.code}, "iss": {s.baseURL}}
@@ -243,11 +225,9 @@ func (s *Server) redirectAuthorizeError(w http.ResponseWriter, r *http.Request, 
 	http.Redirect(w, r, buildRedirectURL(redirectURI, v), http.StatusFound)
 }
 
-// buildRedirectURL は redirect_uri の既存クエリを保ちつつパラメータを追記する。
 func buildRedirectURL(redirectURI string, params url.Values) string {
 	u, err := url.Parse(redirectURI)
 	if err != nil {
-		// redirect_uri は検証済みのためここには来ないが、保険としてそのまま返す。
 		return redirectURI
 	}
 	q := u.Query()
@@ -279,11 +259,10 @@ type consentView struct {
 	RedirectURI      string
 	LoopbackRedirect bool
 	Scope            string
-	// ScopeWrite は write scope を含むか（同意画面の「許可される操作」の出し分け用）。
-	ScopeWrite    bool
-	State         string
-	CodeChallenge string
-	CSRFToken     string
+	ScopeWrite       bool
+	State            string
+	CodeChallenge    string
+	CSRFToken        string
 }
 
 var consentTemplate = template.Must(template.New("consent").Parse(`<!DOCTYPE html>

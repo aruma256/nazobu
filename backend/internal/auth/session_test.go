@@ -14,7 +14,6 @@ func TestHashTokenIsDeterministic(t *testing.T) {
 	if h := hashToken("hellO"); h == h1 {
 		t.Errorf("異なる入力で同一ハッシュ: 衝突 or バグ")
 	}
-	// SHA-256 hex は 64 文字。schema の CHAR(64) に合わせて長さを固定確認。
 	if len(h1) != 64 {
 		t.Errorf("ハッシュ長 = %d, want 64", len(h1))
 	}
@@ -30,7 +29,6 @@ func TestGenerateTokenLengthAndUniqueness(t *testing.T) {
 		if tok == "" {
 			t.Fatal("generateToken が空文字を返した")
 		}
-		// 32 byte を base64 raw url にした長さは 43。短縮等の事故を検知するために確認。
 		if len(tok) != 43 {
 			t.Errorf("token 長 = %d, want 43 (32 bytes raw url base64)", len(tok))
 		}

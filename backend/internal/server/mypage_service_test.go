@@ -34,7 +34,6 @@ func TestClipHistoryEnd(t *testing.T) {
 }
 
 func TestJSTLocation(t *testing.T) {
-	// jst が +9:00 で初期化されていることを固定する。
 	_, offset := time.Now().In(jst).Zone()
 	if offset != 9*3600 {
 		t.Errorf("jst offset = %d, want %d", offset, 9*3600)

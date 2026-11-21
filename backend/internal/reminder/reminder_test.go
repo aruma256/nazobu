@@ -23,7 +23,6 @@ func TestDayBeforeDeadline(t *testing.T) {
 		{"開演前日の20時", ts(2026, 6, 14, 14, 0), ts(2026, 6, 13, 20, 0)},
 		{"開演当日が月初なら前月末の20時へ繰り下がる", ts(2026, 7, 1, 10, 0), ts(2026, 6, 30, 20, 0)},
 		{"開演時刻に関わらず締切は前日20時固定", ts(2026, 6, 14, 0, 30), ts(2026, 6, 13, 20, 0)},
-		// UTC 6/13 16:00 は JST 6/14 1:00。UTC のまま日付を取ると前日が 6/12 になってしまう。
 		{"UTC 入力でも JST に変換してから前日を計算する", time.Date(2026, 6, 13, 16, 0, 0, 0, time.UTC), ts(2026, 6, 13, 20, 0)},
 	}
 	for _, c := range cases {
@@ -67,11 +66,9 @@ func TestIsDue(t *testing.T) {
 }
 
 func TestFormatDateTimeFull(t *testing.T) {
-	// 2026-06-14 は日曜。
 	if got := formatDateTimeFull(ts(2026, 6, 14, 14, 0)); got != "6/14(日) 14:00" {
 		t.Errorf("formatDateTimeFull = %q", got)
 	}
-	// UTC 入力は JST に変換して表示する（6/14 5:00 UTC = 6/14 14:00 JST）。
 	if got := formatDateTimeFull(time.Date(2026, 6, 14, 5, 0, 0, 0, time.UTC)); got != "6/14(日) 14:00" {
 		t.Errorf("formatDateTimeFull(UTC) = %q", got)
 	}
@@ -81,7 +78,6 @@ func TestFormatTimeOnly(t *testing.T) {
 	if got := formatTimeOnly(ts(2026, 6, 14, 9, 5)); got != "09:05" {
 		t.Errorf("formatTimeOnly = %q", got)
 	}
-	// UTC 入力は JST に変換して表示する。
 	if got := formatTimeOnly(time.Date(2026, 6, 14, 0, 5, 0, 0, time.UTC)); got != "09:05" {
 		t.Errorf("formatTimeOnly(UTC) = %q", got)
 	}
@@ -95,7 +91,6 @@ func TestSameDate(t *testing.T) {
 	}{
 		{"JST 同日", ts(2026, 6, 14, 0, 0), ts(2026, 6, 14, 23, 59), true},
 		{"JST 別日", ts(2026, 6, 13, 23, 59), ts(2026, 6, 14, 0, 0), false},
-		// UTC 6/13 15:00 は JST 6/14 0:00。UTC のまま比較すると別日になってしまう。
 		{"UTC 入力は JST に変換して比較する", time.Date(2026, 6, 13, 15, 0, 0, 0, time.UTC), ts(2026, 6, 14, 23, 0), true},
 	}
 	for _, c := range cases {
@@ -112,7 +107,6 @@ func TestTicketURL(t *testing.T) {
 	if got := ticketURL("https://nazobu.aruma256.dev", "t1"); got != want {
 		t.Errorf("ticketURL = %q, want %q", got, want)
 	}
-	// baseURL 末尾の "/" は重複させない。
 	if got := ticketURL("https://nazobu.aruma256.dev/", "t1"); got != want {
 		t.Errorf("ticketURL(末尾スラッシュ) = %q, want %q", got, want)
 	}
@@ -179,7 +173,6 @@ func TestFormatDayBefore(t *testing.T) {
 }
 
 func TestFormatDayBeforeWithoutSubjects(t *testing.T) {
-	// メンション対象がいないチケットはメンション行を出さない（通知連携していないメンバーのみ等）。
 	tickets := []queries.ListTicketsForDayBeforeNotificationRow{
 		{ID: "t1", StartAt: ts(2026, 6, 14, 14, 0), EventTitle: "A"},
 	}
@@ -198,7 +191,6 @@ func TestFormatDayBeforeWithoutSubjects(t *testing.T) {
 }
 
 func TestFormatDayBeforeMentionDedup(t *testing.T) {
-	// 同じ人が同日の 2 公演に参加 → メンション行は各公演に出るが、allowed_mentions は重複排除。
 	tickets := []queries.ListTicketsForDayBeforeNotificationRow{
 		{ID: "t1", StartAt: ts(2026, 6, 14, 14, 0), EventTitle: "A"},
 		{ID: "t2", StartAt: ts(2026, 6, 14, 18, 0), EventTitle: "B"},

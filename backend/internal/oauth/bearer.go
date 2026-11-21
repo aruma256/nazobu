@@ -15,8 +15,7 @@ var errInvalidAccessToken = errors.New("アクセストークンが無効か期�
 
 // Middleware は MCP エンドポイント用の Bearer 認証。
 // 検証に成功したら auth.User を context に注入して次のハンドラへ渡す。
-// 失敗時は 401 + WWW-Authenticate を返す。Claude はこのヘッダの resource_metadata から
-// protected resource metadata を発見して OAuth フローを開始する（lazy authentication）。
+// 失敗時は 401 と resource_metadata 付きの WWW-Authenticate を返す。
 func (s *Server) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		raw, ok := bearerToken(r)
@@ -37,7 +36,6 @@ func (s *Server) Middleware(next http.Handler) http.Handler {
 
 type grantedScopeContextKey struct{}
 
-// withGrantedScope はアクセストークンに紐づく scope（空白区切り）を context に載せる。
 func withGrantedScope(ctx context.Context, scope string) context.Context {
 	return context.WithValue(ctx, grantedScopeContextKey{}, scope)
 }

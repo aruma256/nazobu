@@ -141,7 +141,6 @@ func TestMetadataHandlers(t *testing.T) {
 		if len(pkce) != 1 || pkce[0] != "S256" {
 			t.Errorf("code_challenge_methods_supported = %v", pkce)
 		}
-		// RFC 9207。MCP 2026-07-28 のクライアントはこれを見て iss 検証を行う。
 		if m["authorization_response_iss_parameter_supported"] != true {
 			t.Error("authorization_response_iss_parameter_supported が true でない")
 		}
@@ -215,8 +214,6 @@ func TestBuildRedirectURL(t *testing.T) {
 	}
 }
 
-// RFC 9207 はエラーの認可レスポンスにも iss を要求する。
-// state 無しのケースでも iss だけは必ず付くことを確認する。
 func TestRedirectAuthorizeErrorIncludesIss(t *testing.T) {
 	const issuer = "https://nazobu.example.com"
 	s := NewServer(nil, http.DefaultClient, issuer, true)

@@ -13,9 +13,6 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/oauth"
 )
 
-// newMCPHandler は Claude connector 向けの MCP（Streamable HTTP）ハンドラを組み立てる。
-// 認証は前段の oauth.Middleware が済ませ、auth.User を context に注入してくる前提。
-// ツール実装は Connect RPC ハンドラを in-process 呼び出しして再利用する。
 func newMCPHandler(
 	mypage nazobuv1connect.MyPageServiceHandler,
 	tickets nazobuv1connect.TicketServiceHandler,
@@ -98,16 +95,12 @@ func newMCPHandler(
 		Description: "公演を完全削除する。元に戻せないため利用者に対象を確認してから実行する。チケットが残る公演は削除不可。Discord チャンネル・権限は残る。admin と write スコープが必要。event_id は get_ticket の event_id または Web の公演情報から確認する。",
 	}, deleteEventTool(events))
 
-	// Stateless + JSONResponse: セッション管理を持たず、SSE ではなく素の JSON で応答する。
-	// Cloudflare Tunnel + Next.js rewrites 越しでもバッファリングの影響を受けない構成に寄せる。
 	return mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return srv }, &mcp.StreamableHTTPOptions{
 		Stateless:    true,
 		JSONResponse: true,
 	})
 }
 
-// mcpTicket は MCP ツールが返すチケット情報。proto の Ticket から
-// LLM が扱いやすいフィールドだけを抜き出した形。
 type mcpTicket struct {
 	EventID          string   `json:"event_id" jsonschema:"公演 ID"`
 	TicketID         string   `json:"ticket_id" jsonschema:"チケット ID"`
@@ -277,8 +270,6 @@ func registerUserTool(users nazobuv1connect.UserServiceHandler) mcp.ToolHandlerF
 	}
 }
 
-// createTicketWithEventInput は CreateTicketWithEventRequest の MCP 向けミラー。
-// バリデーション（必須・上限・整合性）は RPC ハンドラ側に集約されているため、ここでは行わない。
 type createTicketWithEventInput struct {
 	EventTitle                      string   `json:"event_title" jsonschema:"公演タイトル（必須）"`
 	EventURL                        string   `json:"event_url" jsonschema:"公演の公式ページ URL（必須、http(s)）"`
@@ -306,8 +297,6 @@ type createTicketWithEventOutput struct {
 func createTicketWithEventTool(tickets nazobuv1connect.TicketServiceHandler) mcp.ToolHandlerFor[createTicketWithEventInput, createTicketWithEventOutput] {
 	return func(ctx context.Context, _ *mcp.CallToolRequest, in createTicketWithEventInput) (*mcp.CallToolResult, createTicketWithEventOutput, error) {
 		var out createTicketWithEventOutput
-		// 書き込みツールはトークンの write スコープを要求する。
-		// read のみのトークンには、コネクタの再接続（再認可）を促す。
 		if !oauth.HasScope(ctx, oauth.ScopeWrite) {
 			return nil, out, errors.New("このアクセストークンには write スコープが無い。Claude のコネクタを一度削除して接続し直し、書き込みを許可してほしい")
 		}
@@ -339,8 +328,6 @@ func createTicketWithEventTool(tickets nazobuv1connect.TicketServiceHandler) mcp
 	}
 }
 
-// createTicketInput は CreateTicketRequest の MCP 向けミラー。
-// バリデーション（必須・上限・整合性）は RPC ハンドラ側に集約されているため、ここでは行わない。
 type createTicketInput struct {
 	EventID                       string   `json:"event_id" jsonschema:"チケットを追加する公演の ID（必須）。list_tickets / get_ticket で確認する"`
 	StartAt                       string   `json:"start_at" jsonschema:"開演日時（JST, RFC3339、必須）"`
@@ -387,8 +374,6 @@ func createTicketTool(tickets nazobuv1connect.TicketServiceHandler) mcp.ToolHand
 	}
 }
 
-// updateTicketWithEventInput は部分更新の入力。ticket_id 以外は全て任意で、
-// 省略（null）したフィールドは現在値を維持する。
 type updateTicketWithEventInput struct {
 	TicketID                        string  `json:"ticket_id" jsonschema:"更新するチケットの ID（必須）"`
 	EventTitle                      *string `json:"event_title,omitempty" jsonschema:"公演タイトル。省略時は変更しない"`
@@ -413,7 +398,6 @@ type updateTicketWithEventOutput struct {
 	UnregisteredParticipantsCount int32     `json:"unregistered_participants_count" jsonschema:"未登録の同行者の人数"`
 }
 
-// pickString / pickInt32 は指定があればその値、無ければ現在値を返す。
 func pickString(cur string, in *string) string {
 	if in != nil {
 		return *in
@@ -428,8 +412,6 @@ func pickInt32(cur int32, in *int32) int32 {
 	return cur
 }
 
-// pickOptionalMinutes は「開演の何分前か」系の optional フィールド用。
-// 省略なら現在値を維持、-1 なら未設定（nil）に戻す。
 func pickOptionalMinutes(cur, in *int32) *int32 {
 	if in == nil {
 		return cur
@@ -440,11 +422,6 @@ func pickOptionalMinutes(cur, in *int32) *int32 {
 	return in
 }
 
-// updateTicketWithEventTool は全置換の UpdateTicketWithEvent RPC を
-// 「現在値を取得 → 指定フィールドだけ上書き → 全フィールド送信」でラップし、
-// LLM からは部分更新として扱えるようにする。
-// 現在値は GetTicket に加え、Ticket メッセージに含まれない
-// entry_deadline のために GetEvent も参照する。
 func updateTicketWithEventTool(tickets nazobuv1connect.TicketServiceHandler, events nazobuv1connect.EventServiceHandler) mcp.ToolHandlerFor[updateTicketWithEventInput, updateTicketWithEventOutput] {
 	return func(ctx context.Context, _ *mcp.CallToolRequest, in updateTicketWithEventInput) (*mcp.CallToolResult, updateTicketWithEventOutput, error) {
 		var out updateTicketWithEventOutput

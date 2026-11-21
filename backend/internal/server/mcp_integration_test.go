@@ -1,9 +1,5 @@
 package server
 
-// MCP エンドポイントの統合テスト。実 MySQL + go-sdk のクライアントで、
-// Bearer 認証 → ツール呼び出し → RPC の in-process 再利用までを一気通貫で検証する。
-// OAuth フロー（authorize / token）自体は internal/oauth の統合テストで担保する。
-
 import (
 	"context"
 	"crypto/sha256"
@@ -42,7 +38,6 @@ func sha256Hex(s string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// setupMCPTestData は user / event / ticket / 参加者と有効なアクセストークンを仕込む。
 func setupMCPTestData(t *testing.T, db *sql.DB) (userID, ticketID, accessToken string) {
 	t.Helper()
 	ctx := context.Background()
@@ -87,8 +82,6 @@ func setupMCPTestData(t *testing.T, db *sql.DB) (userID, ticketID, accessToken s
 	return userID, ticketID, accessToken
 }
 
-// issueMCPAccessToken は指定 scope のアクセストークンを DB に直接発行して raw 値を返す
-// （OAuth フローは oauth 側のテストで担保）。
 func issueMCPAccessToken(t *testing.T, db *sql.DB, userID, scope string) string {
 	t.Helper()
 	accessToken := "test-mcp-access-token-" + id.New()
@@ -123,7 +116,6 @@ func newMCPTestSession(t *testing.T, endpoint, accessToken string) *mcp.ClientSe
 		HTTPClient: &http.Client{
 			Transport: &bearerTransport{token: accessToken, base: http.DefaultTransport},
 		},
-		// stateless サーバに対する GET（SSE ストリーム確立）は不要なので張らない。
 		DisableStandaloneSSE: true,
 	}
 	client := mcp.NewClient(&mcp.Implementation{Name: "test-client", Version: "0.0.1"}, nil)
@@ -153,7 +145,6 @@ func TestIntegrationMCPListMyUpcomingTickets(t *testing.T) {
 	ctx := context.Background()
 	session := newMCPTestSession(t, ts.URL, accessToken)
 
-	// ツールが公開されていること
 	tools, err := session.ListTools(ctx, nil)
 	if err != nil {
 		t.Fatalf("ListTools に失敗: %v", err)
@@ -311,7 +302,6 @@ func TestIntegrationMCPGetTicket(t *testing.T) {
 		if p.UserID != userID || p.Name != "mcp-test-user" {
 			t.Errorf("participants[0] = %+v", p)
 		}
-		// 立替者本人は常に精算済み扱い
 		if !p.IsPurchaser || !p.Settled {
 			t.Errorf("is_purchaser = %v, settled = %v, want どちらも true", p.IsPurchaser, p.Settled)
 		}
@@ -483,7 +473,6 @@ func TestIntegrationMCPCreateTicketWithEvent(t *testing.T) {
 	ts := newMCPTestServer(t, db)
 	ctx := context.Background()
 
-	// event_url の host は OG 取得の allowlist 外なので、テスト中に外部アクセスは発生しない。
 	createArgs := func() map[string]any {
 		return map[string]any{
 			"event_title":                     "新作脱出公演",
@@ -543,7 +532,6 @@ func TestIntegrationMCPCreateTicketWithEvent(t *testing.T) {
 		if out.Ticket.PricePerPerson != 3800 {
 			t.Errorf("price_per_person = %d", out.Ticket.PricePerPerson)
 		}
-		// 立替者は Bearer トークンのユーザー自身になること
 		if out.Ticket.PurchaserName != "mcp-admin" {
 			t.Errorf("purchaser_name = %q", out.Ticket.PurchaserName)
 		}
@@ -554,7 +542,6 @@ func TestIntegrationMCPCreateTicketWithEvent(t *testing.T) {
 			t.Errorf("max_participants = %d", out.MaxParticipants)
 		}
 
-		// DB にも登録されていること
 		q := queries.New(db)
 		if _, err := q.GetEventByID(ctx, out.EventID); err != nil {
 			t.Errorf("登録後の event が取得できない: %v", err)
@@ -773,7 +760,6 @@ func TestIntegrationMCPUpdateTicketWithEvent(t *testing.T) {
 		if out.Ticket.PricePerPerson != 5000 {
 			t.Errorf("price_per_person = %d", out.Ticket.PricePerPerson)
 		}
-		// 省略したフィールドが維持されていること
 		if out.Ticket.EventTitle != "テスト脱出公演" {
 			t.Errorf("event_title が変わってしまった: %q", out.Ticket.EventTitle)
 		}
@@ -783,7 +769,6 @@ func TestIntegrationMCPUpdateTicketWithEvent(t *testing.T) {
 		if out.MaxParticipants != 4 {
 			t.Errorf("max_participants が変わってしまった: %d", out.MaxParticipants)
 		}
-		// Ticket メッセージに乗らない event フィールドも維持されていること（DB で確認）
 		ev, err := q.GetEventByID(ctx, eventID)
 		if err != nil {
 			t.Fatalf("event の取得に失敗: %v", err)
@@ -901,8 +886,6 @@ func TestIntegrationMCPUnauthorized(t *testing.T) {
 	db := testdb.Open(t)
 	ts := newMCPTestServer(t, db)
 
-	// トークン無しの素の POST は 401 + WWW-Authenticate が返ること
-	// （Claude はこのハンドシェイクから OAuth フローを開始する）
 	resp, err := http.Post(ts.URL, "application/json", nil)
 	if err != nil {
 		t.Fatalf("POST に失敗: %v", err)

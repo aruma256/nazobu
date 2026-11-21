@@ -201,7 +201,6 @@ type ListTicketParticipantDiscordIdentitiesRow struct {
 	DiscordSubject sql.NullString
 }
 
-// identity の欠落を検出できるよう LEFT JOIN にする。
 func (q *Queries) ListTicketParticipantDiscordIdentities(ctx context.Context, ticketID string) ([]ListTicketParticipantDiscordIdentitiesRow, error) {
 	rows, err := q.db.QueryContext(ctx, listTicketParticipantDiscordIdentities, ticketID)
 	if err != nil {
@@ -420,7 +419,6 @@ type ListTicketsByIDsRow struct {
 	PurchaserName                 string
 }
 
-// 列は ListTickets と揃える。
 func (q *Queries) ListTicketsByIDs(ctx context.Context, ids []string) ([]ListTicketsByIDsRow, error) {
 	query := listTicketsByIDs
 	var queryParams []interface{}
@@ -475,7 +473,6 @@ const lockTicketForDeletion = `-- name: LockTicketForDeletion :one
 SELECT purchased_by FROM tickets WHERE id = ? FOR UPDATE
 `
 
-// 削除の権限判定と参加者削除の間に立替者変更・参加者追加が割り込むのを防ぐ。
 func (q *Queries) LockTicketForDeletion(ctx context.Context, id string) (string, error) {
 	row := q.db.QueryRowContext(ctx, lockTicketForDeletion, id)
 	var purchased_by string

@@ -6,12 +6,8 @@ import (
 	"time"
 )
 
-// withAccessLog はリクエストごとにメソッド・ルート・ステータス・所要時間を記録する。
-// クエリ文字列・ヘッダ・ボディには code / state / token などが含まれ得るため出力しない。
-// パスも任意文字列になり得るので、mux のルートに一致し 404 でなかったときだけ出す。
 func withAccessLog(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// liveness probe は頻度が高くノイズになるので記録しない。
 		if r.URL.Path == "/healthz" {
 			next.ServeHTTP(w, r)
 			return
@@ -20,7 +16,6 @@ func withAccessLog(next http.Handler) http.Handler {
 		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(rec, r)
 
-		// ServeMux は一致したパターンを r.Pattern に書き込む。
 		attrs := []any{
 			"method", r.Method,
 			"route", r.Pattern,

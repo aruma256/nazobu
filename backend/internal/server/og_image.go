@@ -12,9 +12,6 @@ import (
 	"golang.org/x/net/html"
 )
 
-// OG 画像取得対象のドメイン allowlist。
-// SSRF 対策の要。リダイレクト先もこの allowlist で再検査するため、
-// allowlist 外へのリダイレクトで内部ホストに到達することはない。
 var ogImageAllowedHosts = map[string]struct{}{
 	"realdgame.jp":          {},
 	"escape.id":             {},
@@ -23,26 +20,17 @@ var ogImageAllowedHosts = map[string]struct{}{
 
 const (
 	ogFetchTimeout      = 5 * time.Second
-	ogFetchMaxBodyBytes = 1 << 20 // 1 MiB。HTML head までで十分。
+	ogFetchMaxBodyBytes = 1 << 20
 	ogImageURLMaxLen    = 2048
 )
 
-// escape.id のトップページ等が返す汎用サイト説明。
-// 個別公演ページではないため、これをキャッチコピーとして採用してはいけない。
 const escapeIDGenericDescription = "閉じ込められたいあなたのための脱出・謎解きポータルサイト"
 
-// ogTags は対象ページから取り出せた og:image / og:description を保持する。
-// 取得できなかった項目は空文字。
 type ogTags struct {
-	// 絶対化済みの https URL。長さオーバーや非 https の場合は空文字。
-	Image string
-	// 前後空白のみ trim した og:description。
+	Image       string
 	Description string
 }
 
-// fetchOGTags は eventURL のページから og:image / og:description を 1 リクエストで取り出す。
-// 失敗（allowlist 外 / ネットワーク / パース失敗 / 該当タグ無し）時は対応フィールドが空文字。
-// 失敗理由を区別せず空のまま保存するため error は返さない。
 func fetchOGTags(ctx context.Context, client *http.Client, eventURL string) ogTags {
 	parsed, err := url.Parse(eventURL)
 	if err != nil || parsed.Scheme != "https" {
@@ -55,8 +43,6 @@ func fetchOGTags(ctx context.Context, client *http.Client, eventURL string) ogTa
 	ctx, cancel := context.WithTimeout(ctx, ogFetchTimeout)
 	defer cancel()
 
-	// リダイレクトは毎回 allowlist で再検査する。
-	// CheckRedirect が nil の http.Client は検査なしで最大 10 回追従するため、上書きする。
 	c := *client
 	c.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		if len(via) >= 5 {
@@ -94,7 +80,6 @@ func fetchOGTags(ctx context.Context, client *http.Client, eventURL string) ogTa
 	tags := extractOGTags(limited)
 
 	if tags.Image != "" {
-		// 相対 URL を絶対化し、画像 URL も https のみ許容。長さオーバーや非 https は弾く。
 		abs, err := parsed.Parse(tags.Image)
 		if err != nil || abs.Scheme != "https" {
 			tags.Image = ""
@@ -107,9 +92,6 @@ func fetchOGTags(ctx context.Context, client *http.Client, eventURL string) ogTa
 	return tags
 }
 
-// shouldUseOGDescriptionAsCatchphrase は og:description を event のキャッチコピーに採用するかを判定する。
-// 公演単位の固有説明が取れるのは現状 escape.id のみのため、ホストを escape.id に限定する。
-// またトップページ等が返す汎用サイト説明は採用しない。
 func shouldUseOGDescriptionAsCatchphrase(host, description string) bool {
 	if description == "" {
 		return false
@@ -125,7 +107,6 @@ func shouldUseOGDescriptionAsCatchphrase(host, description string) bool {
 }
 
 func isAllowedOGHost(host string) bool {
-	// :port が付いていれば落とす。allowlist は ASCII ホストのみなので case-fold で揃える。
 	h := strings.ToLower(host)
 	if i := strings.IndexByte(h, ':'); i >= 0 {
 		h = h[:i]
@@ -134,8 +115,6 @@ func isAllowedOGHost(host string) bool {
 	return ok
 }
 
-// extractOGTags は HTML を読み <meta property="og:image" / "og:description" content="..."> を探す。
-// 見つからない項目は空文字のまま。
 func extractOGTags(r io.Reader) ogTags {
 	var tags ogTags
 	z := html.NewTokenizer(r)
@@ -147,7 +126,6 @@ func extractOGTags(r io.Reader) ogTags {
 		case html.StartTagToken, html.SelfClosingTagToken:
 			name, hasAttr := z.TagName()
 			tag := string(name)
-			// OG タグは <head> 内なので <body> に入ったら打ち切る。
 			if tag == "body" {
 				return tags
 			}

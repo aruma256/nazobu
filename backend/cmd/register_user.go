@@ -47,8 +47,6 @@ var registerUserCmd = &cobra.Command{
 
 func init() {
 	registerUserCmd.Flags().StringVar(&registerUserDiscordUserID, "discord-user-id", "", "Discord ユーザー ID（Snowflake）")
-	// display-name は users.display_name の NOT NULL を満たすため必須。実際にログインしてくれば
-	// IdP から取得した値で上書きされるが、事前登録の段階ではここで指定したものが表示される。
 	registerUserCmd.Flags().StringVar(&registerUserDisplayName, "display-name", "", "表示名（必須）")
 	_ = registerUserCmd.MarkFlagRequired("discord-user-id")
 	_ = registerUserCmd.MarkFlagRequired("display-name")

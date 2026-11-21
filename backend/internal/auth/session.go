@@ -18,18 +18,14 @@ const (
 	SessionCookieName = "nazobu_session"
 	SessionTTL        = 30 * 24 * time.Hour
 
-	// users.role に保存する値。schema.sql の CHECK 制約と同期させる。
 	RoleAdmin  = "admin"
 	RoleMember = "member"
 )
 
 var ErrNoSession = errors.New("session が見つからないか期限切れ")
 
-// ErrUserNotRegistered は LoginWithIdentity で identity が事前登録されていない
-// ことを示す。
 var ErrUserNotRegistered = errors.New("ユーザーが事前登録されていない")
 
-// ErrUserAlreadyRegistered は RegisterUser で identity が登録済みであることを示す。
 var ErrUserAlreadyRegistered = errors.New("ユーザーが登録済み")
 
 type User struct {
@@ -39,17 +35,12 @@ type User struct {
 	Role        string
 }
 
-// UserProfile は IdP から取得した、user 表示用プロフィールのスナップショット。
-// ログインのたびに users テーブルへキャッシュ更新される。
-// DisplayName は users.display_name の NOT NULL 制約を満たすよう、IdP ごとの
-// フォールバックを解決してから渡す。
 type UserProfile struct {
 	DisplayName string
 	AvatarURL   string
 }
 
 // RegisterUser は (provider, subject) で識別される IdP identity のユーザーを事前登録する。
-// users と user_identities を同一トランザクションで作る。
 // 登録済みの identity に対しては既存ユーザーを更新せず ErrUserAlreadyRegistered を返す。
 func RegisterUser(ctx context.Context, db *sql.DB, provider, subject string, profile UserProfile) (*User, error) {
 	q := queries.New(db)
@@ -101,7 +92,7 @@ func RegisterUser(ctx context.Context, db *sql.DB, provider, subject string, pro
 // LoginWithIdentity は (provider, subject) で識別される IdP identity に紐づく
 // 既存ユーザーを取得しプロフィールを最新化する。事前登録（RegisterUser）が
 // 行われていない identity に対しては ErrUserNotRegistered を返し、新規ユーザーを
-// 作成しない。サービスを招待制に保つためのログインゲート。
+// 作成しない。
 func LoginWithIdentity(ctx context.Context, db *sql.DB, provider, subject string, profile UserProfile) (*User, error) {
 	avatarURL := nullString(profile.AvatarURL)
 
@@ -130,8 +121,7 @@ func LoginWithIdentity(ctx context.Context, db *sql.DB, provider, subject string
 	}, nil
 }
 
-// CreateSession は新しい session を発行する。
-// 返り値の rawToken はクライアントに cookie で渡す値。DB には sha256 hash しか保存しない。
+// CreateSession は session を発行し、cookie に載せる raw token を返す。
 func CreateSession(ctx context.Context, db *sql.DB, userID string) (string, error) {
 	rawToken, err := generateToken()
 	if err != nil {

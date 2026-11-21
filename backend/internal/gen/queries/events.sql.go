@@ -221,7 +221,6 @@ type SetEventDiscordSpoilerChannelIDParams struct {
 	ID                      string
 }
 
-// 同時実行で既存の channel id を上書きしないよう、NULL のときだけ更新する。
 func (q *Queries) SetEventDiscordSpoilerChannelID(ctx context.Context, arg SetEventDiscordSpoilerChannelIDParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, setEventDiscordSpoilerChannelID, arg.DiscordSpoilerChannelID, arg.ID)
 	if err != nil {

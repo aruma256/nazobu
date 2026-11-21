@@ -1,9 +1,5 @@
 package oauth
 
-// OAuth 2.1 認可コードフロー全体（authorize → token → Bearer 検証 → refresh）を
-// 実 MySQL で検証する統合テスト。CIMD の取得のみ resolveClient の差し替えでスタブする
-// （外部 HTTPS への依存を切るため。取得・検証自体は cimd_test.go で担保）。
-
 import (
 	"context"
 	"database/sql"
@@ -76,7 +72,6 @@ func newFlowEnv(t *testing.T) *flowEnv {
 	t.Cleanup(ts.Close)
 
 	client := ts.Client()
-	// redirect の Location を検証するため自動追従を止める。
 	client.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
 
 	return &flowEnv{srv: srv, ts: ts, client: client, sessionToken: sessionToken, userID: userID}
@@ -94,11 +89,9 @@ func (e *flowEnv) authorizeQuery(state string) url.Values {
 	}
 }
 
-// obtainCode は同意画面の表示 → 承認 POST まで進めて認可コードを取り出す。
 func (e *flowEnv) obtainCode(t *testing.T, state string) string {
 	t.Helper()
 
-	// GET: 同意画面
 	req, _ := http.NewRequest(http.MethodGet, e.ts.URL+"/oauth/authorize?"+e.authorizeQuery(state).Encode(), nil)
 	req.AddCookie(&http.Cookie{Name: auth.SessionCookieName, Value: e.sessionToken})
 	resp, err := e.client.Do(req)
@@ -123,7 +116,6 @@ func (e *flowEnv) obtainCode(t *testing.T, state string) string {
 		t.Fatal("CSRF cookie が発行されていない")
 	}
 
-	// POST: 承認
 	form := url.Values{
 		"client_id":      {testClientID},
 		"redirect_uri":   {testRedirectURI},
@@ -152,7 +144,6 @@ func (e *flowEnv) obtainCode(t *testing.T, state string) string {
 	if got := loc.Query().Get("state"); got != state {
 		t.Errorf("state = %q, want %q", got, state)
 	}
-	// RFC 9207: 成功レスポンスにも issuer を含める。
 	if got := loc.Query().Get("iss"); got != testBaseURL {
 		t.Errorf("iss = %q, want %q", got, testBaseURL)
 	}
@@ -192,7 +183,6 @@ func (e *flowEnv) exchangeCode(t *testing.T, code string) map[string]any {
 	return m
 }
 
-// bearerUserID は Middleware 越しにアクセストークンを検証し、通れば user ID を返す。
 func (e *flowEnv) bearerUserID(t *testing.T, accessToken string) (int, string) {
 	t.Helper()
 	var gotUserID string
@@ -214,7 +204,6 @@ func (e *flowEnv) bearerUserID(t *testing.T, accessToken string) (int, string) {
 func TestIntegrationOAuthAuthorizationCodeFlow(t *testing.T) {
 	e := newFlowEnv(t)
 
-	// 未ログインならログインへリダイレクトされ、next で戻ってこられること
 	req, _ := http.NewRequest(http.MethodGet, e.ts.URL+"/oauth/authorize?"+e.authorizeQuery("s1").Encode(), nil)
 	resp, err := e.client.Do(req)
 	if err != nil {
@@ -228,7 +217,6 @@ func TestIntegrationOAuthAuthorizationCodeFlow(t *testing.T) {
 		t.Errorf("未ログイン時の Location = %q", loc)
 	}
 
-	// 承認 → code → token
 	code := e.obtainCode(t, "state-1")
 	tok := e.exchangeCode(t, code)
 	accessToken, _ := tok["access_token"].(string)
@@ -243,7 +231,6 @@ func TestIntegrationOAuthAuthorizationCodeFlow(t *testing.T) {
 		t.Errorf("scope = %v", tok["scope"])
 	}
 
-	// 認可コードの再利用は invalid_grant
 	resp2, m := e.postToken(t, url.Values{
 		"grant_type":    {"authorization_code"},
 		"code":          {code},
@@ -255,13 +242,11 @@ func TestIntegrationOAuthAuthorizationCodeFlow(t *testing.T) {
 		t.Errorf("code 再利用 = %d %v, want 400 invalid_grant", resp2.StatusCode, m)
 	}
 
-	// アクセストークンで Bearer 認証が通り、user が引けること
 	status, gotUserID := e.bearerUserID(t, accessToken)
 	if status != http.StatusOK || gotUserID != e.userID {
 		t.Errorf("Bearer 検証 = (%d, %q), want (200, %q)", status, gotUserID, e.userID)
 	}
 
-	// 不正なトークンは 401 + WWW-Authenticate（resource_metadata 付き）
 	{
 		h := e.srv.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 		rec := httptest.NewRecorder()
@@ -277,7 +262,6 @@ func TestIntegrationOAuthAuthorizationCodeFlow(t *testing.T) {
 		}
 	}
 
-	// refresh でトークンがローテーションされ、旧トークンが無効になること
 	resp3, m3 := e.postToken(t, url.Values{
 		"grant_type":    {"refresh_token"},
 		"refresh_token": {refreshToken},
@@ -298,7 +282,6 @@ func TestIntegrationOAuthAuthorizationCodeFlow(t *testing.T) {
 		t.Errorf("新アクセストークンで認証できない: (%d, %q)", status, gotUserID)
 	}
 
-	// 旧リフレッシュトークンは invalid_grant
 	resp4, m4 := e.postToken(t, url.Values{
 		"grant_type":    {"refresh_token"},
 		"refresh_token": {refreshToken},
@@ -312,7 +295,6 @@ func TestIntegrationOAuthAuthorizationCodeFlow(t *testing.T) {
 func TestIntegrationOAuthDenyAndPKCEFailure(t *testing.T) {
 	e := newFlowEnv(t)
 
-	// 誤った code_verifier は invalid_grant になり、コードは消費されること
 	code := e.obtainCode(t, "state-pkce")
 	resp, m := e.postToken(t, url.Values{
 		"grant_type":    {"authorization_code"},
@@ -324,7 +306,6 @@ func TestIntegrationOAuthDenyAndPKCEFailure(t *testing.T) {
 	if resp.StatusCode != http.StatusBadRequest || m["error"] != "invalid_grant" {
 		t.Errorf("誤 verifier = %d %v, want 400 invalid_grant", resp.StatusCode, m)
 	}
-	// 消費済みなので正しい verifier でも失敗する
 	resp2, m2 := e.postToken(t, url.Values{
 		"grant_type":    {"authorization_code"},
 		"code":          {code},
@@ -336,7 +317,6 @@ func TestIntegrationOAuthDenyAndPKCEFailure(t *testing.T) {
 		t.Errorf("検証失敗後のコードが再利用できてしまう: %d %v", resp2.StatusCode, m2)
 	}
 
-	// 拒否時は access_denied で redirect されること
 	req, _ := http.NewRequest(http.MethodGet, e.ts.URL+"/oauth/authorize?"+e.authorizeQuery("state-deny").Encode(), nil)
 	req.AddCookie(&http.Cookie{Name: auth.SessionCookieName, Value: e.sessionToken})
 	getResp, err := e.client.Do(req)
@@ -372,7 +352,6 @@ func TestIntegrationOAuthDenyAndPKCEFailure(t *testing.T) {
 	if loc.Query().Get("error") != "access_denied" {
 		t.Errorf("拒否時の redirect = %q", postResp.Header.Get("Location"))
 	}
-	// RFC 9207: エラーレスポンスにも issuer を含める。
 	if got := loc.Query().Get("iss"); got != testBaseURL {
 		t.Errorf("拒否時の iss = %q, want %q", got, testBaseURL)
 	}
@@ -390,7 +369,6 @@ func TestIntegrationOAuthExpiredTokens(t *testing.T) {
 
 	srv := NewServer(db, http.DefaultClient, testBaseURL, false)
 
-	// 期限切れアクセストークン + 有効なリフレッシュトークンを直接仕込む
 	expiredAccess, _ := generateToken()
 	validRefresh, _ := generateToken()
 	if err := q.CreateOAuthToken(ctx, queries.CreateOAuthTokenParams{
@@ -410,7 +388,6 @@ func TestIntegrationOAuthExpiredTokens(t *testing.T) {
 		t.Errorf("期限切れアクセストークンの err = %v, want errInvalidAccessToken", err)
 	}
 
-	// 期限切れリフレッシュトークンは invalid_grant となり、行ごと削除されること
 	expiredRefresh, _ := generateToken()
 	tokenID := id.New()
 	if err := q.CreateOAuthToken(ctx, queries.CreateOAuthTokenParams{

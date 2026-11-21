@@ -23,9 +23,7 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	CreateUserIdentity(ctx context.Context, arg CreateUserIdentityParams) error
 	DeleteEvent(ctx context.Context, id string) (int64, error)
-	// 期限切れの認可コードを掃除する。
 	DeleteExpiredOAuthRecords(ctx context.Context, expiresAt time.Time) error
-	// refresh 期限も切れたトークンを掃除する。
 	DeleteExpiredOAuthTokens(ctx context.Context, refreshTokenExpiresAt time.Time) error
 	DeleteOAuthAuthorizationCode(ctx context.Context, id string) (int64, error)
 	DeleteOAuthTokenByID(ctx context.Context, id string) error
@@ -37,60 +35,32 @@ type Querier interface {
 	GetEventByID(ctx context.Context, id string) (GetEventByIDRow, error)
 	GetOAuthAuthorizationCodeByHash(ctx context.Context, codeHash string) (GetOAuthAuthorizationCodeByHashRow, error)
 	GetOAuthTokenByRefreshTokenHash(ctx context.Context, refreshTokenHash string) (GetOAuthTokenByRefreshTokenHashRow, error)
-	// 期限判定は呼び出し側で行う。
 	GetOAuthTokenUserByAccessTokenHash(ctx context.Context, accessTokenHash string) (GetOAuthTokenUserByAccessTokenHashRow, error)
-	// 期限切れ判定は呼び出し側で行う。
 	GetSessionUserByTokenHash(ctx context.Context, tokenHash string) (GetSessionUserByTokenHashRow, error)
 	GetTicketByID(ctx context.Context, id string) (GetTicketByIDRow, error)
 	GetUserIDByIdentity(ctx context.Context, arg GetUserIDByIdentityParams) (string, error)
 	ListEventTicketsByEventIDs(ctx context.Context, eventIds []string) ([]ListEventTicketsByEventIDsRow, error)
 	ListEvents(ctx context.Context) ([]ListEventsRow, error)
-	// 指定月（[month_start, next_month_start) 半開区間）の自分の参加チケット。
-	// 立替者本人 or 精算済みなら settled = 1 とみなす。
 	// MySQL に BOOLEAN 型がないため CAST で UNSIGNED に固定し、sqlc に NullBool 推論させずに int64 で受ける。
 	ListMyMonthlyTicketsByUserID(ctx context.Context, arg ListMyMonthlyTicketsByUserIDParams) ([]ListMyMonthlyTicketsByUserIDRow, error)
-	// subject は Discord user id。
 	ListNotifiableDiscordSubjectsByTicketIDs(ctx context.Context, ticketIds []string) ([]ListNotifiableDiscordSubjectsByTicketIDsRow, error)
-	// identity の欠落を検出できるよう LEFT JOIN にする。
 	ListTicketParticipantDiscordIdentities(ctx context.Context, ticketID string) ([]ListTicketParticipantDiscordIdentitiesRow, error)
 	ListTicketParticipantNamesByTicketIDs(ctx context.Context, ticketIds []string) ([]ListTicketParticipantNamesByTicketIDsRow, error)
 	ListTicketParticipantsByTicketID(ctx context.Context, ticketID string) ([]ListTicketParticipantsByTicketIDRow, error)
 	ListTickets(ctx context.Context) ([]ListTicketsRow, error)
-	// 列は ListTickets と揃える。
 	ListTicketsByIDs(ctx context.Context, ids []string) ([]ListTicketsByIDsRow, error)
-	// リマインド通知ワーカー用のクエリ。
-	// 締切（前日 20 時 / 集合 2 時間前）と猶予窓の判定は Go 側で行う。日付や時刻の
-	// 演算は JST 基準で組み立てたいが SQL では tz が絡んで間違えやすいため、ここでは
-	// 「まだ通知しておらず、開演が未来」のチケットを候補として広めに引くに留める。
-	// 引数 ? には Go 側で算出した「現在時刻（JST）」を渡す（driver の loc=Asia/Tokyo に
-	// より JST naive な DATETIME 列と素直に比較できる）。
 	ListTicketsForDayBeforeNotification(ctx context.Context, startAt time.Time) ([]ListTicketsForDayBeforeNotificationRow, error)
 	ListTicketsForMeetingNotification(ctx context.Context, startAt time.Time) ([]ListTicketsForMeetingNotificationRow, error)
-	// 自分が立て替えたチケットのうち「自分以外の参加者に未精算が 1 人以上残っている」かつ「開演が現在以前」を取る。
-	// 自分自身の参加分（自己持ち）は精算対象でないため EXISTS の条件から除外する。
-	// 列は ListTickets と同じ。
 	ListUnsettledReceivablesByUserID(ctx context.Context, arg ListUnsettledReceivablesByUserIDParams) ([]ListUnsettledReceivablesByUserIDRow, error)
-	// 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」かつ「開演が現在以前」を取る。
-	// 立替者本人の自己持ち分は精算対象ではないので除外する。
-	// 列は ListTickets と同じ。
 	ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnsettledTicketsByUserIDParams) ([]ListUnsettledTicketsByUserIDRow, error)
-	// 当日 0:00（JST）以降に start_at を持ち、かつ終了予定時刻がまだ過ぎていない自分の参加チケット。
-	// 終了予定時刻は start_at + expected_duration_minutes（どちらも NOT NULL）で算出し、
-	// これを過ぎた公演は除外する。
-	// today_start による下限は対象を当日以降に絞り idx_tickets_start_at を効かせるため。
-	// 列は ListTickets と同じ。
 	ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcomingTicketsByUserIDParams) ([]ListUpcomingTicketsByUserIDRow, error)
 	ListUsers(ctx context.Context) ([]ListUsersRow, error)
-	// 削除の権限判定と参加者削除の間に立替者変更・参加者追加が割り込むのを防ぐ。
 	LockTicketForDeletion(ctx context.Context, id string) (string, error)
-	// 多重送信防止のため未送信のものだけを対象にする。
 	MarkTicketMeetingNotified(ctx context.Context, arg MarkTicketMeetingNotifiedParams) error
 	MarkTicketParticipantSettled(ctx context.Context, arg MarkTicketParticipantSettledParams) error
 	MarkTicketParticipantUnsettled(ctx context.Context, arg MarkTicketParticipantUnsettledParams) error
-	// 多重送信防止のため未送信のものだけを対象にする。
 	MarkTicketsDayBeforeNotified(ctx context.Context, arg MarkTicketsDayBeforeNotifiedParams) error
 	RotateOAuthToken(ctx context.Context, arg RotateOAuthTokenParams) error
-	// 同時実行で既存の channel id を上書きしないよう、NULL のときだけ更新する。
 	SetEventDiscordSpoilerChannelID(ctx context.Context, arg SetEventDiscordSpoilerChannelIDParams) (int64, error)
 	UpdateEvent(ctx context.Context, arg UpdateEventParams) error
 	UpdateTicket(ctx context.Context, arg UpdateTicketParams) error

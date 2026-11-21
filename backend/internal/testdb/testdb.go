@@ -1,18 +1,3 @@
-// Package testdb は実 MySQL を使う統合テストの土台を提供する。
-//
-// 接続先は TEST_DB_* 環境変数で指定する（compose では mysql-test サービス、
-// CI では workflow の services で立てた MySQL を指す）。TEST_DB_HOST が
-// 未設定の環境では統合テストを skip し、ユニットテストだけが走る。
-//
-// スキーマはテストプロセス初回に DROP DATABASE → CREATE DATABASE →
-// schema.sql 全適用で作り直す。テスト用 DB は毎回まっさらな前提なので
-// sqldef の差分適用は使わず、SSOT の schema.sql をそのまま流す。
-//
-// go test ./... はパッケージごとのテストバイナリを並列プロセスで走らせるため、
-// DB 名は TEST_DB_NAME にパッケージ由来の suffix を付けてプロセス間で分離する
-// （共有すると他パッケージの DROP DATABASE / TRUNCATE が直撃する）。
-// このため TEST_DB_USER には CREATE DATABASE できるユーザー（テスト専用
-// MySQL の root）を渡す。
 package testdb
 
 import (
@@ -53,7 +38,6 @@ func Open(t *testing.T) *sql.DB {
 		t.Fatalf("テスト DB の初期化に失敗（mysql-test は起動している？ `docker compose --profile test up -d mysql-test`）: %v", setupErr)
 	}
 
-	// 本番と同じ DSN 設定（parseTime / loc=Asia/Tokyo / utf8mb4）で接続する。
 	conn, err := db.Open(cfg)
 	if err != nil {
 		t.Fatalf("テスト DB への接続に失敗: %v", err)
@@ -80,8 +64,7 @@ func configFromEnv() config.DBConfig {
 	}
 }
 
-// packageSuffix はテストバイナリ名（= テスト対象パッケージ名）から DB 名用の
-// suffix を作る。MySQL の識別子として安全なように英数字以外は _ に潰す。
+// go test ./... はパッケージごとのテストバイナリを並列プロセスで走らせるため、DB 名をパッケージ単位で分ける。
 func packageSuffix() string {
 	name := strings.TrimSuffix(filepath.Base(os.Args[0]), ".test")
 	return strings.Map(func(r rune) rune {
@@ -92,11 +75,7 @@ func packageSuffix() string {
 	}, name)
 }
 
-// recreateDatabase は DB を作り直して schema.sql を適用する。
-// 前回のテスト実行の残骸（mysql-test を上げっぱなしにしたケース）を確実に消すため、
-// TRUNCATE ではなく DROP DATABASE から始める。
 func recreateDatabase(cfg config.DBConfig) error {
-	// DB 名なし & multiStatements で管理用に接続する（schema.sql を一括 Exec するため）。
 	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/?multiStatements=true&charset=utf8mb4&collation=utf8mb4_0900_ai_ci",
 		cfg.User, cfg.Password, cfg.Host, cfg.Port,
@@ -121,7 +100,6 @@ func recreateDatabase(cfg config.DBConfig) error {
 	return nil
 }
 
-// schemaPath は SSOT の backend/sql/schema.sql を返す。
 // go test の作業ディレクトリはテスト対象パッケージごとに変わるため、
 // このファイル自身の位置から辿る。
 func schemaPath() string {
@@ -129,8 +107,6 @@ func schemaPath() string {
 	return filepath.Join(filepath.Dir(thisFile), "..", "..", "sql", "schema.sql")
 }
 
-// truncateAll はテスト DB の全テーブルを空にする。FK 順序を気にしないで済むよう、
-// 同一セッション内で FOREIGN_KEY_CHECKS を一時的に外す。
 func truncateAll(conn *sql.DB) error {
 	rows, err := conn.Query(
 		"SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'",

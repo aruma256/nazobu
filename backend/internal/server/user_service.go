@@ -18,7 +18,6 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/logging"
 )
 
-// users.display_name の VARCHAR(255) と同期させる。
 const maxDisplayNameLength = 255
 
 type userService struct {

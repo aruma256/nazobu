@@ -11,9 +11,6 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/auth"
 )
 
-// sessionTokenFromHeader は Connect の Request header に乗ってきた cookie から
-// session token を取り出す。Connect-Go は http.Header をそのまま見せてくれるので、
-// http.Request 風に Cookie ヘッダをパースしている。
 func sessionTokenFromHeader(h http.Header) string {
 	dummy := http.Request{Header: h}
 	c, err := dummy.Cookie(auth.SessionCookieName)
@@ -23,10 +20,6 @@ func sessionTokenFromHeader(h http.Header) string {
 	return c.Value
 }
 
-// lookupSessionUser は Request header の cookie から user を引く。
-// 未ログイン / 期限切れは connect.CodeUnauthenticated を返す。
-// MCP 経由の呼び出しでは Bearer 認証済みの user が context に注入されるので、
-// cookie より先にそちらを採用する（RPC 実装を認証経路に依存させないため）。
 func lookupSessionUser(ctx context.Context, db *sql.DB, h http.Header) (*auth.User, error) {
 	if user := auth.UserFromContext(ctx); user != nil {
 		return user, nil

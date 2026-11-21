@@ -41,7 +41,6 @@ func TestFetchClientMetadata(t *testing.T) {
 	t.Run("正常系", func(t *testing.T) {
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			// client_id はテストサーバの URL に合わせて動的に返す
 			_, _ = w.Write([]byte(`{
 				"client_id": "http://` + r.Host + `/meta",
 				"client_name": "Claude",
@@ -116,7 +115,6 @@ func TestRedirectURIAllowed(t *testing.T) {
 
 	allowed := []string{
 		"https://claude.ai/api/mcp/auth_callback",
-		// ループバックは port を無視して一致（Claude Code の ephemeral port 対応）
 		"http://localhost:3118/callback",
 		"http://localhost/callback",
 		"http://127.0.0.1:49152/callback",
@@ -173,7 +171,6 @@ func TestCIMDCacheExpiry(t *testing.T) {
 
 func TestFetchClientMetadataSizeLimit(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 上限を超える巨大 JSON（redirect_uris が途中で切れて parse エラーになる）
 		_, _ = w.Write([]byte(`{"redirect_uris": ["` + strings.Repeat("a", cimdMaxBodySize) + `"]}`))
 	}))
 	defer srv.Close()

@@ -22,10 +22,10 @@ func TestSanitizeNextPath(t *testing.T) {
 		{"", ""},
 		{"/events", "/events"},
 		{"/events?id=1", "/events?id=1"},
-		{"//evil.example.com/", ""},       // プロトコル相対 URL の弾き
-		{"https://evil.example.com/", ""}, // 絶対 URL の弾き
-		{"events", ""},                    // / 始まりでない
-		{"javascript:alert(1)", ""},       // スキーマ付き
+		{"//evil.example.com/", ""},
+		{"https://evil.example.com/", ""},
+		{"events", ""},
+		{"javascript:alert(1)", ""},
 		{"/", "/"},
 	}
 	for _, c := range cases {
@@ -43,7 +43,6 @@ func TestGenerateRandomString(t *testing.T) {
 		if err != nil {
 			t.Fatalf("generateRandomString: %v", err)
 		}
-		// 32 bytes -> base64 raw url で 43 文字
 		if len(s) != 43 {
 			t.Errorf("len = %d, want 43", len(s))
 		}
@@ -67,7 +66,6 @@ func TestGenerateRandomString(t *testing.T) {
 	})
 }
 
-// newOAuthTestServer は DB を使わないハンドラテスト向けの Server を組み立てる。
 func newOAuthTestServer() *Server {
 	return &Server{
 		cfg: config.Config{
@@ -129,7 +127,6 @@ func TestHandleDiscordLogin(t *testing.T) {
 		if got := loc.Scheme + "://" + loc.Host + loc.Path; got != "https://discord.com/api/oauth2/authorize" {
 			t.Errorf("リダイレクト先 = %q", got)
 		}
-		// CSRF 対策: cookie と同じ state が認可 URL に乗る。
 		if loc.Query().Get("state") != state.Value {
 			t.Errorf("URL の state = %q, cookie の state = %q", loc.Query().Get("state"), state.Value)
 		}
@@ -164,8 +161,6 @@ func TestHandleDiscordLogin(t *testing.T) {
 	})
 }
 
-// handleDiscordCallback の入力検証（state / code）は DB もネットワークも触らないのでここで固定する。
-// token exchange 以降の正常系は DB が要るため対象外。
 func TestHandleDiscordCallbackBadRequest(t *testing.T) {
 	t.Run("state cookie が無ければ 400", func(t *testing.T) {
 		srv := newOAuthTestServer()
@@ -207,7 +202,6 @@ func TestHandleDiscordCallbackBadRequest(t *testing.T) {
 }
 
 func TestHandleLogout(t *testing.T) {
-	// session cookie を持たないリクエストは DB を触らずに cookie 破棄とリダイレクトだけ行う。
 	srv := newOAuthTestServer()
 	rec := httptest.NewRecorder()
 	srv.handleLogout(rec, httptest.NewRequest(http.MethodPost, "/auth/logout", nil))

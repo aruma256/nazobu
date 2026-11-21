@@ -13,7 +13,6 @@ JOIN users  pu ON pu.id = t.purchased_by
 ORDER BY t.start_at DESC, t.id ASC;
 
 -- name: ListTicketsByIDs :many
--- 列は ListTickets と揃える。
 SELECT t.id, t.event_id, e.title AS event_title, e.url AS event_url, e.catchphrase AS event_catchphrase, e.image_url AS event_image_url,
        e.expected_duration_minutes AS event_expected_duration_minutes,
        e.doors_open_minutes_before AS event_doors_open_minutes_before,
@@ -61,7 +60,6 @@ JOIN users  pu ON pu.id = t.purchased_by
 WHERE t.id = ?;
 
 -- name: ListTicketParticipantDiscordIdentities :many
--- identity の欠落を検出できるよう LEFT JOIN にする。
 SELECT tp.user_id,
        u.display_name,
        ui.subject AS discord_subject
@@ -113,7 +111,6 @@ SELECT COUNT(*) FROM ticket_participants WHERE ticket_id = ? AND user_id = ?;
 SELECT COUNT(*) FROM ticket_participants WHERE ticket_id = ?;
 
 -- name: LockTicketForDeletion :one
--- 削除の権限判定と参加者削除の間に立替者変更・参加者追加が割り込むのを防ぐ。
 SELECT purchased_by FROM tickets WHERE id = ? FOR UPDATE;
 
 -- name: DeleteTicketParticipants :exec

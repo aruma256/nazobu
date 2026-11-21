@@ -22,7 +22,6 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/reminder"
 )
 
-// 外部 HTTP 呼び出し全体の上限。
 const externalHTTPTimeout = 15 * time.Second
 
 type Server struct {
@@ -43,8 +42,6 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 			cfg.Discord.ClientSecret,
 			cfg.Discord.RedirectURL,
 		),
-		// 外部 API（Discord / OG 取得 / CIMD 取得）がハングしてもリクエストを抱え込まないための上限。
-		// 個別の処理はこれより短い context timeout を別途かけている。
 		httpClient: &http.Client{Timeout: externalHTTPTimeout},
 	}
 
@@ -78,8 +75,6 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	ticketPath, ticketHandler := nazobuv1connect.NewTicketServiceHandler(ticketService)
 	mux.Handle(ticketPath, ticketHandler)
 
-	// Claude connector（remote MCP）向けの OAuth 2.1 認可サーバと MCP エンドポイント。
-	// 公開 origin は frontend と同一（rewrites 経由）なので issuer には FRONTEND_URL を流用する。
 	oauthSrv := oauth.NewServer(dbc, srv.httpClient, cfg.FrontendURL, cfg.CookieSecure)
 	mux.HandleFunc("GET /.well-known/oauth-authorization-server", oauthSrv.HandleAuthorizationServerMetadata)
 	mux.HandleFunc("GET /.well-known/oauth-protected-resource", oauthSrv.HandleProtectedResourceMetadata)
@@ -99,7 +94,6 @@ func Run(ctx context.Context, cfg config.Config, dbc *sql.DB) error {
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	// リマインド通知ワーカー。bot または投稿先未設定（ローカル開発の既定）なら起動しない。
 	if discordClient.MessageConfigured(cfg.Discord.ReminderChannelID) {
 		go reminder.NewWorker(dbc, discordClient, cfg.Discord.ReminderChannelID, cfg.FrontendURL).Run(ctx)
 		slog.InfoContext(ctx, "reminder worker started")

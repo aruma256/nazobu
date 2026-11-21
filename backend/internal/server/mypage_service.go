@@ -14,9 +14,8 @@ import (
 )
 
 type myPageService struct {
-	db *sql.DB
-	q  *queries.Queries
-	// now はテスト容易性のため差し替え可能にする。本番は time.Now。
+	db  *sql.DB
+	q   *queries.Queries
 	now func() time.Time
 }
 
@@ -24,7 +23,6 @@ func newMyPageService(db *sql.DB) nazobuv1connect.MyPageServiceHandler {
 	return &myPageService{db: db, q: queries.New(db), now: time.Now}
 }
 
-// jst はサーバの想定タイムゾーン。当日 0:00 や月初の境界算出に使う。
 var jst = time.FixedZone("Asia/Tokyo", 9*60*60)
 
 func (s *myPageService) ListMyUnsettledTickets(ctx context.Context, req *connect.Request[nazobuv1.ListMyUnsettledTicketsRequest]) (response *connect.Response[nazobuv1.ListMyUnsettledTicketsResponse], returnErr error) {
@@ -94,7 +92,6 @@ func (s *myPageService) ListMonthlyTickets(ctx context.Context, req *connect.Req
 	var monthStart time.Time
 	switch {
 	case year == 0 && month == 0:
-		// 既定として前月を返す。
 		currentMonthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, jst)
 		monthStart = currentMonthStart.AddDate(0, -1, 0)
 	case month < 1 || month > 12:
@@ -118,9 +115,6 @@ func (s *myPageService) ListMonthlyTickets(ctx context.Context, req *connect.Req
 	}), nil
 }
 
-// clipHistoryEnd は履歴の上限を「当日 0:00」で切る。
-// 履歴に未来分（今後の予定と重なる範囲）を入れないため。
-// monthStart >= todayStart の月は upper <= monthStart になり、結果は空になる。
 func clipHistoryEnd(nextMonthStart, todayStart time.Time) time.Time {
 	if todayStart.Before(nextMonthStart) {
 		return todayStart

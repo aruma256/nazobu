@@ -4,7 +4,6 @@ import "context"
 
 type userContextKey struct{}
 
-// WithUser は認証済みユーザーを context に注入する。
 func WithUser(ctx context.Context, user *User) context.Context {
 	return context.WithValue(ctx, userContextKey{}, user)
 }

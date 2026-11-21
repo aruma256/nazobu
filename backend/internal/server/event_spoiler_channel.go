@@ -57,7 +57,6 @@ func (s *eventService) LinkEventSpoilerChannel(ctx context.Context, req *connect
 		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Discord チャンネルを確認できません: %w", err))
 	}
 	if !event.DiscordSpoilerChannelID.Valid {
-		// 自動作成と競合しても既存の紐づけを上書きしない。
 		updated, err := s.q.SetEventDiscordSpoilerChannelID(ctx, queries.SetEventDiscordSpoilerChannelIDParams{
 			ID: eventID, DiscordSpoilerChannelID: sql.NullString{String: channelID, Valid: true},
 		})

@@ -86,7 +86,6 @@ func TestIntegrationLinkEventSpoilerChannel(t *testing.T) {
 		}
 	}
 	assertConnectCode(t, link(adminID, eventID, "789"), connect.CodeAlreadyExists)
-	// 過去公演にも紐づけ可能で、同じ公演の全チケットから参照される。
 	tickets := newTicketServiceWithDiscord(db, manager)
 	for range 2 {
 		ticketID := createTestTicket(t, db, eventID, adminID)
@@ -100,7 +99,6 @@ func TestIntegrationLinkEventSpoilerChannel(t *testing.T) {
 	if len(manager.createNames)+len(manager.grantChannels)+len(manager.deletedIDs) != 0 {
 		t.Fatal("紐づけ時に Discord を変更した")
 	}
-	// 新しいチケットで権限付与すると既存チャンネルを再利用する。
 	createTestDiscordIdentity(t, db, adminID, "discord-admin")
 	ticketID := createTestTicket(t, db, eventID, adminID)
 	if _, err := db.ExecContext(ctx, "UPDATE tickets SET start_at = ? WHERE id = ?", time.Date(2026, 9, 1, 0, 0, 0, 0, jst), ticketID); err != nil {
@@ -115,7 +113,6 @@ func TestIntegrationLinkEventSpoilerChannel(t *testing.T) {
 	if err != nil || res.Msg.ChannelCreated || len(manager.grantChannels) != 1 || manager.grantChannels[0] != "456" {
 		t.Fatalf("既存チャンネルの再利用失敗: %v, %v", res, err)
 	}
-	// 検証中に別の処理が紐づけても上書きしない。
 	anotherEvent := createTestEvent(t, db, "競合公演")
 	manager.beforeValidate = func() {
 		if _, err := db.ExecContext(ctx, "UPDATE events SET discord_spoiler_channel_id = '789' WHERE id = ?", anotherEvent); err != nil {
@@ -203,7 +200,6 @@ func TestIntegrationJoinEventSpoilerChannel(t *testing.T) {
 	if len(manager.grantChannels) != 0 {
 		t.Fatal("失敗時に権限を付与した")
 	}
-	// 本人だけに付与され、再実行可能。チケットを作成する必要もない。
 	for range 2 {
 		res, err := join(member, " "+event+" ")
 		if err != nil || res.Msg.DiscordChannelUrl != manager.ChannelURL("456") {

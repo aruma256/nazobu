@@ -177,9 +177,6 @@ func TestApplyOGDescriptionFallback(t *testing.T) {
 	}
 }
 
-// fetchOGTags は SSRF 対策として allowlist でホストを絞っているので、
-// 実際の testserver は allowlist にないホストになる。allowlist を一時的に
-// テストサーバ向けに差し替えて検証する。
 func TestFetchOGTags_Success(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -208,7 +205,6 @@ func TestFetchOGTags_RejectsNonHTTPS(t *testing.T) {
 }
 
 func TestFetchOGTags_RejectsInvalidURL(t *testing.T) {
-	// url.Parse がエラーを返す形（制御文字混入）。
 	if got := fetchOGTags(context.Background(), http.DefaultClient, "https://example.com/\x7f"); got.Image != "" || got.Description != "" {
 		t.Errorf("不正 URL は弾く想定だが %+v を返した", got)
 	}

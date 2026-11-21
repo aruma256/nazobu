@@ -52,7 +52,6 @@ func TestAccessLog(t *testing.T) {
 		t.Fatalf("unexpected record: %v", record)
 	}
 
-	// 未知のプロシージャや未登録パスは任意文字列なのでパスを出さない。
 	for _, target := range []string{"/nazobu.v1.TicketService/alice", "/alice"} {
 		record := serve(target)
 		if strings.Contains(output.String(), "alice") {

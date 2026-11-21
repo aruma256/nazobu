@@ -1,13 +1,3 @@
-// Package oauth は Claude connector（remote MCP server）連携のための
-// OAuth 2.1 認可サーバを提供する。
-//
-// クライアント登録は CIMD（Client ID Metadata Document）方式のみ対応する。
-// client_id はクライアント（Claude）がホストする HTTPS URL で、認可時に
-// その URL からメタデータ（redirect_uris 等）を取得して検証する。
-// 事前のクライアント登録（DCR）は行わない。
-//
-// クライアントは public client（token_endpoint_auth_methods_supported: ["none"]）
-// として扱い、PKCE S256 を必須とする。
 package oauth
 
 import (
@@ -26,34 +16,24 @@ import (
 )
 
 const (
-	// 認可コードの有効期限。単回使用なので短くてよい。
 	authorizationCodeTTL = 5 * time.Minute
-	// アクセストークンの有効期限。切れたら Claude が refresh grant で更新する。
-	accessTokenTTL = 1 * time.Hour
-	// リフレッシュトークンの有効期限。refresh のたびにローテーション + 期限延長する。
-	refreshTokenTTL = 30 * 24 * time.Hour
+	accessTokenTTL       = 1 * time.Hour
+	refreshTokenTTL      = 30 * 24 * time.Hour
 
-	// 提供する scope。read は参照系 MCP ツール、write は登録系 MCP ツールに対応する。
 	ScopeRead  = "read"
 	ScopeWrite = "write"
 
-	// MCP エンドポイントの公開パス。protected resource metadata の resource と一致させる。
 	mcpPath = "/mcp"
 )
 
-// Server は CIMD 方式の OAuth 2.1 認可サーバ。
-// baseURL（= issuer）は外部公開 origin（例 https://nazobu.aruma256.dev）。
 type Server struct {
-	db           *sql.DB
-	q            *queries.Queries
-	baseURL      string
-	cookieSecure bool
-	httpClient   *http.Client
-	cimdCache    *cimdCache
-	// now はテスト容易性のため差し替え可能にする。本番は time.Now。
-	now func() time.Time
-	// resolveClient は client_id（URL）から CIMD を取得・検証する処理。
-	// 実体は resolveClientMetadata。統合テストでは外部 HTTPS への依存を切るため差し替える。
+	db            *sql.DB
+	q             *queries.Queries
+	baseURL       string
+	cookieSecure  bool
+	httpClient    *http.Client
+	cimdCache     *cimdCache
+	now           func() time.Time
 	resolveClient func(ctx context.Context, clientID string) (*ClientMetadata, error)
 }
 
@@ -80,7 +60,6 @@ func (s *Server) protectedResourceMetadataURL() string {
 	return s.baseURL + "/.well-known/oauth-protected-resource"
 }
 
-// generateToken は認可コード / トークン用の乱数文字列を生成する。
 func generateToken() (string, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {

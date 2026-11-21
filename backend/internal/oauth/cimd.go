@@ -15,16 +15,11 @@ import (
 )
 
 const (
-	// CIMD 取得のタイムアウト。Claude 側は認可フロー全体で 10 秒程度しか待たないため短めにする。
 	cimdFetchTimeout = 5 * time.Second
-	// CIMD ドキュメントのサイズ上限。正常なメタデータは数 KB で収まる。
-	cimdMaxBodySize = 64 * 1024
-	// 取得済みメタデータのキャッシュ期間。GET → POST（同意）で二度引くのを避ける。
-	cimdCacheTTL = 5 * time.Minute
+	cimdMaxBodySize  = 64 * 1024
+	cimdCacheTTL     = 5 * time.Minute
 )
 
-// ClientMetadata は CIMD（Client ID Metadata Document）の必要フィールドのみを表す。
-// 例: Claude Code は https://claude.ai/oauth/claude-code-client-metadata を client_id として名乗る。
 type ClientMetadata struct {
 	ClientID     string   `json:"client_id"`
 	ClientName   string   `json:"client_name"`
@@ -32,9 +27,6 @@ type ClientMetadata struct {
 	RedirectURIs []string `json:"redirect_uris"`
 }
 
-// parseClientIDURL は client_id が CIMD として妥当な URL かを検証する。
-// HTTPS のみ許可し、fragment 付きや、ループバック / プライベートアドレスへの
-// 取得（SSRF の踏み台化）を弾く。
 func parseClientIDURL(raw string) (*url.URL, error) {
 	u, err := url.Parse(raw)
 	if err != nil {
@@ -59,7 +51,6 @@ func parseClientIDURL(raw string) (*url.URL, error) {
 	return u, nil
 }
 
-// fetchClientMetadata は client_id URL から CIMD を取得して検証する。
 func fetchClientMetadata(ctx context.Context, client *http.Client, clientID string) (*ClientMetadata, error) {
 	ctx, cancel := context.WithTimeout(ctx, cimdFetchTimeout)
 	defer cancel()
@@ -89,7 +80,6 @@ func fetchClientMetadata(ctx context.Context, client *http.Client, clientID stri
 	if err := json.Unmarshal(body, &meta); err != nil {
 		return nil, fmt.Errorf("CIMD が JSON として不正: %w", err)
 	}
-	// ドキュメント側の client_id は自身の URL と一致していなければならない（なりすまし防止）。
 	if meta.ClientID != "" && meta.ClientID != clientID {
 		return nil, errors.New("CIMD の client_id が URL と一致しない")
 	}
@@ -100,7 +90,6 @@ func fetchClientMetadata(ctx context.Context, client *http.Client, clientID stri
 	return &meta, nil
 }
 
-// resolveClientMetadata は検証済み client_id の CIMD をキャッシュ経由で取得する。
 func (s *Server) resolveClientMetadata(ctx context.Context, clientID string) (*ClientMetadata, error) {
 	if _, err := parseClientIDURL(clientID); err != nil {
 		return nil, err

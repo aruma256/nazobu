@@ -55,14 +55,10 @@ func TestDiscordUserToProfile(t *testing.T) {
 	}
 }
 
-// roundTripFunc は Transport を関数で差し替えるためのアダプタ。
-// FetchDiscordUser は Discord の実 URL を固定で叩くため、httptest ではなく
-// Transport 層で応答を偽装する。
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
 
-// fakeDiscordAPI は指定 status / body を返す client を作り、受け取ったリクエストを *got に記録する。
 func fakeDiscordAPI(status int, body string, got **http.Request) *http.Client {
 	return &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
 		if got != nil {

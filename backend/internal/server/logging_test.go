@@ -44,7 +44,6 @@ func TestRPCFailureLogPrivacy(t *testing.T) {
 	}
 }
 
-// 実際の書き込みで、成功ログ・失敗時の非出力・入力値の非出力をまとめて確認する。
 func TestIntegrationMutationLogs(t *testing.T) {
 	db := testdb.Open(t)
 	adminID := createTestUser(t, db, "private-display-name", auth.RoleAdmin)

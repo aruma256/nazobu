@@ -13,7 +13,6 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/id"
 )
 
-// tokenResponse は RFC 6749 5.1 のトークンレスポンス。
 type tokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	TokenType    string `json:"token_type"`
@@ -67,7 +66,6 @@ func (s *Server) handleAuthorizationCodeGrant(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// 単回使用: 検証より先に削除し、並行リクエストによる二重使用を影響行数で弾く。
 	deleted, err := s.q.DeleteOAuthAuthorizationCode(ctx, row.ID)
 	if err != nil {
 		writeTokenError(w, http.StatusInternalServerError, "server_error", "認可コードの消費に失敗")
@@ -86,7 +84,6 @@ func (s *Server) handleAuthorizationCodeGrant(w http.ResponseWriter, r *http.Req
 		writeTokenError(w, http.StatusBadRequest, "invalid_grant", "client_id が一致しない")
 		return
 	}
-	// redirect_uri は認可時に使った値との完全一致（RFC 6749 4.1.3）。
 	if row.RedirectUri != redirectURI {
 		writeTokenError(w, http.StatusBadRequest, "invalid_grant", "redirect_uri が一致しない")
 		return
@@ -152,8 +149,6 @@ func (s *Server) handleRefreshTokenGrant(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// public client のためリフレッシュトークンは毎回ローテーションする（OAuth 2.1）。
-	// 旧トークンの無効化と新トークンの発行は同一 UPDATE で行う。
 	newAccessToken, newRefreshToken, err := generateTokenPair()
 	if err != nil {
 		writeTokenError(w, http.StatusInternalServerError, "server_error", "トークンの生成に失敗")

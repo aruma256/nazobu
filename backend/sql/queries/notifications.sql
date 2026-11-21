@@ -1,10 +1,3 @@
--- リマインド通知ワーカー用のクエリ。
--- 締切（前日 20 時 / 集合 2 時間前）と猶予窓の判定は Go 側で行う。日付や時刻の
--- 演算は JST 基準で組み立てたいが SQL では tz が絡んで間違えやすいため、ここでは
--- 「まだ通知しておらず、開演が未来」のチケットを候補として広めに引くに留める。
--- 引数 ? には Go 側で算出した「現在時刻（JST）」を渡す（driver の loc=Asia/Tokyo に
--- より JST naive な DATETIME 列と素直に比較できる）。
-
 -- name: ListTicketsForDayBeforeNotification :many
 SELECT t.id, t.start_at, t.meeting_at, t.meeting_place,
        e.title AS event_title
@@ -25,7 +18,6 @@ WHERE t.meeting_notified_at IS NULL
 ORDER BY t.meeting_at ASC, t.id ASC;
 
 -- name: ListNotifiableDiscordSubjectsByTicketIDs :many
--- subject は Discord user id。
 SELECT tp.ticket_id,
        ui.subject
 FROM ticket_participants tp
@@ -36,14 +28,12 @@ WHERE tp.ticket_id IN (sqlc.slice('ticket_ids'))
 ORDER BY tp.ticket_id, tp.created_at ASC;
 
 -- name: MarkTicketsDayBeforeNotified :exec
--- 多重送信防止のため未送信のものだけを対象にする。
 UPDATE tickets
 SET day_before_notified_at = ?
 WHERE id IN (sqlc.slice('ids'))
   AND day_before_notified_at IS NULL;
 
 -- name: MarkTicketMeetingNotified :exec
--- 多重送信防止のため未送信のものだけを対象にする。
 UPDATE tickets
 SET meeting_notified_at = ?
 WHERE id = ?

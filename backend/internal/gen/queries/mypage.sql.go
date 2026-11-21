@@ -36,8 +36,6 @@ type ListMyMonthlyTicketsByUserIDRow struct {
 	Settled    int64
 }
 
-// 指定月（[month_start, next_month_start) 半開区間）の自分の参加チケット。
-// 立替者本人 or 精算済みなら settled = 1 とみなす。
 // MySQL に BOOLEAN 型がないため CAST で UNSIGNED に固定し、sqlc に NullBool 推論させずに int64 で受ける。
 func (q *Queries) ListMyMonthlyTicketsByUserID(ctx context.Context, arg ListMyMonthlyTicketsByUserIDParams) ([]ListMyMonthlyTicketsByUserIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, listMyMonthlyTicketsByUserID, arg.UserID, arg.MonthStart, arg.NextMonthStart)
@@ -114,9 +112,6 @@ type ListUnsettledReceivablesByUserIDRow struct {
 	PurchaserName                 string
 }
 
-// 自分が立て替えたチケットのうち「自分以外の参加者に未精算が 1 人以上残っている」かつ「開演が現在以前」を取る。
-// 自分自身の参加分（自己持ち）は精算対象でないため EXISTS の条件から除外する。
-// 列は ListTickets と同じ。
 func (q *Queries) ListUnsettledReceivablesByUserID(ctx context.Context, arg ListUnsettledReceivablesByUserIDParams) ([]ListUnsettledReceivablesByUserIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUnsettledReceivablesByUserID, arg.UserID, arg.Now)
 	if err != nil {
@@ -201,9 +196,6 @@ type ListUnsettledTicketsByUserIDRow struct {
 	PurchaserName                 string
 }
 
-// 自分が参加したチケットのうち「立替者が自分以外」かつ「未精算」かつ「開演が現在以前」を取る。
-// 立替者本人の自己持ち分は精算対象ではないので除外する。
-// 列は ListTickets と同じ。
 func (q *Queries) ListUnsettledTicketsByUserID(ctx context.Context, arg ListUnsettledTicketsByUserIDParams) ([]ListUnsettledTicketsByUserIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUnsettledTicketsByUserID, arg.UserID, arg.Now)
 	if err != nil {
@@ -288,11 +280,6 @@ type ListUpcomingTicketsByUserIDRow struct {
 	PurchaserName                 string
 }
 
-// 当日 0:00（JST）以降に start_at を持ち、かつ終了予定時刻がまだ過ぎていない自分の参加チケット。
-// 終了予定時刻は start_at + expected_duration_minutes（どちらも NOT NULL）で算出し、
-// これを過ぎた公演は除外する。
-// today_start による下限は対象を当日以降に絞り idx_tickets_start_at を効かせるため。
-// 列は ListTickets と同じ。
 func (q *Queries) ListUpcomingTicketsByUserID(ctx context.Context, arg ListUpcomingTicketsByUserIDParams) ([]ListUpcomingTicketsByUserIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUpcomingTicketsByUserID, arg.UserID, arg.TodayStart, arg.Now)
 	if err != nil {

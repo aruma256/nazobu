@@ -28,10 +28,9 @@ func (s *eventService) DeleteEvent(ctx context.Context, req *connect.Request[naz
 	if eventID == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("event_id は必須"))
 	}
-	// FK の制約で、同時にチケットが追加された場合も連鎖削除せず拒否する。
 	count, err := s.q.DeleteEvent(ctx, eventID)
 	var mysqlErr *mysql.MySQLError
-	if errors.As(err, &mysqlErr) && mysqlErr.Number == 1451 {
+	if errors.As(err, &mysqlErr) && mysqlErr.Number == mysqlErrRowIsReferenced {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("チケットが残っている公演は削除できません。先にチケットを削除してください"))
 	}
 	if err != nil {

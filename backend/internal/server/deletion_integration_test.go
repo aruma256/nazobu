@@ -68,7 +68,6 @@ func TestIntegrationDeleteTicketAndEvent(t *testing.T) {
 					t.Fatalf("code = %v, want %v", tc.err, tc.code)
 				}
 			}
-			// DB から直接削除しても、参加・精算記録を連鎖削除しない。
 			if _, err := db.Exec("DELETE FROM tickets WHERE id = ?", ticket); err == nil {
 				t.Fatal("参加者のあるチケットを直接削除できてしまった")
 			}
@@ -152,7 +151,6 @@ func TestIntegrationDeleteRollback(t *testing.T) {
 	req := connect.NewRequest(&nazobuv1.DeleteTicketRequest{TicketId: parentID})
 	setSessionCookie(t, db, req, payer)
 	deleteParent := func() error { _, err := newTicketService(db).DeleteTicket(ctx, req); return err }
-	// 子行を削除した後、親行の削除だけを失敗させ、子行も復元されることを検証する。
 	if _, err := db.Exec("CREATE TRIGGER reject_deletion BEFORE DELETE ON tickets FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = '削除失敗テスト'"); err != nil {
 		t.Fatal(err)
 	}

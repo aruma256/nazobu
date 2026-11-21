@@ -1,9 +1,5 @@
 package server
 
-// ticketService の統合テスト。実 MySQL（testdb パッケージ経由）に対して
-// セッション認証込みで RPC ハンドラを呼び、DB 往復を含む挙動を検証する。
-// TEST_DB_HOST 未設定の環境では skip される。
-
 import (
 	"context"
 	"database/sql"
@@ -97,7 +93,6 @@ func createTestEvent(t *testing.T, db *sql.DB, title string) string {
 	return eventID
 }
 
-// setSessionCookie は userID の session を DB に作り、その cookie を req に載せる。
 func setSessionCookie[T any](t *testing.T, db *sql.DB, req *connect.Request[T], userID string) {
 	t.Helper()
 	token, err := auth.CreateSession(context.Background(), db, userID)
@@ -125,7 +120,6 @@ func TestIntegrationCreateAndGetTicket(t *testing.T) {
 	memberID := createTestUser(t, db, "member-user", auth.RoleMember)
 	eventID := createTestEvent(t, db, "テスト公演")
 
-	// admin がグループチケットを登録する
 	createReq := connect.NewRequest(&nazobuv1.CreateTicketRequest{
 		EventId:            eventID,
 		StartAt:            "2026-08-01T14:00:00+09:00",
@@ -145,7 +139,6 @@ func TestIntegrationCreateAndGetTicket(t *testing.T) {
 		t.Fatal("作成された ticket の ID が空")
 	}
 
-	// 登録した内容が DB 経由でそのまま取れること（JST の日時表現含む）
 	getReq := connect.NewRequest(&nazobuv1.GetTicketRequest{TicketId: ticketID})
 	setSessionCookie(t, db, getReq, memberID)
 	getRes, err := svc.GetTicket(ctx, getReq)
@@ -166,7 +159,6 @@ func TestIntegrationCreateAndGetTicket(t *testing.T) {
 		t.Errorf("PricePerPerson = %d, want 3500", ticket.PricePerPerson)
 	}
 
-	// 参加者 2 名が入っていて、立替者（admin）に印がつくこと
 	participants := getRes.Msg.Participants
 	if len(participants) != 2 {
 		t.Fatalf("参加者数 = %d, want 2", len(participants))
@@ -183,7 +175,6 @@ func TestIntegrationCreateAndGetTicket(t *testing.T) {
 		}
 	}
 
-	// member（非立替者）には編集権限がないこと
 	if getRes.Msg.CanEdit {
 		t.Error("非 admin・非立替者の CanEdit が true になっている")
 	}
@@ -259,7 +250,6 @@ func TestIntegrationTicketMemo(t *testing.T) {
 	}
 	ticketID := createRes.Msg.Ticket.Id
 
-	// 立替者でも admin でもない参加者も閲覧できること
 	getReq := connect.NewRequest(&nazobuv1.GetTicketRequest{TicketId: ticketID})
 	setSessionCookie(t, db, getReq, memberID)
 	getRes, err := svc.GetTicket(ctx, getReq)
@@ -291,7 +281,6 @@ func TestIntegrationTicketMemo(t *testing.T) {
 		}
 	}
 
-	// 編集権限の無い参加者は更新できないこと
 	forbiddenReq := connect.NewRequest(updateRequest("書き換え"))
 	setSessionCookie(t, db, forbiddenReq, memberID)
 	_, err = svc.UpdateTicket(ctx, forbiddenReq)
@@ -299,7 +288,6 @@ func TestIntegrationTicketMemo(t *testing.T) {
 		t.Errorf("code = %v, want %v", got, connect.CodePermissionDenied)
 	}
 
-	// 上限を超えるメモは拒否されること
 	tooLongReq := connect.NewRequest(updateRequest(strings.Repeat("謎", ticketMemoMaxChars+1)))
 	setSessionCookie(t, db, tooLongReq, adminID)
 	_, err = svc.UpdateTicket(ctx, tooLongReq)
@@ -307,7 +295,6 @@ func TestIntegrationTicketMemo(t *testing.T) {
 		t.Errorf("code = %v, want %v", got, connect.CodeInvalidArgument)
 	}
 
-	// 上限ちょうどのマルチバイト文字列を DB に保存できること
 	maxMemo := strings.Repeat("謎", ticketMemoMaxChars)
 	maxReq := connect.NewRequest(updateRequest(maxMemo))
 	setSessionCookie(t, db, maxReq, adminID)
@@ -319,7 +306,6 @@ func TestIntegrationTicketMemo(t *testing.T) {
 		t.Errorf("UpdateTicket 後の memo の文字数 = %d, want %d", utf8.RuneCountInString(got), ticketMemoMaxChars)
 	}
 
-	// 空文字で未設定に戻せること
 	clearReq := connect.NewRequest(updateRequest(""))
 	setSessionCookie(t, db, clearReq, adminID)
 	clearRes, err := svc.UpdateTicket(ctx, clearReq)
@@ -354,8 +340,6 @@ func TestIntegrationUpdateTicketMaxParticipantsLowerBound(t *testing.T) {
 	}
 	ticketID := createRes.Msg.Ticket.Id
 
-	// 参加者が 2 名いる状態で max_participants を 1 に下げるのは
-	// 現在の参加者数を DB で数えた上で弾かれること
 	updateReq := connect.NewRequest(&nazobuv1.UpdateTicketRequest{
 		TicketId:          ticketID,
 		StartAt:           "2026-08-01T14:00:00+09:00",
@@ -379,7 +363,6 @@ func TestIntegrationUnregisteredParticipants(t *testing.T) {
 	memberID := createTestUser(t, db, "member-user", auth.RoleMember)
 	eventID := createTestEvent(t, db, "テスト公演")
 
-	// 未登録の同行者 2 名込みで登録でき、人数が DB 往復で保たれること
 	createReq := connect.NewRequest(&nazobuv1.CreateTicketRequest{
 		EventId:                       eventID,
 		StartAt:                       "2026-08-01T14:00:00+09:00",
@@ -408,7 +391,6 @@ func TestIntegrationUnregisteredParticipants(t *testing.T) {
 		t.Errorf("UnregisteredParticipantsCount = %d, want 2", got)
 	}
 
-	// 登録ユーザー 2 名 + 未登録 2 名で満席（max 4）なので、参加者追加は弾かれること
 	otherID := createTestUser(t, db, "other-user", auth.RoleMember)
 	addReq := connect.NewRequest(&nazobuv1.AddTicketParticipantsRequest{
 		TicketId: ticketID,
@@ -420,7 +402,6 @@ func TestIntegrationUnregisteredParticipants(t *testing.T) {
 		t.Errorf("満席時の追加 code = %v, want %v", got, connect.CodeFailedPrecondition)
 	}
 
-	// max_participants を参加者数 + 未登録人数より小さくする更新は弾かれること
 	updateReq := connect.NewRequest(&nazobuv1.UpdateTicketRequest{
 		TicketId:                      ticketID,
 		StartAt:                       "2026-08-01T14:00:00+09:00",
@@ -435,7 +416,6 @@ func TestIntegrationUnregisteredParticipants(t *testing.T) {
 		t.Errorf("max 減少 code = %v, want %v", got, connect.CodeFailedPrecondition)
 	}
 
-	// 未登録人数を減らす更新は通り、値が保存されること
 	updateReq = connect.NewRequest(&nazobuv1.UpdateTicketRequest{
 		TicketId:                      ticketID,
 		StartAt:                       "2026-08-01T14:00:00+09:00",
@@ -453,7 +433,6 @@ func TestIntegrationUnregisteredParticipants(t *testing.T) {
 		t.Errorf("更新後の UnregisteredParticipantsCount = %d, want 1", got)
 	}
 
-	// 未登録 1 名に減ったので空き 1 枠に追加できること
 	addReq = connect.NewRequest(&nazobuv1.AddTicketParticipantsRequest{
 		TicketId: ticketID,
 		UserIds:  []string{otherID},
@@ -517,7 +496,6 @@ func TestIntegrationEventURLUnique(t *testing.T) {
 		t.Fatalf("event の取得に失敗: %v", err)
 	}
 
-	// event の host は OG 取得の allowlist 外なので、テスト中に外部アクセスは発生しない。
 	create := func(eventURL string) (*connect.Response[nazobuv1.CreateTicketWithEventResponse], error) {
 		req := connect.NewRequest(&nazobuv1.CreateTicketWithEventRequest{
 			EventTitle:                   "新規公演",
@@ -584,7 +562,6 @@ func TestIntegrationTicketParticipantManagement(t *testing.T) {
 	otherID := createTestUser(t, db, "other-user", auth.RoleMember)
 	eventID := createTestEvent(t, db, "テスト公演")
 
-	// max 2 のチケットを admin だけで作る（空きは 1）
 	createReq := connect.NewRequest(&nazobuv1.CreateTicketRequest{
 		EventId:            eventID,
 		StartAt:            "2026-08-01T14:00:00+09:00",
@@ -620,7 +597,6 @@ func TestIntegrationTicketParticipantManagement(t *testing.T) {
 		return len(res.Msg.Participants)
 	}
 
-	// 空きがあるうちは追加できる
 	if err := addParticipants(t, memberID); err != nil {
 		t.Fatalf("参加者追加に失敗: %v", err)
 	}
@@ -628,12 +604,10 @@ func TestIntegrationTicketParticipantManagement(t *testing.T) {
 		t.Fatalf("参加者数 = %d, want 2", got)
 	}
 
-	// 満席での追加は DB の現在数を数えた上で弾かれる
 	if err := addParticipants(t, otherID); connectCode(t, err) != connect.CodeFailedPrecondition {
 		t.Errorf("満席時の追加 code = %v, want %v", connectCode(t, err), connect.CodeFailedPrecondition)
 	}
 
-	// 参加済みユーザの再追加は冪等（満席でもエラーにならず、数も増えない）
 	if err := addParticipants(t, memberID); err != nil {
 		t.Fatalf("参加済みユーザの再追加がエラー: %v", err)
 	}
@@ -641,7 +615,6 @@ func TestIntegrationTicketParticipantManagement(t *testing.T) {
 		t.Errorf("再追加後の参加者数 = %d, want 2", got)
 	}
 
-	// 立替者本人は削除できない
 	removeReq := connect.NewRequest(&nazobuv1.RemoveTicketParticipantRequest{
 		TicketId: ticketID,
 		UserId:   adminID,
@@ -652,7 +625,6 @@ func TestIntegrationTicketParticipantManagement(t *testing.T) {
 		t.Errorf("立替者削除 code = %v, want %v", got, connect.CodeFailedPrecondition)
 	}
 
-	// 立替者以外は削除でき、空いた枠に改めて追加できる
 	removeReq = connect.NewRequest(&nazobuv1.RemoveTicketParticipantRequest{
 		TicketId: ticketID,
 		UserId:   memberID,
@@ -744,7 +716,6 @@ func TestIntegrationGrantTicketSpoilerChannelAccess(t *testing.T) {
 		t.Errorf("member の DiscordSpoilerChannelUrl = %q", memberGetRes.Msg.DiscordSpoilerChannelUrl)
 	}
 
-	// 同じ event の別日 ticket は既存 channel へその ticket の参加者だけ追加する。
 	secondTicketID := createTicket("2026-09-15T19:00:00+09:00", member2ID)
 	synced, err := grant(secondTicketID, adminID)
 	if err != nil {
@@ -761,12 +732,10 @@ func TestIntegrationGrantTicketSpoilerChannelAccess(t *testing.T) {
 		t.Errorf("grant = channels:%v members:%v", manager.grantChannels, manager.grantMembers)
 	}
 
-	// admin 以外は実行できない。
 	if _, err := grant(secondTicketID, member2ID); connectCode(t, err) != connect.CodePermissionDenied {
 		t.Errorf("member の実行 code = %v, want %v", connectCode(t, err), connect.CodePermissionDenied)
 	}
 
-	// 連携対象日（2026-08-30）より前の ticket は対象外。
 	legacyEventID := createTestEvent(t, db, "旧公演")
 	legacyReq := connect.NewRequest(&nazobuv1.CreateTicketRequest{
 		EventId: legacyEventID, StartAt: "2026-08-29T23:59:59+09:00", PricePerPerson: 1000,
@@ -782,8 +751,6 @@ func TestIntegrationGrantTicketSpoilerChannelAccess(t *testing.T) {
 	}
 }
 
-// createTestTicket は event に紐づく ticket を作成して ID を返す。
-// 参加者は付けず本体だけを作る。
 func createTestTicket(t *testing.T, db *sql.DB, eventID, purchasedBy string) string {
 	t.Helper()
 	ticketID := id.New()
@@ -801,8 +768,6 @@ func createTestTicket(t *testing.T, db *sql.DB, eventID, purchasedBy string) str
 	return ticketID
 }
 
-// CreateTicket / UpdateTicket のレスポンスと GetEvent が、他の RPC と同じ内容を返すこと。
-// （開場時間の欠落、GetEvent の tickets が常に空、という過去の不具合の回帰テスト）
 func TestIntegrationTicketResponseConsistency(t *testing.T) {
 	db := testdb.Open(t)
 	ctx := context.Background()
@@ -811,7 +776,6 @@ func TestIntegrationTicketResponseConsistency(t *testing.T) {
 
 	userID := createTestUser(t, db, "user", auth.RoleMember)
 
-	// 日本語 100 文字のタイトル・集合場所（300 バイト）は VARCHAR(255) に収まるので受け付ける。
 	longText := strings.Repeat("謎", 100)
 	doorsOpen := int32(15)
 	withEventReq := connect.NewRequest(&nazobuv1.CreateTicketWithEventRequest{

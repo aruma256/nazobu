@@ -36,7 +36,6 @@ func newEventService(db *sql.DB) nazobuv1connect.EventServiceHandler {
 	return &eventService{db: db, q: queries.New(db), httpClient: http.DefaultClient}
 }
 
-// title / catchphrase は VARCHAR の定義（文字数）に合わせて文字数で判定する。
 const (
 	eventTitleMaxLen       = 255
 	eventURLMaxLen         = 512
@@ -114,11 +113,14 @@ func (s *eventService) GetEvent(ctx context.Context, req *connect.Request[nazobu
 	return connect.NewResponse(&nazobuv1.GetEventResponse{Event: event}), nil
 }
 
-// eventWriteError は events への INSERT / UPDATE のエラーを connect.Error に変換する。
-// URL の UNIQUE 制約違反は AlreadyExists として利用者に伝える。
+const (
+	mysqlErrDupEntry        = 1062
+	mysqlErrRowIsReferenced = 1451
+)
+
 func eventWriteError(err error, action string) error {
 	var mysqlErr *mysql.MySQLError
-	if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 && strings.Contains(mysqlErr.Message, "uq_events_url") {
+	if errors.As(err, &mysqlErr) && mysqlErr.Number == mysqlErrDupEntry && strings.Contains(mysqlErr.Message, "uq_events_url") {
 		return connect.NewError(connect.CodeAlreadyExists, errors.New("同じ URL の公演がすでに登録されています。既存の公演にチケットを追加してください"))
 	}
 	return connect.NewError(connect.CodeInternal, fmt.Errorf("event の%sに失敗: %w", action, err))
@@ -134,7 +136,6 @@ type preparedEventFields struct {
 	expectedDuration int32
 }
 
-// prepareEventFields は event 部の入力を検証し、OG タグ取得と catchphrase 補完まで一括で行う。
 func prepareEventFields(
 	ctx context.Context,
 	client *http.Client,
@@ -193,8 +194,6 @@ func prepareEventFields(
 	}, nil
 }
 
-// applyOGDescriptionFallback は catchphrase が空のとき、採用条件を満たす og:description で補完する。
-// 長さ上限を超える og:description は採用しない。
 func applyOGDescriptionFallback(catchphrase, host, ogDescription string) string {
 	if catchphrase != "" {
 		return catchphrase
@@ -247,8 +246,6 @@ func stringToNullString(s string) sql.NullString {
 	return sql.NullString{String: s, Valid: true}
 }
 
-// attachTickets は events に紐づく ticket と参加者を埋める。1 イベントずつ N+1 で叩かず、
-// IN (...) でまとめて引いて in-memory で振り分ける。
 func (s *eventService) attachTickets(ctx context.Context, events []*nazobuv1.Event) error {
 	indexByEvent := make(map[string]*nazobuv1.Event, len(events))
 	eventIDs := make([]string, 0, len(events))

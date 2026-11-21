@@ -20,7 +20,6 @@ INSERT INTO oauth_tokens
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6));
 
 -- name: GetOAuthTokenUserByAccessTokenHash :one
--- 期限判定は呼び出し側で行う。
 SELECT u.id, u.display_name, u.avatar_url, u.role,
        t.id AS token_id, t.scope, t.access_token_expires_at
 FROM oauth_tokens t
@@ -45,9 +44,7 @@ WHERE id = ?;
 DELETE FROM oauth_tokens WHERE id = ?;
 
 -- name: DeleteExpiredOAuthRecords :exec
--- 期限切れの認可コードを掃除する。
 DELETE FROM oauth_authorization_codes WHERE expires_at < ?;
 
 -- name: DeleteExpiredOAuthTokens :exec
--- refresh 期限も切れたトークンを掃除する。
 DELETE FROM oauth_tokens WHERE refresh_token_expires_at < ?;

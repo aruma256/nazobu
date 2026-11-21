@@ -34,7 +34,7 @@ func TestNormalizeTicketMemo(t *testing.T) {
 		name     string
 		raw      string
 		want     string
-		wantCode connect.Code // 0 ならエラーなし
+		wantCode connect.Code
 	}{
 		{"空文字", "", "", 0},
 		{"空白のみは未設定扱い", " \n\t ", "", 0},
@@ -67,7 +67,7 @@ func TestValidateTicketCapacityInput(t *testing.T) {
 		name              string
 		maxParticipants   int32
 		unregisteredCount int32
-		wantCode          connect.Code // 0 ならエラーなし
+		wantCode          connect.Code
 	}{
 		{"最小の有効値", 1, 0, 0},
 		{"未登録の同行者ありも有効", 4, 3, 0},
@@ -121,7 +121,6 @@ func TestTicketCapacityExceeded(t *testing.T) {
 }
 
 func TestFormatJSTDateTime(t *testing.T) {
-	// UTC 2026-05-04T00:00:00Z は JST 2026-05-04T09:00:00+09:00
 	in := time.Date(2026, 5, 4, 0, 0, 0, 0, time.UTC)
 	got := formatJSTDateTime(in)
 	want := "2026-05-04T09:00:00+09:00"

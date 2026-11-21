@@ -1,9 +1,5 @@
 package server
 
-// myPageService の統合テスト。now を固定した myPageService を直接組み立て、
-// 実 MySQL 上で時刻境界（未来分除外・終演後除外・履歴の当日クリップ）と
-// 精算操作による状態遷移を検証する。
-
 import (
 	"context"
 	"database/sql"
@@ -18,7 +14,6 @@ import (
 	"github.com/aruma256/nazobu/backend/internal/testdb"
 )
 
-// mustCreateTicket は admin セッションで CreateTicket を呼び、ticket ID を返す。
 func mustCreateTicket(t *testing.T, db *sql.DB, adminID, eventID, startAt string, participantIDs []string) string {
 	t.Helper()
 	svc := newTicketService(db)
@@ -61,7 +56,6 @@ func TestIntegrationMyPageAndSettlement(t *testing.T) {
 	db := testdb.Open(t)
 	ctx := context.Background()
 
-	// 基準時刻を 2026-07-15 12:00 JST に固定する
 	now := time.Date(2026, 7, 15, 12, 0, 0, 0, jst)
 	mypage := &myPageService{db: db, q: queries.New(db), now: func() time.Time { return now }}
 
@@ -69,11 +63,6 @@ func TestIntegrationMyPageAndSettlement(t *testing.T) {
 	memberID := createTestUser(t, db, "member-user", auth.RoleMember)
 	eventID := createTestEvent(t, db, "テスト公演")
 
-	// 立替者はすべて admin。expected_duration_minutes は既定の 120 分。
-	// - past:        7/10 開催。member が未精算 → 未精算/未回収/月次履歴に出る
-	// - future:      7/20 開催。開催前なので精算系には出ず、今後の予定には出る
-	// - todayEnded:  当日 9:00 開演 → 終演 11:00 は now(12:00) より前なので今後の予定から除外
-	// - todayOngoing: 当日 10:30 開演 → 終演 12:30 は now より後なので今後の予定に残る
 	pastID := mustCreateTicket(t, db, adminID, eventID, "2026-07-10T14:00:00+09:00", []string{adminID, memberID})
 	futureID := mustCreateTicket(t, db, adminID, eventID, "2026-07-20T14:00:00+09:00", []string{adminID, memberID})
 	_ = mustCreateTicket(t, db, adminID, eventID, "2026-07-15T09:00:00+09:00", []string{adminID})
@@ -104,11 +93,9 @@ func TestIntegrationMyPageAndSettlement(t *testing.T) {
 		}
 	}
 
-	// 精算前: past だけが member の未精算・admin の未回収に出る（future は開催前なので出ない）
 	assertUnsettled(t, []string{pastID})
 	assertReceivables(t, []string{pastID})
 
-	// 今後の予定（admin）: 終演済みの todayEnded は除外され、進行中 + 未来分が開演順に並ぶ
 	upcomingReq := connect.NewRequest(&nazobuv1.ListMyUpcomingTicketsRequest{})
 	setSessionCookie(t, db, upcomingReq, adminID)
 	upcomingRes, err := mypage.ListMyUpcomingTickets(ctx, upcomingReq)
@@ -119,7 +106,6 @@ func TestIntegrationMyPageAndSettlement(t *testing.T) {
 		t.Errorf("今後の予定 = %v, want %v", got, []string{todayOngoingID, futureID})
 	}
 
-	// 月次履歴（member, 2026-07）: 当日 0:00 でクリップされるため past だけが出て、未精算
 	assertMonthly := func(t *testing.T, wantSettled bool) {
 		t.Helper()
 		req := connect.NewRequest(&nazobuv1.ListMonthlyTicketsRequest{Year: 2026, Month: 7})
@@ -137,7 +123,6 @@ func TestIntegrationMyPageAndSettlement(t *testing.T) {
 	}
 	assertMonthly(t, false)
 
-	// admin が member の精算を登録すると、未精算・未回収から消えて月次履歴が精算済みになる
 	ticketSvc := newTicketService(db)
 	settleReq := connect.NewRequest(&nazobuv1.UpdateTicketParticipantSettlementRequest{
 		TicketId: pastID,
@@ -152,7 +137,6 @@ func TestIntegrationMyPageAndSettlement(t *testing.T) {
 	assertReceivables(t, []string{})
 	assertMonthly(t, true)
 
-	// 精算解除で未精算に戻ること
 	unsettleReq := connect.NewRequest(&nazobuv1.UpdateTicketParticipantSettlementRequest{
 		TicketId: pastID,
 		UserId:   memberID,

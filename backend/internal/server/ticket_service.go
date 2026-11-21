@@ -40,10 +40,8 @@ func newTicketServiceWithDiscord(db *sql.DB, manager discordSpoilerChannelManage
 	}
 }
 
-// 上限は VARCHAR の定義（文字数）に合わせ、バイト数ではなく文字数で判定する。
 const (
 	meetingPlaceMaxLen = 255
-	// tickets.memo の VARCHAR(2000) に合わせる。
 	ticketMemoMaxChars = 2000
 )
 
@@ -142,7 +140,6 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 	if err != nil {
 		return nil, err
 	}
-	// 立替者は常にログイン中の user。クライアントから受け取らない。
 	purchasedBy := user.ID
 
 	msg := req.Msg
@@ -184,8 +181,6 @@ func (s *ticketService) CreateTicket(ctx context.Context, req *connect.Request[n
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("参加者数（未登録の同行者を含む）が max_participants を超えている"))
 	}
 
-	// 参照整合性は FK でも担保されるが、ユーザに分かりやすいメッセージを返すため事前確認する。
-	// 立替者 (= session user) の存在は session 引きで担保済みなので、participants のみ確認する。
 	if err := s.assertEventExists(ctx, eventID); err != nil {
 		return nil, err
 	}
@@ -292,7 +287,6 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 	if purchasedBy == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("purchased_by_user_id は必須"))
 	}
-	// 立替者を変更する場合、新しい立替者は ticket の参加者の中から選ぶ。
 	if purchasedBy != existing.PurchasedBy {
 		count, err := s.q.CountTicketParticipant(ctx, queries.CountTicketParticipantParams{
 			TicketID: ticketID,
@@ -305,7 +299,6 @@ func (s *ticketService) UpdateTicket(ctx context.Context, req *connect.Request[n
 			return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("立替者は ticket の参加者の中から選ぶ"))
 		}
 	}
-	// max_participants は現在の参加者数（未登録の同行者を含む）を下回ってはいけない。
 	participantCount, err := s.q.CountTicketParticipantsByTicketID(ctx, ticketID)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者数の取得に失敗: %w", err))
@@ -343,7 +336,6 @@ func (s *ticketService) CreateTicketWithEvent(ctx context.Context, req *connect.
 	if err != nil {
 		return nil, err
 	}
-	// 立替者は常にログイン中の user。クライアントから受け取らない。
 	purchasedBy := user.ID
 
 	msg := req.Msg
@@ -583,9 +575,6 @@ func (s *ticketService) UpdateTicketWithEvent(ctx context.Context, req *connect.
 	return connect.NewResponse(&nazobuv1.UpdateTicketWithEventResponse{Ticket: ticket}), nil
 }
 
-// ticketFromRow は一覧系クエリの行を Ticket メッセージに変換する。参加者名は空で返す。
-// ListTickets と同じ列を返すクエリの行は queries.ListTicketsRow(r) と型変換して渡す
-// （列が揃っていないとコンパイルエラーになる）。
 func ticketFromRow(r queries.ListTicketsRow) *nazobuv1.Ticket {
 	return &nazobuv1.Ticket{
 		Id:                            r.ID,
@@ -608,7 +597,6 @@ func ticketFromRow(r queries.ListTicketsRow) *nazobuv1.Ticket {
 	}
 }
 
-// buildTicketResponse は ticket_id から表示用の Ticket メッセージを組み立てる。
 func (s *ticketService) buildTicketResponse(ctx context.Context, ticketID string) (*nazobuv1.Ticket, error) {
 	rows, err := s.q.ListTicketsByIDs(ctx, []string{ticketID})
 	if err != nil || len(rows) == 0 {
@@ -660,7 +648,6 @@ func (s *ticketService) AddTicketParticipants(ctx context.Context, req *connect.
 	defer func() { _ = tx.Rollback() }()
 
 	qtx := s.q.WithTx(tx)
-	// max_participants を超えないよう、現在数（未登録の同行者を含む）を持って 1 件ずつ加算する。
 	currentCount, err := qtx.CountTicketParticipantsByTicketID(ctx, ticketID)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者数の取得に失敗: %w", err))
@@ -675,7 +662,6 @@ func (s *ticketService) AddTicketParticipants(ctx context.Context, req *connect.
 			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("参加者の重複確認に失敗: %w", err))
 		}
 		if count > 0 {
-			// 既に参加済み。冪等に扱う。
 			continue
 		}
 		if ticketCapacityExceeded(currentCount+1, existing.UnregisteredParticipantsCount, existing.MaxParticipants) {
@@ -805,8 +791,6 @@ func canEditTicket(user *auth.User, purchasedBy string) bool {
 	return user.Role == auth.RoleAdmin || user.ID == purchasedBy
 }
 
-// normalizeTicketMemo は前後の空白を除いたメモを返す。
-// 日本語が主なので、バイト数ではなく文字数で上限を判定する。
 func normalizeTicketMemo(raw string) (string, error) {
 	memo := strings.TrimSpace(raw)
 	if utf8.RuneCountInString(memo) > ticketMemoMaxChars {
@@ -815,7 +799,6 @@ func normalizeTicketMemo(raw string) (string, error) {
 	return memo, nil
 }
 
-// validateTicketCapacityInput は定員関連のリクエスト値そのものの下限を検証する。
 func validateTicketCapacityInput(maxParticipants, unregisteredCount int32) error {
 	if maxParticipants < 1 {
 		return connect.NewError(connect.CodeInvalidArgument, errors.New("max_participants は 1 以上"))
@@ -826,8 +809,6 @@ func validateTicketCapacityInput(maxParticipants, unregisteredCount int32) error
 	return nil
 }
 
-// ticketCapacityExceeded は登録ユーザーの参加者数と未登録の同行者の合計が
-// max_participants を超えるかどうかを判定する。
 func ticketCapacityExceeded(registeredCount int64, unregisteredCount, maxParticipants int32) bool {
 	return registeredCount+int64(unregisteredCount) > int64(maxParticipants)
 }
@@ -843,8 +824,6 @@ func formatNullableJSTDateTime(v sql.NullTime) string {
 	return formatJSTDateTime(v.Time)
 }
 
-// parseRequiredJSTDateTime は RFC3339 を必須として受け取り、JST 基準の time.Time に変換する。
-// field は invalid 時のエラーメッセージで参照する proto フィールド名。
 func parseRequiredJSTDateTime(raw, field string) (time.Time, error) {
 	s := strings.TrimSpace(raw)
 	if s == "" {
@@ -869,7 +848,6 @@ func parseNullableJSTDateTime(raw, field string) (sql.NullTime, error) {
 	return sql.NullTime{Time: t.In(jst), Valid: true}, nil
 }
 
-// attachTicketParticipantNames は tickets の各 ticket に参加者名（created_at 昇順）を埋める。
 func attachTicketParticipantNames(ctx context.Context, q *queries.Queries, tickets []*nazobuv1.Ticket) error {
 	if len(tickets) == 0 {
 		return nil

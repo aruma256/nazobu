@@ -14,17 +14,13 @@ const (
 	meetingHeader   = "⏰ 今日の公演リマインド！みんな起きてる？"
 )
 
-// weekdayJP は time.Weekday（0=日曜）に対応する日本語の曜日。
 var weekdayJP = [...]string{"日", "月", "火", "水", "木", "金", "土"}
 
-// formatDayBefore は同日の前日リマインドを 1 通分の本文に整形する。
-// tickets は同じ開演日のチケット群、subjectsByTicket は ticket_id → メンション対象。
-// 返り値の第 2 戻り値は allowed_mentions 用に重複排除したメンション対象（送信順）。
 func formatDayBefore(
 	baseURL string,
 	tickets []queries.ListTicketsForDayBeforeNotificationRow,
 	subjectsByTicket map[string][]string,
-) (string, []string) {
+) (content string, mentions []string) {
 	var b strings.Builder
 	b.WriteString(dayBeforeHeader)
 	b.WriteString("\n")
@@ -49,14 +45,11 @@ func formatDayBefore(
 	return strings.TrimRight(b.String(), "\n"), dedupePreserveOrder(allSubjects)
 }
 
-// formatMeeting は集合 2 時間前リマインドを 1 件分の本文に整形する。
-// 集合・開演とも「当日」前提で時刻のみ表示する。
 func formatMeeting(baseURL string, t queries.ListTicketsForMeetingNotificationRow, subjects []string) string {
 	var b strings.Builder
 	b.WriteString(meetingHeader)
 	b.WriteString("\n\n")
 	fmt.Fprintf(&b, "『%s』\n", t.EventTitle)
-	// クエリで meeting_at IS NOT NULL を保証しているため Valid 前提。
 	b.WriteString("📍 集合 " + formatTimeOnly(t.MeetingAt.Time))
 	if t.MeetingPlace != "" {
 		b.WriteString(" ／ " + t.MeetingPlace)
@@ -69,8 +62,6 @@ func formatMeeting(baseURL string, t queries.ListTicketsForMeetingNotificationRo
 	return b.String()
 }
 
-// meetingLine は前日リマインドの集合行を組み立てる（集合情報が無ければ空文字）。
-// 集合日が開演日と異なる（日跨ぎ集合）場合は日付付きで表示する。
 func meetingLine(meetingAt sql.NullTime, place string, startAt time.Time) string {
 	if !meetingAt.Valid {
 		if place != "" {
@@ -90,7 +81,6 @@ func meetingLine(meetingAt sql.NullTime, place string, startAt time.Time) string
 	return "📍 集合 " + when
 }
 
-// formatDateTimeFull は "6/14(日) 14:00" 形式（JST）。
 func formatDateTimeFull(t time.Time) string {
 	t = t.In(jst)
 	return fmt.Sprintf("%d/%d(%s) %02d:%02d",

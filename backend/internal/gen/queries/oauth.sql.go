@@ -80,7 +80,6 @@ const deleteExpiredOAuthRecords = `-- name: DeleteExpiredOAuthRecords :exec
 DELETE FROM oauth_authorization_codes WHERE expires_at < ?
 `
 
-// 期限切れの認可コードを掃除する。
 func (q *Queries) DeleteExpiredOAuthRecords(ctx context.Context, expiresAt time.Time) error {
 	_, err := q.db.ExecContext(ctx, deleteExpiredOAuthRecords, expiresAt)
 	return err
@@ -90,7 +89,6 @@ const deleteExpiredOAuthTokens = `-- name: DeleteExpiredOAuthTokens :exec
 DELETE FROM oauth_tokens WHERE refresh_token_expires_at < ?
 `
 
-// refresh 期限も切れたトークンを掃除する。
 func (q *Queries) DeleteExpiredOAuthTokens(ctx context.Context, refreshTokenExpiresAt time.Time) error {
 	_, err := q.db.ExecContext(ctx, deleteExpiredOAuthTokens, refreshTokenExpiresAt)
 	return err
@@ -193,7 +191,6 @@ type GetOAuthTokenUserByAccessTokenHashRow struct {
 	AccessTokenExpiresAt time.Time
 }
 
-// 期限判定は呼び出し側で行う。
 func (q *Queries) GetOAuthTokenUserByAccessTokenHash(ctx context.Context, accessTokenHash string) (GetOAuthTokenUserByAccessTokenHashRow, error) {
 	row := q.db.QueryRowContext(ctx, getOAuthTokenUserByAccessTokenHash, accessTokenHash)
 	var i GetOAuthTokenUserByAccessTokenHashRow

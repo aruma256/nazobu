@@ -1,4 +1,3 @@
-// Package discord は Discord HTTP API との連携を提供する。
 package discord
 
 import (
@@ -20,10 +19,13 @@ const (
 	discordAPIBaseURL = "https://discord.com/api/v10"
 	requestTimeout    = 10 * time.Second
 	viewChannel       = int64(1 << 10)
+
+	channelTypeGuildText = 0
+
+	overwriteTypeRole   = 0
+	overwriteTypeMember = 1
 )
 
-// Client はネタバレチャンネルの作成とメンバー権限付与に必要な
-// Discord API だけを扱う。Bot token はリクエストヘッダー以外に出さない。
 type Client struct {
 	httpClient *http.Client
 	apiBaseURL string
@@ -35,7 +37,6 @@ type Client struct {
 	botUserID string
 }
 
-// NewClient は本番 Discord API 用の client を返す。
 func NewClient(httpClient *http.Client, botToken, guildID, categoryID string) *Client {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
@@ -49,7 +50,6 @@ func NewClient(httpClient *http.Client, botToken, guildID, categoryID string) *C
 	}
 }
 
-// Configured はチャンネル操作に必要な設定が揃っているかを返す。
 func (c *Client) Configured() bool {
 	return c != nil && c.botToken != "" && c.guildID != "" && c.categoryID != ""
 }
@@ -99,27 +99,27 @@ func (c *Client) CreateSpoilerChannel(ctx context.Context, name, topic string, m
 	}
 	members := uniqueSorted(memberIDs)
 	overwrites := make([]permissionOverwrite, 0, len(members)+2)
-	// @everyone ロールの id は guild id と同じ。VIEW_CHANNEL だけを明示的に拒否する。
+	// @everyone ロールの id は guild id と同じ。
 	overwrites = append(overwrites, permissionOverwrite{
-		ID: c.guildID, Type: 0, Allow: "0", Deny: fmt.Sprint(viewChannel),
+		ID: c.guildID, Type: overwriteTypeRole, Allow: "0", Deny: fmt.Sprint(viewChannel),
 	})
 	// @everyone の拒否は bot にも適用される。作成後の権限追加や補償削除を行えるよう、
 	// bot 自身には member overwrite で VIEW_CHANNEL を明示的に許可する。
 	overwrites = append(overwrites, permissionOverwrite{
-		ID: botUserID, Type: 1, Allow: fmt.Sprint(viewChannel), Deny: "0",
+		ID: botUserID, Type: overwriteTypeMember, Allow: fmt.Sprint(viewChannel), Deny: "0",
 	})
 	for _, memberID := range members {
 		if memberID == botUserID {
 			continue
 		}
 		overwrites = append(overwrites, permissionOverwrite{
-			ID: memberID, Type: 1, Allow: fmt.Sprint(viewChannel), Deny: "0",
+			ID: memberID, Type: overwriteTypeMember, Allow: fmt.Sprint(viewChannel), Deny: "0",
 		})
 	}
 
 	payload := createChannelRequest{
 		Name:                 name,
-		Type:                 0, // GUILD_TEXT
+		Type:                 channelTypeGuildText,
 		Topic:                topic,
 		ParentID:             c.categoryID,
 		PermissionOverwrites: overwrites,
@@ -134,9 +134,6 @@ func (c *Client) CreateSpoilerChannel(ctx context.Context, name, topic string, m
 	return created.ID, nil
 }
 
-// currentBotUserID は認証中の bot user ID を返す。チャンネル作成のたびに
-// Discord API へ問い合わせないよう成功した値だけを client 内にキャッシュする。
-// 取得失敗はキャッシュせず、次の操作で再試行できるようにする。
 func (c *Client) currentBotUserID(ctx context.Context) (string, error) {
 	c.botUserMu.Lock()
 	defer c.botUserMu.Unlock()
@@ -199,7 +196,7 @@ func (c *Client) GrantMembersView(ctx context.Context, channelID string, memberI
 		allow.Or(allow, view)
 		deny.AndNot(deny, view)
 
-		payload := permissionOverwrite{Type: 1, Allow: allow.String(), Deny: deny.String()}
+		payload := permissionOverwrite{Type: overwriteTypeMember, Allow: allow.String(), Deny: deny.String()}
 		path := "/channels/" + url.PathEscape(channelID) + "/permissions/" + url.PathEscape(memberID)
 		if err := c.doAuditJSON(ctx, http.MethodPut, path, payload, nil); err != nil {
 			return err
@@ -297,7 +294,6 @@ func permissionInt(raw string) (*big.Int, error) {
 }
 
 // ValidateSpoilerChannel は設定済みサーバーの既存テキストチャンネルか確認する。
-// 手動作成済みチャンネルのカテゴリ・権限は変更しない。
 func (c *Client) ValidateSpoilerChannel(ctx context.Context, channelID string) error {
 	if !c.Configured() {
 		return fmt.Errorf("Discord ネタバレチャンネル設定が未完了")

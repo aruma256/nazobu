@@ -26,7 +26,6 @@ type DiscordConfig struct {
 	BotToken          string
 	GuildID           string
 	SpoilerCategoryID string
-	// リマインド通知の投稿先チャンネル ID。空ならリマインドワーカーは起動しない。
 	ReminderChannelID string
 }
 

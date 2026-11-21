@@ -15,13 +15,9 @@ const (
 	discordUserInfoURL = "https://discord.com/api/users/@me"
 	discordCDNBase     = "https://cdn.discordapp.com"
 
-	// ProviderDiscord は user_identities.provider に保存する識別子。
 	ProviderDiscord = "discord"
 )
 
-// Discord は OIDC discovery エンドポイント（/.well-known/openid-configuration）に
-// 対応していないので、Provider 設定を手組みする。
-// ID token も実質的に使わず、access token で /users/@me を叩いて identity を取得する方針。
 func NewDiscordProvider(ctx context.Context) *oidc.Provider {
 	cfg := oidc.ProviderConfig{
 		IssuerURL:   "https://discord.com",
@@ -38,21 +34,17 @@ func DiscordOAuthConfig(provider *oidc.Provider, clientID, clientSecret, redirec
 		ClientSecret: clientSecret,
 		Endpoint:     provider.Endpoint(),
 		RedirectURL:  redirectURL,
-		// Discord で profile 取得に必要な最小 scope。email も取らない。
-		Scopes: []string{"identify"},
+		Scopes:       []string{"identify"},
 	}
 }
 
 type DiscordUser struct {
-	ID       string `json:"id"`
-	Username string `json:"username"`
-	// Discord 公式ドキュメント上の名称は "Display name" だが、API レスポンスの
-	// JSON フィールド名は歴史的経緯から global_name のまま。
+	ID          string `json:"id"`
+	Username    string `json:"username"`
 	DisplayName string `json:"global_name"`
 	Avatar      string `json:"avatar"`
 }
 
-// ToProfile は Discord の identity を IdP 非依存の UserProfile に変換する。
 func (du *DiscordUser) ToProfile() UserProfile {
 	displayName := du.DisplayName
 	if displayName == "" {

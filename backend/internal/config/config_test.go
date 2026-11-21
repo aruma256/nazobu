@@ -3,7 +3,6 @@ package config
 import "testing"
 
 func TestEnv(t *testing.T) {
-	// 未設定 / 空文字は os.Getenv からは区別できず、どちらもデフォルト値に倒れる。
 	t.Run("空文字（= 未設定相当）ならデフォルト値を返す", func(t *testing.T) {
 		t.Setenv("NAZOBU_TEST_UNSET", "")
 		if got := env("NAZOBU_TEST_UNSET", "default"); got != "default" {
@@ -20,7 +19,6 @@ func TestEnv(t *testing.T) {
 }
 
 func TestLoadDefaults(t *testing.T) {
-	// 各 key を空にして、デフォルト値が反映されることを確認する。
 	keys := []string{
 		"HTTP_ADDR", "FRONTEND_URL", "SCHEMA_PATH", "COOKIE_SECURE",
 		"DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME",
@@ -120,7 +118,6 @@ func TestLoadOverridden(t *testing.T) {
 }
 
 func TestCookieSecureOnlyExactlyTrue(t *testing.T) {
-	// "true" 以外（"1", "TRUE", "yes" 等）は false に倒れる仕様の固定。
 	cases := []struct {
 		in   string
 		want bool

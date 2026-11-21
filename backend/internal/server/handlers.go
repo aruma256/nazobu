@@ -16,14 +16,10 @@ import (
 const (
 	stateCookieName = "nazobu_oauth_state"
 	stateCookieTTL  = 10 * time.Minute
-	// ログイン完了後にユーザーを戻すパスを保持する一時 cookie。
-	nextCookieName = "nazobu_oauth_next"
-	nextCookieTTL  = 10 * time.Minute
+	nextCookieName  = "nazobu_oauth_next"
+	nextCookieTTL   = 10 * time.Minute
 )
 
-// sanitizeNextPath は ?next= で受け取った遷移先パスを open redirect の
-// 踏み台にされないように検証する。許容するのは `/` 始まりかつ `//` で
-// 始まらない（プロトコル相対 URL を弾く）内部パスのみ。
 func sanitizeNextPath(raw string) string {
 	if raw == "" {
 		return ""
@@ -110,8 +106,6 @@ func (s *Server) handleDiscordCallback(w http.ResponseWriter, r *http.Request) {
 
 	user, err := auth.LoginWithIdentity(ctx, s.db, auth.ProviderDiscord, du.ID, du.ToProfile())
 	if err != nil {
-		// 招待制：未登録ユーザーは login 画面にエラー付きで戻す。
-		// next cookie はもう使わないので破棄しておく。
 		if errors.Is(err, auth.ErrUserNotRegistered) {
 			clearCookie(w, nextCookieName, s.cfg.CookieSecure)
 			http.Redirect(w, r, s.cfg.FrontendURL+"/login?error=not_registered", http.StatusFound)
@@ -157,7 +151,6 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	clearCookie(w, auth.SessionCookieName, s.cfg.CookieSecure)
-	// POST → GET にしてログイン画面へ。
 	http.Redirect(w, r, s.cfg.FrontendURL+"/login", http.StatusSeeOther)
 }
 

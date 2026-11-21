@@ -57,7 +57,6 @@ type GetSessionUserByTokenHashRow struct {
 	ExpiresAt   time.Time
 }
 
-// 期限切れ判定は呼び出し側で行う。
 func (q *Queries) GetSessionUserByTokenHash(ctx context.Context, tokenHash string) (GetSessionUserByTokenHashRow, error) {
 	row := q.db.QueryRowContext(ctx, getSessionUserByTokenHash, tokenHash)
 	var i GetSessionUserByTokenHashRow

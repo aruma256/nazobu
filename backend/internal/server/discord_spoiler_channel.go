@@ -22,7 +22,6 @@ const discordChannelNameMaxRunes = 100
 
 var discordSpoilerChannelFeatureStartAt = time.Date(2026, time.August, 30, 0, 0, 0, 0, jst)
 
-// discordSpoilerChannelManager は Discord API との境界。テストでは fake に差し替える。
 type discordSpoilerChannelManager interface {
 	Configured() bool
 	ChannelURL(channelID string) string
@@ -55,8 +54,6 @@ func (s *ticketService) GrantTicketSpoilerChannelAccess(
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("ticket_id は必須"))
 	}
 
-	// 現在の構成は backend 1 インスタンス。同一 event の二重作成を避けるため、
-	// Discord 作成から DB への id 保存までをプロセス内で直列化する。
 	s.spoilerChannelMutation.Lock()
 	defer s.spoilerChannelMutation.Unlock()
 
@@ -108,7 +105,6 @@ func (s *ticketService) GrantTicketSpoilerChannelAccess(
 			ID:                      ticket.EventID,
 		})
 		if updateErr != nil || updated != 1 {
-			// DB から参照できない orphan channel を残さないよう補償する。
 			deleteErr := s.spoilerChannelManager.DeleteChannel(ctx, channelID)
 			if deleteErr != nil {
 				slog.ErrorContext(ctx, "discord channel compensation failed", logging.ID("event_id", ticket.EventID))
@@ -137,9 +133,6 @@ func (s *ticketService) discordSpoilerChannelURL(channelID sql.NullString) strin
 	return s.spoilerChannelManager.ChannelURL(channelID.String)
 }
 
-// discordSpoilerChannelName は Discord の 1〜100 文字制限に合わせて
-// "YYYYMMDD-公演名" を組み立てる。日本語や emoji は保ち、チャンネル名で
-// 問題になりやすい区切り文字と制御文字だけを '-' に畳み込む。
 func discordSpoilerChannelName(startAt time.Time, eventTitle, eventID string) string {
 	prefix := startAt.In(jst).Format("20060102") + "-"
 	titleRunes := make([]rune, 0, len([]rune(eventTitle)))

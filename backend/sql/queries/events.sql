@@ -28,7 +28,6 @@ WHERE id = ?;
 SELECT COUNT(*) FROM events WHERE id = ?;
 
 -- name: SetEventDiscordSpoilerChannelID :execrows
--- 同時実行で既存の channel id を上書きしないよう、NULL のときだけ更新する。
 UPDATE events
 SET discord_spoiler_channel_id = ?, updated_at = NOW(6)
 WHERE id = ? AND discord_spoiler_channel_id IS NULL;
