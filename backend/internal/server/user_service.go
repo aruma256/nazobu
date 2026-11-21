@@ -39,8 +39,19 @@ func (s *userService) GetMe(ctx context.Context, req *connect.Request[nazobuv1.G
 		Id:          user.ID,
 		DisplayName: user.DisplayName,
 		AvatarUrl:   user.AvatarURL.String,
-		Role:        user.Role,
+		Role:        toProtoRole(user.Role),
 	}), nil
+}
+
+func toProtoRole(role string) nazobuv1.Role {
+	switch role {
+	case auth.RoleAdmin:
+		return nazobuv1.Role_ROLE_ADMIN
+	case auth.RoleMember:
+		return nazobuv1.Role_ROLE_MEMBER
+	default:
+		return nazobuv1.Role_ROLE_UNSPECIFIED
+	}
 }
 
 func (s *userService) ListUsers(ctx context.Context, req *connect.Request[nazobuv1.ListUsersRequest]) (response *connect.Response[nazobuv1.ListUsersResponse], returnErr error) {

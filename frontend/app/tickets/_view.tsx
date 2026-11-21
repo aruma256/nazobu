@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import type { Ticket } from "@/app/gen/nazobu/v1/ticket_pb";
-import type { GetMeResponse } from "@/app/gen/nazobu/v1/user_pb";
+import { type GetMeResponse, Role } from "@/app/gen/nazobu/v1/user_pb";
 import { myPageClient, ticketClient, userClient } from "@/app/lib/rpc";
 
 import {
@@ -92,7 +92,7 @@ export function TicketsView() {
 
   const { me, tickets, unsettledCount, receivablesCount } = state;
   const displayName = me.displayName;
-  const isAdmin = me.role === "admin";
+  const isAdmin = me.role === Role.ADMIN;
 
   return (
     <>

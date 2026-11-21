@@ -21,6 +21,55 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type Role int32
+
+const (
+	Role_ROLE_UNSPECIFIED Role = 0
+	Role_ROLE_ADMIN       Role = 1
+	Role_ROLE_MEMBER      Role = 2
+)
+
+// Enum value maps for Role.
+var (
+	Role_name = map[int32]string{
+		0: "ROLE_UNSPECIFIED",
+		1: "ROLE_ADMIN",
+		2: "ROLE_MEMBER",
+	}
+	Role_value = map[string]int32{
+		"ROLE_UNSPECIFIED": 0,
+		"ROLE_ADMIN":       1,
+		"ROLE_MEMBER":      2,
+	}
+)
+
+func (x Role) Enum() *Role {
+	p := new(Role)
+	*p = x
+	return p
+}
+
+func (x Role) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Role) Descriptor() protoreflect.EnumDescriptor {
+	return file_nazobu_v1_user_proto_enumTypes[0].Descriptor()
+}
+
+func (Role) Type() protoreflect.EnumType {
+	return &file_nazobu_v1_user_proto_enumTypes[0]
+}
+
+func (x Role) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Role.Descriptor instead.
+func (Role) EnumDescriptor() ([]byte, []int) {
+	return file_nazobu_v1_user_proto_rawDescGZIP(), []int{0}
+}
+
 type GetMeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -63,9 +112,8 @@ type GetMeResponse struct {
 	// 表示名（NOT NULL）。IdP 側で空のときはハンドル名等にフォールバックして埋める。
 	DisplayName string `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
 	// avatar URL は未設定なら空文字列。
-	AvatarUrl string `protobuf:"bytes,4,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
-	// 'admin' / 'member'。
-	Role          string `protobuf:"bytes,5,opt,name=role,proto3" json:"role,omitempty"`
+	AvatarUrl     string `protobuf:"bytes,4,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
+	Role          Role   `protobuf:"varint,6,opt,name=role,proto3,enum=nazobu.v1.Role" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -121,11 +169,11 @@ func (x *GetMeResponse) GetAvatarUrl() string {
 	return ""
 }
 
-func (x *GetMeResponse) GetRole() string {
+func (x *GetMeResponse) GetRole() Role {
 	if x != nil {
 		return x.Role
 	}
-	return ""
+	return Role_ROLE_UNSPECIFIED
 }
 
 type ListUsersRequest struct {
@@ -364,13 +412,13 @@ var File_nazobu_v1_user_proto protoreflect.FileDescriptor
 const file_nazobu_v1_user_proto_rawDesc = "" +
 	"\n" +
 	"\x14nazobu/v1/user.proto\x12\tnazobu.v1\"\x0e\n" +
-	"\fGetMeRequest\"\x85\x01\n" +
+	"\fGetMeRequest\"\x9c\x01\n" +
 	"\rGetMeResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayName\x12\x1d\n" +
 	"\n" +
-	"avatar_url\x18\x04 \x01(\tR\tavatarUrl\x12\x12\n" +
-	"\x04role\x18\x05 \x01(\tR\x04roleJ\x04\b\x02\x10\x03R\busername\"\x12\n" +
+	"avatar_url\x18\x04 \x01(\tR\tavatarUrl\x12#\n" +
+	"\x04role\x18\x06 \x01(\x0e2\x0f.nazobu.v1.RoleR\x04roleJ\x04\b\x02\x10\x03J\x04\b\x05\x10\x06R\busername\"\x12\n" +
 	"\x10ListUsersRequest\":\n" +
 	"\x11ListUsersResponse\x12%\n" +
 	"\x05users\x18\x01 \x03(\v2\x0f.nazobu.v1.UserR\x05users\"`\n" +
@@ -381,7 +429,12 @@ const file_nazobu_v1_user_proto_rawDesc = "" +
 	"\x04user\x18\x01 \x01(\v2\x0f.nazobu.v1.UserR\x04user\"I\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
-	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayNameJ\x04\b\x02\x10\x03R\busername2\xe2\x01\n" +
+	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayNameJ\x04\b\x02\x10\x03R\busername*=\n" +
+	"\x04Role\x12\x14\n" +
+	"\x10ROLE_UNSPECIFIED\x10\x00\x12\x0e\n" +
+	"\n" +
+	"ROLE_ADMIN\x10\x01\x12\x0f\n" +
+	"\vROLE_MEMBER\x10\x022\xe2\x01\n" +
 	"\vUserService\x12:\n" +
 	"\x05GetMe\x12\x17.nazobu.v1.GetMeRequest\x1a\x18.nazobu.v1.GetMeResponse\x12F\n" +
 	"\tListUsers\x12\x1b.nazobu.v1.ListUsersRequest\x1a\x1c.nazobu.v1.ListUsersResponse\x12O\n" +
@@ -399,30 +452,33 @@ func file_nazobu_v1_user_proto_rawDescGZIP() []byte {
 	return file_nazobu_v1_user_proto_rawDescData
 }
 
+var file_nazobu_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_nazobu_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_nazobu_v1_user_proto_goTypes = []any{
-	(*GetMeRequest)(nil),         // 0: nazobu.v1.GetMeRequest
-	(*GetMeResponse)(nil),        // 1: nazobu.v1.GetMeResponse
-	(*ListUsersRequest)(nil),     // 2: nazobu.v1.ListUsersRequest
-	(*ListUsersResponse)(nil),    // 3: nazobu.v1.ListUsersResponse
-	(*RegisterUserRequest)(nil),  // 4: nazobu.v1.RegisterUserRequest
-	(*RegisterUserResponse)(nil), // 5: nazobu.v1.RegisterUserResponse
-	(*User)(nil),                 // 6: nazobu.v1.User
+	(Role)(0),                    // 0: nazobu.v1.Role
+	(*GetMeRequest)(nil),         // 1: nazobu.v1.GetMeRequest
+	(*GetMeResponse)(nil),        // 2: nazobu.v1.GetMeResponse
+	(*ListUsersRequest)(nil),     // 3: nazobu.v1.ListUsersRequest
+	(*ListUsersResponse)(nil),    // 4: nazobu.v1.ListUsersResponse
+	(*RegisterUserRequest)(nil),  // 5: nazobu.v1.RegisterUserRequest
+	(*RegisterUserResponse)(nil), // 6: nazobu.v1.RegisterUserResponse
+	(*User)(nil),                 // 7: nazobu.v1.User
 }
 var file_nazobu_v1_user_proto_depIdxs = []int32{
-	6, // 0: nazobu.v1.ListUsersResponse.users:type_name -> nazobu.v1.User
-	6, // 1: nazobu.v1.RegisterUserResponse.user:type_name -> nazobu.v1.User
-	0, // 2: nazobu.v1.UserService.GetMe:input_type -> nazobu.v1.GetMeRequest
-	2, // 3: nazobu.v1.UserService.ListUsers:input_type -> nazobu.v1.ListUsersRequest
-	4, // 4: nazobu.v1.UserService.RegisterUser:input_type -> nazobu.v1.RegisterUserRequest
-	1, // 5: nazobu.v1.UserService.GetMe:output_type -> nazobu.v1.GetMeResponse
-	3, // 6: nazobu.v1.UserService.ListUsers:output_type -> nazobu.v1.ListUsersResponse
-	5, // 7: nazobu.v1.UserService.RegisterUser:output_type -> nazobu.v1.RegisterUserResponse
-	5, // [5:8] is the sub-list for method output_type
-	2, // [2:5] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	0, // 0: nazobu.v1.GetMeResponse.role:type_name -> nazobu.v1.Role
+	7, // 1: nazobu.v1.ListUsersResponse.users:type_name -> nazobu.v1.User
+	7, // 2: nazobu.v1.RegisterUserResponse.user:type_name -> nazobu.v1.User
+	1, // 3: nazobu.v1.UserService.GetMe:input_type -> nazobu.v1.GetMeRequest
+	3, // 4: nazobu.v1.UserService.ListUsers:input_type -> nazobu.v1.ListUsersRequest
+	5, // 5: nazobu.v1.UserService.RegisterUser:input_type -> nazobu.v1.RegisterUserRequest
+	2, // 6: nazobu.v1.UserService.GetMe:output_type -> nazobu.v1.GetMeResponse
+	4, // 7: nazobu.v1.UserService.ListUsers:output_type -> nazobu.v1.ListUsersResponse
+	6, // 8: nazobu.v1.UserService.RegisterUser:output_type -> nazobu.v1.RegisterUserResponse
+	6, // [6:9] is the sub-list for method output_type
+	3, // [3:6] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_nazobu_v1_user_proto_init() }
@@ -435,13 +491,14 @@ func file_nazobu_v1_user_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_nazobu_v1_user_proto_rawDesc), len(file_nazobu_v1_user_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_nazobu_v1_user_proto_goTypes,
 		DependencyIndexes: file_nazobu_v1_user_proto_depIdxs,
+		EnumInfos:         file_nazobu_v1_user_proto_enumTypes,
 		MessageInfos:      file_nazobu_v1_user_proto_msgTypes,
 	}.Build()
 	File_nazobu_v1_user_proto = out.File

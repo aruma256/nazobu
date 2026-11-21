@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import type { GetMeResponse } from "@/app/gen/nazobu/v1/user_pb";
+import { type GetMeResponse, Role } from "@/app/gen/nazobu/v1/user_pb";
 import type { MonthlyTicket } from "@/app/gen/nazobu/v1/mypage_pb";
 import type { Ticket } from "@/app/gen/nazobu/v1/ticket_pb";
 import { myPageClient, userClient } from "@/app/lib/rpc";
@@ -133,7 +133,7 @@ export function HomeView() {
 
   const { me, unsettled, unsettledReceivables, upcoming } = state.data;
   const displayName = me.displayName;
-  const isAdmin = me.role === "admin";
+  const isAdmin = me.role === Role.ADMIN;
 
   const switchMonth = (diff: number) => {
     if (!monthView || monthView.loading) return;

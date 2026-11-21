@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 
 import type { Event as NazobuEvent, EventTicket } from "@/app/gen/nazobu/v1/event_pb";
-import type { GetMeResponse } from "@/app/gen/nazobu/v1/user_pb";
+import { type GetMeResponse, Role } from "@/app/gen/nazobu/v1/user_pb";
 import { eventClient, myPageClient, userClient } from "@/app/lib/rpc";
 
 import {
@@ -127,7 +127,7 @@ export function EventsView() {
 
   return (
     <>
-      <AppHeader brand="謎部" user={displayName} isAdmin={me.role === "admin"} />
+      <AppHeader brand="謎部" user={displayName} isAdmin={me.role === Role.ADMIN} />
       <PageShell>
         <UnsettledBanner
           unsettledCount={unsettledCount}
@@ -160,7 +160,7 @@ export function EventsView() {
                   key={e.id}
                   event={e}
                   myName={displayName}
-                  isAdmin={me.role === "admin"}
+                  isAdmin={me.role === Role.ADMIN}
                   deleting={deletingId !== null}
                   onDelete={() => handleDelete(e)}
                 />

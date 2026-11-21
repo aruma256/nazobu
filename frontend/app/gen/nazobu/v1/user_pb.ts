@@ -2,15 +2,15 @@
 // @generated from file nazobu/v1/user.proto (package nazobu.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file nazobu/v1/user.proto.
  */
 export const file_nazobu_v1_user: GenFile = /*@__PURE__*/
-  fileDesc("ChRuYXpvYnUvdjEvdXNlci5wcm90bxIJbmF6b2J1LnYxIg4KDEdldE1lUmVxdWVzdCJjCg1HZXRNZVJlc3BvbnNlEgoKAmlkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCRISCgphdmF0YXJfdXJsGAQgASgJEgwKBHJvbGUYBSABKAlKBAgCEANSCHVzZXJuYW1lIhIKEExpc3RVc2Vyc1JlcXVlc3QiMwoRTGlzdFVzZXJzUmVzcG9uc2USHgoFdXNlcnMYASADKAsyDy5uYXpvYnUudjEuVXNlciJEChNSZWdpc3RlclVzZXJSZXF1ZXN0EhcKD2Rpc2NvcmRfdXNlcl9pZBgBIAEoCRIUCgxkaXNwbGF5X25hbWUYAiABKAkiNQoUUmVnaXN0ZXJVc2VyUmVzcG9uc2USHQoEdXNlchgBIAEoCzIPLm5hem9idS52MS5Vc2VyIjgKBFVzZXISCgoCaWQYASABKAkSFAoMZGlzcGxheV9uYW1lGAMgASgJSgQIAhADUgh1c2VybmFtZTLiAQoLVXNlclNlcnZpY2USOgoFR2V0TWUSFy5uYXpvYnUudjEuR2V0TWVSZXF1ZXN0GhgubmF6b2J1LnYxLkdldE1lUmVzcG9uc2USRgoJTGlzdFVzZXJzEhsubmF6b2J1LnYxLkxpc3RVc2Vyc1JlcXVlc3QaHC5uYXpvYnUudjEuTGlzdFVzZXJzUmVzcG9uc2USTwoMUmVnaXN0ZXJVc2VyEh4ubmF6b2J1LnYxLlJlZ2lzdGVyVXNlclJlcXVlc3QaHy5uYXpvYnUudjEuUmVnaXN0ZXJVc2VyUmVzcG9uc2VCRFpCZ2l0aHViLmNvbS9hcnVtYTI1Ni9uYXpvYnUvYmFja2VuZC9pbnRlcm5hbC9nZW4vbmF6b2J1L3YxO25hem9idXYxYgZwcm90bzM");
+  fileDesc("ChRuYXpvYnUvdjEvdXNlci5wcm90bxIJbmF6b2J1LnYxIg4KDEdldE1lUmVxdWVzdCJ6Cg1HZXRNZVJlc3BvbnNlEgoKAmlkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCRISCgphdmF0YXJfdXJsGAQgASgJEh0KBHJvbGUYBiABKA4yDy5uYXpvYnUudjEuUm9sZUoECAIQA0oECAUQBlIIdXNlcm5hbWUiEgoQTGlzdFVzZXJzUmVxdWVzdCIzChFMaXN0VXNlcnNSZXNwb25zZRIeCgV1c2VycxgBIAMoCzIPLm5hem9idS52MS5Vc2VyIkQKE1JlZ2lzdGVyVXNlclJlcXVlc3QSFwoPZGlzY29yZF91c2VyX2lkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCSI1ChRSZWdpc3RlclVzZXJSZXNwb25zZRIdCgR1c2VyGAEgASgLMg8ubmF6b2J1LnYxLlVzZXIiOAoEVXNlchIKCgJpZBgBIAEoCRIUCgxkaXNwbGF5X25hbWUYAyABKAlKBAgCEANSCHVzZXJuYW1lKj0KBFJvbGUSFAoQUk9MRV9VTlNQRUNJRklFRBAAEg4KClJPTEVfQURNSU4QARIPCgtST0xFX01FTUJFUhACMuIBCgtVc2VyU2VydmljZRI6CgVHZXRNZRIXLm5hem9idS52MS5HZXRNZVJlcXVlc3QaGC5uYXpvYnUudjEuR2V0TWVSZXNwb25zZRJGCglMaXN0VXNlcnMSGy5uYXpvYnUudjEuTGlzdFVzZXJzUmVxdWVzdBocLm5hem9idS52MS5MaXN0VXNlcnNSZXNwb25zZRJPCgxSZWdpc3RlclVzZXISHi5uYXpvYnUudjEuUmVnaXN0ZXJVc2VyUmVxdWVzdBofLm5hem9idS52MS5SZWdpc3RlclVzZXJSZXNwb25zZUJEWkJnaXRodWIuY29tL2FydW1hMjU2L25hem9idS9iYWNrZW5kL2ludGVybmFsL2dlbi9uYXpvYnUvdjE7bmF6b2J1djFiBnByb3RvMw");
 
 /**
  * @generated from message nazobu.v1.GetMeRequest
@@ -49,11 +49,9 @@ export type GetMeResponse = Message<"nazobu.v1.GetMeResponse"> & {
   avatarUrl: string;
 
   /**
-   * 'admin' / 'member'。
-   *
-   * @generated from field: string role = 5;
+   * @generated from field: nazobu.v1.Role role = 6;
    */
-  role: string;
+  role: Role;
 };
 
 /**
@@ -159,6 +157,32 @@ export type User = Message<"nazobu.v1.User"> & {
  */
 export const UserSchema: GenMessage<User> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_user, 6);
+
+/**
+ * @generated from enum nazobu.v1.Role
+ */
+export enum Role {
+  /**
+   * @generated from enum value: ROLE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: ROLE_ADMIN = 1;
+   */
+  ADMIN = 1,
+
+  /**
+   * @generated from enum value: ROLE_MEMBER = 2;
+   */
+  MEMBER = 2,
+}
+
+/**
+ * Describes the enum nazobu.v1.Role.
+ */
+export const RoleSchema: GenEnum<Role> = /*@__PURE__*/
+  enumDesc(file_nazobu_v1_user, 0);
 
 /**
  * @generated from service nazobu.v1.UserService

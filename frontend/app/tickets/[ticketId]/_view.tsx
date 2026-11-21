@@ -10,7 +10,7 @@ import type {
   Ticket,
   TicketParticipant,
 } from "@/app/gen/nazobu/v1/ticket_pb";
-import type { GetMeResponse, User } from "@/app/gen/nazobu/v1/user_pb";
+import { type GetMeResponse, Role, type User } from "@/app/gen/nazobu/v1/user_pb";
 import { eventClient, ticketClient, userClient } from "@/app/lib/rpc";
 
 import {
@@ -201,7 +201,7 @@ export function TicketDetailView({ ticketId }: { ticketId: string }) {
   }
 
   const displayName = me.displayName;
-  const isAdmin = me.role === "admin";
+  const isAdmin = me.role === Role.ADMIN;
   const startAt = parseDateTime(ticket.startAt);
   const endAt = new Date(
     startAt.getTime() + ticket.eventExpectedDurationMinutes * 60 * 1000,

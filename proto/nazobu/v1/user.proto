@@ -15,16 +15,21 @@ service UserService {
 
 message GetMeRequest {}
 
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  ROLE_ADMIN = 1;
+  ROLE_MEMBER = 2;
+}
+
 message GetMeResponse {
-  reserved 2;
+  reserved 2, 5;
   reserved "username";
   string id = 1;
   // 表示名（NOT NULL）。IdP 側で空のときはハンドル名等にフォールバックして埋める。
   string display_name = 3;
   // avatar URL は未設定なら空文字列。
   string avatar_url = 4;
-  // 'admin' / 'member'。
-  string role = 5;
+  Role role = 6;
 }
 
 message ListUsersRequest {}
