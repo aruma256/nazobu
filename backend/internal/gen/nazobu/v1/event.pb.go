@@ -118,9 +118,8 @@ type Event struct {
 	// 想定所要時間（分）。1 以上。
 	ExpectedDurationMinutes int32 `protobuf:"varint,8,opt,name=expected_duration_minutes,json=expectedDurationMinutes,proto3" json:"expected_duration_minutes,omitempty"`
 	// 公演のキャッチコピー。入力が空なら og:description で補完することがある。未設定なら空文字。
-	Catchphrase string `protobuf:"bytes,9,opt,name=catchphrase,proto3" json:"catchphrase,omitempty"`
-	// ネタバレチャンネルが紐づけ済みか。
-	HasSpoilerChannel bool `protobuf:"varint,10,opt,name=has_spoiler_channel,json=hasSpoilerChannel,proto3" json:"has_spoiler_channel,omitempty"`
+	Catchphrase       string `protobuf:"bytes,9,opt,name=catchphrase,proto3" json:"catchphrase,omitempty"`
+	HasSpoilerChannel bool   `protobuf:"varint,10,opt,name=has_spoiler_channel,json=hasSpoilerChannel,proto3" json:"has_spoiler_channel,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -231,9 +230,8 @@ type EventTicket struct {
 	// 開演日時（RFC3339, JST）。
 	StartAt string `protobuf:"bytes,2,opt,name=start_at,json=startAt,proto3" json:"start_at,omitempty"`
 	// 一人あたりの精算額（円）。
-	PricePerPerson int32 `protobuf:"varint,3,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
-	// 立て替えてくれた人の表示名。
-	PurchaserName string `protobuf:"bytes,4,opt,name=purchaser_name,json=purchaserName,proto3" json:"purchaser_name,omitempty"`
+	PricePerPerson int32  `protobuf:"varint,3,opt,name=price_per_person,json=pricePerPerson,proto3" json:"price_per_person,omitempty"`
+	PurchaserName  string `protobuf:"bytes,4,opt,name=purchaser_name,json=purchaserName,proto3" json:"purchaser_name,omitempty"`
 	// 参加者の表示名（created_at 昇順）。立替者も参加者なら含む。
 	ParticipantNames []string `protobuf:"bytes,5,rep,name=participant_names,json=participantNames,proto3" json:"participant_names,omitempty"`
 	// 本サービスに未登録の同行者の人数。0 以上。

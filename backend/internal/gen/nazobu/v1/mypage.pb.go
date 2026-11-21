@@ -263,9 +263,9 @@ func (x *ListMyUpcomingTicketsResponse) GetTickets() []*Ticket {
 
 type ListMonthlyTicketsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// JST での年。0 を指定すると month と合わせて「サーバ JST 基準の前月」を返す。
+	// JST での年。
 	Year int32 `protobuf:"varint,1,opt,name=year,proto3" json:"year,omitempty"`
-	// JST での月（1〜12）。0 を指定すると year と合わせて「サーバ JST 基準の前月」を返す。
+	// JST での月（1〜12）。
 	Month         int32 `protobuf:"varint,2,opt,name=month,proto3" json:"month,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

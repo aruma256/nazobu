@@ -4,18 +4,16 @@ package nazobu.v1;
 
 option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1";
 
-// TicketService は ticket（公演に対する 1 枚分の参加チケット）の参照・登録・更新・削除 RPC を提供する。
 service TicketService {
-  // ListTickets は登録済み ticket を start_at 降順で返す。
   rpc ListTickets(ListTicketsRequest) returns (ListTicketsResponse);
   // GetTicket は 1 件の ticket を詳細表示用の形（参加者の精算状況を含む）で返す。
   rpc GetTicket(GetTicketRequest) returns (GetTicketResponse);
   // CreateTicket は新規 ticket を 1 件登録する。参加者も同時に登録する。ログインユーザーなら誰でも実行でき、立替者は実行者になる。
   rpc CreateTicket(CreateTicketRequest) returns (CreateTicketResponse);
   // CreateTicketWithEvent は event と ticket を 1 トランザクションで同時登録する。
-  // 1 公演 1 チケットが主流のため、新規作成はこの統合 RPC を主動線にする。ログインユーザーなら誰でも実行でき、立替者は実行者になる。
+  // ログインユーザーなら誰でも実行でき、立替者は実行者になる。
   rpc CreateTicketWithEvent(CreateTicketWithEventRequest) returns (CreateTicketWithEventResponse);
-  // UpdateTicket は ticket 本体（start_at / meeting_at / price_per_person / max_participants / meeting_place / memo / purchased_by_user_id）を更新する。
+  // UpdateTicket は ticket 本体を更新する。
   // admin もしくは立替者のみ実行可能。新しい立替者は ticket の参加者の中から選ぶ。
   rpc UpdateTicket(UpdateTicketRequest) returns (UpdateTicketResponse);
   // UpdateTicketWithEvent は ticket と紐づく event を 1 トランザクションで同時更新する。
@@ -35,7 +33,7 @@ service TicketService {
   // GrantTicketSpoilerChannelAccess は event の Discord ネタバレチャンネルを必要に応じて作成し、
   // 指定 ticket の現在の参加者へ閲覧権限を追加付与する。admin のみ実行可能。
   rpc GrantTicketSpoilerChannelAccess(GrantTicketSpoilerChannelAccessRequest) returns (GrantTicketSpoilerChannelAccessResponse);
-  // DeleteTicket は誤登録した ticket を完全削除する。admin もしくは立替者のみ。参加・精算情報も削除する。
+  // DeleteTicket は ticket を完全削除する。admin もしくは立替者のみ。参加・精算情報も削除する。
   rpc DeleteTicket(DeleteTicketRequest) returns (DeleteTicketResponse);
 
 }
@@ -51,14 +49,14 @@ message Ticket {
   string id = 1;
   string event_id = 2;
   string event_title = 3;
-  reserved 4; // 旧 attended_on (DATE 単独保持)。start_at に統合。
+  reserved 4;
+  reserved "attended_on";
   // 一人あたりの精算額（円）。
   int32 price_per_person = 5;
   // 集合日時（RFC3339, JST オフセット +09:00。集合時刻が決まっていない場合は空文字）。
   string meeting_at = 6;
   // 集合場所（空文字なら未設定）。
   string meeting_place = 7;
-  // 立て替えてくれた人の表示名。
   string purchaser_name = 8;
   // 参加者の表示名（created_at 昇順）。立替者も参加者なら含む。
   repeated string participant_names = 9;
@@ -102,13 +100,14 @@ message TicketParticipant {
   string name = 2;
   // 自分の精算が完了しているか。立替者本人なら常に true。
   bool settled = 3;
-  // 立替者本人かどうか。立替者は精算操作の対象外、また削除もできない。
+  // 立替者は精算操作の対象外、また削除もできない。
   bool is_purchaser = 4;
 }
 
 message CreateTicketRequest {
   string event_id = 1;
-  reserved 2; // 旧 attended_on。start_at に統合。
+  reserved 2;
+  reserved "attended_on";
   // 一人あたりの精算額（円、0 以上）。
   int32 price_per_person = 3;
   // 集合日時（RFC3339, JST。集合時刻が決まっていない場合は空文字）。
@@ -116,7 +115,6 @@ message CreateTicketRequest {
   // 集合場所（空文字なら未設定）。
   string meeting_place = 5;
   // 参加者の user id。立替者（= ログイン中の user）を含めても構わない。1 件以上。
-  // 立替者は session の user で固定するため、ここでは指定しない。
   repeated string participant_user_ids = 6;
   // 開演日時（RFC3339, JST）。
   string start_at = 7;
@@ -135,7 +133,8 @@ message CreateTicketResponse {
 
 message UpdateTicketRequest {
   string ticket_id = 1;
-  reserved 2; // 旧 attended_on。start_at に統合。
+  reserved 2;
+  reserved "attended_on";
   // 一人あたりの精算額（円、0 以上）。
   int32 price_per_person = 3;
   // 集合日時（RFC3339, JST。集合時刻が決まっていない場合は空文字）。
@@ -160,7 +159,6 @@ message UpdateTicketResponse {
 }
 
 message CreateTicketWithEventRequest {
-  // ---- event 部 ----
   string event_title = 1;
   string event_url = 2;
   // 公演のキャッチコピー（任意）。
@@ -171,8 +169,6 @@ message CreateTicketWithEventRequest {
   optional int32 event_entry_deadline_minutes_before = 5;
   // 想定所要時間（分）。1 以上。
   int32 event_expected_duration_minutes = 6;
-
-  // ---- ticket 部 ----
   // 一人あたりの精算額（円、0 以上）。
   int32 price_per_person = 7;
   // 開演日時（RFC3339, JST）。
@@ -198,16 +194,12 @@ message CreateTicketWithEventResponse {
 
 message UpdateTicketWithEventRequest {
   string ticket_id = 1;
-
-  // ---- event 部 ----
   string event_title = 2;
   string event_url = 3;
   string event_catchphrase = 4;
   optional int32 event_doors_open_minutes_before = 5;
   optional int32 event_entry_deadline_minutes_before = 6;
   int32 event_expected_duration_minutes = 7;
-
-  // ---- ticket 部 ----
   int32 price_per_person = 8;
   string meeting_at = 9;
   string meeting_place = 10;

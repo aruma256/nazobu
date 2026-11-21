@@ -50,14 +50,13 @@ const (
 
 // EventServiceClient is a client for the nazobu.v1.EventService service.
 type EventServiceClient interface {
-	// ListEvents は登録済み event を新しい順で返す。各 event には紐づく ticket を含める。
 	ListEvents(context.Context, *connect.Request[v1.ListEventsRequest]) (*connect.Response[v1.ListEventsResponse], error)
 	GetEvent(context.Context, *connect.Request[v1.GetEventRequest]) (*connect.Response[v1.GetEventResponse], error)
 	// LinkEventSpoilerChannel は既存の Discord チャンネルを未紐づけの公演に紐づける。admin のみ。
 	LinkEventSpoilerChannel(context.Context, *connect.Request[v1.LinkEventSpoilerChannelRequest]) (*connect.Response[v1.LinkEventSpoilerChannelResponse], error)
 	// JoinEventSpoilerChannel は紐づけ済みチャンネルの閲覧権限を本人に付与する。
 	JoinEventSpoilerChannel(context.Context, *connect.Request[v1.JoinEventSpoilerChannelRequest]) (*connect.Response[v1.JoinEventSpoilerChannelResponse], error)
-	// DeleteEvent は誤登録した event を完全削除する。admin のみ。チケットが残っている場合は削除不可。
+	// DeleteEvent は event を完全削除する。admin のみ。チケットが残っている場合は削除不可。
 	DeleteEvent(context.Context, *connect.Request[v1.DeleteEventRequest]) (*connect.Response[v1.DeleteEventResponse], error)
 }
 
@@ -141,14 +140,13 @@ func (c *eventServiceClient) DeleteEvent(ctx context.Context, req *connect.Reque
 
 // EventServiceHandler is an implementation of the nazobu.v1.EventService service.
 type EventServiceHandler interface {
-	// ListEvents は登録済み event を新しい順で返す。各 event には紐づく ticket を含める。
 	ListEvents(context.Context, *connect.Request[v1.ListEventsRequest]) (*connect.Response[v1.ListEventsResponse], error)
 	GetEvent(context.Context, *connect.Request[v1.GetEventRequest]) (*connect.Response[v1.GetEventResponse], error)
 	// LinkEventSpoilerChannel は既存の Discord チャンネルを未紐づけの公演に紐づける。admin のみ。
 	LinkEventSpoilerChannel(context.Context, *connect.Request[v1.LinkEventSpoilerChannelRequest]) (*connect.Response[v1.LinkEventSpoilerChannelResponse], error)
 	// JoinEventSpoilerChannel は紐づけ済みチャンネルの閲覧権限を本人に付与する。
 	JoinEventSpoilerChannel(context.Context, *connect.Request[v1.JoinEventSpoilerChannelRequest]) (*connect.Response[v1.JoinEventSpoilerChannelResponse], error)
-	// DeleteEvent は誤登録した event を完全削除する。admin のみ。チケットが残っている場合は削除不可。
+	// DeleteEvent は event を完全削除する。admin のみ。チケットが残っている場合は削除不可。
 	DeleteEvent(context.Context, *connect.Request[v1.DeleteEventRequest]) (*connect.Response[v1.DeleteEventResponse], error)
 }
 

@@ -69,16 +69,15 @@ const (
 
 // TicketServiceClient is a client for the nazobu.v1.TicketService service.
 type TicketServiceClient interface {
-	// ListTickets は登録済み ticket を start_at 降順で返す。
 	ListTickets(context.Context, *connect.Request[v1.ListTicketsRequest]) (*connect.Response[v1.ListTicketsResponse], error)
 	// GetTicket は 1 件の ticket を詳細表示用の形（参加者の精算状況を含む）で返す。
 	GetTicket(context.Context, *connect.Request[v1.GetTicketRequest]) (*connect.Response[v1.GetTicketResponse], error)
 	// CreateTicket は新規 ticket を 1 件登録する。参加者も同時に登録する。ログインユーザーなら誰でも実行でき、立替者は実行者になる。
 	CreateTicket(context.Context, *connect.Request[v1.CreateTicketRequest]) (*connect.Response[v1.CreateTicketResponse], error)
 	// CreateTicketWithEvent は event と ticket を 1 トランザクションで同時登録する。
-	// 1 公演 1 チケットが主流のため、新規作成はこの統合 RPC を主動線にする。ログインユーザーなら誰でも実行でき、立替者は実行者になる。
+	// ログインユーザーなら誰でも実行でき、立替者は実行者になる。
 	CreateTicketWithEvent(context.Context, *connect.Request[v1.CreateTicketWithEventRequest]) (*connect.Response[v1.CreateTicketWithEventResponse], error)
-	// UpdateTicket は ticket 本体（start_at / meeting_at / price_per_person / max_participants / meeting_place / memo / purchased_by_user_id）を更新する。
+	// UpdateTicket は ticket 本体を更新する。
 	// admin もしくは立替者のみ実行可能。新しい立替者は ticket の参加者の中から選ぶ。
 	UpdateTicket(context.Context, *connect.Request[v1.UpdateTicketRequest]) (*connect.Response[v1.UpdateTicketResponse], error)
 	// UpdateTicketWithEvent は ticket と紐づく event を 1 トランザクションで同時更新する。
@@ -98,7 +97,7 @@ type TicketServiceClient interface {
 	// GrantTicketSpoilerChannelAccess は event の Discord ネタバレチャンネルを必要に応じて作成し、
 	// 指定 ticket の現在の参加者へ閲覧権限を追加付与する。admin のみ実行可能。
 	GrantTicketSpoilerChannelAccess(context.Context, *connect.Request[v1.GrantTicketSpoilerChannelAccessRequest]) (*connect.Response[v1.GrantTicketSpoilerChannelAccessResponse], error)
-	// DeleteTicket は誤登録した ticket を完全削除する。admin もしくは立替者のみ。参加・精算情報も削除する。
+	// DeleteTicket は ticket を完全削除する。admin もしくは立替者のみ。参加・精算情報も削除する。
 	DeleteTicket(context.Context, *connect.Request[v1.DeleteTicketRequest]) (*connect.Response[v1.DeleteTicketResponse], error)
 }
 
@@ -255,16 +254,15 @@ func (c *ticketServiceClient) DeleteTicket(ctx context.Context, req *connect.Req
 
 // TicketServiceHandler is an implementation of the nazobu.v1.TicketService service.
 type TicketServiceHandler interface {
-	// ListTickets は登録済み ticket を start_at 降順で返す。
 	ListTickets(context.Context, *connect.Request[v1.ListTicketsRequest]) (*connect.Response[v1.ListTicketsResponse], error)
 	// GetTicket は 1 件の ticket を詳細表示用の形（参加者の精算状況を含む）で返す。
 	GetTicket(context.Context, *connect.Request[v1.GetTicketRequest]) (*connect.Response[v1.GetTicketResponse], error)
 	// CreateTicket は新規 ticket を 1 件登録する。参加者も同時に登録する。ログインユーザーなら誰でも実行でき、立替者は実行者になる。
 	CreateTicket(context.Context, *connect.Request[v1.CreateTicketRequest]) (*connect.Response[v1.CreateTicketResponse], error)
 	// CreateTicketWithEvent は event と ticket を 1 トランザクションで同時登録する。
-	// 1 公演 1 チケットが主流のため、新規作成はこの統合 RPC を主動線にする。ログインユーザーなら誰でも実行でき、立替者は実行者になる。
+	// ログインユーザーなら誰でも実行でき、立替者は実行者になる。
 	CreateTicketWithEvent(context.Context, *connect.Request[v1.CreateTicketWithEventRequest]) (*connect.Response[v1.CreateTicketWithEventResponse], error)
-	// UpdateTicket は ticket 本体（start_at / meeting_at / price_per_person / max_participants / meeting_place / memo / purchased_by_user_id）を更新する。
+	// UpdateTicket は ticket 本体を更新する。
 	// admin もしくは立替者のみ実行可能。新しい立替者は ticket の参加者の中から選ぶ。
 	UpdateTicket(context.Context, *connect.Request[v1.UpdateTicketRequest]) (*connect.Response[v1.UpdateTicketResponse], error)
 	// UpdateTicketWithEvent は ticket と紐づく event を 1 トランザクションで同時更新する。
@@ -284,7 +282,7 @@ type TicketServiceHandler interface {
 	// GrantTicketSpoilerChannelAccess は event の Discord ネタバレチャンネルを必要に応じて作成し、
 	// 指定 ticket の現在の参加者へ閲覧権限を追加付与する。admin のみ実行可能。
 	GrantTicketSpoilerChannelAccess(context.Context, *connect.Request[v1.GrantTicketSpoilerChannelAccessRequest]) (*connect.Response[v1.GrantTicketSpoilerChannelAccessResponse], error)
-	// DeleteTicket は誤登録した ticket を完全削除する。admin もしくは立替者のみ。参加・精算情報も削除する。
+	// DeleteTicket は ticket を完全削除する。admin もしくは立替者のみ。参加・精算情報も削除する。
 	DeleteTicket(context.Context, *connect.Request[v1.DeleteTicketRequest]) (*connect.Response[v1.DeleteTicketResponse], error)
 }
 

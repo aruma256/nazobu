@@ -106,8 +106,6 @@ export type Event = Message<"nazobu.v1.Event"> & {
   catchphrase: string;
 
   /**
-   * ネタバレチャンネルが紐づけ済みか。
-   *
    * @generated from field: bool has_spoiler_channel = 10;
    */
   hasSpoilerChannel: boolean;
@@ -144,8 +142,6 @@ export type EventTicket = Message<"nazobu.v1.EventTicket"> & {
   pricePerPerson: number;
 
   /**
-   * 立て替えてくれた人の表示名。
-   *
    * @generated from field: string purchaser_name = 4;
    */
   purchaserName: string;
@@ -312,14 +308,10 @@ export const JoinEventSpoilerChannelResponseSchema: GenMessage<JoinEventSpoilerC
   messageDesc(file_nazobu_v1_event, 11);
 
 /**
- * EventService は event（公演）の参照・削除 RPC を提供する。
- *
  * @generated from service nazobu.v1.EventService
  */
 export const EventService: GenService<{
   /**
-   * ListEvents は登録済み event を新しい順で返す。各 event には紐づく ticket を含める。
-   *
    * @generated from rpc nazobu.v1.EventService.ListEvents
    */
   listEvents: {
@@ -356,7 +348,7 @@ export const EventService: GenService<{
     output: typeof JoinEventSpoilerChannelResponseSchema;
   },
   /**
-   * DeleteEvent は誤登録した event を完全削除する。admin のみ。チケットが残っている場合は削除不可。
+   * DeleteEvent は event を完全削除する。admin のみ。チケットが残っている場合は削除不可。
    *
    * @generated from rpc nazobu.v1.EventService.DeleteEvent
    */

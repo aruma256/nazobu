@@ -4,16 +4,14 @@ package nazobu.v1;
 
 option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1";
 
-// EventService は event（公演）の参照・削除 RPC を提供する。
 service EventService {
-  // ListEvents は登録済み event を新しい順で返す。各 event には紐づく ticket を含める。
   rpc ListEvents(ListEventsRequest) returns (ListEventsResponse);
   rpc GetEvent(GetEventRequest) returns (GetEventResponse);
   // LinkEventSpoilerChannel は既存の Discord チャンネルを未紐づけの公演に紐づける。admin のみ。
   rpc LinkEventSpoilerChannel(LinkEventSpoilerChannelRequest) returns (LinkEventSpoilerChannelResponse);
   // JoinEventSpoilerChannel は紐づけ済みチャンネルの閲覧権限を本人に付与する。
   rpc JoinEventSpoilerChannel(JoinEventSpoilerChannelRequest) returns (JoinEventSpoilerChannelResponse);
-  // DeleteEvent は誤登録した event を完全削除する。admin のみ。チケットが残っている場合は削除不可。
+  // DeleteEvent は event を完全削除する。admin のみ。チケットが残っている場合は削除不可。
   rpc DeleteEvent(DeleteEventRequest) returns (DeleteEventResponse);
 
 }
@@ -41,7 +39,6 @@ message Event {
   int32 expected_duration_minutes = 8;
   // 公演のキャッチコピー。入力が空なら og:description で補完することがある。未設定なら空文字。
   string catchphrase = 9;
-  // ネタバレチャンネルが紐づけ済みか。
   bool has_spoiler_channel = 10;
 }
 
@@ -51,7 +48,6 @@ message EventTicket {
   string start_at = 2;
   // 一人あたりの精算額（円）。
   int32 price_per_person = 3;
-  // 立て替えてくれた人の表示名。
   string purchaser_name = 4;
   // 参加者の表示名（created_at 昇順）。立替者も参加者なら含む。
   repeated string participant_names = 5;

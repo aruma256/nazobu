@@ -109,14 +109,14 @@ export const ListMyUpcomingTicketsResponseSchema: GenMessage<ListMyUpcomingTicke
  */
 export type ListMonthlyTicketsRequest = Message<"nazobu.v1.ListMonthlyTicketsRequest"> & {
   /**
-   * JST での年。0 を指定すると month と合わせて「サーバ JST 基準の前月」を返す。
+   * JST での年。
    *
    * @generated from field: int32 year = 1;
    */
   year: number;
 
   /**
-   * JST での月（1〜12）。0 を指定すると year と合わせて「サーバ JST 基準の前月」を返す。
+   * JST での月（1〜12）。
    *
    * @generated from field: int32 month = 2;
    */
@@ -200,8 +200,6 @@ export const MonthlyTicketSchema: GenMessage<MonthlyTicket> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_mypage, 8);
 
 /**
- * MyPageService はマイページ表示に必要な集約データを返す。
- *
  * @generated from service nazobu.v1.MyPageService
  */
 export const MyPageService: GenService<{

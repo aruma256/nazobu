@@ -49,7 +49,7 @@ export type GetMeResponse = Message<"nazobu.v1.GetMeResponse"> & {
   avatarUrl: string;
 
   /**
-   * 'admin' / 'member'。schema.sql の users.role と同じ値。
+   * 'admin' / 'member'。
    *
    * @generated from field: string role = 5;
    */
@@ -148,8 +148,6 @@ export type User = Message<"nazobu.v1.User"> & {
   id: string;
 
   /**
-   * 表示名（NOT NULL）。
-   *
    * @generated from field: string display_name = 3;
    */
   displayName: string;
@@ -163,8 +161,6 @@ export const UserSchema: GenMessage<User> = /*@__PURE__*/
   messageDesc(file_nazobu_v1_user, 6);
 
 /**
- * UserService は現在ログイン中の user に関する RPC、user 一覧の参照 RPC、および user の事前登録 RPC を提供する。
- *
  * @generated from service nazobu.v1.UserService
  */
 export const UserService: GenService<{
@@ -187,7 +183,7 @@ export const UserService: GenService<{
     output: typeof ListUsersResponseSchema;
   },
   /**
-   * RegisterUser は Discord ユーザーを事前登録する（ログインの許可と、ログイン前のメンションを可能にするため）。admin のみ。
+   * RegisterUser は Discord ユーザーを事前登録する。登録済みのユーザーのみログインできる。admin のみ。
    * 登録済みなら already_exists を返し、既存ユーザーは更新しない。
    *
    * @generated from rpc nazobu.v1.UserService.RegisterUser

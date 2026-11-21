@@ -47,7 +47,7 @@ type UserServiceClient interface {
 	// GetMe は cookie session から現在の user を返す。未ログインなら unauthenticated。
 	GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error)
 	ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error)
-	// RegisterUser は Discord ユーザーを事前登録する（ログインの許可と、ログイン前のメンションを可能にするため）。admin のみ。
+	// RegisterUser は Discord ユーザーを事前登録する。登録済みのユーザーのみログインできる。admin のみ。
 	// 登録済みなら already_exists を返し、既存ユーザーは更新しない。
 	RegisterUser(context.Context, *connect.Request[v1.RegisterUserRequest]) (*connect.Response[v1.RegisterUserResponse], error)
 }
@@ -111,7 +111,7 @@ type UserServiceHandler interface {
 	// GetMe は cookie session から現在の user を返す。未ログインなら unauthenticated。
 	GetMe(context.Context, *connect.Request[v1.GetMeRequest]) (*connect.Response[v1.GetMeResponse], error)
 	ListUsers(context.Context, *connect.Request[v1.ListUsersRequest]) (*connect.Response[v1.ListUsersResponse], error)
-	// RegisterUser は Discord ユーザーを事前登録する（ログインの許可と、ログイン前のメンションを可能にするため）。admin のみ。
+	// RegisterUser は Discord ユーザーを事前登録する。登録済みのユーザーのみログインできる。admin のみ。
 	// 登録済みなら already_exists を返し、既存ユーザーは更新しない。
 	RegisterUser(context.Context, *connect.Request[v1.RegisterUserRequest]) (*connect.Response[v1.RegisterUserResponse], error)
 }

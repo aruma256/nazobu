@@ -4,12 +4,11 @@ package nazobu.v1;
 
 option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1";
 
-// UserService は現在ログイン中の user に関する RPC、user 一覧の参照 RPC、および user の事前登録 RPC を提供する。
 service UserService {
   // GetMe は cookie session から現在の user を返す。未ログインなら unauthenticated。
   rpc GetMe(GetMeRequest) returns (GetMeResponse);
   rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
-  // RegisterUser は Discord ユーザーを事前登録する（ログインの許可と、ログイン前のメンションを可能にするため）。admin のみ。
+  // RegisterUser は Discord ユーザーを事前登録する。登録済みのユーザーのみログインできる。admin のみ。
   // 登録済みなら already_exists を返し、既存ユーザーは更新しない。
   rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse);
 }
@@ -17,7 +16,6 @@ service UserService {
 message GetMeRequest {}
 
 message GetMeResponse {
-  // 旧 username field（id=2）を削除済み。再利用しないため reserved。
   reserved 2;
   reserved "username";
   string id = 1;
@@ -25,7 +23,7 @@ message GetMeResponse {
   string display_name = 3;
   // avatar URL は未設定なら空文字列。
   string avatar_url = 4;
-  // 'admin' / 'member'。schema.sql の users.role と同じ値。
+  // 'admin' / 'member'。
   string role = 5;
 }
 
@@ -48,10 +46,8 @@ message RegisterUserResponse {
 }
 
 message User {
-  // 旧 username field（id=2）を削除済み。再利用しないため reserved。
   reserved 2;
   reserved "username";
   string id = 1;
-  // 表示名（NOT NULL）。
   string display_name = 3;
 }

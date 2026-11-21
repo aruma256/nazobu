@@ -6,7 +6,6 @@ import "nazobu/v1/ticket.proto";
 
 option go_package = "github.com/aruma256/nazobu/backend/internal/gen/nazobu/v1;nazobuv1";
 
-// MyPageService はマイページ表示に必要な集約データを返す。
 service MyPageService {
   // 自分が参加しており、立替者が自分以外で、開演済みのうち未精算のチケット一覧。
   // start_at 昇順。未ログインなら unauthenticated。
@@ -41,9 +40,9 @@ message ListMyUpcomingTicketsResponse {
 }
 
 message ListMonthlyTicketsRequest {
-  // JST での年。0 を指定すると month と合わせて「サーバ JST 基準の前月」を返す。
+  // JST での年。
   int32 year = 1;
-  // JST での月（1〜12）。0 を指定すると year と合わせて「サーバ JST 基準の前月」を返す。
+  // JST での月（1〜12）。
   int32 month = 2;
 }
 
