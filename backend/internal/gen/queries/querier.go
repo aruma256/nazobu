@@ -23,8 +23,6 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	CreateUserIdentity(ctx context.Context, arg CreateUserIdentityParams) error
 	DeleteEvent(ctx context.Context, id string) (int64, error)
-	DeleteExpiredOAuthRecords(ctx context.Context, expiresAt time.Time) error
-	DeleteExpiredOAuthTokens(ctx context.Context, refreshTokenExpiresAt time.Time) error
 	DeleteOAuthAuthorizationCode(ctx context.Context, id string) (int64, error)
 	DeleteOAuthTokenByID(ctx context.Context, id string) error
 	DeleteSessionByTokenHash(ctx context.Context, tokenHash string) error

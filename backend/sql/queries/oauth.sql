@@ -42,9 +42,3 @@ WHERE id = ?;
 
 -- name: DeleteOAuthTokenByID :exec
 DELETE FROM oauth_tokens WHERE id = ?;
-
--- name: DeleteExpiredOAuthRecords :exec
-DELETE FROM oauth_authorization_codes WHERE expires_at < ?;
-
--- name: DeleteExpiredOAuthTokens :exec
-DELETE FROM oauth_tokens WHERE refresh_token_expires_at < ?;

@@ -78,4 +78,4 @@
 ## 未対応・今後
 
 - write 系ツールの拡充（チケット参加者管理・チケット代の精算状態の更新など）
-- 期限切れ OAuth レコードの定期掃除（`DeleteExpiredOAuthRecords` / `DeleteExpiredOAuthTokens` クエリは用意済みで未配線）
+- 期限切れ OAuth レコード（認可コード / トークン）の定期掃除

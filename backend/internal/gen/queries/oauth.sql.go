@@ -76,24 +76,6 @@ func (q *Queries) CreateOAuthToken(ctx context.Context, arg CreateOAuthTokenPara
 	return err
 }
 
-const deleteExpiredOAuthRecords = `-- name: DeleteExpiredOAuthRecords :exec
-DELETE FROM oauth_authorization_codes WHERE expires_at < ?
-`
-
-func (q *Queries) DeleteExpiredOAuthRecords(ctx context.Context, expiresAt time.Time) error {
-	_, err := q.db.ExecContext(ctx, deleteExpiredOAuthRecords, expiresAt)
-	return err
-}
-
-const deleteExpiredOAuthTokens = `-- name: DeleteExpiredOAuthTokens :exec
-DELETE FROM oauth_tokens WHERE refresh_token_expires_at < ?
-`
-
-func (q *Queries) DeleteExpiredOAuthTokens(ctx context.Context, refreshTokenExpiresAt time.Time) error {
-	_, err := q.db.ExecContext(ctx, deleteExpiredOAuthTokens, refreshTokenExpiresAt)
-	return err
-}
-
 const deleteOAuthAuthorizationCode = `-- name: DeleteOAuthAuthorizationCode :execrows
 DELETE FROM oauth_authorization_codes WHERE id = ?
 `
